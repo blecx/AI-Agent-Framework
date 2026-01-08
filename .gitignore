@@ -1,0 +1,30 @@
+# Byte- und Logdateien
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.log
+
+# Virtuelle Umgebungen
+venv/
+.env/
+.venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# Betriebssystemdateien
+.DS_Store
+Thumbs.db
+
+# Python-Umgebungen in Agent-Ordnern
+openAI-generic/venv/
+openAI-generic/.env/
+openAI-generic/.venv/
+openAI-generic/ENV/
+
+# Sonstige
+*.swp
+*.bak
+*.tmp
