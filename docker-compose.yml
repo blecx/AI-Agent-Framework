@@ -48,6 +48,23 @@ services:
     # Default: Launch TUI. Override with: docker compose run client <command>
     command: ["python", "-m", "src.client", "tui"]
 
+  tui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tui
+    container_name: iso21500-tui
+    stdin_open: true
+    tty: true
+    environment:
+      - API_BASE_URL=http://api:8000
+      - API_TIMEOUT=30
+    depends_on:
+      - api
+    networks:
+      - iso21500-network
+    # Default: Show help. Override with: docker compose run tui <command>
+    command: ["python", "main.py", "--help"]
+
 networks:
   iso21500-network:
     driver: bridge
