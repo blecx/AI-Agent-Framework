@@ -501,6 +501,269 @@ Use this context to inform your responses and code changes.
 
 ---
 
+## Working with Multi-Repository Projects
+
+When your project uses multiple repositories (e.g., API in one repo, WebUI client in another), managing context across repositories requires special attention.
+
+### Cross-Repository Context Challenges
+
+**Common Scenarios:**
+1. **Separate Client Repositories**: WebUI client in different repo than API
+2. **Microservices Architecture**: Different services in different repos
+3. **Shared Libraries**: Common code in separate repo
+4. **Documentation Sites**: Docs in separate repo from code
+
+**Example: AI-Agent-Framework**
+- **Core API**: `blecx/AI-Agent-Framework` (this repository)
+- **WebUI Client**: `blecx/AI-Agent-Framework-Client` (separate repository)
+- **Relationship**: Client consumes API via REST endpoints
+
+### Documenting Cross-Repository Architecture
+
+**In the Core Repository (API):**
+```markdown
+## Related Repositories
+
+- **[AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)**: 
+  WebUI client for interactive project management
+  - **Relationship**: Consumes this API via REST endpoints
+  - **Communication**: HTTP/REST (no shared code)
+  - **Documentation**: See client repo for setup and usage
+
+## Architecture
+
+The system uses a multi-repository architecture:
+- This repo contains the core API and TUI/CLI clients
+- WebUI client is in a separate repository for independent deployment
+- All clients communicate via REST API only
+```
+
+**In the Client Repository (WebUI):**
+```markdown
+## Core API Repository
+
+This WebUI client requires the AI-Agent-Framework API:
+- **API Repository**: [blecx/AI-Agent-Framework](https://github.com/blecx/AI-Agent-Framework)
+- **API Documentation**: http://localhost:8000/docs (when running)
+- **Setup**: Follow the API setup guide first
+
+## Configuration
+
+Configure the API endpoint in your `.env` file:
+\`\`\`env
+VITE_API_BASE_URL=http://localhost:8000
+\`\`\`
+```
+
+### Context Restoration Across Repositories
+
+**For Humans:**
+
+When working across multiple repos, follow this sequence:
+
+1. **Start with the core/API repository**:
+   ```bash
+   # Read core architecture
+   cat core-repo/README.md
+   cat core-repo/docs/README.md
+   cat core-repo/docs/adr/0004-separate-client-application.md
+   ```
+
+2. **Review the relationship documentation**:
+   - Look for "Related Repositories" sections
+   - Find architecture diagrams showing component relationships
+   - Review ADRs about multi-repo decisions
+
+3. **Switch to the client repository**:
+   ```bash
+   # Read client docs
+   cat client-repo/README.md
+   # Look for "Core API Repository" or "Backend Setup" sections
+   ```
+
+4. **Understand the integration points**:
+   - API endpoints consumed by the client
+   - Authentication/authorization mechanisms
+   - Configuration requirements
+   - Deployment dependencies
+
+**For AI Agents:**
+
+When AI agents work across multiple repositories, provide context from both:
+
+```python
+class MultiRepoContextLoader:
+    """Load context from multiple related repositories"""
+    
+    def __init__(self, primary_repo: str, related_repos: List[str]):
+        self.primary_repo = Path(primary_repo)
+        self.related_repos = [Path(r) for r in related_repos]
+    
+    def load_cross_repo_context(self) -> dict:
+        """Load context from all related repositories"""
+        return {
+            "primary": self._load_repo_context(self.primary_repo),
+            "related": [
+                self._load_repo_context(repo) 
+                for repo in self.related_repos
+            ],
+            "relationships": self._extract_relationships()
+        }
+    
+    def _extract_relationships(self) -> dict:
+        """Extract cross-repository relationships"""
+        # Look for "Related Repositories" sections in README
+        # Parse architecture diagrams
+        # Find references to other repos in ADRs
+        # Identify API endpoints and integration points
+        pass
+```
+
+**AI Agent Prompt with Cross-Repo Context:**
+
+```
+You are working on a multi-repository project:
+
+Primary Repository: blecx/AI-Agent-Framework
+- Purpose: Core API for project management
+- Technology: FastAPI (Python)
+- Documentation: [content from docs/]
+
+Related Repository: blecx/AI-Agent-Framework-Client
+- Purpose: WebUI client for interactive use
+- Technology: React/Vite
+- Relationship: Consumes primary repo's API via REST
+- Documentation: [content from client repo README]
+
+Key Integration Points:
+- API Base URL: http://localhost:8000
+- API Endpoints: /projects, /commands, /artifacts
+- Authentication: [describe auth mechanism]
+- No shared code - pure REST API communication
+
+When making changes:
+1. Consider impact on both repositories
+2. Ensure API changes are backward compatible
+3. Update documentation in both repos if needed
+4. Test client after API changes
+```
+
+### Storing Cross-Repository Transcripts
+
+**When to Store in Which Repository:**
+
+**Store in Core/API Repository when:**
+- Discussion is primarily about API design
+- Changes affect the API contract
+- Architectural decisions impact all clients
+- Core business logic discussions
+
+**Store in Client Repository when:**
+- Discussion is primarily about UI/UX
+- Changes are client-specific
+- Only affects that particular client
+
+**Store in Both (with cross-references) when:**
+- Major architectural changes affecting both
+- Integration points are being modified
+- Breaking changes to API
+
+**Cross-Repository Transcript Example:**
+
+In Core API Repository (`docs/chat/2026-01-15-api-breaking-change.md`):
+```markdown
+# Chat Transcript: API Breaking Change Discussion
+
+**Affected Repositories:**
+- ✅ This repository (API)
+- ⚠️ [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) - Requires updates
+
+**Related Issues:**
+- API: #123
+- Client: blecx/AI-Agent-Framework-Client#45
+
+**Migration Guide:**
+See [API Breaking Changes Guide](../howto/api-v2-migration.md)
+```
+
+In Client Repository (`docs/chat/2026-01-15-client-api-update.md`):
+```markdown
+# Chat Transcript: Client Update for API v2
+
+**Related API Changes:**
+- API Repository: [blecx/AI-Agent-Framework](https://github.com/blecx/AI-Agent-Framework)
+- API Chat: [2026-01-15-api-breaking-change.md](https://github.com/blecx/AI-Agent-Framework/blob/main/docs/chat/2026-01-15-api-breaking-change.md)
+- API PR: blecx/AI-Agent-Framework#123
+
+**Changes Required in This Client:**
+[List client-specific changes]
+```
+
+### Best Practices for Multi-Repo Documentation
+
+**1. Maintain Clear Links:**
+- Always link to the other repository's documentation
+- Use full GitHub URLs (not relative paths)
+- Include repository name in links: `[AI-Agent-Framework](https://github.com/...)`
+
+**2. Document the Relationship:**
+- Explain why repositories are separate
+- Describe communication mechanisms
+- Show architecture diagrams with both repos
+
+**3. Keep ADRs in Core Repository:**
+- Store architectural decisions that affect multiple repos in the core/API repo
+- Reference them from client repos
+
+**4. Sync Breaking Changes:**
+- Document breaking changes in both repos
+- Link PRs across repositories
+- Update integration tests
+
+**5. Version Compatibility:**
+- Document which client versions work with which API versions
+- Maintain a compatibility matrix
+- Tag releases in sync when needed
+
+### Example: AI-Agent-Framework Multi-Repo Setup
+
+**Core Repository Structure:**
+```
+AI-Agent-Framework/
+├── README.md                        # Links to client repos
+├── docs/
+│   ├── README.md                    # Multi-repo architecture
+│   ├── adr/
+│   │   └── 0004-separate-client.md  # Why separate repos
+│   └── howto/
+│       └── client-integration.md    # How clients integrate
+└── apps/api/                        # Core API code
+```
+
+**Client Repository Structure:**
+```
+AI-Agent-Framework-Client/
+├── README.md                        # Links back to API repo
+├── docs/
+│   ├── setup.md                     # API setup prerequisites
+│   └── api-integration.md           # How this client uses the API
+└── src/                             # Client code
+```
+
+**Documentation Cross-References:**
+
+API Repo → Client Repo:
+- README mentions client in "Client Applications" section
+- Links to client repo for WebUI setup
+- ADR-0004 documents the separation decision
+
+Client Repo → API Repo:
+- README links to API repo for backend setup
+- Configuration docs reference API endpoints
+- Troubleshooting guide links to API docs
+
+---
+
 ## Linking Strategy
 
 ### Cross-Reference Best Practices
