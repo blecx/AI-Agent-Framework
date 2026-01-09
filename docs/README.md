@@ -12,10 +12,12 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 1. **[Project README](../README.md)** - Overview, architecture, and features
 2. **[Quick Start Guide](../QUICKSTART.md)** - Step-by-step setup instructions
-3. **[MVP Specification](spec/mvp-iso21500-agent.md)** - Detailed system specification
+3. **[Development Guide](development.md)** - Complete local development guide
+4. **[MVP Specification](spec/mvp-iso21500-agent.md)** - Detailed system specification
 
 **Quick Links:**
 - 🚀 [Setup Guide](../QUICKSTART.md)
+- 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
@@ -28,6 +30,7 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 ```
 docs/
 ├── README.md                          # This file
+├── development.md                     # Local development guide
 ├── spec/                              # Formal specifications
 ├── adr/                               # Architecture Decision Records
 ├── chat/                              # Development transcripts
@@ -93,6 +96,27 @@ Verbatim conversations documenting design discussions and decision-making proces
 - Documentation planning
 
 **Transcript Template:** [TEMPLATE.md](chat/TEMPLATE.md) *(to be created)*
+
+---
+
+## Development Guides
+
+Comprehensive guides for developing and maintaining the project.
+
+| Guide | Description | Last Updated |
+|-------|-------------|--------------|
+| [Development Guide](development.md) | Complete local development guide including setup, workflow, testing, and troubleshooting | 2026-01-09 |
+
+**Topics Covered:**
+- Development environment setup with `.venv`
+- Project structure and organization
+- Running the application locally
+- Development workflow and hot reload
+- Adding dependencies (Python and JavaScript)
+- Testing strategies
+- Docker integration
+- IDE configuration
+- Troubleshooting common issues
 
 ---
 
@@ -230,7 +254,9 @@ Find documentation by topic.
 - [ADR-0002: LLM Configuration](adr/0002-llm-http-adapter-json-config.md)
 
 ### Development & Workflow
+- [Development Guide](development.md)
 - [README - Development](../README.md#development)
+- [QUICKSTART - Local Development](../QUICKSTART.md#local-development-without-docker)
 - [ADR-0003: Propose/Apply Workflow](adr/0003-propose-apply-before-commit.md)
 - [Chat Transcript: Full Development Discussion](chat/2026-01-09-blecx-copilot-transcript.md)
 

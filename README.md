@@ -40,6 +40,92 @@ This system provides intelligent project management following ISO 21500 standard
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
 
+## Local Development Setup
+
+For local development without Docker, follow these steps:
+
+### Prerequisites
+
+- **Python 3.10+** (Python 3.12 recommended)
+- **Git**
+- (Optional) LM Studio or OpenAI-compatible LLM endpoint
+
+### Step-by-Step Setup
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/blecx/AI-Agent-Framework.git
+cd AI-Agent-Framework
+```
+
+2. **Run the setup script:**
+
+**Linux/macOS:**
+```bash
+./setup.sh
+```
+
+**Windows:**
+```cmd
+setup.bat
+```
+
+This script will:
+- Create a Python virtual environment in `.venv/`
+- Install all required dependencies from `requirements.txt`
+- Display next steps for running the application
+
+3. **Activate the virtual environment:**
+
+**Linux/macOS:**
+```bash
+source .venv/bin/activate
+```
+
+**Windows:**
+```cmd
+.venv\Scripts\activate.bat
+```
+
+4. **Create project documents directory:**
+```bash
+mkdir projectDocs
+```
+
+5. **Configure LLM settings (optional):**
+```bash
+cp configs/llm.default.json configs/llm.json
+# Edit configs/llm.json with your LLM endpoint details
+```
+
+6. **Run the API server:**
+```bash
+cd apps/api
+PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+```
+
+7. **Access the application:**
+- API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+**Note:** For the web UI, you'll need to run it separately (see Web UI section below) or use Docker.
+
+### Running the Web UI (Optional)
+
+If you want to run the React frontend locally:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+The web UI will be available at http://localhost:5173 (or the port shown in the terminal).
+
+### Docker Deployment Setup
+
+For production or simplified deployment using Docker:
+
 ### Prerequisites
 
 - Docker and Docker Compose
@@ -201,21 +287,52 @@ projectDocs/
 
 ## Development
 
-### Running Locally (without Docker)
+### Local Development Setup
 
-**Backend:**
-```bash
-cd apps/api
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
+For detailed local development setup, see the [Local Development Setup](#local-development-setup) section above.
 
-**Frontend:**
-```bash
-cd apps/web
-npm install
-npm run dev
-```
+**Quick Reference:**
+
+1. **Create virtual environment:**
+   ```bash
+   ./setup.sh  # Linux/macOS
+   # or
+   setup.bat   # Windows
+   ```
+
+2. **Activate virtual environment:**
+   ```bash
+   source .venv/bin/activate  # Linux/macOS
+   # or
+   .venv\Scripts\activate.bat  # Windows
+   ```
+
+3. **Run the API:**
+   ```bash
+   cd apps/api
+   PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+   ```
+
+4. **Run the Web UI (optional):**
+   ```bash
+   cd apps/web
+   npm install
+   npm run dev
+   ```
+
+### Adding New Dependencies
+
+1. Add the dependency to `requirements.txt` with a pinned version
+2. Reinstall dependencies:
+   ```bash
+   source .venv/bin/activate  # Activate if not already active
+   pip install -r requirements.txt
+   ```
+3. Update `apps/api/requirements.txt` if the dependency is needed in Docker
+4. Rebuild Docker images if using Docker deployment:
+   ```bash
+   docker compose build --no-cache
+   ```
 
 ### Adding New Commands
 

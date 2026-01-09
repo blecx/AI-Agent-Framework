@@ -183,21 +183,136 @@ If using LM Studio and the API can't reach it:
 
 ## Advanced Usage
 
-### Running Locally (Development)
+## Local Development (without Docker)
 
-**Backend:**
+If you prefer to develop without Docker, you can run the application directly on your local machine using a Python virtual environment.
+
+### Prerequisites
+
+- **Python 3.10+** (Python 3.12 recommended)
+- **Git**
+- **Node.js 18+** (for web UI)
+- (Optional) LM Studio or OpenAI-compatible LLM endpoint
+
+### Setup Steps
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/blecx/AI-Agent-Framework.git
+cd AI-Agent-Framework
+```
+
+2. **Run the setup script:**
+
+**Linux/macOS:**
+```bash
+./setup.sh
+```
+
+**Windows:**
+```cmd
+setup.bat
+```
+
+This will:
+- Create a virtual environment in `.venv/`
+- Install all Python dependencies
+- Display next steps
+
+3. **Activate the virtual environment:**
+
+**Linux/macOS:**
+```bash
+source .venv/bin/activate
+```
+
+**Windows:**
+```cmd
+.venv\Scripts\activate.bat
+```
+
+4. **Create project documents directory:**
+```bash
+mkdir projectDocs
+```
+
+5. **Configure LLM (optional):**
+```bash
+cp configs/llm.default.json configs/llm.json
+# Edit configs/llm.json with your LLM settings
+```
+
+For local LLM (LM Studio):
+- Ensure LM Studio is running on `http://localhost:1234`
+- Update `configs/llm.json`:
+  ```json
+  {
+    "provider": "lmstudio",
+    "base_url": "http://localhost:1234/v1",
+    "api_key": "lm-studio",
+    "model": "local-model"
+  }
+  ```
+
+6. **Run the API server:**
 ```bash
 cd apps/api
-pip install -r requirements.txt
 PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 ```
 
-**Frontend:**
+The API will be available at:
+- http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+7. **(Optional) Run the Web UI:**
 ```bash
+# In a new terminal
 cd apps/web
 npm install
 npm run dev
 ```
+
+The web UI will be available at http://localhost:5173
+
+### When to Use Local Development vs Docker
+
+**Use Local Development (.venv) when:**
+- You're actively developing and debugging code
+- You need faster iteration cycles
+- You want to use your IDE's debugger
+- You need to inspect or modify dependencies
+- You're running on a development machine
+
+**Use Docker when:**
+- You want a consistent environment across team members
+- You're deploying to production
+- You need to test the full system integration
+- You want isolated environments
+- You're distributing the application to others
+
+### Switching Between Local and Docker
+
+You can easily switch between local and Docker development:
+
+**To Docker:**
+```bash
+deactivate  # Exit virtual environment if active
+docker compose up --build
+```
+
+**To Local:**
+```bash
+docker compose down
+source .venv/bin/activate  # or .venv\Scripts\activate.bat on Windows
+cd apps/api
+PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+```
+
+---
+
+## Docker Deployment (Production)
+
+For production deployment or if you prefer Docker, continue using the Docker setup described in the earlier sections of this guide.
 
 ### Customizing Templates
 
