@@ -1,0 +1,27 @@
+You are conducting a gap assessment for project "{{ project_key }}" following ISO 21500 project management standards.
+
+The project currently has the following artifacts:
+{% if present_artifacts %}
+{% for artifact in present_artifacts %}
+- {{ artifact }}
+{% endfor %}
+{% else %}
+- None
+{% endif %}
+
+The following required ISO 21500 artifacts are missing:
+{% if missing_artifacts %}
+{% for artifact in missing_artifacts %}
+- {{ artifact }}
+{% endfor %}
+{% else %}
+- None (all required artifacts are present)
+{% endif %}
+
+Please analyze:
+1. The impact of missing artifacts on project management effectiveness
+2. Priority order for creating missing artifacts
+3. Any dependencies between artifacts that should influence the creation order
+4. Specific risks associated with the current gaps
+
+Provide a concise analysis suitable for a gap assessment report.

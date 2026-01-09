@@ -24,6 +24,16 @@ openAI-generic/.env/
 openAI-generic/.venv/
 openAI-generic/ENV/
 
+# Node.js
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env.local
+.env.*.local
+
 # Sonstige
 *.swp
 *.bak
