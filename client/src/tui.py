@@ -157,7 +157,10 @@ class CreateProjectScreen(Screen):
             self.notify(f"Project '{key}' created successfully!", severity="information")
             self.app.pop_screen()
         except SystemExit:
-            # Error was already displayed by the client
+            # APIClient calls sys.exit() on errors (CLI design pattern)
+            # We catch SystemExit here to prevent TUI from exiting
+            # Error message was already displayed to stderr by APIClient
+            # NOTE: In a future refactor, APIClient could raise custom exceptions
             pass
     
     @on(Button.Pressed, "#btn_cancel")
@@ -313,7 +316,11 @@ class RunCommandScreen(Screen):
             log.write_line(f"[green]✓ Proposal generated![/green]")
             log.write_line(f"Proposal ID: {self.proposal['proposal_id']}")
             log.write_line(f"\nAssistant Message:")
-            log.write_line(self.proposal['assistant_message'][:MESSAGE_PREVIEW_LENGTH])
+            message = self.proposal['assistant_message']
+            if len(message) > MESSAGE_PREVIEW_LENGTH:
+                log.write_line(message[:MESSAGE_PREVIEW_LENGTH] + "...")
+            else:
+                log.write_line(message)
             
             log.write_line(f"\nFile Changes ({len(self.proposal['file_changes'])}):")
             for change in self.proposal['file_changes']:
@@ -326,6 +333,8 @@ class RunCommandScreen(Screen):
             self.notify("Proposal ready! Review and click Apply to commit.", severity="information")
             
         except SystemExit:
+            # APIClient calls sys.exit() on errors (CLI design pattern)
+            # Catch to prevent TUI exit; error already logged to stderr
             log.write_line("[red]✗ Failed to generate proposal[/red]")
     
     @on(Button.Pressed, "#btn_apply")
@@ -352,6 +361,8 @@ class RunCommandScreen(Screen):
             apply_btn.disabled = True
             
         except SystemExit:
+            # APIClient calls sys.exit() on errors (CLI design pattern)
+            # Catch to prevent TUI exit; error already logged to stderr
             log.write_line("[red]✗ Failed to apply proposal[/red]")
     
     @on(Button.Pressed, "#btn_cancel")
