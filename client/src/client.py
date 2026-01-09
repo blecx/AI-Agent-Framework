@@ -120,7 +120,14 @@ class APIClient:
             sys.exit(1)
     
     def close(self):
-        """Close the HTTP client."""
+        """Close the HTTP client.
+        
+        Note: For CLI usage, this is typically not needed as the process
+        exits after each command. The client connection will be automatically
+        closed when the process terminates. This method is provided for
+        completeness and for cases where the APIClient might be used in
+        long-running processes or tests.
+        """
         self.client.close()
 
 
@@ -338,7 +345,7 @@ def main():
     except KeyboardInterrupt:
         click.echo("\n\nInterrupted by user.", err=True)
         sys.exit(130)
-    except (httpx.RequestError, httpx.HTTPError) as e:
+    except httpx.RequestError as e:
         click.echo(f"\nAPI connection error: {str(e)}", err=True)
         sys.exit(1)
     except click.ClickException as e:
