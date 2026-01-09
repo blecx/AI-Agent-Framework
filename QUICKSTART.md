@@ -2,6 +2,42 @@
 
 This guide shows you how to get the ISO 21500 Project Management AI Agent system up and running.
 
+## Choosing Your Client Interface
+
+This framework supports multiple client interfaces, each optimized for different use cases:
+
+### Client Options
+
+**1. WebUI (Graphical Interface)** - Recommended for most users
+- **Repository**: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- **Best for**: Interactive project management, visual diff review, team collaboration
+- **Features**: Modern React UI, artifact browser, real-time updates
+- **Setup**: See the [WebUI Client Setup](#webui-client-setup) section below
+
+**2. TUI/CLI (Text Interface)** - For automation and scripting
+- **Location**: Included in this repository (`client/` and `apps/tui/`)
+- **Best for**: CI/CD pipelines, automation scripts, headless environments
+- **Features**: Command-line interface, scriptable operations, terminal UI
+- **Setup**: See the [TUI/CLI Client Setup](#tuicli-client-setup) section below
+
+**3. Direct API** - For custom integrations
+- **Best for**: Building custom clients, integrations, language-specific implementations
+- **Documentation**: Available at `http://localhost:8000/docs` after starting the API
+- **Setup**: Start the API server (see below), then connect your custom client
+
+### How to Choose?
+
+| Use Case | Recommended Client |
+|----------|-------------------|
+| Team collaboration and visual project management | **WebUI** |
+| Automated workflows and CI/CD pipelines | **TUI/CLI** |
+| Quick command-line operations | **TUI/CLI** |
+| Visual diff review and artifact browsing | **WebUI** |
+| SSH/remote terminal sessions | **TUI/CLI** |
+| Custom integrations | **Direct API** |
+
+Both the WebUI and TUI/CLI clients connect to the same API, so you can use them interchangeably or simultaneously.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
@@ -69,21 +105,30 @@ docker compose up --build
 This will:
 - Build the FastAPI backend
 - Build the React frontend
-- Start both services
+- Start the core services (API)
 - Initialize the `/projectDocs` git repository if needed
 
 ### 5. Access the Application
 
-- **Web UI**: http://localhost:8080
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
-- **Client CLI**: Use `docker compose run client <command>`
+- **TUI/CLI Client**: Use `docker compose run client <command>` (see below)
+- **WebUI**: See [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) for graphical interface setup
 
-### 6. (Optional) Try the Client
+### 6. Choose and Setup Your Client
 
-The client provides both interactive (TUI) and command-line (CLI) access:
+#### Option A: WebUI (Graphical Interface)
 
-#### 🖥️ Terminal User Interface (NEW!)
+For a modern web-based interface:
+1. Visit the [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository
+2. Follow the setup instructions there
+3. Configure it to connect to your API at `http://localhost:8000`
+
+#### Option B: TUI/CLI (Text Interface)
+
+The TUI/CLI client is already included. Try it:
+
+#### 🖥️ Terminal User Interface
 
 Launch an interactive visual interface:
 
@@ -119,23 +164,32 @@ For detailed client usage, see [client/README.md](client/README.md).
 
 ## Using the System
 
-You can interact with the system in three ways:
+You can interact with the system using different client interfaces:
 
-1. **Web UI** (http://localhost:8080) - Rich visual interface for interactive use
-2. **TUI (Terminal UI)** - Interactive terminal interface with visual navigation
-3. **CLI Client** - Command-line interface for automation and scripting
+1. **WebUI** - Rich visual interface for interactive use (separate repository)
+2. **TUI (Terminal UI)** - Interactive terminal interface with visual navigation (this repository)
+3. **CLI** - Command-line interface for automation and scripting (this repository)
 
-### Using the Web UI
+## WebUI Client Setup
 
-### Create a Project
+The WebUI provides a modern graphical interface for project management. It's maintained in a separate repository for independent deployment.
 
-1. Open http://localhost:8080
+### Setup Instructions
+
+1. Follow the setup instructions in the [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository
+2. Configure the WebUI to connect to your API endpoint (default: `http://localhost:8000`)
+3. Access the WebUI through your browser
+
+### Using the WebUI
+
+**Create a Project:**
+1. Open the WebUI in your browser
 2. Click "Create New Project"
 3. Enter a project key (e.g., `PROJ001`) - alphanumeric, dashes, underscores only
 4. Enter a project name (e.g., `Website Redesign`)
 5. Click "Create Project"
 
-### Run Commands
+**Run Commands:**
 
 The system supports three main commands:
 
@@ -168,11 +222,16 @@ Creates a project schedule with timeline and Mermaid gantt chart.
 3. Review the generated schedule
 4. Click "Apply & Commit" to save
 
-### View Artifacts
-
+**View Artifacts:**
 1. Click the "Artifacts" tab
 2. See all generated documents
 3. Click any artifact to view its content
+
+For detailed WebUI documentation, see [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client).
+
+## TUI/CLI Client Setup
+
+The TUI/CLI client is included in this repository and provides text-based interfaces for automation and scripting.
 
 ### View Project Documents
 
@@ -185,9 +244,27 @@ ls -la PROJ001/           # View project files
 cat PROJ001/project.json  # View project metadata
 ```
 
-### Using the CLI Client
+### Using the TUI (Terminal User Interface)
 
-The CLI client provides an alternative way to interact with the system:
+Launch an interactive visual interface in your terminal:
+
+```bash
+# Launch TUI (default when running client container)
+docker compose run client
+
+# Or explicitly
+docker compose run client tui
+```
+
+**TUI Features:**
+- 📁 **Visual Project Management**: Browse and create projects with menus
+- ⚙️ **Interactive Commands**: Run commands with real-time feedback
+- 📊 **Artifact Browser**: View generated artifacts
+- ⌨️ **Keyboard Navigation**: Full keyboard and mouse support
+
+### Using the CLI (Command Line Interface)
+
+The CLI provides traditional command-line access for automation:
 
 ```bash
 # Create a project
@@ -212,12 +289,25 @@ docker compose run client get-artifact --key CLI001 --path artifacts/gap_assessm
 docker compose run client demo --key DEMO001 --name "Automated Demo"
 ```
 
-**When to use CLI vs Web UI:**
-
-- **Use Web UI** for: Interactive project management, visual diff review, artifact browsing
-- **Use CLI** for: Automation, scripting, CI/CD integration, batch operations
-
 For more CLI examples and detailed documentation, see [client/README.md](client/README.md).
+
+### When to Use Each Client
+
+**Use WebUI when:**
+- Interactive project management needed
+- Visual diff review and proposal comparison
+- Non-technical users
+- Team collaboration
+- Rich visual experience desired
+
+**Use TUI/CLI when:**
+- Automation and scripting required
+- CI/CD pipeline integration
+- Headless/server environments
+- Quick command-line operations
+- SSH/remote terminal sessions
+
+**Both clients connect to the same API**, so you can use them interchangeably or simultaneously based on your needs.
 
 ## Troubleshooting
 
