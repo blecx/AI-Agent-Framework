@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: ../../docker/api/Dockerfile
+    container_name: iso21500-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount project documents directory (user must create this)
+      - ./projectDocs:/projectDocs
+      # Mount LLM config (optional, uses default if not provided)
+      - ./configs/llm.default.json:/config/llm.json:ro
+    environment:
+      - PROJECT_DOCS_PATH=/projectDocs
+      - LLM_CONFIG_PATH=/config/llm.json
+    networks:
+      - iso21500-network
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    container_name: iso21500-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - iso21500-network
+
+networks:
+  iso21500-network:
+    driver: bridge
+
+volumes:
+  projectDocs:
