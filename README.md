@@ -90,6 +90,66 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 - Only hashes stored in audit logs by default
 - Separate project documents repository
 
+## Client Applications
+
+The AI-Agent-Framework provides multiple client interfaces to suit different workflows and use cases:
+
+### 🖥️ TUI (Text User Interface)
+
+**Location**: `apps/tui/` in this repository  
+**Purpose**: Command-line client for testing, automation, and terminal-based workflows
+
+The TUI provides a terminal-based interface for interacting with the API. It's ideal for:
+- **CI/CD pipelines**: Automated testing and deployment workflows
+- **Scripting**: Batch operations and automation scripts
+- **Quick testing**: Fast validation of API functionality
+- **SSH-only environments**: Full functionality without graphics
+- **Developer workflows**: Command-line preferred environments
+
+**Getting Started**:
+```bash
+# Using Docker
+docker compose run tui health
+docker compose run tui projects list
+
+# Local development
+cd apps/tui
+python main.py --help
+```
+
+For detailed TUI documentation, see [apps/tui/README.md](apps/tui/README.md).
+
+### 🌐 WebUI (Web User Interface)
+
+**Location**: Separate repository at [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)  
+**Purpose**: Graphical web client for interactive project management
+
+The WebUI provides a modern, browser-based interface maintained as an independent application. It's ideal for:
+- **Interactive project management**: Visual workflows and real-time collaboration
+- **Visual workflows**: Drag-and-drop, rich UI components
+- **Team collaboration**: Multi-user access and shared project views
+- **Non-technical users**: User-friendly interface for all skill levels
+- **Rich visualizations**: Charts, graphs, and visual project tracking
+
+**Getting Started**: Visit the [WebUI repository](https://github.com/blecx/AI-Agent-Framework-Client) for setup instructions and documentation.
+
+### When to Use Each Client
+
+| Use Case | TUI | WebUI |
+|----------|-----|-------|
+| Automated testing & CI/CD | ✅ Best | ⚪ Not ideal |
+| Quick command-line tasks | ✅ Best | ⚪ Not needed |
+| SSH/terminal-only access | ✅ Only option | ❌ Not available |
+| Interactive project management | ⚪ Basic | ✅ Best |
+| Visual diff review | ⚪ Text only | ✅ Best |
+| Team collaboration | ⚪ Limited | ✅ Best |
+| Non-technical users | ⚪ Requires CLI knowledge | ✅ Best |
+| Scripting & automation | ✅ Best | ❌ Not suitable |
+
+**Note**: Both clients communicate with the same API server, ensuring feature parity for core operations.
+
+For a detailed comparison and architecture overview, see [docs/clients/overview.md](docs/clients/overview.md).
+
 ## Quick Start
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**

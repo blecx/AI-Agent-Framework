@@ -119,13 +119,100 @@ For detailed client usage, see [client/README.md](client/README.md).
 
 ## Using the System
 
-You can interact with the system in three ways:
+The AI-Agent-Framework provides multiple client interfaces:
 
-1. **Web UI** (http://localhost:8080) - Rich visual interface for interactive use
-2. **TUI (Terminal UI)** - Interactive terminal interface with visual navigation
-3. **CLI Client** - Command-line interface for automation and scripting
+1. **Built-in Web UI** (apps/web/) - Included in this repository at http://localhost:8080
+2. **TUI (Terminal UI)** (apps/tui/) - Command-line client in this repository
+3. **WebUI Client** - Separate repository with enhanced features (see below)
 
-### Using the Web UI
+## Getting Started with the TUI
+
+The TUI (Text User Interface) provides command-line access to the API for automation and scripting.
+
+### Running the TUI with Docker
+
+```bash
+# Check API health
+docker compose run tui health
+
+# Create a project
+docker compose run tui projects create --key TEST001 --name "Test Project"
+
+# List all projects
+docker compose run tui projects list
+
+# Get project details
+docker compose run tui projects get --key TEST001
+
+# Propose a command (preview changes)
+docker compose run tui commands propose --project TEST001 --command assess_gaps
+
+# Apply a proposal (commits changes)
+docker compose run tui commands apply --project TEST001 --proposal <proposal-id>
+
+# List artifacts
+docker compose run tui artifacts list --project TEST001
+
+# View artifact content
+docker compose run tui artifacts get --project TEST001 --path artifacts/gap_assessment.md
+```
+
+### Running the TUI Locally
+
+```bash
+cd apps/tui
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+export API_BASE_URL=http://localhost:8000
+
+# Run commands
+python main.py health
+python main.py projects list
+python main.py --help  # See all available commands
+```
+
+**When to use the TUI:**
+- CI/CD pipelines and automation
+- Scripting and batch operations
+- SSH-only or terminal-based environments
+- Quick API testing and validation
+- Environments where graphical UI is not available
+
+For complete TUI documentation, see [apps/tui/README.md](apps/tui/README.md).
+
+## Getting Started with the WebUI
+
+The **WebUI Client** is a modern, feature-rich web interface maintained in a separate repository for independent versioning and deployment.
+
+### Features
+
+- 🎨 **Modern UI/UX**: Enhanced visual design and user experience
+- 📊 **Rich Visualizations**: Charts, dashboards, and project insights
+- 👥 **Team Collaboration**: Multi-user workflows and shared views
+- 🔄 **Real-time Updates**: Live project status and notifications
+- 📱 **Responsive Design**: Works on desktop, tablet, and mobile
+
+### Setup
+
+The WebUI Client has its own repository with dedicated documentation:
+
+**Repository**: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+
+**Quick Setup**:
+1. Visit the [WebUI repository](https://github.com/blecx/AI-Agent-Framework-Client)
+2. Follow the README instructions for installation
+3. Configure the API endpoint to point to your API server
+4. Launch the WebUI and connect to your running API
+
+**When to use the WebUI:**
+- Interactive project management with visual workflows
+- Team collaboration and shared project views
+- Rich visual diff review and proposal comparison
+- Non-technical users who prefer graphical interfaces
+- Scenarios requiring advanced visualizations
+
+For detailed WebUI setup and usage, visit the [WebUI repository](https://github.com/blecx/AI-Agent-Framework-Client).
+
+## Using the Built-in Web UI
 
 ### Create a Project
 
@@ -184,40 +271,6 @@ git log                    # View commit history
 ls -la PROJ001/           # View project files
 cat PROJ001/project.json  # View project metadata
 ```
-
-### Using the CLI Client
-
-The CLI client provides an alternative way to interact with the system:
-
-```bash
-# Create a project
-docker compose run client create-project --key CLI001 --name "CLI Project"
-
-# Check project state
-docker compose run client get-state --key CLI001
-
-# Propose assess_gaps command
-docker compose run client propose --key CLI001 --command assess_gaps
-
-# Note the proposal_id from output, then apply it
-docker compose run client apply --key CLI001 --proposal-id <proposal-id>
-
-# List artifacts
-docker compose run client list-artifacts --key CLI001
-
-# View artifact content
-docker compose run client get-artifact --key CLI001 --path artifacts/gap_assessment.md
-
-# Or run a complete demo workflow
-docker compose run client demo --key DEMO001 --name "Automated Demo"
-```
-
-**When to use CLI vs Web UI:**
-
-- **Use Web UI** for: Interactive project management, visual diff review, artifact browsing
-- **Use CLI** for: Automation, scripting, CI/CD integration, batch operations
-
-For more CLI examples and detailed documentation, see [client/README.md](client/README.md).
 
 ## Troubleshooting
 

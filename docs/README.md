@@ -28,77 +28,120 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 ## System Architecture
 
-The AI Agent Framework uses a three-container architecture for maximum flexibility:
+The AI Agent Framework uses a multi-component architecture with a core API server and multiple client interfaces:
 
-### Container Overview
+### Core Components
 
-| Container | Purpose | Port | Required |
-|-----------|---------|------|----------|
-| **api** | FastAPI backend - Core logic and API endpoints | 8000 | ✅ Yes |
-| **web** | React/Vite frontend - Visual user interface | 8080 | ✅ Yes |
-| **client** | Python CLI - API consumer and automation tool | N/A | ⚪ Optional |
+| Component | Purpose | Location | Port | Required |
+|-----------|---------|----------|------|----------|
+| **API Server** | FastAPI backend - Core logic and endpoints | `apps/api/` | 8000 | ✅ Yes |
+| **Built-in Web UI** | React/Vite frontend - Basic visual interface | `apps/web/` | 8080 | ⚪ Optional |
+| **TUI Client** | Python CLI - Terminal-based automation | `apps/tui/` | N/A | ⚪ Optional |
 
-### Architecture Diagram
+### Extended Clients
+
+| Client | Purpose | Repository | Maintenance |
+|--------|---------|------------|-------------|
+| **WebUI Client** | Enhanced web interface with rich features | [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) | Separate (Independent) |
+
+### Architecture Overview
 
 ```
-┌─────────────────┐
-│    Web UI       │  ← Visual Interface (Interactive)
-│  React/Vite     │
-│   (Port 8080)   │
-└────────┬────────┘
-         │
-         │  HTTP/REST
-         │
-         ▼
-┌─────────────────┐         ┌──────────────────┐
-│   API Server    │◄────────│  Python Client   │  ← CLI Interface (Automation)
-│    FastAPI      │         │  (Optional)      │
-│   (Port 8000)   │         └──────────────────┘
-└────────┬────────┘
-         │
-         │  Git Operations
-         │
-         ▼
-┌─────────────────┐
-│  projectDocs/   │  ← Separate Git Repository
-│  (Git Repo)     │     (Project Documents)
-└─────────────────┘
+┌─────────────────────┐         ┌─────────────────────┐
+│  Built-in Web UI    │         │    WebUI Client     │
+│   (apps/web/)       │         │  (Separate Repo)    │
+│   Port 8080         │         │   Enhanced UI       │
+└──────────┬──────────┘         └──────────┬──────────┘
+           │                               │
+           │        HTTP/REST              │
+           │                               │
+           └───────────┬───────────────────┘
+                       │
+                       ▼
+           ┌───────────────────────┐         ┌──────────────────┐
+           │    API Server         │◄────────│   TUI Client     │
+           │   (apps/api/)         │         │  (apps/tui/)     │
+           │    Port 8000          │         │  CLI/Terminal    │
+           └──────────┬────────────┘         └──────────────────┘
+                      │
+                      │  Git Operations
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │   projectDocs/       │  ← Separate Git Repository
+           │   (Git Repo)         │     (Project Documents)
+           └──────────────────────┘
 ```
 
-### Client Architecture
+### Multi-Client Architecture
 
-The **client** container is a standalone Python CLI application that:
+The system provides multiple client interfaces to serve different use cases:
 
-- **Consumes the REST API**: All operations via HTTP endpoints
-- **No shared code**: Completely independent from the API/web containers
-- **Demonstrates API-first design**: Validates that all functionality is available via API
-- **Enables automation**: Scripting, batch operations, CI/CD integration
-- **Optional component**: Not required for core system functionality
+**1. Built-in Web UI (apps/web/)**
+- **Purpose**: Basic visual interface included in the main repository
+- **Technology**: React/Vite with minimal dependencies
+- **Use Case**: Quick setup, simple visual workflows
+- **Maintenance**: Part of main repository, versioned together
 
-#### When to Use Each Interface
+**2. TUI Client (apps/tui/)**
+- **Purpose**: Terminal-based command-line interface
+- **Technology**: Python CLI with Click framework
+- **Use Case**: Automation, CI/CD, scripting, SSH-only environments
+- **Maintenance**: Part of main repository, tight integration
 
-**Use Web UI when:**
-- Interactive project management
-- Visual diff review and proposal preview
-- Browsing and exploring artifacts
-- Non-technical users
-- Rich visual experience needed
+**3. WebUI Client (Separate Repository)**
+- **Purpose**: Advanced web interface with rich features
+- **Technology**: Modern web stack (see separate repo)
+- **Use Case**: Interactive project management, team collaboration, advanced visualizations
+- **Maintenance**: **Independent repository for separate versioning and deployment**
+- **Repository**: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
 
-**Use CLI Client when:**
-- Automation and scripting
-- CI/CD pipeline integration
-- Batch processing multiple projects
-- Command-line workflows
-- API testing and validation
-- No GUI available (servers, containers)
+### Why Separate WebUI Repository?
+
+The WebUI client is maintained in a separate repository to provide:
+
+1. **Independent Versioning**: WebUI can evolve at its own pace without affecting the API
+2. **Deployment Flexibility**: Deploy WebUI independently to different environments
+3. **Team Structure**: Frontend team can work independently from backend team
+4. **Technology Stack**: Use different tech stacks and dependencies without conflicts
+5. **Release Cadence**: Update UI more frequently than core API
+6. **Client Choice**: Users can choose built-in Web UI or enhanced WebUI based on needs
+
+For detailed rationale, see [ADR-0004: Separate Client Application](adr/0004-separate-client-application.md) and [Client Architecture Overview](clients/overview.md).
+
+### Client Selection Guide
+
+**Use TUI Client when:**
+- Automating project management tasks
+- Integrating with CI/CD pipelines
+- Working in SSH-only or headless environments
+- Scripting and batch operations
+- Command-line workflows preferred
+- Quick API testing and validation
+
+**Use Built-in Web UI when:**
+- Basic visual interface needed
+- Quick setup without additional configuration
+- Simple project management workflows
+- Minimal feature set is sufficient
+
+**Use WebUI Client when:**
+- Rich interactive project management needed
+- Team collaboration and multi-user workflows
+- Advanced visualizations and dashboards required
+- Non-technical users need user-friendly interface
+- Enhanced features beyond basic operations
 
 **Use Direct API when:**
-- Custom integrations
-- Building your own client
-- Language-specific implementations
-- Advanced automation needs
+- Building custom integrations
+- Using different programming languages
+- Advanced automation with custom logic
+- Embedding in other applications
 
-For detailed client documentation, see [client/README.md](../client/README.md).
+For detailed client documentation:
+- **TUI**: [apps/tui/README.md](../apps/tui/README.md)
+- **WebUI Client**: [AI-Agent-Framework-Client Repository](https://github.com/blecx/AI-Agent-Framework-Client)
+- **Client Overview**: [clients/overview.md](clients/overview.md)
 
 ---
 
