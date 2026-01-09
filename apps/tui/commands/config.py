@@ -11,6 +11,9 @@ from rich.console import Console
 
 console = Console()
 
+# Minimum API key length to show partial content (first/last 4 chars)
+MIN_KEY_LENGTH_FOR_PARTIAL_DISPLAY = 8
+
 
 @click.group(name="config")
 def config_group():
@@ -87,7 +90,7 @@ def show_config():
     if Config.API_KEY:
         # Show only first/last 4 chars of API key, ensure proper masking
         key_len = len(Config.API_KEY)
-        if key_len <= 8:
+        if key_len <= MIN_KEY_LENGTH_FOR_PARTIAL_DISPLAY:
             masked_key = "***"
         else:
             masked_key = f"{Config.API_KEY[:4]}...{Config.API_KEY[-4:]}"
