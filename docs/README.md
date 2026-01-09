@@ -6,6 +6,52 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 ---
 
+## Multi-Repository Architecture
+
+The AI-Agent-Framework is designed with a multi-repository architecture to enable independent development and deployment of clients:
+
+### Core Repository (this repository)
+- **API Server**: FastAPI backend providing REST endpoints for all project management operations
+- **TUI/CLI Client**: Python-based text interface for automation and scripting
+- **Documentation**: Complete system documentation, ADRs, and specifications
+
+### Client Repositories
+
+**[AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)** - WebUI (Graphical Interface)
+- React/Vite-based web application
+- Modern graphical interface for interactive project management
+- Visual diff viewer and artifact browser
+- Deployed independently from the API
+- Connects to the API via REST endpoints
+
+### Why Separate Repositories?
+
+**Benefits:**
+1. **Independent Deployment**: Deploy and update clients without touching the API
+2. **Technology Flexibility**: Different clients can use different tech stacks
+3. **API-First Design**: Ensures all functionality is available via REST API
+4. **Team Independence**: Frontend and backend teams can work independently
+5. **Multiple Clients**: Enables different clients for different use cases (WebUI for interactive use, TUI/CLI for automation)
+6. **Clear Boundaries**: Separation of concerns between API and presentation layers
+
+**Relationship Between Components:**
+- **API** (this repo): Core business logic, data storage, LLM integration
+- **WebUI** (separate repo): Visual, interactive client for end users
+- **TUI/CLI** (this repo): Text-based client for automation and DevOps workflows
+- **projectDocs/**: Separate git repository for project documents (managed by API)
+
+**Communication:**
+All clients communicate with the API exclusively via REST endpoints. This ensures:
+- Consistency across clients
+- Validation that all functionality is API-accessible
+- Easy integration of custom clients
+- Simplified testing and API documentation
+
+**Future Architecture:**
+See [ADR-0004: Separate Client Application](adr/0004-separate-client-application.md) for detailed rationale and future considerations.
+
+---
+
 ## Quick Start
 
 **New to the project?** Start here:
@@ -19,7 +65,8 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 - 🚀 [Setup Guide](../QUICKSTART.md)
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
-- 🔧 [Client Documentation](../client/README.md) - CLI API consumer
+- 🌐 [WebUI Client](https://github.com/blecx/AI-Agent-Framework-Client) - Graphical interface (separate repo)
+- 🔧 [TUI/CLI Client Documentation](../client/README.md) - Text-based automation client
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
 - 📝 [How-To Guides](howto/)
@@ -28,31 +75,32 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 ## System Architecture
 
-The AI Agent Framework uses a three-container architecture for maximum flexibility:
+The AI Agent Framework uses a multi-repository architecture with separate client applications:
 
-### Container Overview
+### Component Overview
 
-| Container | Purpose | Port | Required |
-|-----------|---------|------|----------|
-| **api** | FastAPI backend - Core logic and API endpoints | 8000 | ✅ Yes |
-| **web** | React/Vite frontend - Visual user interface | 8080 | ✅ Yes |
-| **client** | Python CLI - API consumer and automation tool | N/A | ⚪ Optional |
+| Component | Purpose | Location | Required |
+|-----------|---------|----------|----------|
+| **API** | FastAPI backend - Core logic and REST endpoints | This repo - Port 8000 | ✅ Yes |
+| **WebUI** | React/Vite frontend - Graphical interface | [Separate repo](https://github.com/blecx/AI-Agent-Framework-Client) | ⚪ Optional |
+| **TUI/CLI** | Python text client - Automation tool | This repo - `client/` | ⚪ Optional |
+| **projectDocs/** | Git repository for project documents | Auto-created by API | ✅ Yes (auto) |
 
 ### Architecture Diagram
 
 ```
-┌─────────────────┐
-│    Web UI       │  ← Visual Interface (Interactive)
-│  React/Vite     │
-│   (Port 8080)   │
-└────────┬────────┘
-         │
-         │  HTTP/REST
-         │
-         ▼
+┌────────────────────────┐
+│  WebUI (React/Vite)    │  ← Visual Interface (Separate Repository)
+│  AI-Agent-Framework-   │     Interactive Management
+│  Client Repository     │
+└──────────┬─────────────┘
+           │
+           │  HTTP/REST
+           │
+           ▼
 ┌─────────────────┐         ┌──────────────────┐
-│   API Server    │◄────────│  Python Client   │  ← CLI Interface (Automation)
-│    FastAPI      │         │  (Optional)      │
+│   API Server    │◄────────│  TUI/CLI Client  │  ← Text Interface (Automation)
+│    FastAPI      │         │  (This repo)     │     Scripting & CI/CD
 │   (Port 8000)   │         └──────────────────┘
 └────────┬────────┘
          │
@@ -67,38 +115,57 @@ The AI Agent Framework uses a three-container architecture for maximum flexibili
 
 ### Client Architecture
 
-The **client** container is a standalone Python CLI application that:
+**WebUI Client (Separate Repository)**
+- **Repository**: [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- **Technology**: React/Vite with modern JavaScript
+- **Purpose**: Interactive visual interface for end users
+- **Deployment**: Independent from API (can be hosted separately)
+- **Communication**: REST API only (no shared code)
+- **Best for**: Team collaboration, visual project management
 
-- **Consumes the REST API**: All operations via HTTP endpoints
-- **No shared code**: Completely independent from the API/web containers
-- **Demonstrates API-first design**: Validates that all functionality is available via API
-- **Enables automation**: Scripting, batch operations, CI/CD integration
-- **Optional component**: Not required for core system functionality
+**TUI/CLI Client (This Repository)**
+- **Location**: `client/` and `apps/tui/` directories
+- **Technology**: Python with Click and Textual frameworks
+- **Purpose**: Automation, scripting, CI/CD integration
+- **Deployment**: Docker container or local Python
+- **Communication**: REST API only (no shared code)
+- **Best for**: DevOps workflows, automation pipelines
+
+**Key Design Principles:**
+- **API-First**: All clients use REST API exclusively
+- **No Shared Code**: Clients are completely independent
+- **Validates API Completeness**: Ensures all functionality is API-accessible
+- **Multiple Options**: Users choose the interface that fits their workflow
 
 #### When to Use Each Interface
 
-**Use Web UI when:**
-- Interactive project management
+**Use WebUI (Graphical Interface) when:**
+- Interactive project management needed
 - Visual diff review and proposal preview
 - Browsing and exploring artifacts
-- Non-technical users
-- Rich visual experience needed
+- Non-technical users or team collaboration
+- Rich visual experience desired
+- **Setup**: [AI-Agent-Framework-Client repository](https://github.com/blecx/AI-Agent-Framework-Client)
 
-**Use CLI Client when:**
-- Automation and scripting
+**Use TUI/CLI Client when:**
+- Automation and scripting needed
 - CI/CD pipeline integration
 - Batch processing multiple projects
 - Command-line workflows
 - API testing and validation
-- No GUI available (servers, containers)
+- Headless/server environments (no GUI available)
+- **Setup**: Included in this repository - see [client/README.md](../client/README.md)
 
 **Use Direct API when:**
-- Custom integrations
+- Custom integrations required
 - Building your own client
 - Language-specific implementations
 - Advanced automation needs
+- **Documentation**: http://localhost:8000/docs
 
-For detailed client documentation, see [client/README.md](../client/README.md).
+For detailed client documentation:
+- WebUI: [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- TUI/CLI: [client/README.md](../client/README.md)
 
 ---
 
