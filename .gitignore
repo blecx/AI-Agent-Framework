@@ -38,3 +38,6 @@ build/
 *.swp
 *.bak
 *.tmp
+
+# Project documents (separate git repo)
+projectDocs/

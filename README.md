@@ -38,6 +38,8 @@ This system provides intelligent project management following ISO 21500 standard
 
 ## Quick Start
 
+**📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
+
 ### Prerequisites
 
 - Docker and Docker Compose
