@@ -19,7 +19,10 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 - 🚀 [Setup Guide](../QUICKSTART.md)
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
-- 🔧 [Client Documentation](../client/README.md) - CLI API consumer
+- 🎮 [Client Documentation](clients/README.md) - All client interfaces
+  - 🔧 [TUI Client](../apps/tui/README.md) - Command-line automation
+  - 🖥️ [Advanced Client](../client/README.md) - CLI + Interactive TUI
+  - 🌐 [WebUI Client](https://github.com/blecx/AI-Agent-Framework-Client) - Separate repository
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
 - 📝 [How-To Guides](howto/)
@@ -67,38 +70,178 @@ The AI Agent Framework uses a three-container architecture for maximum flexibili
 
 ### Client Architecture
 
-The **client** container is a standalone Python CLI application that:
+The AI-Agent Framework provides **multiple client interfaces** to support different workflows:
 
-- **Consumes the REST API**: All operations via HTTP endpoints
-- **No shared code**: Completely independent from the API/web containers
-- **Demonstrates API-first design**: Validates that all functionality is available via API
-- **Enables automation**: Scripting, batch operations, CI/CD integration
-- **Optional component**: Not required for core system functionality
+#### Available Clients
+
+1. **Web UI (Included)** - `apps/web/`
+   - React/Vite frontend included in this repository
+   - Port: 8080
+   - Integrated with Docker setup
+
+2. **TUI Client** - `apps/tui/`
+   - Simple command-line interface for automation
+   - Scriptable and CI/CD-friendly
+   - Included in this repository
+
+3. **Advanced Client** - `client/`
+   - Python-based client with CLI + Interactive TUI modes
+   - Uses Textual for rich terminal interface
+   - Included in this repository
+   - Optional component
+
+4. **WebUI (Separate Repository)** - [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+   - Enhanced web interface with additional features
+   - Independent updates and customization
+   - Alternative to the included web UI
+
+#### Client Separation Strategy
+
+**Why multiple clients?**
+
+- **API-First Design**: All clients consume the same REST API, validating the API-first architecture
+- **Flexibility**: Choose the interface that fits your workflow
+- **Independence**: Each client can evolve without affecting others
+- **Specialization**: Each client optimized for specific use cases
+
+**Why a separate WebUI repository?**
+
+- **Independent Development**: WebUI can evolve on its own release cycle
+- **Customization**: Users can fork and customize without affecting the core framework
+- **Lighter Core**: Keeps the main repository focused on the API/backend
+- **Multiple Options**: Users can choose between the included web UI or the enhanced WebUI
+
+#### Client Comparison
+
+| Client | Location | Interface Type | Best For | Required |
+|--------|----------|----------------|----------|----------|
+| **Web UI** | `apps/web/` | Graphical (Browser) | Quick setup, basic features | ✅ Included |
+| **TUI** | `apps/tui/` | Command-line | CI/CD, scripting, automation | ⚪ Optional |
+| **Advanced Client** | `client/` | CLI + Interactive Terminal | Terminal workflows, API testing | ⚪ Optional |
+| **WebUI** | Separate repo | Graphical (Browser) | Enhanced features, team use | ⚪ Optional |
 
 #### When to Use Each Interface
 
-**Use Web UI when:**
-- Interactive project management
-- Visual diff review and proposal preview
-- Browsing and exploring artifacts
-- Non-technical users
-- Rich visual experience needed
+**Use Web UI (`apps/web/`) when:**
+- Need quick setup with Docker
+- Want basic project management features
+- Prefer integrated deployment
+- Starting with the framework
 
-**Use CLI Client when:**
-- Automation and scripting
-- CI/CD pipeline integration
-- Batch processing multiple projects
-- Command-line workflows
-- API testing and validation
-- No GUI available (servers, containers)
+**Use TUI (`apps/tui/`) when:**
+- Writing automation scripts
+- Running in CI/CD pipelines
+- Need simple, fast command-line operations
+- Working in minimal environments
+
+**Use Advanced Client (`client/`) when:**
+- Working in terminal/SSH sessions but want visual navigation
+- Need interactive feedback in terminal
+- Debugging or testing the API
+- Want both CLI scripting and interactive TUI modes
+
+**Use WebUI (separate repo) when:**
+- Need enhanced features beyond basic web UI
+- Want customizable interface
+- Need independent update cycle
+- Working with teams requiring rich collaboration features
 
 **Use Direct API when:**
-- Custom integrations
-- Building your own client
-- Language-specific implementations
-- Advanced automation needs
+- Building custom integrations
+- Creating your own client in another language
+- Advanced automation needs not covered by existing clients
 
-For detailed client documentation, see [client/README.md](../client/README.md).
+#### API Integration Guide for Client Developers
+
+**Building a New Client:**
+
+All clients communicate via the REST API. To build a new client:
+
+1. **API Endpoint Reference**: See `http://localhost:8000/docs` (OpenAPI/Swagger)
+
+2. **Core Endpoints**:
+   - `GET /health` - API health check
+   - `POST /projects` - Create project
+   - `GET /projects` - List projects
+   - `GET /projects/{key}/state` - Get project state
+   - `POST /projects/{key}/commands/propose` - Propose command
+   - `POST /projects/{key}/commands/apply` - Apply proposal
+   - `GET /projects/{key}/artifacts` - List artifacts
+   - `GET /projects/{key}/artifacts/{path}` - Get artifact content
+
+3. **Authentication**: Currently no authentication (add if needed for your use case)
+
+4. **Example Request/Response**: See [client implementation examples](#example-implementations)
+
+5. **Best Practices**:
+   - Always check API health before operations
+   - Handle proposal IDs from propose/apply workflow
+   - Parse error responses gracefully
+   - Use timeouts for long-running operations
+
+For detailed client implementation examples:
+- **TUI Client**: [apps/tui/README.md](../apps/tui/README.md)
+- **Advanced Client**: [client/README.md](../client/README.md)
+- **WebUI**: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+
+#### Example Implementations
+
+**Python (using httpx):**
+```python
+import httpx
+
+client = httpx.Client(base_url="http://localhost:8000")
+
+# Health check
+response = client.get("/health")
+print(response.json())
+
+# Create project
+response = client.post("/projects", json={
+    "key": "PROJ001",
+    "name": "My Project"
+})
+project = response.json()
+
+# Propose command
+response = client.post(f"/projects/{project['key']}/commands/propose", json={
+    "command": "assess_gaps"
+})
+proposal = response.json()
+
+# Apply proposal
+response = client.post(f"/projects/{project['key']}/commands/apply", json={
+    "proposal_id": proposal["proposal_id"]
+})
+result = response.json()
+```
+
+**JavaScript/TypeScript (using fetch):**
+```javascript
+const API_BASE = 'http://localhost:8000';
+
+// Health check
+const health = await fetch(`${API_BASE}/health`);
+const healthData = await health.json();
+
+// Create project
+const project = await fetch(`${API_BASE}/projects`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ key: 'PROJ001', name: 'My Project' })
+});
+const projectData = await project.json();
+
+// Propose command
+const proposal = await fetch(`${API_BASE}/projects/PROJ001/commands/propose`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ command: 'assess_gaps' })
+});
+const proposalData = await proposal.json();
+```
+
+For complete API documentation, run the API server and visit: `http://localhost:8000/docs`
 
 ---
 
@@ -196,6 +339,29 @@ Comprehensive guides for developing and maintaining the project.
 - Docker integration
 - IDE configuration
 - Troubleshooting common issues
+
+---
+
+## Client Documentation
+
+Comprehensive guides for all available client interfaces and API integration.
+
+| Guide | Description | Last Updated |
+|-------|-------------|--------------|
+| [Client Overview](clients/README.md) | Complete guide to all client interfaces, API reference, and building custom clients | 2026-01-09 |
+| [TUI Client](../apps/tui/README.md) | Command-line interface for automation and scripting | 2026-01-09 |
+| [Advanced Client](../client/README.md) | CLI + Interactive TUI with rich terminal features | 2026-01-09 |
+| [WebUI Client](https://github.com/blecx/AI-Agent-Framework-Client) | Enhanced web interface (separate repository) | External |
+
+**Topics Covered:**
+- Available clients and comparison
+- Client separation strategy
+- When to use each client
+- API endpoint reference
+- Authentication guide (for future implementations)
+- Building custom clients (step-by-step)
+- Example implementations (Python, JavaScript/TypeScript)
+- Best practices and troubleshooting
 
 ---
 

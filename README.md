@@ -90,6 +90,64 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 - Only hashes stored in audit logs by default
 - Separate project documents repository
 
+## User Interfaces & Clients
+
+The AI-Agent Framework provides multiple interfaces to suit different workflows and use cases:
+
+### 🖥️ TUI (Text User Interface)
+
+**Location:** `apps/tui/`
+
+A command-line interface for automation, testing, and scripting workflows.
+
+**Best for:**
+- CI/CD pipelines and automation
+- Quick testing and validation
+- Command-line scripting
+- Server environments without GUI
+
+**Documentation:** [apps/tui/README.md](apps/tui/README.md)
+
+### 🎮 Advanced Client (CLI + Interactive TUI)
+
+**Location:** `client/`
+
+A Python-based client with both traditional CLI and an interactive terminal UI (using Textual).
+
+**Best for:**
+- Interactive terminal-based project management
+- SSH/remote sessions
+- Visual navigation in terminal
+- API testing and validation
+- Automation with rich feedback
+
+**Documentation:** [client/README.md](client/README.md)
+
+### 🌐 WebUI (Web User Interface)
+
+**Repository:** [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+
+A modern graphical web interface for interactive project management (separate repository).
+
+**Best for:**
+- Interactive project management with visual feedback
+- Team collaboration
+- Non-technical users
+- Visual diff review and proposal comparison
+- Cross-platform access from any browser
+
+**Documentation:** See the [WebUI repository](https://github.com/blecx/AI-Agent-Framework-Client) for setup and usage instructions.
+
+### Choosing the Right Client
+
+| Client | Use Case | Automation | Visual Interface | Setup Complexity |
+|--------|----------|------------|------------------|------------------|
+| **TUI** | CLI automation, scripts | ✅ Excellent | 📟 Command-line | 🟢 Simple |
+| **Client** | Terminal workflows | ✅ Good | 🖥️ Interactive terminal | 🟢 Simple |
+| **WebUI** | Interactive management | ⚠️ Limited | 🌐 Full graphical UI | 🟡 Moderate |
+
+All clients communicate with the same REST API, ensuring feature parity and flexibility.
+
 ## Quick Start
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
