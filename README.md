@@ -11,61 +11,93 @@ This system provides intelligent project management following ISO 21500 standard
 - **Docker Deployment**: Two-container setup for easy deployment
 - **Git-based Storage**: All project documents stored in a separate git repository with full version history
 
+## Client Applications
+
+This repository contains the core API and TUI (text interface). For graphical interfaces:
+
+- **TUI (Text User Interface)**: Command-line client included in `apps/tui/` and `client/` - for testing, automation, and scripting
+- **WebUI (Graphical Interface)**: React-based web client in separate repository: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) - for interactive project management
+
+### When to use which client?
+- **TUI**: CI/CD pipelines, automation scripts, quick testing, headless environments
+- **WebUI**: Interactive project management, visual document editing, team collaboration
+
+## Related Projects
+
+- **[AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)**: WebUI client - React-based graphical interface for interactive project management
+- **[TUI Client](apps/tui/README.md)**: Included terminal interface for command-line workflows
+- **[CLI Client](client/README.md)**: Standalone Python client for automation and API consumption
+
 ## Architecture
 
-### Three-Container Setup
+### Multi-Repository Architecture
 
-The system uses a modern three-container architecture for maximum flexibility and separation of concerns:
+The AI-Agent-Framework uses a multi-repository architecture for maximum flexibility and separation of concerns:
 
-1. **API Container (`api`)**: FastAPI backend service
-   - Handles project management logic and LLM interactions
-   - Manages git-based document storage
-   - Exposes REST API endpoints
-   - Port: 8000
+**Core Repository (this repo):**
+- **API Container (`api`)**: FastAPI backend service
+  - Handles project management logic and LLM interactions
+  - Manages git-based document storage
+  - Exposes REST API endpoints
+  - Port: 8000
 
-2. **Web Container (`web`)**: React/Vite frontend service
-   - Modern UI for project creation and management
-   - Visual diff viewer for proposal review
-   - Artifact browser and preview
-   - Port: 8080
+- **TUI/CLI Client Container (`client`)**: Python text-based client (optional)
+  - Demonstrates API usage without graphical UI
+  - Enables automation and scripting
+  - CI/CD integration capability
+  - Command-line interface for all API operations
 
-3. **Client Container (`client`)**: Python CLI client (optional)
-   - Demonstrates API usage without the web UI
-   - Enables automation and scripting
-   - CI/CD integration capability
-   - Command-line interface for all API operations
+**Separate Client Repository:**
+- **[AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)**: WebUI (graphical interface)
+  - React/Vite frontend for interactive project management
+  - Visual diff viewer for proposal review
+  - Artifact browser and preview
+  - Deployed separately from core API
+  - See separate repository for setup instructions
 
-### Why Three Containers?
+### Why Separate Repositories?
 
 This architecture provides:
 
-- **API-First Design**: The client validates that all functionality is available via REST API
+- **API-First Design**: All clients validate that functionality is available via REST API
+- **Independent Deployment**: Deploy API and clients separately
 - **Composability**: Each component can be used independently
-- **Flexibility**: Choose the interface that fits your workflow (Web UI, TUI, or CLI)
-- **Automation**: Client enables scripting and CI/CD integration
-- **Optional Components**: The client is not required for core functionality
+- - **Flexibility**: Choose the interface that fits your workflow (WebUI for interactive use, TUI for automation)
+- **Multiple Client Options**: Different teams can build specialized clients
+- **Reduced Coupling**: Client updates don't require API redeployment
 
-### Container Communication
+### Communication Architecture
 
 ```
-┌─────────────┐
-│   Web UI    │──┐
-│  (port 8080)│  │  Rich visual interface
-└─────────────┘  │
-                 │    ┌──────────────┐
-                 ├───►│  API Server  │◄────────┐
-                 │    │  (port 8000) │         │
-┌─────────────┐  │    └──────────────┘         │
-│   Client    │──┘            │                │
-│  (TUI/CLI)  │  Interactive  ▼                │
-└─────────────┘  & Automation │                │
-                       ┌──────────────┐         │
-                       │ projectDocs/ │─────────┘
-                       │ (Git Repo)   │
-                       └──────────────┘
+┌────────────────────────┐
+│  WebUI Client (React)  │  (Separate Repository)
+│  blecx/AI-Agent-       │  Rich visual interface
+│  Framework-Client      │  Interactive management
+└──────────┬─────────────┘
+           │ HTTP/REST
+           │
+           ▼
+     ┌──────────────┐
+     │  API Server  │◄────────┐
+     │  (port 8000) │         │
+     └──────┬───────┘         │
+            │                 │
+            │  Git Ops        │
+            │                 │
+     ┌──────▼───────┐         │
+     │ projectDocs/ │─────────┘
+     │ (Git Repo)   │
+     └──────────────┘
+            ▲
+            │ HTTP/REST
+            │
+┌───────────┴─────┐
+│   TUI/CLI       │  (This Repository)
+│   Client        │  Automation & Scripting
+└─────────────────┘
 ```
 
-All containers communicate via Docker network. The web UI and client (with TUI/CLI modes) both consume the same REST API.
+All clients communicate with the API via REST endpoints. The API manages all project data in a separate git repository.
 
 ### Backend (FastAPI)
 - LLM abstraction with OpenAI-compatible HTTP adapter
@@ -74,7 +106,10 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 - Audit logging with NDJSON format
 - Template-driven artifact generation
 
-### Frontend (React/Vite)
+### Client Options
+
+**WebUI (Separate Repository - [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client))**
+- React/Vite frontend for interactive project management
 - Project creation and selection
 - Command panel with three core commands:
   - `assess_gaps`: Analyze missing ISO 21500 artifacts
@@ -83,6 +118,12 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 - Proposal review modal with unified diff viewer
 - Artifacts list and preview
 - Real-time status updates
+
+**TUI/CLI (Included in this Repository)**
+- Terminal-based interface for automation
+- Same functionality as WebUI, optimized for scripting
+- CI/CD integration capability
+- See [client/README.md](client/README.md) and [apps/tui/README.md](apps/tui/README.md)
 
 ### Compliance Features
 - No secrets committed to code repository
@@ -93,6 +134,11 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 ## Quick Start
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
+
+**Choose Your Interface:**
+- **WebUI (Recommended for most users)**: Visual, interactive project management - see [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- **TUI (For automation/scripting)**: Terminal interface included in this repo - see setup instructions below
+- **API Only**: Run backend only and integrate with custom clients
 
 ## Local Development Setup
 
@@ -181,7 +227,7 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
-**Note:** For the web UI, you'll need to run it separately (see Web UI section below) or use Docker.
+**Note:** For the graphical WebUI, see the separate [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository. For the TUI/CLI client, see the [Client Usage](#client-usage) section.
 
 ### Manual Setup (Alternative)
 
@@ -201,22 +247,17 @@ If you prefer not to use the setup script, you can set up manually:
    ```bash
    source .venv/bin/activate  # Linux/macOS
    # or .venv\Scripts\activate.bat on Windows
-   
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-### Running the Web UI (Optional)
+### Running a Client Interface
 
-If you want to run the React frontend locally:
+**For WebUI (Graphical Interface):**
+See the separate [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository for setup instructions.
 
-```bash
-cd apps/web
-npm install
-npm run dev
-```
-
-The web UI will be available at http://localhost:5173 (or the port shown in the terminal).
+**For TUI/CLI (Text Interface):**
+See [Client Usage](#client-usage) section below or [client/README.md](client/README.md) for detailed instructions.
 
 ### Docker Deployment Setup
 
@@ -254,16 +295,17 @@ The default configuration uses LM Studio on `http://host.docker.internal:1234/v1
 docker compose up --build
 ```
 
-This will start all three services:
+This will start the core services:
 - API server (backend)
-- Web UI (frontend)
-- Client (CLI tool - optional)
+- Optional: TUI/CLI client for automation
+
+**Note**: For the WebUI graphical interface, see the separate [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository.
 
 5. Access the application:
-- Web UI: http://localhost:8080
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
-- Client: `docker compose run client <command>` (see Client Usage below)
+- TUI/CLI Client: `docker compose run client <command>` (see Client Usage below)
+- **WebUI**: See [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) for graphical interface setup
 
 ## Client Usage
 
@@ -334,15 +376,36 @@ For detailed client documentation, see [client/README.md](client/README.md).
 
 ## Usage
 
-### Creating a Project
+### Interface Options
 
-1. Open http://localhost:8080
+This framework supports multiple client interfaces:
+
+1. **WebUI (Graphical Interface)** - Recommended for interactive use
+   - Setup: See [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository
+   - Features: Visual project management, diff viewer, artifact browser
+   - Best for: Team collaboration, visual document editing, non-technical users
+
+2. **TUI/CLI (Text Interface)** - Included in this repository
+   - Setup: `docker compose run client` or see [client/README.md](client/README.md)
+   - Features: Automation, scripting, CI/CD integration
+   - Best for: DevOps workflows, automated pipelines, headless environments
+
+3. **Direct API** - For custom integrations
+   - Setup: Connect to `http://localhost:8000` after running the API
+   - Documentation: http://localhost:8000/docs
+   - Best for: Custom clients, integrations, language-specific implementations
+
+### Using the WebUI (Graphical Interface)
+
+For setup instructions, see the [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository.
+
+**Creating a Project:**
+1. Open the WebUI in your browser
 2. Click "Create New Project"
 3. Enter a project key (e.g., `PROJ001`) and name
 4. Click "Create Project"
 
-### Running Commands
-
+**Running Commands:**
 1. Select your project
 2. Choose a command from the Commands tab:
    - **Assess Gaps**: Identifies missing ISO 21500 artifacts
@@ -352,11 +415,14 @@ For detailed client documentation, see [client/README.md](client/README.md).
 4. Review the proposed changes and diffs
 5. Click "Apply & Commit" to save changes to git
 
-### Viewing Artifacts
+**Viewing Artifacts:**
 
+**Viewing Artifacts:**
 1. Switch to the "Artifacts" tab
 2. Click on any artifact to view its content
 3. All changes are tracked in git with full history
+
+For detailed WebUI documentation, see [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client).
 
 ## Project Structure
 
