@@ -41,7 +41,7 @@ pip install -r requirements.txt
 REM Success message
 echo.
 echo =========================================
-echo Setup completed successfully!
+echo ✓ Setup completed successfully!
 echo =========================================
 echo.
 echo Next steps:
