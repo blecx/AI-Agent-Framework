@@ -19,9 +19,86 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 - 🚀 [Setup Guide](../QUICKSTART.md)
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
+- 🔧 [Client Documentation](../client/README.md) - CLI API consumer
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
 - 📝 [How-To Guides](howto/)
+
+---
+
+## System Architecture
+
+The AI Agent Framework uses a three-container architecture for maximum flexibility:
+
+### Container Overview
+
+| Container | Purpose | Port | Required |
+|-----------|---------|------|----------|
+| **api** | FastAPI backend - Core logic and API endpoints | 8000 | ✅ Yes |
+| **web** | React/Vite frontend - Visual user interface | 8080 | ✅ Yes |
+| **client** | Python CLI - API consumer and automation tool | N/A | ⚪ Optional |
+
+### Architecture Diagram
+
+```
+┌─────────────────┐
+│    Web UI       │  ← Visual Interface (Interactive)
+│  React/Vite     │
+│   (Port 8080)   │
+└────────┬────────┘
+         │
+         │  HTTP/REST
+         │
+         ▼
+┌─────────────────┐         ┌──────────────────┐
+│   API Server    │◄────────│  Python Client   │  ← CLI Interface (Automation)
+│    FastAPI      │         │  (Optional)      │
+│   (Port 8000)   │         └──────────────────┘
+└────────┬────────┘
+         │
+         │  Git Operations
+         │
+         ▼
+┌─────────────────┐
+│  projectDocs/   │  ← Separate Git Repository
+│  (Git Repo)     │     (Project Documents)
+└─────────────────┘
+```
+
+### Client Architecture
+
+The **client** container is a standalone Python CLI application that:
+
+- **Consumes the REST API**: All operations via HTTP endpoints
+- **No shared code**: Completely independent from the API/web containers
+- **Demonstrates API-first design**: Validates that all functionality is available via API
+- **Enables automation**: Scripting, batch operations, CI/CD integration
+- **Optional component**: Not required for core system functionality
+
+#### When to Use Each Interface
+
+**Use Web UI when:**
+- Interactive project management
+- Visual diff review and proposal preview
+- Browsing and exploring artifacts
+- Non-technical users
+- Rich visual experience needed
+
+**Use CLI Client when:**
+- Automation and scripting
+- CI/CD pipeline integration
+- Batch processing multiple projects
+- Command-line workflows
+- API testing and validation
+- No GUI available (servers, containers)
+
+**Use Direct API when:**
+- Custom integrations
+- Building your own client
+- Language-specific implementations
+- Advanced automation needs
+
+For detailed client documentation, see [client/README.md](../client/README.md).
 
 ---
 
