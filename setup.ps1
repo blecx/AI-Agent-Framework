@@ -40,8 +40,8 @@ Write-Host ""
 
 $pythonVersions = @()
 
-# Check for py launcher with specific versions
-$pyVersionsToCheck = @("3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20")
+# Check for py launcher with specific versions (realistic range)
+$pyVersionsToCheck = @("3.10", "3.11", "3.12", "3.13", "3.14", "3.15")
 
 foreach ($ver in $pyVersionsToCheck) {
     try {
@@ -51,10 +51,14 @@ foreach ($ver in $pyVersionsToCheck) {
             $shortVersion = ($fullVersion -split '\.')[0..1] -join '.'
             
             if (Test-PythonVersion $shortVersion) {
-                $pythonVersions += [PSCustomObject]@{
-                    ShortVersion = $shortVersion
-                    FullVersion = $fullVersion
-                    Command = "py -$ver"
+                # Check if this version is not already in the list
+                $exists = $pythonVersions | Where-Object { $_.FullVersion -eq $fullVersion }
+                if (-not $exists) {
+                    $pythonVersions += [PSCustomObject]@{
+                        ShortVersion = $shortVersion
+                        FullVersion = $fullVersion
+                        Command = "py -$ver"
+                    }
                 }
             }
         }

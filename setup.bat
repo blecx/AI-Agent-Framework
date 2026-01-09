@@ -19,8 +19,8 @@ echo.
 REM Initialize arrays (using environment variables with indices)
 set PYTHON_COUNT=0
 
-REM Check for py launcher with specific versions
-for %%v in (3.10 3.11 3.12 3.13 3.14 3.15 3.16 3.17 3.18 3.19 3.20) do (
+REM Check for py launcher with specific versions (realistic range)
+for %%v in (3.10 3.11 3.12 3.13 3.14 3.15) do (
     py -%%v --version >nul 2>&1
     if !errorlevel! equ 0 (
         for /f "tokens=2" %%i in ('py -%%v --version 2^>^&1') do (
@@ -119,8 +119,11 @@ if !PYTHON_COUNT! equ 1 (
     set /p "selection=Select Python version [1-!PYTHON_COUNT!]: "
     
     REM Validate input
+    if "!selection!"=="" goto INVALID_SELECTION
     set /a test_num=!selection! 2>nul
-    if !errorlevel! neq 0 goto INVALID_SELECTION
+    if "!test_num!"=="0" (
+        if not "!selection!"=="0" goto INVALID_SELECTION
+    )
     if !selection! lss 1 goto INVALID_SELECTION
     if !selection! gtr !PYTHON_COUNT! goto INVALID_SELECTION
     

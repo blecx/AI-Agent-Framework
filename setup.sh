@@ -36,8 +36,8 @@ declare -a PYTHON_VERSIONS
 declare -a PYTHON_PATHS
 declare -a PYTHON_FULL_VERSIONS
 
-# Check for python3.X versions (3.8 through 3.20)
-for ver in {8..20}; do
+# Check for python3.X versions (3.10 through 3.15 - realistic range)
+for ver in {10..15}; do
     cmd="python3.$ver"
     if command -v "$cmd" &> /dev/null; then
         full_version=$("$cmd" --version 2>&1 | awk '{print $2}')
