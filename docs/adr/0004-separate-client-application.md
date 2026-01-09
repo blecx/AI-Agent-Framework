@@ -272,19 +272,28 @@ Web UI alone would:
 ## References
 
 - [Client README](../../client/README.md) - Detailed client documentation
-- [Main README - Architecture](../../README.md#architecture) - Three-container architecture
-- [QUICKSTART - Client Usage](../../QUICKSTART.md#6-optional-try-the-cli-client) - Getting started with client
+- [TUI README](../../apps/tui/README.md) - TUI client documentation
+- [Client Architecture Overview](../clients/overview.md) - Multi-client architecture guide
+- [Main README - Client Applications](../../README.md#client-applications) - Client overview
+- [QUICKSTART - TUI Usage](../../QUICKSTART.md#getting-started-with-the-tui) - Getting started with TUI
+- [QUICKSTART - WebUI](../../QUICKSTART.md#getting-started-with-the-webui) - WebUI client setup
 - [API Documentation](http://localhost:8000/docs) - FastAPI auto-generated docs
 
 ## Related Decisions
 
 - **ADR-0001:** Separate project documents repository - Same principle of separation
 - **ADR-0002:** HTTP-based LLM adapter - API-first design philosophy
-- **ADR-0003:** Propose/apply workflow - Used by both web UI and client
+- **ADR-0003:** Propose/apply workflow - Used by all clients (TUI, Web UI, WebUI)
+
+## See Also
+
+- [WebUI Client Repository](https://github.com/blecx/AI-Agent-Framework-Client) - Separate WebUI client
+- [Client Selection Guide](../clients/overview.md#use-case-guide) - Choosing the right client
 
 ## Changes to This ADR
 
 - **2026-01-09:** Initial version - Separate client application decision
+- **2026-01-09:** Updated references for multi-client architecture
 
 ---
 

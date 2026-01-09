@@ -556,6 +556,16 @@ We considered but rejected:
 - [ADR-0001: Separate Docs Repository](0001-docs-repo-mounted-git.md)
 - [Chat Transcript](../chat/2026-01-09-blecx-copilot-transcript.md) - Original discussion
 
+## Client Implementation
+
+The propose/apply workflow is implemented in all client interfaces:
+
+- **TUI Client**: CLI commands for propose and apply operations (see [apps/tui/README.md](../../apps/tui/README.md))
+- **Built-in Web UI**: Modal-based proposal review with visual diff viewer
+- **WebUI Client**: Enhanced proposal review with rich features (see [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client))
+
+For detailed client comparison and selection guide, see [Client Architecture Overview](../clients/overview.md).
+
 ## Review History
 
 | Date | Reviewer | Decision |

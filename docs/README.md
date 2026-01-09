@@ -19,7 +19,9 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 - 🚀 [Setup Guide](../QUICKSTART.md)
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
-- 🔧 [Client Documentation](../client/README.md) - CLI API consumer
+- 🔧 [TUI Client](../apps/tui/README.md) - Terminal-based CLI
+- 🌐 [WebUI Client](https://github.com/blecx/AI-Agent-Framework-Client) - Separate web UI repository
+- 📊 [Client Overview](clients/overview.md) - Multi-client architecture guide
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
 - 📝 [How-To Guides](howto/)
