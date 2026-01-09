@@ -220,7 +220,9 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed instructions.
 
 **Basic flow:**
 1. `docker compose up --build`
-2. Open http://localhost:8080
+2. Setup a client interface:
+   - **WebUI**: See [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) for graphical interface
+   - **TUI/CLI**: Use `docker compose run client` for text interface
 3. Create a project
 4. Run commands (assess_gaps, generate_artifact, generate_plan)
 5. Review proposals

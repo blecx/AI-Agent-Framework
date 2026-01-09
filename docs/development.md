@@ -231,9 +231,10 @@ docker compose up --build
 ```
 
 Access points:
-- Web UI: http://localhost:8080
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
+- **WebUI**: See [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) for graphical interface setup
+- **TUI/CLI**: `docker compose run client` for text-based interface
 
 ---
 

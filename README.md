@@ -259,6 +259,8 @@ See the separate [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-F
 **For TUI/CLI (Text Interface):**
 See [Client Usage](#client-usage) section below or [client/README.md](client/README.md) for detailed instructions.
 
+**Note:** The `apps/web/` directory in this repository contains a legacy web interface. For the latest WebUI with enhanced features, use the [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client) repository.
+
 ### Docker Deployment Setup
 
 For production or simplified deployment using Docker:
