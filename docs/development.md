@@ -35,21 +35,72 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
    cd AI-Agent-Framework
    ```
 
-2. **Create Python virtual environment:**
+2. **Create Python virtual environment using the intelligent setup script:**
 
    **Using the setup script (recommended):**
-   ```bash
-   ./setup.sh          # Linux/macOS
-   setup.bat           # Windows
-   ```
-
-   **Manual setup:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # Linux/macOS
-   # or
-   .venv\Scripts\activate.bat  # Windows
    
+   The intelligent setup script detects all available Python versions on your system and helps you choose the best one.
+   
+   **Linux/macOS:**
+   ```bash
+   ./setup.sh
+   ```
+   
+   **Windows (PowerShell - Recommended):**
+   ```powershell
+   .\setup.ps1
+   ```
+   
+   **Windows (Command Prompt):**
+   ```cmd
+   setup.bat
+   ```
+   
+   **How the setup script works:**
+   
+   1. **Detection Phase:**
+      - Scans your system for all Python 3.x installations
+      - Checks versions using `python3.X`, `python3`, `python`, and `py -X.Y` commands
+      - Filters out versions below Python 3.10 (minimum requirement)
+   
+   2. **Selection Phase:**
+      - Displays a numbered list of compatible Python versions with full paths
+      - If multiple versions found: prompts you to select one
+      - If only one version found: asks for confirmation to use it
+      - If no compatible version found: displays download links and exits
+   
+   3. **Validation Phase:**
+      - Validates selected version meets minimum requirements (Python 3.10+)
+      - Checks if `.venv/` already exists and prompts to recreate if needed
+   
+   4. **Setup Phase:**
+      - Creates virtual environment: `python-X.Y -m venv .venv`
+      - Activates the environment
+      - Upgrades pip: `pip install --upgrade pip`
+      - Installs all dependencies: `pip install -r requirements.txt`
+      - Shows success message with next steps
+   
+   **Manual setup (alternative):**
+   
+   If you prefer to set up manually or the script doesn't work for your system:
+   
+   ```bash
+   # Check your Python version (must be 3.10+)
+   python3 --version
+   
+   # Create virtual environment with specific version
+   python3 -m venv .venv          # Uses default python3
+   # OR
+   python3.12 -m venv .venv       # Uses specific version
+   
+   # Activate the environment
+   source .venv/bin/activate      # Linux/macOS
+   # OR
+   .venv\Scripts\activate.bat     # Windows (Command Prompt)
+   # OR
+   .\.venv\Scripts\Activate.ps1   # Windows (PowerShell)
+   
+   # Upgrade pip and install dependencies
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
@@ -257,10 +308,58 @@ The development servers support hot reload:
 
 The project maintains two Python requirements files:
 
-- **`requirements.txt`** (root): For local development with `.venv`
-- **`apps/api/requirements.txt`**: For Docker builds
+- **`requirements.txt`** (root): For local development with `.venv` - includes all dependencies plus testing and dev tools
+- **`apps/api/requirements.txt`**: For Docker builds - includes only runtime dependencies
 
-**Best Practice:** Keep both files in sync. If you add a dependency for the API, add it to both files.
+**Key Differences:**
+- Root `requirements.txt` includes: pytest, pytest-asyncio, black, flake8 (for local development)
+- Docker `apps/api/requirements.txt` includes: only runtime dependencies (smaller image size)
+
+**Best Practice:** When adding a new runtime dependency:
+1. Add it to both `requirements.txt` and `apps/api/requirements.txt`
+2. When adding a dev-only dependency (like a linter), add it only to root `requirements.txt`
+
+### Understanding the Setup Script vs Docker
+
+**Setup Script (`.venv`):**
+- Used for **local development**
+- Detects and uses Python versions installed on your system
+- Creates virtual environment in project root
+- Fast iteration and debugging
+- Direct access to code and dependencies
+
+**Docker:**
+- Used for **production deployment** and team consistency
+- Uses Python version specified in Dockerfile (currently 3.12)
+- Self-contained environment with its own Python installation
+- Isolated from system Python
+- Reads dependencies from `apps/api/requirements.txt`
+
+**Key Differences:**
+
+| Aspect | Setup Script (.venv) | Docker |
+|--------|---------------------|--------|
+| Python Version | Detected from system | Fixed in Dockerfile |
+| Dependencies File | `requirements.txt` | `apps/api/requirements.txt` |
+| Setup Time | Fast (uses system Python) | Slower (builds image) |
+| Isolation | Process-level | Container-level |
+| Best For | Development, debugging | Production, testing |
+
+**Workflow Integration:**
+
+```bash
+# Development workflow with .venv
+./setup.sh                          # One-time setup
+source .venv/bin/activate           # Each session
+cd apps/api
+PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+
+# Production workflow with Docker
+docker compose up --build           # Builds and runs
+docker compose logs -f api          # View logs
+```
+
+Both setups use the same codebase and can access the same `projectDocs/` directory, so you can easily switch between them.
 
 ---
 
@@ -294,6 +393,37 @@ pip install pytest pytest-asyncio
 # Run tests (when implemented)
 pytest
 ```
+
+### Testing the Setup Scripts
+
+**Test scenarios to verify:**
+
+1. **Single Python version installed:**
+   ```bash
+   # Script should auto-detect and ask for confirmation
+   ./setup.sh
+   # Expected: Shows 1 version, asks "Use this version? [Y/n]:"
+   ```
+
+2. **Multiple Python versions installed:**
+   ```bash
+   # Script should list all versions and prompt for selection
+   ./setup.sh
+   # Expected: Shows numbered list, asks "Select Python version [1-N]:"
+   ```
+
+3. **Existing .venv directory:**
+   ```bash
+   # Script should detect and ask to recreate
+   ./setup.sh
+   # Expected: Shows warning, asks "Remove existing .venv and recreate? [y/N]:"
+   ```
+
+4. **No compatible Python version:**
+   ```bash
+   # Script should show error and download links
+   # (Can only test this on a system without Python 3.10+)
+   ```
 
 ### Testing LLM Integration
 
@@ -385,6 +515,53 @@ docker compose up --build
 ---
 
 ## Troubleshooting
+
+### Setup Script Issues
+
+**Problem:** Script says "No compatible Python version found"
+- **Solution:** Install Python 3.10 or higher:
+  - Ubuntu/Debian: `sudo apt install python3.12`
+  - macOS (Homebrew): `brew install python@3.12`
+  - Windows: Download from https://www.python.org/downloads/
+  - Ensure "Add Python to PATH" is checked during Windows installation
+
+**Problem:** Setup script doesn't detect my Python installation
+- **Solution:** Check your Python is accessible:
+  ```bash
+  python3 --version     # Should show Python 3.x
+  which python3         # Should show path to Python
+  ```
+  If not found, add Python to your PATH or use manual setup
+
+**Problem:** Script fails with "python3 -m venv .venv" error
+- **Solution:** Install python3-venv package:
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install python3.12-venv
+  
+  # Fedora/RHEL
+  sudo dnf install python3-virtualenv
+  ```
+
+**Problem:** "Permission denied" when running setup script
+- **Solution:** Make the script executable:
+  ```bash
+  chmod +x setup.sh
+  ./setup.sh
+  ```
+
+**Problem:** PowerShell script execution is disabled (Windows)
+- **Solution:** Enable script execution:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  .\setup.ps1
+  ```
+
+**Problem:** Script creates .venv but pip install fails
+- **Solution:** 
+  1. Delete .venv: `rm -rf .venv` (or `rmdir /s .venv` on Windows)
+  2. Ensure you have internet connection
+  3. Try manual setup with `pip install --no-cache-dir -r requirements.txt`
 
 ### Virtual Environment Issues
 

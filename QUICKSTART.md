@@ -202,17 +202,33 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-2. **Run the setup script:**
+2. **Run the intelligent setup script:**
+
+The setup script automatically detects available Python versions, lets you choose one, and sets up your environment.
 
 **Linux/macOS:**
 ```bash
 ./setup.sh
 ```
 
-**Windows:**
+**Windows (PowerShell - Recommended):**
+```powershell
+.\setup.ps1
+```
+
+**Windows (Command Prompt):**
 ```cmd
 setup.bat
 ```
+
+**Script features:**
+- 🔍 Auto-detects all Python 3.x versions on your system
+- 📋 Shows compatible versions (3.10+) with their installation paths
+- ✅ Prompts you to select a version or auto-selects if only one found
+- 🔒 Validates minimum version requirements (Python 3.10+)
+- 📦 Creates `.venv/` with your selected Python version
+- ⬆️ Upgrades pip and installs all dependencies
+- 💡 Provides helpful download links if no compatible version found
 
 This will:
 - Create a virtual environment in `.venv/`
@@ -226,7 +242,12 @@ This will:
 source .venv/bin/activate
 ```
 
-**Windows:**
+**Windows (PowerShell):**
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Windows (Command Prompt):**
 ```cmd
 .venv\Scripts\activate.bat
 ```
