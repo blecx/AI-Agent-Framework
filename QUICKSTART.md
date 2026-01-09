@@ -79,9 +79,27 @@ This will:
 - **API Docs**: http://localhost:8000/docs
 - **Client CLI**: Use `docker compose run client <command>`
 
-### 6. (Optional) Try the CLI Client
+### 6. (Optional) Try the Client
 
-The client provides command-line access to all API operations:
+The client provides both interactive (TUI) and command-line (CLI) access:
+
+#### 🖥️ Terminal User Interface (NEW!)
+
+Launch an interactive visual interface:
+
+```bash
+# Launch TUI (default)
+docker compose run client
+
+# Or explicitly
+docker compose run client tui
+```
+
+Navigate with keyboard/mouse, manage projects, run commands, and view artifacts in real-time!
+
+#### 📟 Command Line Interface
+
+Traditional CLI for automation:
 
 ```bash
 # Show help and available commands
@@ -101,10 +119,11 @@ For detailed client usage, see [client/README.md](client/README.md).
 
 ## Using the System
 
-You can interact with the system in two ways:
+You can interact with the system in three ways:
 
-1. **Web UI** (http://localhost:8080) - Visual interface for interactive use
-2. **CLI Client** - Command-line interface for automation and scripting
+1. **Web UI** (http://localhost:8080) - Rich visual interface for interactive use
+2. **TUI (Terminal UI)** - Interactive terminal interface with visual navigation
+3. **CLI Client** - Command-line interface for automation and scripting
 
 ### Using the Web UI
 

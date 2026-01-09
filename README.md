@@ -41,7 +41,7 @@ This architecture provides:
 
 - **API-First Design**: The client validates that all functionality is available via REST API
 - **Composability**: Each component can be used independently
-- **Flexibility**: Choose the interface that fits your workflow (Web UI or CLI)
+- **Flexibility**: Choose the interface that fits your workflow (Web UI, TUI, or CLI)
 - **Automation**: Client enables scripting and CI/CD integration
 - **Optional Components**: The client is not required for core functionality
 
@@ -50,22 +50,22 @@ This architecture provides:
 ```
 ┌─────────────┐
 │   Web UI    │──┐
-│  (port 8080)│  │
+│  (port 8080)│  │  Rich visual interface
 └─────────────┘  │
                  │    ┌──────────────┐
                  ├───►│  API Server  │◄────────┐
                  │    │  (port 8000) │         │
 ┌─────────────┐  │    └──────────────┘         │
 │   Client    │──┘            │                │
-│    (CLI)    │               │                │
-└─────────────┘               ▼                │
-                      ┌──────────────┐         │
-                      │ projectDocs/ │─────────┘
-                      │ (Git Repo)   │
-                      └──────────────┘
+│  (TUI/CLI)  │  Interactive  ▼                │
+└─────────────┘  & Automation │                │
+                       ┌──────────────┐         │
+                       │ projectDocs/ │─────────┘
+                       │ (Git Repo)   │
+                       └──────────────┘
 ```
 
-All containers communicate via Docker network. The web UI and client both consume the same REST API.
+All containers communicate via Docker network. The web UI and client (with TUI/CLI modes) both consume the same REST API.
 
 ### Backend (FastAPI)
 - LLM abstraction with OpenAI-compatible HTTP adapter
@@ -267,7 +267,30 @@ This will start all three services:
 
 ## Client Usage
 
-The optional CLI client provides command-line access to all API operations.
+The optional client provides both interactive (TUI) and command-line (CLI) access to all API operations.
+
+### 🖥️ Terminal User Interface (TUI) - NEW!
+
+Launch an interactive visual interface in your terminal:
+
+```bash
+# Launch TUI (default when running client container)
+docker compose run client
+
+# Or explicitly
+docker compose run client tui
+```
+
+**TUI Features:**
+- 📁 **Visual Project Management**: Browse and create projects with menus
+- ⚙️ **Interactive Commands**: Run commands with real-time feedback
+- 📊 **Artifact Browser**: View generated artifacts
+- ⌨️ **Keyboard Navigation**: Full keyboard and mouse support
+- 🎨 **Dark/Light Mode**: Toggle with `d` key
+
+### 📟 Command Line Interface (CLI)
+
+Traditional CLI for automation and scripting:
 
 ### Quick Start
 

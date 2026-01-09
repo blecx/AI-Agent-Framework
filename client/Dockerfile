@@ -13,5 +13,5 @@ COPY src/ ./src/
 # Set Python path
 ENV PYTHONPATH=/app
 
-# Default command (can be overridden in docker-compose or docker run)
-CMD ["python", "-m", "src.client", "--help"]
+# Default command - Launch TUI (can be overridden in docker-compose or docker run)
+CMD ["python", "-m", "src.client", "tui"]

@@ -1,13 +1,44 @@
 # AI Agent API Client
 
-A standalone Python CLI client for consuming the AI Agent REST API. This client demonstrates API usage without the web UI and enables automation, scripting, and CI/CD integration.
+A standalone Python client for consuming the AI Agent REST API. Features both a Terminal User Interface (TUI) for interactive use and a command-line interface (CLI) for automation and scripting.
+
+## Interfaces
+
+### 🖥️ Terminal User Interface (TUI) - NEW!
+
+An interactive, visual terminal interface built with Textual:
+
+- **Visual Navigation**: Navigate through menus and screens with keyboard or mouse
+- **Project Management**: Browse projects, create new ones, view details
+- **Command Execution**: Run commands with real-time feedback
+- **Artifact Viewing**: Browse and view generated artifacts
+- **Real-time Updates**: See command output and results as they happen
+
+**Launch the TUI:**
+```bash
+# Using Docker
+docker compose run client tui
+
+# Using local Python
+python -m src.client tui
+```
+
+### 📟 Command Line Interface (CLI)
+
+Traditional CLI for automation and scripting:
+
+- **Scriptable**: Use in bash scripts and automation
+- **CI/CD Ready**: Perfect for automated pipelines
+- **Batch Operations**: Process multiple operations
+- **Output Parsing**: JSON-friendly output for scripting
 
 ## Purpose
 
 The AI Agent API Client serves as:
 
+- **Interactive Tool**: TUI for hands-on project management
 - **API Consumer**: Demonstrates how to interact with the AI Agent API
-- **Automation Tool**: Enables scripting and batch operations
+- **Automation Tool**: CLI enables scripting and batch operations
 - **CI/CD Integration**: Can be used in automated pipelines
 - **Testing Tool**: Useful for API testing and validation
 - **Independent Component**: Runs separately from the main application
@@ -20,10 +51,11 @@ The client is completely independent from the AI Agent application:
 - **Separate container**: Runs in its own Docker container
 - **API-first design**: Validates the API-first architecture
 - **Optional component**: Not required for core functionality
+- **Dual interface**: TUI for interactivity, CLI for automation
 
 ## Features
 
-The client supports all major API operations:
+The client supports all major API operations in both TUI and CLI modes:
 
 - ✅ **Health Check**: Verify API availability
 - ✅ **Project Management**: Create and list projects
@@ -31,7 +63,8 @@ The client supports all major API operations:
 - ✅ **Command Proposal**: Preview changes before applying
 - ✅ **Command Apply**: Execute and commit changes
 - ✅ **Artifacts**: List and retrieve project artifacts
-- ✅ **Demo Workflow**: Run complete end-to-end workflow
+- ✅ **Demo Workflow**: Run complete end-to-end workflow (CLI only)
+- ✅ **Interactive TUI**: Visual interface for all operations (NEW!)
 
 ## Installation
 
@@ -40,10 +73,14 @@ The client supports all major API operations:
 Using Docker Compose (from repository root):
 
 ```bash
-# Build and run the client
-docker compose run client --help
+# Launch the TUI (default)
+docker compose run client
 
-# Run a specific command
+# Or explicitly launch TUI
+docker compose run client tui
+
+# Use CLI commands
+docker compose run client --help
 docker compose run client create-project --key TEST001 --name "Test Project"
 ```
 
@@ -92,11 +129,66 @@ When running locally, use `http://localhost:8000` (or the appropriate host).
 
 ## Usage
 
+### TUI (Terminal User Interface) - Interactive Mode
+
+The TUI provides a visual, menu-driven interface:
+
+**Launch the TUI:**
+```bash
+# Using Docker
+docker compose run client tui
+
+# Using local Python
+python -m src.client tui
+```
+
+**TUI Features:**
+
+1. **Main Menu**
+   - 📁 Projects: Browse and manage projects
+   - ❤️ Health Check: Verify API status
+   - ❌ Exit: Close the application
+
+2. **Project Management**
+   - List all projects with details
+   - Create new projects with forms
+   - Select projects to view details
+
+3. **Project Details (Tabbed Interface)**
+   - **Info Tab**: View project metadata (name, key, dates)
+   - **Commands Tab**: Run commands (Assess Gaps, Generate Artifact, Generate Plan)
+   - **Artifacts Tab**: Browse generated artifacts
+
+4. **Command Execution**
+   - Propose commands with real-time feedback
+   - Review proposed changes
+   - Apply changes and commit to repository
+
+**Keyboard Shortcuts:**
+- `q` - Quit application
+- `d` - Toggle dark/light mode
+- `Escape` - Go back/cancel
+- `Tab` - Navigate between elements
+- Arrow keys - Navigate menus and lists
+- `Enter` - Select/activate
+
+**Mouse Support:**
+- Click buttons to activate
+- Click table rows to select
+- Scroll through content
+
+### CLI (Command Line Interface) - Scripting Mode
+
+The CLI provides traditional command-line access for automation:
+
 ### Command Overview
 
 ```bash
 # Show all commands
 python -m src.client --help
+
+# Launch TUI
+python -m src.client tui
 
 # Check API health
 python -m src.client health
@@ -312,24 +404,39 @@ python -m src.client health
   - `--name`: Project name (required)
   - `--run-gaps/--no-run-gaps`: Run assess_gaps after project creation (default: yes)
 
-## When to Use the Client vs Web UI
+- `tui`: Launch Terminal User Interface (NEW!)
+  - Interactive visual interface
+  - Menu-driven navigation
+  - Real-time feedback
 
-### Use the Client for:
+## When to Use TUI vs CLI vs Web UI
 
-- **Automation**: Scripting repetitive tasks
-- **CI/CD Integration**: Automated project management in pipelines
-- **Batch Operations**: Processing multiple projects
-- **API Testing**: Validating API functionality
-- **Command-line Workflows**: When GUI is not available
-- **Integration**: Connecting to other tools and systems
+### Use the TUI (Terminal User Interface) for:
+
+- 🖥️ **Interactive Terminal Work**: When you prefer visual navigation in a terminal
+- 🎯 **Quick Tasks**: Fast access to common operations without typing commands
+- 📊 **Real-time Feedback**: See command execution and results as they happen
+- 🚀 **Learning**: Discover features through menus and visual guidance
+- 🔄 **Workflow Management**: Navigate between projects and commands easily
+- 💻 **SSH/Remote Sessions**: Full functionality over terminal-only connections
+
+### Use the CLI (Command Line) for:
+
+- 🤖 **Automation**: Scripting repetitive tasks
+- 🔧 **CI/CD Integration**: Automated project management in pipelines
+- 📦 **Batch Operations**: Processing multiple projects
+- 🧪 **API Testing**: Validating API functionality
+- 📝 **Documentation**: Command examples in docs and tutorials
+- 🔌 **Integration**: Connecting to other tools and systems
 
 ### Use the Web UI for:
 
-- **Interactive Use**: Creating and managing projects manually
-- **Visual Review**: Reviewing diffs and proposals visually
-- **Exploration**: Browsing artifacts and project state
-- **User-friendly**: Non-technical users
-- **Rich Features**: Full visual experience
+- 🌐 **Rich Visual Interface**: Full graphical experience with modern UI
+- 👥 **Non-technical Users**: User-friendly for all skill levels
+- 🔍 **Visual Review**: Detailed diff viewing and proposal comparison
+- 🗂️ **Exploration**: Browse artifacts and project state visually
+- 📱 **Cross-platform**: Access from any device with a browser
+- 🎨 **Advanced Features**: Full feature set with visual enhancements
 
 ## Troubleshooting
 

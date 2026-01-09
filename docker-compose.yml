@@ -36,6 +36,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
     container_name: ai-agent-client
+    stdin_open: true
+    tty: true
     environment:
       - API_BASE_URL=http://api:8000
       - API_TIMEOUT=30
@@ -43,8 +45,8 @@ services:
       - api
     networks:
       - iso21500-network
-    # By default, shows help. Override with: docker compose run client <command>
-    command: ["python", "-m", "src.client", "--help"]
+    # Default: Launch TUI. Override with: docker compose run client <command>
+    command: ["python", "-m", "src.client", "tui"]
 
 networks:
   iso21500-network:

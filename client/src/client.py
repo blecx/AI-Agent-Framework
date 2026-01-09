@@ -338,6 +338,26 @@ def demo(ctx, key, name, run_gaps):
     click.echo("=" * 80)
 
 
+@cli.command()
+@click.pass_context
+def tui(ctx):
+    """Launch the Terminal User Interface (TUI).
+    
+    An interactive terminal interface for managing projects,
+    running commands, and viewing artifacts.
+    """
+    try:
+        from .tui import run_tui
+        run_tui()
+    except ImportError as e:
+        click.echo(f"Error: TUI dependencies not installed: {e}", err=True)
+        click.echo("Please ensure 'textual' and 'rich' are installed.", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error launching TUI: {str(e)}", err=True)
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     try:
@@ -351,6 +371,7 @@ def main():
     except click.ClickException as e:
         e.show()
         sys.exit(1)
+
 
 
 if __name__ == "__main__":
