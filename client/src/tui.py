@@ -8,22 +8,21 @@ import os
 import sys
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from pathlib import Path
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.widgets import Header, Footer, Button, Static, Input, Label, DataTable, TextArea, TabbedContent, TabPane, Select, Log
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Header, Footer, Button, Static, Input, Label, DataTable, TabbedContent, TabPane, Log
 from textual.screen import Screen
 from textual import on
 from textual.binding import Binding
-from rich.syntax import Syntax
-from rich.text import Text
-from rich.panel import Panel
 
 # Import the API client from the main client module
-import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from client import APIClient, API_BASE_URL, API_TIMEOUT
+
+# Constants
+MESSAGE_PREVIEW_LENGTH = 500  # Max characters to show in message preview
 
 
 class ProjectListScreen(Screen):
@@ -76,7 +75,8 @@ class ProjectListScreen(Screen):
                     try:
                         dt = datetime.fromisoformat(created.replace('Z', '+00:00'))
                         created = dt.strftime("%Y-%m-%d %H:%M")
-                    except:
+                    except (ValueError, TypeError, AttributeError):
+                        # Keep original value if parsing fails
                         pass
                 table.add_row(
                     project["key"],
@@ -313,7 +313,7 @@ class RunCommandScreen(Screen):
             log.write_line(f"[green]✓ Proposal generated![/green]")
             log.write_line(f"Proposal ID: {self.proposal['proposal_id']}")
             log.write_line(f"\nAssistant Message:")
-            log.write_line(self.proposal['assistant_message'][:500])
+            log.write_line(self.proposal['assistant_message'][:MESSAGE_PREVIEW_LENGTH])
             
             log.write_line(f"\nFile Changes ({len(self.proposal['file_changes'])}):")
             for change in self.proposal['file_changes']:
