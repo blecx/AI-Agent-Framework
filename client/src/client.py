@@ -39,7 +39,7 @@ class APIClient:
             try:
                 error_detail = e.response.json().get("detail", str(e))
                 click.echo(f"Details: {error_detail}", err=True)
-            except:
+            except (ValueError, json.JSONDecodeError):
                 click.echo(f"Details: {e.response.text}", err=True)
             sys.exit(1)
         except Exception as e:
@@ -279,13 +279,18 @@ def demo(ctx, key, name, run_gaps):
     click.echo("AI Agent API Client - Demo Workflow")
     click.echo("=" * 80)
     
-    # Step 1: Create project
+    # Step 1: Create project (or check if exists)
     click.echo(f"\n[1/4] Creating project '{key}' with name '{name}'...")
-    try:
-        result = client.create_project(key, name)
+    
+    # Check if project already exists
+    existing_projects = client.list_projects()
+    project_exists = any(p['key'] == key for p in existing_projects)
+    
+    if project_exists:
+        click.echo("⚠ Project already exists, continuing...")
+    else:
+        client.create_project(key, name)
         click.echo("✓ Project created successfully!")
-    except:
-        click.echo("⚠ Project may already exist, continuing...")
     
     # Step 2: Get project state
     click.echo(f"\n[2/4] Getting project state...")
