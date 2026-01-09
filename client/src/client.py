@@ -42,8 +42,8 @@ class APIClient:
             except (ValueError, json.JSONDecodeError):
                 click.echo(f"Details: {e.response.text}", err=True)
             sys.exit(1)
-        except Exception as e:
-            click.echo(f"Error: {str(e)}", err=True)
+        except (httpx.RequestError, httpx.TimeoutException, httpx.ConnectError) as e:
+            click.echo(f"Connection error: {str(e)}", err=True)
             sys.exit(1)
     
     def health_check(self) -> Dict[str, Any]:
@@ -109,6 +109,14 @@ class APIClient:
             return response.text
         except httpx.HTTPStatusError as e:
             click.echo(f"Error: HTTP {e.response.status_code}", err=True)
+            try:
+                error_detail = e.response.json().get("detail", "Artifact not found")
+                click.echo(f"Details: {error_detail}", err=True)
+            except (ValueError, json.JSONDecodeError):
+                click.echo(f"Details: {e.response.text}", err=True)
+            sys.exit(1)
+        except (httpx.RequestError, httpx.TimeoutException, httpx.ConnectError) as e:
+            click.echo(f"Connection error: {str(e)}", err=True)
             sys.exit(1)
     
     def close(self):
@@ -330,8 +338,11 @@ def main():
     except KeyboardInterrupt:
         click.echo("\n\nInterrupted by user.", err=True)
         sys.exit(130)
-    except Exception as e:
-        click.echo(f"\nUnexpected error: {str(e)}", err=True)
+    except (httpx.RequestError, httpx.HTTPError) as e:
+        click.echo(f"\nAPI connection error: {str(e)}", err=True)
+        sys.exit(1)
+    except click.ClickException as e:
+        e.show()
         sys.exit(1)
 
 
