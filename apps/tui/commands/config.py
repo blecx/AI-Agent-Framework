@@ -5,7 +5,8 @@ Allows runtime configuration of API settings.
 import os
 import click
 from pathlib import Path
-from utils import print_success, print_info, print_error
+from config import Config
+from utils import print_success, print_info
 from rich.console import Console
 
 console = Console()
@@ -37,8 +38,7 @@ def set_config(api_url: str, api_key: str):
         python main.py config set --api-url http://api:8000 --api-key mykey
     """
     if not api_url and not api_key:
-        print_error("Please provide at least one configuration option (--api-url or --api-key)")
-        return
+        raise click.UsageError("Please provide at least one configuration option (--api-url or --api-key)")
     
     # Determine .env file path (in TUI directory)
     tui_dir = Path(__file__).parent.parent
@@ -80,15 +80,17 @@ def set_config(api_url: str, api_key: str):
 @config_group.command(name="show")
 def show_config():
     """Display current configuration settings."""
-    from config import Config
-    
     console.print("\n[bold cyan]Current Configuration[/bold cyan]\n")
     console.print(f"[bold]API Base URL:[/bold] {Config.API_BASE_URL}")
     console.print(f"[bold]API Timeout:[/bold] {Config.API_TIMEOUT} seconds")
     
     if Config.API_KEY:
-        # Show only first/last 4 chars of API key
-        masked_key = f"{Config.API_KEY[:4]}...{Config.API_KEY[-4:]}" if len(Config.API_KEY) > 8 else "***"
+        # Show only first/last 4 chars of API key, ensure proper masking
+        key_len = len(Config.API_KEY)
+        if key_len <= 8:
+            masked_key = "***"
+        else:
+            masked_key = f"{Config.API_KEY[:4]}...{Config.API_KEY[-4:]}"
         console.print(f"[bold]API Key:[/bold] {masked_key}")
     else:
         console.print(f"[bold]API Key:[/bold] [dim]Not configured[/dim]")
