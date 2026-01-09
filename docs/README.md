@@ -142,11 +142,13 @@ Key architectural decisions with context, rationale, and consequences.
 | [ADR-0001](adr/0001-docs-repo-mounted-git.md) | Separate Project Documents Git Repository Mounted at /projectDocs | 2026-01-09 | ✅ Accepted |
 | [ADR-0002](adr/0002-llm-http-adapter-json-config.md) | LLM HTTP Adapter Configured by JSON with LM Studio Defaults | 2026-01-09 | ✅ Accepted |
 | [ADR-0003](adr/0003-propose-apply-before-commit.md) | Propose/Apply Workflow with Review-Before-Commit | 2026-01-09 | ✅ Accepted |
+| [ADR-0004](adr/0004-separate-client-application.md) | Separate Client Application for API Consumption | 2026-01-09 | ✅ Accepted |
 
 **ADR Topics:**
 - Why separate git repository for project documents?
 - Why HTTP adapter instead of LLM SDK?
 - Why two-step propose/apply workflow?
+- Why separate client application container?
 
 **ADR Template:** [template.md](adr/template.md)
 
