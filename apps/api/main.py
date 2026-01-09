@@ -5,10 +5,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
+import sys
 
-from .routers import projects, commands, artifacts
-from .services.git_manager import GitManager
-from .services.llm_service import LLMService
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(__file__))
+
+from routers import projects, commands, artifacts
+from services.git_manager import GitManager
+from services.llm_service import LLMService
 
 
 @asynccontextmanager

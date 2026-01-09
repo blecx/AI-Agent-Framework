@@ -4,7 +4,7 @@ Projects router for creating and managing projects.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
-from ..models import ProjectCreate, ProjectInfo, ProjectState
+from models import ProjectCreate, ProjectInfo, ProjectState
 
 router = APIRouter()
 

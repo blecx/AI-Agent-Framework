@@ -4,7 +4,7 @@ Artifacts router for listing and retrieving artifacts.
 from fastapi import APIRouter, HTTPException, Request, Response
 from typing import List
 
-from ..models import ArtifactInfo
+from models import ArtifactInfo
 
 router = APIRouter()
 

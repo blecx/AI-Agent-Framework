@@ -4,13 +4,13 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY apps/web/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY apps/web/ .
 
 # Build the app
 RUN npm run build
@@ -22,7 +22,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/web/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 80

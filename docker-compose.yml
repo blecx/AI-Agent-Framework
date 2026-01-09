@@ -21,8 +21,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
-      dockerfile: ../../docker/web/Dockerfile
+      context: .
+      dockerfile: docker/web/Dockerfile
     container_name: iso21500-web
     ports:
       - "8080:80"

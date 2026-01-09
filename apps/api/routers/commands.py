@@ -3,8 +3,8 @@ Commands router for propose/apply flow.
 """
 from fastapi import APIRouter, HTTPException, Request
 
-from ..models import CommandPropose, CommandProposal, CommandApply, CommandApplyResult
-from ..services.command_service import CommandService
+from models import CommandPropose, CommandProposal, CommandApply, CommandApplyResult
+from services.command_service import CommandService
 
 router = APIRouter()
 
