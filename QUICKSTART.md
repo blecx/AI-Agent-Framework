@@ -77,8 +77,55 @@ This will:
 - **Web UI**: http://localhost:8080
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
+- **Client CLI**: Use `docker compose run client <command>`
+
+### 6. (Optional) Try the Client
+
+The client provides both interactive (TUI) and command-line (CLI) access:
+
+#### 🖥️ Terminal User Interface (NEW!)
+
+Launch an interactive visual interface:
+
+```bash
+# Launch TUI (default)
+docker compose run client
+
+# Or explicitly
+docker compose run client tui
+```
+
+Navigate with keyboard/mouse, manage projects, run commands, and view artifacts in real-time!
+
+#### 📟 Command Line Interface
+
+Traditional CLI for automation:
+
+```bash
+# Show help and available commands
+docker compose run client --help
+
+# Create a project via CLI
+docker compose run client create-project --key CLI001 --name "CLI Test Project"
+
+# List all projects
+docker compose run client list-projects
+
+# Run a complete demo workflow
+docker compose run client demo --key DEMO001 --name "Demo via CLI"
+```
+
+For detailed client usage, see [client/README.md](client/README.md).
 
 ## Using the System
+
+You can interact with the system in three ways:
+
+1. **Web UI** (http://localhost:8080) - Rich visual interface for interactive use
+2. **TUI (Terminal UI)** - Interactive terminal interface with visual navigation
+3. **CLI Client** - Command-line interface for automation and scripting
+
+### Using the Web UI
 
 ### Create a Project
 
@@ -137,6 +184,40 @@ git log                    # View commit history
 ls -la PROJ001/           # View project files
 cat PROJ001/project.json  # View project metadata
 ```
+
+### Using the CLI Client
+
+The CLI client provides an alternative way to interact with the system:
+
+```bash
+# Create a project
+docker compose run client create-project --key CLI001 --name "CLI Project"
+
+# Check project state
+docker compose run client get-state --key CLI001
+
+# Propose assess_gaps command
+docker compose run client propose --key CLI001 --command assess_gaps
+
+# Note the proposal_id from output, then apply it
+docker compose run client apply --key CLI001 --proposal-id <proposal-id>
+
+# List artifacts
+docker compose run client list-artifacts --key CLI001
+
+# View artifact content
+docker compose run client get-artifact --key CLI001 --path artifacts/gap_assessment.md
+
+# Or run a complete demo workflow
+docker compose run client demo --key DEMO001 --name "Automated Demo"
+```
+
+**When to use CLI vs Web UI:**
+
+- **Use Web UI** for: Interactive project management, visual diff review, artifact browsing
+- **Use CLI** for: Automation, scripting, CI/CD integration, batch operations
+
+For more CLI examples and detailed documentation, see [client/README.md](client/README.md).
 
 ## Troubleshooting
 

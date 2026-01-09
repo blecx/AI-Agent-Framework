@@ -13,6 +13,60 @@ This system provides intelligent project management following ISO 21500 standard
 
 ## Architecture
 
+### Three-Container Setup
+
+The system uses a modern three-container architecture for maximum flexibility and separation of concerns:
+
+1. **API Container (`api`)**: FastAPI backend service
+   - Handles project management logic and LLM interactions
+   - Manages git-based document storage
+   - Exposes REST API endpoints
+   - Port: 8000
+
+2. **Web Container (`web`)**: React/Vite frontend service
+   - Modern UI for project creation and management
+   - Visual diff viewer for proposal review
+   - Artifact browser and preview
+   - Port: 8080
+
+3. **Client Container (`client`)**: Python CLI client (optional)
+   - Demonstrates API usage without the web UI
+   - Enables automation and scripting
+   - CI/CD integration capability
+   - Command-line interface for all API operations
+
+### Why Three Containers?
+
+This architecture provides:
+
+- **API-First Design**: The client validates that all functionality is available via REST API
+- **Composability**: Each component can be used independently
+- **Flexibility**: Choose the interface that fits your workflow (Web UI, TUI, or CLI)
+- **Automation**: Client enables scripting and CI/CD integration
+- **Optional Components**: The client is not required for core functionality
+
+### Container Communication
+
+```
+┌─────────────┐
+│   Web UI    │──┐
+│  (port 8080)│  │  Rich visual interface
+└─────────────┘  │
+                 │    ┌──────────────┐
+                 ├───►│  API Server  │◄────────┐
+                 │    │  (port 8000) │         │
+┌─────────────┐  │    └──────────────┘         │
+│   Client    │──┘            │                │
+│  (TUI/CLI)  │  Interactive  ▼                │
+└─────────────┘  & Automation │                │
+                       ┌──────────────┐         │
+                       │ projectDocs/ │─────────┘
+                       │ (Git Repo)   │
+                       └──────────────┘
+```
+
+All containers communicate via Docker network. The web UI and client (with TUI/CLI modes) both consume the same REST API.
+
 ### Backend (FastAPI)
 - LLM abstraction with OpenAI-compatible HTTP adapter
 - Git repository manager for project documents
@@ -200,10 +254,83 @@ The default configuration uses LM Studio on `http://host.docker.internal:1234/v1
 docker compose up --build
 ```
 
+This will start all three services:
+- API server (backend)
+- Web UI (frontend)
+- Client (CLI tool - optional)
+
 5. Access the application:
 - Web UI: http://localhost:8080
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
+- Client: `docker compose run client <command>` (see Client Usage below)
+
+## Client Usage
+
+The optional client provides both interactive (TUI) and command-line (CLI) access to all API operations.
+
+### 🖥️ Terminal User Interface (TUI) - NEW!
+
+Launch an interactive visual interface in your terminal:
+
+```bash
+# Launch TUI (default when running client container)
+docker compose run client
+
+# Or explicitly
+docker compose run client tui
+```
+
+**TUI Features:**
+- 📁 **Visual Project Management**: Browse and create projects with menus
+- ⚙️ **Interactive Commands**: Run commands with real-time feedback
+- 📊 **Artifact Browser**: View generated artifacts
+- ⌨️ **Keyboard Navigation**: Full keyboard and mouse support
+- 🎨 **Dark/Light Mode**: Toggle with `d` key
+
+### 📟 Command Line Interface (CLI)
+
+Traditional CLI for automation and scripting:
+
+### Quick Start
+
+```bash
+# Show available commands
+docker compose run client --help
+
+# Create a project
+docker compose run client create-project --key PROJ001 --name "My Project"
+
+# List all projects
+docker compose run client list-projects
+
+# Run a complete demo workflow
+docker compose run client demo --key DEMO001 --name "Demo Project"
+```
+
+### Common Commands
+
+```bash
+# Check API health
+docker compose run client health
+
+# Get project state
+docker compose run client get-state --key PROJ001
+
+# Propose command (preview changes)
+docker compose run client propose --key PROJ001 --command assess_gaps
+
+# Apply proposal (commit changes)
+docker compose run client apply --key PROJ001 --proposal-id <id>
+
+# List artifacts
+docker compose run client list-artifacts --key PROJ001
+
+# Get artifact content
+docker compose run client get-artifact --key PROJ001 --path artifacts/gap_assessment.md
+```
+
+For detailed client documentation, see [client/README.md](client/README.md).
 
 ## Usage
 

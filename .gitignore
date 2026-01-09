@@ -11,6 +11,12 @@ venv/
 .venv/
 ENV/
 
+# Client-specific
+client/.venv/
+client/.env
+client/__pycache__/
+client/src/__pycache__/
+
 # VS Code
 .vscode/
 

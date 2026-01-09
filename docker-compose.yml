@@ -31,6 +31,23 @@ services:
     networks:
       - iso21500-network
 
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ai-agent-client
+    stdin_open: true
+    tty: true
+    environment:
+      - API_BASE_URL=http://api:8000
+      - API_TIMEOUT=30
+    depends_on:
+      - api
+    networks:
+      - iso21500-network
+    # Default: Launch TUI. Override with: docker compose run client <command>
+    command: ["python", "-m", "src.client", "tui"]
+
 networks:
   iso21500-network:
     driver: bridge
