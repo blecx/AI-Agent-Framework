@@ -1,0 +1,17 @@
+# TUI Client Dependencies for ISO 21500 AI-Agent Framework
+# Python 3.10+ required
+
+# CLI framework
+click==8.1.7
+
+# HTTP client
+httpx==0.27.0
+
+# Data validation
+pydantic==2.5.3
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Terminal formatting
+rich==13.7.0

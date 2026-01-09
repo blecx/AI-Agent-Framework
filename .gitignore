@@ -17,6 +17,12 @@ client/.env
 client/__pycache__/
 client/src/__pycache__/
 
+# TUI-specific
+apps/tui/.venv/
+apps/tui/.env
+apps/tui/__pycache__/
+apps/tui/commands/__pycache__/
+
 # VS Code
 .vscode/
 
