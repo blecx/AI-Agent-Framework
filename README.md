@@ -365,16 +365,18 @@ For detailed local development setup, see the [Local Development Setup](#local-d
 ### Adding New Dependencies
 
 1. Add the dependency to `requirements.txt` with a pinned version
-2. Reinstall dependencies:
+2. If it's a runtime dependency (needed by the API), also add it to `apps/api/requirements.txt`
+3. Reinstall dependencies:
    ```bash
    source .venv/bin/activate  # Activate if not already active
    pip install -r requirements.txt
    ```
-3. Update `apps/api/requirements.txt` if the dependency is needed in Docker
-4. Rebuild Docker images if using Docker deployment:
+4. For Docker deployment, rebuild the images:
    ```bash
    docker compose build --no-cache
    ```
+
+**Note:** Testing and development dependencies (pytest, black, flake8) should only be in the root `requirements.txt`, not in `apps/api/requirements.txt`.
 
 ### Adding New Commands
 

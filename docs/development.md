@@ -308,10 +308,16 @@ The development servers support hot reload:
 
 The project maintains two Python requirements files:
 
-- **`requirements.txt`** (root): For local development with `.venv`
-- **`apps/api/requirements.txt`**: For Docker builds
+- **`requirements.txt`** (root): For local development with `.venv` - includes all dependencies plus testing and dev tools
+- **`apps/api/requirements.txt`**: For Docker builds - includes only runtime dependencies
 
-**Best Practice:** Keep both files in sync. If you add a dependency for the API, add it to both files.
+**Key Differences:**
+- Root `requirements.txt` includes: pytest, pytest-asyncio, black, flake8 (for local development)
+- Docker `apps/api/requirements.txt` includes: only runtime dependencies (smaller image size)
+
+**Best Practice:** When adding a new runtime dependency:
+1. Add it to both `requirements.txt` and `apps/api/requirements.txt`
+2. When adding a dev-only dependency (like a linter), add it only to root `requirements.txt`
 
 ### Understanding the Setup Script vs Docker
 
@@ -387,6 +393,37 @@ pip install pytest pytest-asyncio
 # Run tests (when implemented)
 pytest
 ```
+
+### Testing the Setup Scripts
+
+**Test scenarios to verify:**
+
+1. **Single Python version installed:**
+   ```bash
+   # Script should auto-detect and ask for confirmation
+   ./setup.sh
+   # Expected: Shows 1 version, asks "Use this version? [Y/n]:"
+   ```
+
+2. **Multiple Python versions installed:**
+   ```bash
+   # Script should list all versions and prompt for selection
+   ./setup.sh
+   # Expected: Shows numbered list, asks "Select Python version [1-N]:"
+   ```
+
+3. **Existing .venv directory:**
+   ```bash
+   # Script should detect and ask to recreate
+   ./setup.sh
+   # Expected: Shows warning, asks "Remove existing .venv and recreate? [y/N]:"
+   ```
+
+4. **No compatible Python version:**
+   ```bash
+   # Script should show error and download links
+   # (Can only test this on a system without Python 3.10+)
+   ```
 
 ### Testing LLM Integration
 
@@ -478,6 +515,53 @@ docker compose up --build
 ---
 
 ## Troubleshooting
+
+### Setup Script Issues
+
+**Problem:** Script says "No compatible Python version found"
+- **Solution:** Install Python 3.10 or higher:
+  - Ubuntu/Debian: `sudo apt install python3.12`
+  - macOS (Homebrew): `brew install python@3.12`
+  - Windows: Download from https://www.python.org/downloads/
+  - Ensure "Add Python to PATH" is checked during Windows installation
+
+**Problem:** Setup script doesn't detect my Python installation
+- **Solution:** Check your Python is accessible:
+  ```bash
+  python3 --version     # Should show Python 3.x
+  which python3         # Should show path to Python
+  ```
+  If not found, add Python to your PATH or use manual setup
+
+**Problem:** Script fails with "python3 -m venv .venv" error
+- **Solution:** Install python3-venv package:
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install python3.12-venv
+  
+  # Fedora/RHEL
+  sudo dnf install python3-virtualenv
+  ```
+
+**Problem:** "Permission denied" when running setup script
+- **Solution:** Make the script executable:
+  ```bash
+  chmod +x setup.sh
+  ./setup.sh
+  ```
+
+**Problem:** PowerShell script execution is disabled (Windows)
+- **Solution:** Enable script execution:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  .\setup.ps1
+  ```
+
+**Problem:** Script creates .venv but pip install fails
+- **Solution:** 
+  1. Delete .venv: `rm -rf .venv` (or `rmdir /s .venv` on Windows)
+  2. Ensure you have internet connection
+  3. Try manual setup with `pip install --no-cache-dir -r requirements.txt`
 
 ### Virtual Environment Issues
 
