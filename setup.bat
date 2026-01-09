@@ -41,7 +41,7 @@ pip install -r requirements.txt
 REM Success message
 echo.
 echo =========================================
-echo ✓ Setup completed successfully!
+echo [OK] Setup completed successfully!
 echo =========================================
 echo.
 echo Next steps:
@@ -58,7 +58,7 @@ echo.
 echo   4. Run the API server:
 echo      cd apps\api
 echo      set PROJECT_DOCS_PATH=..\..\projectDocs
-echo      uvicorn main:app --reload
+echo      uvicorn main:app --reload --port 8000
 echo.
 echo   5. Access the API at http://localhost:8000
 echo      API docs at http://localhost:8000/docs
