@@ -58,22 +58,36 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-2. **Run the setup script:**
+2. **Run the intelligent setup script:**
+
+The setup script will automatically detect all available Python versions on your system, prompt you to select one, validate that it meets the minimum requirements, and create a virtual environment.
 
 **Linux/macOS:**
 ```bash
 ./setup.sh
 ```
 
-**Windows:**
+**Windows (PowerShell):**
+```powershell
+.\setup.ps1
+```
+
+**Windows (Command Prompt):**
 ```cmd
 setup.bat
 ```
 
-This script will:
-- Create a Python virtual environment in `.venv/`
-- Install all required dependencies from `requirements.txt`
-- Display next steps for running the application
+**What the script does:**
+- 🔍 Detects all available Python 3.x versions on your system
+- 📋 Shows you a list of compatible versions (3.10+) with their paths
+- ✅ Prompts you to select a version (or auto-selects if only one is found)
+- 🔒 Validates the selected version meets minimum requirements
+- 📦 Creates a Python virtual environment in `.venv/` using your selected version
+- ⬆️ Upgrades pip to the latest version
+- 📥 Installs all required dependencies from `requirements.txt`
+- ✨ Displays next steps for running the application
+
+If no compatible Python version is found, the script will display download links and helpful error messages.
 
 3. **Activate the virtual environment:**
 
@@ -82,7 +96,12 @@ This script will:
 source .venv/bin/activate
 ```
 
-**Windows:**
+**Windows (PowerShell):**
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Windows (Command Prompt):**
 ```cmd
 .venv\Scripts\activate.bat
 ```
@@ -109,6 +128,29 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 - API Docs: http://localhost:8000/docs
 
 **Note:** For the web UI, you'll need to run it separately (see Web UI section below) or use Docker.
+
+### Manual Setup (Alternative)
+
+If you prefer not to use the setup script, you can set up manually:
+
+1. **Check Python version:**
+   ```bash
+   python3 --version  # Should be 3.10 or higher
+   ```
+
+2. **Create virtual environment:**
+   ```bash
+   python3 -m venv .venv
+   ```
+
+3. **Activate and install dependencies:**
+   ```bash
+   source .venv/bin/activate  # Linux/macOS
+   # or .venv\Scripts\activate.bat on Windows
+   
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
 ### Running the Web UI (Optional)
 

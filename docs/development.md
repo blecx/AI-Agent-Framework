@@ -35,21 +35,72 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
    cd AI-Agent-Framework
    ```
 
-2. **Create Python virtual environment:**
+2. **Create Python virtual environment using the intelligent setup script:**
 
    **Using the setup script (recommended):**
-   ```bash
-   ./setup.sh          # Linux/macOS
-   setup.bat           # Windows
-   ```
-
-   **Manual setup:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # Linux/macOS
-   # or
-   .venv\Scripts\activate.bat  # Windows
    
+   The intelligent setup script detects all available Python versions on your system and helps you choose the best one.
+   
+   **Linux/macOS:**
+   ```bash
+   ./setup.sh
+   ```
+   
+   **Windows (PowerShell - Recommended):**
+   ```powershell
+   .\setup.ps1
+   ```
+   
+   **Windows (Command Prompt):**
+   ```cmd
+   setup.bat
+   ```
+   
+   **How the setup script works:**
+   
+   1. **Detection Phase:**
+      - Scans your system for all Python 3.x installations
+      - Checks versions using `python3.X`, `python3`, `python`, and `py -X.Y` commands
+      - Filters out versions below Python 3.10 (minimum requirement)
+   
+   2. **Selection Phase:**
+      - Displays a numbered list of compatible Python versions with full paths
+      - If multiple versions found: prompts you to select one
+      - If only one version found: asks for confirmation to use it
+      - If no compatible version found: displays download links and exits
+   
+   3. **Validation Phase:**
+      - Validates selected version meets minimum requirements (Python 3.10+)
+      - Checks if `.venv/` already exists and prompts to recreate if needed
+   
+   4. **Setup Phase:**
+      - Creates virtual environment: `python-X.Y -m venv .venv`
+      - Activates the environment
+      - Upgrades pip: `pip install --upgrade pip`
+      - Installs all dependencies: `pip install -r requirements.txt`
+      - Shows success message with next steps
+   
+   **Manual setup (alternative):**
+   
+   If you prefer to set up manually or the script doesn't work for your system:
+   
+   ```bash
+   # Check your Python version (must be 3.10+)
+   python3 --version
+   
+   # Create virtual environment with specific version
+   python3 -m venv .venv          # Uses default python3
+   # OR
+   python3.12 -m venv .venv       # Uses specific version
+   
+   # Activate the environment
+   source .venv/bin/activate      # Linux/macOS
+   # OR
+   .venv\Scripts\activate.bat     # Windows (Command Prompt)
+   # OR
+   .\.venv\Scripts\Activate.ps1   # Windows (PowerShell)
+   
+   # Upgrade pip and install dependencies
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
@@ -261,6 +312,48 @@ The project maintains two Python requirements files:
 - **`apps/api/requirements.txt`**: For Docker builds
 
 **Best Practice:** Keep both files in sync. If you add a dependency for the API, add it to both files.
+
+### Understanding the Setup Script vs Docker
+
+**Setup Script (`.venv`):**
+- Used for **local development**
+- Detects and uses Python versions installed on your system
+- Creates virtual environment in project root
+- Fast iteration and debugging
+- Direct access to code and dependencies
+
+**Docker:**
+- Used for **production deployment** and team consistency
+- Uses Python version specified in Dockerfile (currently 3.12)
+- Self-contained environment with its own Python installation
+- Isolated from system Python
+- Reads dependencies from `apps/api/requirements.txt`
+
+**Key Differences:**
+
+| Aspect | Setup Script (.venv) | Docker |
+|--------|---------------------|--------|
+| Python Version | Detected from system | Fixed in Dockerfile |
+| Dependencies File | `requirements.txt` | `apps/api/requirements.txt` |
+| Setup Time | Fast (uses system Python) | Slower (builds image) |
+| Isolation | Process-level | Container-level |
+| Best For | Development, debugging | Production, testing |
+
+**Workflow Integration:**
+
+```bash
+# Development workflow with .venv
+./setup.sh                          # One-time setup
+source .venv/bin/activate           # Each session
+cd apps/api
+PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+
+# Production workflow with Docker
+docker compose up --build           # Builds and runs
+docker compose logs -f api          # View logs
+```
+
+Both setups use the same codebase and can access the same `projectDocs/` directory, so you can easily switch between them.
 
 ---
 
