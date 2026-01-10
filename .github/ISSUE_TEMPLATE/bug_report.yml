@@ -1,0 +1,157 @@
+name: Bug Report
+description: Report a bug or issue in the AI-Agent-Framework backend
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill out the sections below to help us diagnose and fix the issue.
+        
+        **Before submitting:**
+        - Search existing issues to avoid duplicates
+        - Verify the bug exists in the latest version
+        - Follow the **Plan → Issues → PRs** workflow for fixes
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: The API returns 500 when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Start the API with `uvicorn main:app --reload`
+        2. Send a POST request to `/api/projects`
+        3. Observe the error in the response
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: The API should return 201 with project details
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: The API returns 500 Internal Server Error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Relevant error messages, stack traces, or logs
+      placeholder: |
+        Paste error logs here. Include:
+        - API error output from uvicorn
+        - Browser console errors (if applicable)
+        - Docker logs (if using Docker)
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: run-mode
+    attributes:
+      label: Run Mode
+      description: How are you running the application?
+      options:
+        - Local (venv + uvicorn)
+        - Docker (docker compose)
+        - Other (specify in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Output of `python --version`
+      placeholder: "Python 3.12.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: Your operating system and version
+      placeholder: "Ubuntu 22.04, macOS 14.2, Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation-checklist
+    attributes:
+      label: Validation Checklist
+      description: Have you tried these validation steps?
+      value: |
+        ## Docker Validation (if applicable)
+        - [ ] `docker compose down && docker compose up --build`
+        - [ ] `curl http://localhost:8000/health` returns healthy status
+        - [ ] Check Docker logs: `docker compose logs api`
+        
+        ## Local Validation (if applicable)
+        - [ ] `./setup.sh` completes successfully
+        - [ ] `source .venv/bin/activate` activates virtual environment
+        - [ ] `pip install -r requirements.txt` installs dependencies
+        - [ ] `mkdir -p projectDocs` creates docs directory
+        - [ ] `cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload` starts API
+        - [ ] `curl http://localhost:8000/health` returns healthy status
+        
+        ## General Checks
+        - [ ] Checked that `projectDocs/` is NOT committed
+        - [ ] Checked that `configs/llm.json` is NOT committed
+        - [ ] Reviewed git status for unintended files
+        - [ ] Bug persists after clean reinstall
+
+  - type: dropdown
+    id: cross-repo-impact
+    attributes:
+      label: Does this bug affect the frontend client?
+      description: Consider if the bug impacts AI-Agent-Framework-Client
+      options:
+        - "No - Backend only"
+        - "Yes - Client is also affected"
+        - "Unknown - Needs investigation"
+    validations:
+      required: true
+
+  - type: input
+    id: related-client-issue
+    attributes:
+      label: Related Client Issue (if applicable)
+      description: Link to issue in blecx/AI-Agent-Framework-Client
+      placeholder: "blecx/AI-Agent-Framework-Client#123"
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that might be relevant
+      placeholder: |
+        - Screenshots
+        - Related issues or PRs
+        - Workarounds you've tried
+        - Environment variables set
+        - Recent changes before bug appeared
