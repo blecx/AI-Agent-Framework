@@ -270,10 +270,12 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed instructions.
    - Docker build CI/CD
 
 4. **Documentation**
-   - API documentation (Swagger/OpenAPI)
-   - Architecture diagrams
-   - Contributing guidelines
-   - Deployment guide
+   - ✅ API documentation (Swagger/OpenAPI) - Auto-generated at `/docs`
+   - ✅ Architecture overview - Complete system architecture
+   - ✅ Deployment guide - Multi-component deployment guide
+   - ✅ Client integration guide - Build your own client
+   - ✅ Contributing guidelines - Development guide
+   - ✅ Architecture Decision Records (ADRs)
 
 ## Conclusion
 
@@ -289,5 +291,32 @@ The MVP v1 is **complete and functional**. All core requirements have been met:
 ✅ Audit logging with compliance features
 ✅ Three core commands (assess_gaps, generate_artifact, generate_plan)
 ✅ Full documentation and quick start guide
+✅ Complete architecture documentation
+✅ Multi-component deployment guide
+✅ Client integration guide with examples
 
 The system is ready for demo and further development.
+
+## Documentation Index
+
+### Core Documentation
+- [README.md](README.md) - Main project overview and setup
+- [QUICKSTART.md](QUICKSTART.md) - Quick start guide
+- [SUMMARY.md](SUMMARY.md) - This file - MVP implementation summary
+
+### Architecture & Design
+- [docs/architecture/overview.md](docs/architecture/overview.md) - Complete system architecture
+- [docs/spec/mvp-iso21500-agent.md](docs/spec/mvp-iso21500-agent.md) - MVP specification
+- [docs/adr/0001-docs-repo-mounted-git.md](docs/adr/0001-docs-repo-mounted-git.md) - Separate docs repository
+- [docs/adr/0002-llm-http-adapter-json-config.md](docs/adr/0002-llm-http-adapter-json-config.md) - LLM HTTP adapter
+- [docs/adr/0003-propose-apply-before-commit.md](docs/adr/0003-propose-apply-before-commit.md) - Propose/apply workflow
+- [docs/adr/0004-separate-client-application.md](docs/adr/0004-separate-client-application.md) - Client separation strategy
+
+### Deployment & Integration
+- [docs/deployment/multi-component-guide.md](docs/deployment/multi-component-guide.md) - Complete deployment guide
+- [docs/api/client-integration-guide.md](docs/api/client-integration-guide.md) - API reference and client examples
+- [docs/development.md](docs/development.md) - Development guide
+
+### Additional Resources
+- [docs/README.md](docs/README.md) - Documentation index
+- [docs/howto/chat-context-in-repo.md](docs/howto/chat-context-in-repo.md) - Chat context best practices
