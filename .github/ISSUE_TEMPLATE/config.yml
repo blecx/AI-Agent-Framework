@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Copilot Instructions
+    url: https://github.com/blecx/AI-Agent-Framework/blob/main/.github/copilot-instructions.md
+    about: Comprehensive development guide and workflow instructions for AI agents and humans
+  - name: 📝 Prompt Templates
+    url: https://github.com/blecx/AI-Agent-Framework/tree/main/.github/prompts
+    about: Reusable templates for planning features, drafting issues/PRs, and coordinating cross-repo changes
+  - name: 🚀 Quick Start Guide
+    url: https://github.com/blecx/AI-Agent-Framework/blob/main/QUICKSTART.md
+    about: Fast setup guide for local development and Docker deployment
+  - name: 📚 Development Documentation
+    url: https://github.com/blecx/AI-Agent-Framework/tree/main/docs
+    about: Detailed documentation including development guides and architecture decisions
+  - name: 🔗 Frontend Repository
+    url: https://github.com/blecx/AI-Agent-Framework-Client
+    about: React/Vite client repository - check here for frontend-related issues

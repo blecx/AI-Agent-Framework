@@ -1,0 +1,225 @@
+name: Feature Request
+description: Propose a new feature or enhancement for the AI-Agent-Framework backend
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Please provide detailed information to help us evaluate and implement it.
+        
+        **Before submitting:**
+        - Check existing issues/PRs for similar requests
+        - Consider if this should be multiple smaller issues (prefer 1-2 day PRs)
+        - Follow the **Plan → Issues → PRs** workflow
+        - Review constraints below before proposing implementation
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / Problem Statement
+      description: What problem does this feature solve? What value does it provide?
+      placeholder: |
+        As a [user type], I need [capability] so that [benefit].
+        
+        Currently, [describe current limitation or problem]...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included and excluded from this feature?
+      value: |
+        ## In Scope
+        - 
+        - 
+        
+        ## Out of Scope
+        - 
+        - 
+        
+        ## Dependencies
+        - 
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Specific, testable conditions that must be met
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+        - [ ] No changes to existing functionality (unless intentional)
+        - [ ] API documented in OpenAPI schema (if applicable)
+        - [ ] No sensitive data committed (projectDocs/, configs/llm.json)
+    validations:
+      required: true
+
+  - type: textarea
+    id: api-contract
+    attributes:
+      label: API Contract (if applicable)
+      description: Define new/modified endpoints, request/response schemas
+      placeholder: |
+        ## New Endpoints
+        
+        ### POST /api/projects/{id}/export
+        **Request:** None
+        **Response 200:**
+        ```json
+        {
+          "project_id": "string",
+          "artifacts": [...],
+          "metadata": {...}
+        }
+        ```
+        **Response 404:** Project not found
+        
+        ## Modified Endpoints
+        (List any changes to existing endpoints)
+        
+        ## Breaking Changes
+        (Note any backwards incompatible changes)
+      render: markdown
+
+  - type: textarea
+    id: repo-constraints
+    attributes:
+      label: Repository Constraints Checklist
+      description: Critical constraints for AI-Agent-Framework backend
+      value: |
+        ## File Management
+        - [ ] **DO NOT commit `projectDocs/`** - It's a separate git repository managed via PROJECT_DOCS_PATH
+        - [ ] **DO NOT commit `configs/llm.json`** - User-specific configuration (use llm.default.json as reference)
+        - [ ] Verify `.gitignore` rules are respected
+        
+        ## Dependencies
+        - [ ] **Runtime dependencies** added to BOTH:
+          - `requirements.txt` (root)
+          - `apps/api/requirements.txt`
+        - [ ] **Dev/test dependencies** added to `requirements.txt` (root) ONLY
+        - [ ] All dependencies have pinned versions
+        
+        ## Validation
+        - [ ] Changes work with Docker deployment (`docker compose up --build`)
+        - [ ] Changes work with local venv (`PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload`)
+        - [ ] API health check passes (`curl http://localhost:8000/health`)
+        - [ ] Linting passes (`black`, `flake8`) - optional but recommended
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-breakdown
+    attributes:
+      label: Issue Breakdown Guidance
+      description: For large features, break into smaller issues (1 issue = 1 PR)
+      placeholder: |
+        If this feature is large (>200 lines changed), consider breaking it into:
+        
+        Issue 1: [Foundational change]
+        - Estimated size: S/M/L
+        - Files: apps/api/models.py, apps/api/services/...
+        
+        Issue 2: [Next increment]
+        - Estimated size: S/M/L
+        - Depends on: Issue 1
+        
+        ## Size Guidelines
+        - S: < 50 lines changed (< 1 day)
+        - M: 50-200 lines changed (1-2 days)
+        - L: > 200 lines changed (consider splitting)
+      render: markdown
+
+  - type: dropdown
+    id: cross-repo-coordination
+    attributes:
+      label: Does this require client changes?
+      description: Consider impact on AI-Agent-Framework-Client
+      options:
+        - "No - Backend only"
+        - "Yes - Client changes required"
+        - "Maybe - Needs analysis"
+    validations:
+      required: true
+
+  - type: textarea
+    id: cross-repo-details
+    attributes:
+      label: Cross-Repository Coordination
+      description: If client changes are needed, document the coordination plan
+      placeholder: |
+        ## Backend Changes (this repo)
+        - New endpoint: POST /api/...
+        - Response format: {...}
+        
+        ## Client Changes (AI-Agent-Framework-Client)
+        - Issue to create: [description]
+        - New components needed: [list]
+        - API integration: [details]
+        
+        ## Implementation Order
+        1. Backend PR merged first (backwards compatible)
+        2. Client issue created referencing backend PR
+        3. Client PR implemented and tested
+        4. Both deployed together (if breaking change)
+        
+        ## Related Issues
+        - Backend issue: (this issue)
+        - Client issue: blecx/AI-Agent-Framework-Client#XXX (create after backend plan)
+      render: markdown
+
+  - type: textarea
+    id: technical-approach
+    attributes:
+      label: Technical Approach
+      description: Proposed implementation details
+      placeholder: |
+        ## Files to Change
+        - `apps/api/routers/projects.py` - Add new endpoint
+        - `apps/api/models.py` - Add response model
+        - `apps/api/services/git_manager.py` - Add helper method (if needed)
+        
+        ## Key Components
+        - Use existing GitManager for document operations
+        - Follow FastAPI patterns from similar endpoints
+        - Add Pydantic models for validation
+        
+        ## Edge Cases / Considerations
+        - Handle missing project (404)
+        - Handle empty artifact list
+        - Consider performance for large projects
+        
+        ## References
+        - Similar implementation: [link to existing code]
+        - Related documentation: [link]
+      render: markdown
+
+  - type: textarea
+    id: docs-updates
+    attributes:
+      label: Documentation Updates
+      description: What documentation needs to be updated?
+      value: |
+        - [ ] README.md (if user-facing feature)
+        - [ ] QUICKSTART.md (if affects setup)
+        - [ ] docs/development.md (if affects dev workflow)
+        - [ ] OpenAPI/Swagger docs (automatic via FastAPI)
+        - [ ] .github/copilot-instructions.md (if affects conventions)
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: |
+        - Mockups or diagrams
+        - Links to related features
+        - Performance considerations
+        - Security implications
+        - Alternative approaches considered
