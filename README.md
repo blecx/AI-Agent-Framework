@@ -641,10 +641,27 @@ This project is part of the AI-Agent-Framework repository.
 
 ## Contributing
 
-1. Create a feature branch
-2. Make your changes
-3. Test with `docker compose up --build`
-4. Submit a pull request
+We follow a **Plan → Issues → PRs** workflow for all contributions. Please review our development guidelines before starting:
+
+**📋 Essential Reading:**
+- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - Complete development guide and workflow
+- **[.github/prompts/](.github/prompts/)** - Templates for planning, issues, and PRs
+- **[docs/development.md](docs/development.md)** - Detailed development documentation
+
+**Quick Contribution Steps:**
+1. **Plan**: Start with a clear spec (goal, scope, acceptance criteria)
+2. **Create Issue**: Use [issue template](.github/prompts/drafting-issue.md) with validation steps
+3. **Implement**: One issue per PR, keep changes small (< 200 lines preferred)
+4. **Validate**: Run linting, builds, and tests per [validation steps](.github/copilot-instructions.md#validation-steps-backend---ai-agent-framework)
+5. **Submit PR**: Use [PR template](.github/prompts/drafting-pr.md) with copy-pasteable validation commands
+6. **Review & Merge**: Squash merge preferred
+
+**Key Guidelines:**
+- **Never commit** `projectDocs/` or `configs/llm.json` (auto-ignored)
+- Always set `PROJECT_DOCS_PATH=../../projectDocs` when running API locally
+- Add runtime dependencies to **both** `requirements.txt` files (root and `apps/api/`)
+- Test with both local venv (`./setup.sh`) and Docker before submitting
+- For cross-repo changes (backend + frontend), see [coordination guide](.github/prompts/cross-repo-coordination.md)
 
 ---
 
