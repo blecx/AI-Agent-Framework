@@ -1,0 +1,149 @@
+# Step 1: Issue seed file for Copilot agent
+# Repo set: blecx/AI-Agent-Framework and blecx/AI-Agent-Framework-Client
+# Generated: 2026-01-10 22:58:06 UTC
+
+version: 1
+step: 1
+name: "Step 1 issue seed"
+created_utc: "2026-01-10 22:58:06"
+repos:
+  - owner: blecx
+    repo: AI-Agent-Framework
+    issues:
+      - key: "framework-01"
+        title: "Step 1: Define core agent interfaces and message schema"
+        description: |
+          Create the foundational interfaces for the agent framework so downstream features can build on a stable contract.
+
+          Requirements:
+          - Define core types/interfaces for Agent, Tool, Action/Command, Message, and Context.
+          - Provide a minimal message schema (role, content, metadata, timestamps) and a validation strategy.
+          - Document public API surface with inline docs.
+
+          Acceptance Criteria:
+          - Types/interfaces exist and are exported from the main package entrypoint.
+          - Basic unit tests exist for schema validation (if applicable).
+          - README or docs reference the new interfaces.
+
+          Code links (placeholders):
+          - [ ] framework interfaces: <LINK_TO_CODE>
+          - [ ] message schema: <LINK_TO_CODE>
+          - [ ] tests: <LINK_TO_CODE>
+        labels:
+          - "enhancement"
+          - "architecture"
+          - "step-1"
+
+      - key: "framework-02"
+        title: "Step 1: Add baseline configuration and environment loading"
+        description: |
+          Implement a small configuration layer for the framework to standardize environment variables and runtime settings.
+
+          Requirements:
+          - Add config module with typed configuration object.
+          - Load values from environment with sensible defaults.
+          - Document required env vars.
+
+          Acceptance Criteria:
+          - Config can be imported and used by other modules.
+          - Invalid/missing critical settings produce clear errors.
+
+          Code links (placeholders):
+          - [ ] config module: <LINK_TO_CODE>
+          - [ ] documentation: <LINK_TO_CODE>
+        labels:
+          - "enhancement"
+          - "configuration"
+          - "step-1"
+
+      - key: "framework-03"
+        title: "Step 1: Implement minimal tool runner with error handling"
+        description: |
+          Provide a minimal ToolRunner that can execute registered tools safely.
+
+          Requirements:
+          - Registry for tools by name.
+          - Execute tool with validated inputs.
+          - Standard error type for tool failures.
+
+          Acceptance Criteria:
+          - ToolRunner can register and run tools.
+          - Errors are surfaced with consistent structure.
+          - Example tool included.
+
+          Code links (placeholders):
+          - [ ] tool runner: <LINK_TO_CODE>
+          - [ ] example tool: <LINK_TO_CODE>
+        labels:
+          - "enhancement"
+          - "tooling"
+          - "step-1"
+
+  - owner: blecx
+    repo: AI-Agent-Framework-Client
+    issues:
+      - key: "client-01"
+        title: "Step 1: Create client SDK skeleton and package structure"
+        description: |
+          Scaffold the client SDK repository with a minimal package structure ready for implementation.
+
+          Requirements:
+          - Establish src/ layout and build tooling.
+          - Export a public Client class placeholder.
+          - Add basic lint/test configuration.
+
+          Acceptance Criteria:
+          - `npm test` (or equivalent) runs successfully.
+          - Package builds and exports a module.
+
+          Code links (placeholders):
+          - [ ] package entrypoint: <LINK_TO_CODE>
+          - [ ] build config: <LINK_TO_CODE>
+        labels:
+          - "enhancement"
+          - "client"
+          - "step-1"
+
+      - key: "client-02"
+        title: "Step 1: Define client ↔ framework message contract types"
+        description: |
+          Define the shared message/command contract used between the client SDK and the agent framework.
+
+          Requirements:
+          - Mirror message schema types from the framework.
+          - Add serialization/deserialization helpers.
+          - Document compatibility expectations.
+
+          Acceptance Criteria:
+          - Types compile and are exported.
+          - Simple tests cover serialization round-trip.
+
+          Code links (placeholders):
+          - [ ] contract types: <LINK_TO_CODE>
+          - [ ] serialization helpers: <LINK_TO_CODE>
+        labels:
+          - "enhancement"
+          - "client"
+          - "protocol"
+          - "step-1"
+
+      - key: "client-03"
+        title: "Step 1: Add example usage project/snippet"
+        description: |
+          Provide a minimal example showing how a consumer would use the client SDK to send messages/commands.
+
+          Requirements:
+          - Add example folder or README snippet.
+          - Include basic initialization and one request/response flow.
+
+          Acceptance Criteria:
+          - Example is referenced from README.
+          - Example builds/runs (if executable).
+
+          Code links (placeholders):
+          - [ ] example code: <LINK_TO_CODE>
+          - [ ] README section: <LINK_TO_CODE>
+        labels:
+          - "documentation"
+          - "client"
+          - "step-1"
