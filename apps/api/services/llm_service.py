@@ -18,7 +18,13 @@ class LLMService:
         self.client = httpx.AsyncClient(timeout=self.config.get("timeout", 120))
         
         # Set up Jinja2 for prompt templates
-        template_path = Path(__file__).parent.parent.parent.parent / "templates"
+        # Resolve templates relative to the installed app layout inside container.
+        # When the API is copied into /app, templates are placed at /app/templates.
+        # Use parent.parent to reach /app from /app/services
+        template_path = Path(__file__).resolve().parent.parent / "templates"
+        # Fallback: if templates not found there, try repository-root style (/templates)
+        if not template_path.exists():
+            template_path = Path(__file__).resolve().parent.parent.parent.parent / "templates"
         self.jinja_env = Environment(loader=FileSystemLoader(str(template_path)))
         
     def _load_config(self) -> Dict[str, Any]:
