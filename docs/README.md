@@ -18,8 +18,11 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 **Quick Links:**
 - 🚀 [Setup Guide](../QUICKSTART.md)
 - 💻 [Development Guide](development.md)
+- 🏛️ [Architecture Overview](architecture/overview.md)
+- 🚀 [Deployment Guide](deployment/README.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
-- 🔧 [Client Documentation](../client/README.md) - CLI API consumer
+- 🔌 [Client Integration Guide](api/client-integration.md)
+- 🔧 [TUI Client Documentation](../apps/tui/README.md)
 - 🏗️ [Architecture Decisions](adr/)
 - 💬 [Development Discussions](chat/)
 - 📝 [How-To Guides](howto/)
@@ -108,11 +111,34 @@ For detailed client documentation, see [client/README.md](../client/README.md).
 docs/
 ├── README.md                          # This file
 ├── development.md                     # Local development guide
+├── architecture/                      # System architecture documentation
+│   └── overview.md                    # Complete architecture overview
+├── deployment/                        # Deployment guides
+│   └── README.md                      # Deployment scenarios and best practices
+├── api/                               # API documentation
+│   └── client-integration.md          # Guide for building API clients
 ├── spec/                              # Formal specifications
 ├── adr/                               # Architecture Decision Records
 ├── chat/                              # Development transcripts
 └── howto/                             # Procedural guides
 ```
+
+---
+
+## Architecture & Deployment
+
+Comprehensive guides for understanding and deploying the system.
+
+| Document | Description | Last Updated |
+|----------|-------------|--------------|
+| [Architecture Overview](architecture/overview.md) | Complete system architecture including components, communication flows, data storage, and design principles | 2026-01-10 |
+| [Deployment Guide](deployment/README.md) | Deployment scenarios from single-machine to multi-component production deployments, including Docker, Kubernetes, and manual deployment strategies | 2026-01-10 |
+| [Client Integration Guide](api/client-integration.md) | Comprehensive guide for developers building custom API clients with endpoint reference, examples, and best practices | 2026-01-10 |
+
+**Topics Covered:**
+- **Architecture:** System components (API, TUI, WebUI), communication flows, deployment modes, technology stack
+- **Deployment:** Docker Compose, manual deployment, production considerations, scaling, monitoring
+- **API Integration:** Endpoint reference, authentication, error handling, client best practices, example implementations
 
 ---
 
@@ -143,12 +169,14 @@ Key architectural decisions with context, rationale, and consequences.
 | [ADR-0002](adr/0002-llm-http-adapter-json-config.md) | LLM HTTP Adapter Configured by JSON with LM Studio Defaults | 2026-01-09 | ✅ Accepted |
 | [ADR-0003](adr/0003-propose-apply-before-commit.md) | Propose/Apply Workflow with Review-Before-Commit | 2026-01-09 | ✅ Accepted |
 | [ADR-0004](adr/0004-separate-client-application.md) | Separate Client Application for API Consumption | 2026-01-09 | ✅ Accepted |
+| [ADR-0005](adr/0005-monorepo-strategy.md) | Monorepo Strategy for All Client Interfaces | 2026-01-10 | ✅ Accepted |
 
 **ADR Topics:**
 - Why separate git repository for project documents?
 - Why HTTP adapter instead of LLM SDK?
 - Why two-step propose/apply workflow?
 - Why separate client application container?
+- Why keep all clients (TUI, WebUI) in the same repository?
 
 **ADR Template:** [template.md](adr/template.md)
 
@@ -314,10 +342,13 @@ Find all documentation related to a specific feature or decision.
 Find documentation by topic.
 
 ### Architecture & Design
+- [Architecture Overview](architecture/overview.md)
 - [MVP Specification](spec/mvp-iso21500-agent.md)
 - [ADR-0001: Separate Docs Repository](adr/0001-docs-repo-mounted-git.md)
 - [ADR-0002: LLM HTTP Adapter](adr/0002-llm-http-adapter-json-config.md)
 - [ADR-0003: Propose/Apply Workflow](adr/0003-propose-apply-before-commit.md)
+- [ADR-0004: Separate Client Container](adr/0004-separate-client-application.md)
+- [ADR-0005: Monorepo Strategy](adr/0005-monorepo-strategy.md)
 
 ### Security & Compliance
 - [MVP Spec - Security Section](spec/mvp-iso21500-agent.md#compliance--security)
@@ -328,15 +359,24 @@ Find documentation by topic.
 
 ### Configuration & Setup
 - [Quick Start Guide](../QUICKSTART.md)
+- [Deployment Guide](deployment/README.md)
 - [README - Setup](../README.md#setup)
 - [MVP Spec - LLM Configuration](spec/mvp-iso21500-agent.md#llm-configuration)
 - [ADR-0002: LLM Configuration](adr/0002-llm-http-adapter-json-config.md)
 
+### API & Client Integration
+- [Client Integration Guide](api/client-integration.md)
+- [TUI Client README](../apps/tui/README.md)
+- [API Documentation (Interactive)](http://localhost:8000/docs)
+- [Architecture Overview - Communication Flows](architecture/overview.md#communication-flows)
+
 ### Development & Workflow
 - [Development Guide](development.md)
+- [Deployment Guide - Development Setup](deployment/README.md#development-setup)
 - [README - Development](../README.md#development)
 - [QUICKSTART - Local Development](../QUICKSTART.md#local-development-without-docker)
 - [ADR-0003: Propose/Apply Workflow](adr/0003-propose-apply-before-commit.md)
+- [ADR-0005: Monorepo Strategy](adr/0005-monorepo-strategy.md)
 - [Chat Transcript: Full Development Discussion](chat/2026-01-09-blecx-copilot-transcript.md)
 
 ### Documentation Best Practices
@@ -429,6 +469,7 @@ See [How-To: Chat Context Storage](howto/chat-context-in-repo.md) for detailed g
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 1.1.0 | 2026-01-10 | Added architecture overview, deployment guide, client integration guide, and ADR-0005 | GitHub Copilot |
 | 1.0.0 | 2026-01-09 | Initial documentation structure | GitHub Copilot |
 
 ---
@@ -448,7 +489,7 @@ See [How-To: Chat Context Storage](howto/chat-context-in-repo.md) for detailed g
 
 ---
 
-**Last Updated:** 2026-01-09  
+**Last Updated:** 2026-01-10  
 **Maintained By:** Development Team  
 **Classification:** Internal  
 **Status:** Active
