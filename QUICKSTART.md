@@ -233,6 +233,8 @@ For detailed WebUI documentation, see [AI-Agent-Framework-Client](https://github
 
 The TUI/CLI client is included in this repository and provides text-based interfaces for automation and scripting.
 
+**For detailed TUI documentation, see [apps/tui/README.md](apps/tui/README.md).**
+
 ### View Project Documents
 
 All project documents are stored in `./projectDocs/` as a separate git repository:
