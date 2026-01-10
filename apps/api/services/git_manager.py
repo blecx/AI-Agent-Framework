@@ -4,6 +4,8 @@ Git repository manager for project documents.
 import os
 import json
 import git
+import subprocess
+import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
@@ -22,15 +24,83 @@ class GitManager:
         self.base_path.mkdir(parents=True, exist_ok=True)
         
         git_dir = self.base_path / ".git"
+        logger = logging.getLogger(__name__)
+
+        # Helper to attempt marking the mounted repo as safe for git
+        def add_safe_directory():
+            try:
+                subprocess.run([
+                    "git",
+                    "config",
+                    "--global",
+                    "--add",
+                    "safe.directory",
+                    str(self.base_path)
+                ], check=False)
+                logger.info("Added %s to git safe.directory", self.base_path)
+            except Exception:
+                logger.exception("Failed to add safe.directory for %s", self.base_path)
+
         if not git_dir.exists():
-            self.repo = git.Repo.init(self.base_path)
-            # Create initial commit
-            readme_path = self.base_path / "README.md"
-            readme_path.write_text("# Project Documents\n\nThis repository contains project management documents.\n")
-            self.repo.index.add(["README.md"])
-            self.repo.index.commit("Initial commit")
+            try:
+                self.repo = git.Repo.init(self.base_path)
+                # Create initial commit
+                readme_path = self.base_path / "README.md"
+                readme_path.write_text("# Project Documents\n\nThis repository contains project management documents.\n")
+                try:
+                    self.repo.index.add(["README.md"])
+                    self.repo.index.commit("Initial commit")
+                except Exception:
+                    logger.exception("Initial commit failed in new repo at %s", self.base_path)
+            except Exception:
+                logger.exception("Failed to initialize git repo at %s", self.base_path)
+                # Attempt to mark directory safe and retry
+                add_safe_directory()
+                try:
+                    self.repo = git.Repo(self.base_path)
+                except Exception:
+                    # If still failing, re-create repository
+                    try:
+                        backup = self.base_path / f".git.broken.{int(datetime.utcnow().timestamp())}"
+                        if git_dir.exists():
+                            git_dir.rename(backup)
+                        self.repo = git.Repo.init(self.base_path)
+                        readme_path = self.base_path / "README.md"
+                        readme_path.write_text("# Project Documents\n\nThis repository contains project management documents.\n")
+                        self.repo.index.add(["README.md"])
+                        self.repo.index.commit("Initial commit")
+                        logger.warning("Reinitialized repository at %s, moved old .git to %s", self.base_path, backup)
+                    except Exception:
+                        logger.exception("Failed to reinitialize repository at %s", self.base_path)
         else:
-            self.repo = git.Repo(self.base_path)
+            # Try opening existing repo; handle corrupted or unsafe repos gracefully
+            try:
+                try:
+                    self.repo = git.Repo(self.base_path)
+                except Exception:
+                    # Try marking safe.directory and retry
+                    add_safe_directory()
+                    self.repo = git.Repo(self.base_path)
+            except Exception:
+                logger.exception("Existing repository at %s appears invalid, attempting reinit", self.base_path)
+                try:
+                    backup = self.base_path / f".git.broken.{int(datetime.utcnow().timestamp())}"
+                    git_dir.rename(backup)
+                except Exception:
+                    logger.exception("Failed to move broken .git at %s", self.base_path)
+                try:
+                    self.repo = git.Repo.init(self.base_path)
+                    readme_path = self.base_path / "README.md"
+                    if not readme_path.exists():
+                        readme_path.write_text("# Project Documents\n\nThis repository contains project management documents.\n")
+                    try:
+                        self.repo.index.add(["README.md"])
+                        self.repo.index.commit("Initial commit")
+                    except Exception:
+                        logger.exception("Initial commit failed after reinit at %s", self.base_path)
+                    logger.warning("Reinitialized repository at %s", self.base_path)
+                except Exception:
+                    logger.exception("Failed to reinitialize repository at %s", self.base_path)
             
     def get_project_path(self, project_key: str) -> Path:
         """Get the path for a specific project."""
