@@ -251,11 +251,60 @@ For complete API documentation, run the API server and visit: `http://localhost:
 docs/
 ├── README.md                          # This file
 ├── development.md                     # Local development guide
+├── architecture/                      # System architecture documentation
+├── deployment/                        # Deployment guides
+├── api/                               # API and client integration guides
 ├── spec/                              # Formal specifications
 ├── adr/                               # Architecture Decision Records
 ├── chat/                              # Development transcripts
 └── howto/                             # Procedural guides
 ```
+
+---
+
+## Architecture Documentation
+
+Comprehensive system architecture and design documentation.
+
+| Document | Description | Last Updated |
+|----------|-------------|--------------|
+| [Architecture Overview](architecture/overview.md) | Complete system architecture including components, communication patterns, deployment architecture, and data flow | 2026-01-10 |
+
+**Topics Covered:**
+- Component diagram and architecture layers
+- Repository structure (main repo + future client repo)
+- REST API communication patterns
+- Deployment architecture (Docker Compose, Kubernetes, cloud platforms)
+- Security architecture and audit logging
+- Technology stack and scalability considerations
+- Extension points for adding new clients and commands
+
+---
+
+## Deployment & Integration
+
+Guides for deploying and integrating with the AI-Agent-Framework.
+
+| Document | Description | Last Updated |
+|----------|-------------|--------------|
+| [Multi-Component Deployment Guide](deployment/multi-component-guide.md) | Complete deployment guide covering local development, Docker Compose, Kubernetes, and cloud platforms | 2026-01-10 |
+| [Client Integration Guide](api/client-integration-guide.md) | API reference and examples for building custom clients in Python, JavaScript, and Go | 2026-01-10 |
+
+**Deployment Topics:**
+- Local development setup (with and without Docker)
+- Production deployment options (Docker Compose, Kubernetes, cloud)
+- Networking configuration and CORS
+- Environment variables and secrets management
+- Health checks, monitoring, logging
+- Backup and recovery strategies
+
+**Integration Topics:**
+- Complete API endpoint reference with curl examples
+- Authentication flow (current and future)
+- Request/response formats and error handling
+- Propose/apply workflow implementation
+- Client implementation examples (Python, JavaScript, Go)
+- Best practices and troubleshooting
 
 ---
 
@@ -480,10 +529,22 @@ Find all documentation related to a specific feature or decision.
 Find documentation by topic.
 
 ### Architecture & Design
+- [Architecture Overview](architecture/overview.md) - Complete system architecture
 - [MVP Specification](spec/mvp-iso21500-agent.md)
 - [ADR-0001: Separate Docs Repository](adr/0001-docs-repo-mounted-git.md)
 - [ADR-0002: LLM HTTP Adapter](adr/0002-llm-http-adapter-json-config.md)
 - [ADR-0003: Propose/Apply Workflow](adr/0003-propose-apply-before-commit.md)
+- [ADR-0004: Client Separation Strategy](adr/0004-separate-client-application.md)
+
+### Deployment & Operations
+- [Multi-Component Deployment Guide](deployment/multi-component-guide.md)
+- [Quick Start Guide](../QUICKSTART.md)
+- [README - Setup](../README.md#setup)
+
+### API & Integration
+- [Client Integration Guide](api/client-integration-guide.md) - Build your own client
+- [API Auto-Generated Docs](http://localhost:8000/docs) (when running)
+- [Client README](../client/README.md) - Standalone CLI client
 
 ### Security & Compliance
 - [MVP Spec - Security Section](spec/mvp-iso21500-agent.md#compliance--security)
@@ -493,6 +554,8 @@ Find documentation by topic.
 - [How-To: Chat Context - Compliance](howto/chat-context-in-repo.md#compliance-guidance)
 
 ### Configuration & Setup
+- [Deployment Guide - Environment Variables](deployment/multi-component-guide.md#environment-variables)
+- [Deployment Guide - Secrets Management](deployment/multi-component-guide.md#secrets-management)
 - [Quick Start Guide](../QUICKSTART.md)
 - [README - Setup](../README.md#setup)
 - [MVP Spec - LLM Configuration](spec/mvp-iso21500-agent.md#llm-configuration)

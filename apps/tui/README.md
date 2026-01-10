@@ -150,6 +150,25 @@ python main.py artifacts list --project PROJ001
 python main.py artifacts get --project PROJ001 --path artifacts/gap_assessment.md
 ```
 
+#### Configuration Management
+
+```bash
+# Show current configuration
+python main.py config show
+
+# Set API URL
+python main.py config set --api-url http://localhost:8000
+
+# Set API key
+python main.py config set --api-key your-secret-key
+
+# Set both URL and key
+python main.py config set --api-url http://api:8000 --api-key mykey
+
+# Reset configuration to defaults
+python main.py config reset
+```
+
 ### Docker Usage
 
 When using Docker, prefix commands with `docker compose run tui`:
@@ -353,7 +372,8 @@ apps/tui/
 │   ├── __init__.py
 │   ├── projects.py      # Project management commands
 │   ├── propose.py       # Propose/apply workflow
-│   └── artifacts.py     # Artifact commands
+│   ├── artifacts.py     # Artifact commands
+│   └── config.py        # Configuration commands
 └── README.md            # This file
 ```
 
@@ -376,6 +396,13 @@ Available commands: `assess_gaps`, `generate_artifact`, `generate_plan`
 
 - `artifacts list --project <KEY>` - List project artifacts
 - `artifacts get --project <KEY> --path <PATH>` - View artifact content
+
+### Configuration Commands
+
+- `config show` - Display current configuration
+- `config set --api-url <URL>` - Set API base URL
+- `config set --api-key <KEY>` - Set API authentication key
+- `config reset` - Reset configuration to defaults
 
 ## Dependencies
 

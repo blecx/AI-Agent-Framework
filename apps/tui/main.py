@@ -11,6 +11,7 @@ from utils import print_success, print_json
 from commands.projects import projects_group
 from commands.propose import propose_group
 from commands.artifacts import artifacts_group
+from commands.config import config_group
 
 
 @click.group()
@@ -60,6 +61,7 @@ def health():
 cli.add_command(projects_group)
 cli.add_command(propose_group)
 cli.add_command(artifacts_group)
+cli.add_command(config_group)
 
 
 if __name__ == "__main__":
