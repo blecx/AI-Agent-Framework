@@ -16,13 +16,18 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-### 2. Create Project Documents Directory
+### 2. Project Documents Directory
+
+By default the compose configuration uses a Docker named volume for project documents so no manual step is required.
+
+If you prefer to keep project documents on your host filesystem, create the directory before starting services:
 
 ```bash
-mkdir projectDocs
+# Optional: create host directory for persistent docs (only needed if you want host-managed files)
+mkdir -p projectDocs
 ```
 
-This directory will be automatically initialized as a git repository by the API on first run.
+The API will initialize the repository inside the docs directory on first run.
 
 ### 3. (Optional) Configure LLM
 
@@ -43,12 +48,14 @@ To use an LLM, create or edit `configs/llm.json`:
 ```
 
 For LM Studio:
+
 1. Download and install LM Studio
 2. Load a model (e.g., CodeLlama, Mistral, or any chat model)
 3. Start the local server (Server tab → Start Server)
 4. Use the config above (default)
 
 For OpenAI:
+
 ```json
 {
   "provider": "openai",
@@ -67,6 +74,7 @@ docker compose up --build
 ```
 
 This will:
+
 - Build the FastAPI backend
 - Build the React frontend
 - Start both services
@@ -74,9 +82,9 @@ This will:
 
 ### 5. Access the Application
 
-- **Web UI**: http://localhost:8080
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+- **Web UI**: <http://localhost:8080>
+- **API**: <http://localhost:8000>
+- **API Docs**: <http://localhost:8000/docs>
 - **Client CLI**: Use `docker compose run client <command>`
 
 ### 6. (Optional) Try the Client
@@ -130,18 +138,21 @@ The AI-Agent Framework offers multiple interfaces to match your workflow:
 ### Decision Guide
 
 **Use TUI (`apps/tui/`) when:**
+
 - ✅ Running in CI/CD pipelines
 - ✅ Writing automation scripts
 - ✅ Need simple, fast command-line operations
 - ✅ Working in minimal environments
 
 **Use Advanced Client (`client/`) when:**
+
 - ✅ Working in terminal/SSH sessions but want visual navigation
 - ✅ Need interactive feedback in terminal
 - ✅ Debugging or testing the API
 - ✅ Want both CLI scripting and interactive TUI modes
 
 **Use WebUI (separate repo) when:**
+
 - ✅ Need rich visual interface
 - ✅ Managing projects interactively
 - ✅ Working with non-technical team members
@@ -152,6 +163,7 @@ The AI-Agent Framework offers multiple interfaces to match your workflow:
 The TUI client is a simple command-line tool included in this repository.
 
 **Docker:**
+
 ```bash
 # Show help
 docker compose run tui --help
@@ -167,6 +179,7 @@ docker compose run tui commands propose --project PROJ001 --command assess_gaps
 ```
 
 **Local:**
+
 ```bash
 cd apps/tui
 python -m venv .venv
@@ -182,6 +195,7 @@ python main.py health
 The advanced client provides both CLI and interactive TUI modes.
 
 **Docker (Interactive TUI):**
+
 ```bash
 # Launch interactive TUI (default)
 docker compose run client
@@ -191,6 +205,7 @@ docker compose run client tui
 ```
 
 **Docker (CLI mode):**
+
 ```bash
 # Run CLI commands
 docker compose run client --help
@@ -199,6 +214,7 @@ docker compose run client demo --key DEMO001 --name "Demo Project"
 ```
 
 **Local:**
+
 ```bash
 cd client
 python -m venv .venv
@@ -217,7 +233,9 @@ The WebUI is a **separate repository** with a modern React-based interface.
 **Repository:** [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
 
 **Quick Start:**
+
 1. Clone the WebUI repository:
+
    ```bash
    git clone https://github.com/blecx/AI-Agent-Framework-Client.git
    ```
@@ -231,6 +249,7 @@ The WebUI is a **separate repository** with a modern React-based interface.
 **Note:** The Docker setup in this repository already includes a web frontend at `apps/web/`. The separate WebUI repository provides an alternative, enhanced interface with additional features.
 
 **When to use each web interface:**
+
 - **`apps/web/`** (included): Quick setup, basic features, integrated deployment
 - **Separate WebUI repo**: Enhanced features, independent updates, customizable
 
@@ -244,7 +263,7 @@ You can interact with the system through multiple interfaces. Below are examples
 
 #### Create a Project
 
-1. Open http://localhost:8080
+1. Open <http://localhost:8080>
 2. Click "Create New Project"
 3. Enter a project key (e.g., `PROJ001`) - alphanumeric, dashes, underscores only
 4. Enter a project name (e.g., `Website Redesign`)
@@ -351,11 +370,11 @@ docker compose run client demo --key DEMO001 --name "Automated Demo"
 
 **Client Usage Summary:**
 
-| Client | Best For | Documentation |
-|--------|----------|---------------|
-| **TUI** (`apps/tui/`) | Simple CLI automation, quick commands | [apps/tui/README.md](apps/tui/README.md) |
-| **Advanced Client** (`client/`) | Interactive terminal + CLI, rich feedback | [client/README.md](client/README.md) |
-| **WebUI** (separate repo) | Visual interface, team collaboration | [WebUI Repository](https://github.com/blecx/AI-Agent-Framework-Client) |
+| Client                          | Best For                                  | Documentation                                                          |
+| ------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| **TUI** (`apps/tui/`)           | Simple CLI automation, quick commands     | [apps/tui/README.md](apps/tui/README.md)                               |
+| **Advanced Client** (`client/`) | Interactive terminal + CLI, rich feedback | [client/README.md](client/README.md)                                   |
+| **WebUI** (separate repo)       | Visual interface, team collaboration      | [WebUI Repository](https://github.com/blecx/AI-Agent-Framework-Client) |
 
 For more examples and detailed documentation, see the respective client README files.
 
@@ -418,31 +437,36 @@ If you prefer to develop without Docker, you can run the application directly on
 ### Setup Steps
 
 1. **Clone the repository:**
+
 ```bash
 git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-2. **Run the intelligent setup script:**
+1. **Run the intelligent setup script:**
 
 The setup script automatically detects available Python versions, lets you choose one, and sets up your environment.
 
 **Linux/macOS:**
+
 ```bash
 ./setup.sh
 ```
 
 **Windows (PowerShell - Recommended):**
+
 ```powershell
 .\setup.ps1
 ```
 
 **Windows (Command Prompt):**
+
 ```cmd
 setup.bat
 ```
 
 **Script features:**
+
 - 🔍 Auto-detects all Python 3.x versions on your system
 - 📋 Shows compatible versions (3.10+) with their installation paths
 - ✅ Prompts you to select a version or auto-selects if only one found
@@ -452,41 +476,49 @@ setup.bat
 - 💡 Provides helpful download links if no compatible version found
 
 This will:
+
 - Create a virtual environment in `.venv/`
 - Install all Python dependencies
 - Display next steps
 
-3. **Activate the virtual environment:**
+1. **Activate the virtual environment:**
 
 **Linux/macOS:**
+
 ```bash
 source .venv/bin/activate
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
 **Windows (Command Prompt):**
+
 ```cmd
 .venv\Scripts\activate.bat
 ```
 
-4. **Create project documents directory:**
+1. **Create project documents directory:**
+
 ```bash
 mkdir projectDocs
 ```
 
-5. **Configure LLM (optional):**
+1. **Configure LLM (optional):**
+
 ```bash
 cp configs/llm.default.json configs/llm.json
 # Edit configs/llm.json with your LLM settings
 ```
 
 For local LLM (LM Studio):
+
 - Ensure LM Studio is running on `http://localhost:1234`
 - Update `configs/llm.json`:
+
   ```json
   {
     "provider": "lmstudio",
@@ -496,17 +528,20 @@ For local LLM (LM Studio):
   }
   ```
 
-6. **Run the API server:**
+1. **Run the API server:**
+
 ```bash
 cd apps/api
 PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 ```
 
 The API will be available at:
-- http://localhost:8000
-- API Docs: http://localhost:8000/docs
 
-7. **(Optional) Run the Web UI:**
+- <http://localhost:8000>
+- API Docs: <http://localhost:8000/docs>
+
+1. **(Optional) Run the Web UI:**
+
 ```bash
 # In a new terminal
 cd apps/web
@@ -514,11 +549,12 @@ npm install
 npm run dev
 ```
 
-The web UI will be available at http://localhost:5173
+The web UI will be available at <http://localhost:5173>
 
 ### When to Use Local Development vs Docker
 
 **Use Local Development (.venv) when:**
+
 - You're actively developing and debugging code
 - You need faster iteration cycles
 - You want to use your IDE's debugger
@@ -526,6 +562,7 @@ The web UI will be available at http://localhost:5173
 - You're running on a development machine
 
 **Use Docker when:**
+
 - You want a consistent environment across team members
 - You're deploying to production
 - You need to test the full system integration
@@ -537,12 +574,14 @@ The web UI will be available at http://localhost:5173
 You can easily switch between local and Docker development:
 
 **To Docker:**
+
 ```bash
 deactivate  # Exit virtual environment if active
 docker compose up --build
 ```
 
 **To Local:**
+
 ```bash
 docker compose down
 source .venv/bin/activate  # or .venv\Scripts\activate.bat on Windows
@@ -559,12 +598,14 @@ For production deployment or if you prefer Docker, continue using the Docker set
 ### Customizing Templates
 
 Edit templates in:
+
 - `templates/prompts/iso21500/` - Jinja2 prompts for LLM
 - `templates/output/iso21500/` - Markdown output templates
 
 ### Audit Logging
 
 Audit events are stored in:
+
 ```
 projectDocs/[PROJECT_KEY]/events/events.ndjson
 ```
@@ -581,13 +622,14 @@ By default, only hashes are logged (no sensitive content). To enable full loggin
 ## Next Steps
 
 - Review the full [README.md](README.md) for detailed architecture information
-- Explore the API documentation at http://localhost:8000/docs
+- Explore the API documentation at <http://localhost:8000/docs>
 - Customize templates for your specific needs
 - Integrate with CI/CD pipelines for automated project management
 
 ## Support
 
 For issues or questions:
+
 - Check the [README.md](README.md) for detailed documentation
 - Review API logs: `docker compose logs api`
 - Review web logs: `docker compose logs web`

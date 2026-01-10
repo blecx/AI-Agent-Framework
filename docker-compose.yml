@@ -9,8 +9,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Mount project documents directory (user must create this)
-      - ./projectDocs:/projectDocs
+      # Use a Docker named volume for project documents by default (created automatically).
+      # If you prefer to store docs on the host filesystem, replace with a bind mount:
+      # - ./projectDocs:/projectDocs
+      - projectDocs:/projectDocs
       # Mount LLM config (optional, uses default if not provided)
       - ./configs/llm.default.json:/config/llm.json:ro
     environment:

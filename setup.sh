@@ -190,7 +190,13 @@ echo "  1. Activate the virtual environment:"
 echo "     source .venv/bin/activate"
 echo ""
 echo "  2. Create the projectDocs directory (if not exists):"
-echo "     mkdir -p projectDocs"
+echo "     (created automatically by this setup script and Docker)"
+# Ensure projectDocs exists so Docker and local runs work without manual steps
+if [ ! -d "projectDocs" ]; then
+    echo "Creating projectDocs directory..."
+    mkdir -p projectDocs
+    echo "Created projectDocs/"
+fi
 echo ""
 echo "  3. Configure LLM settings (optional):"
 echo "     cp configs/llm.default.json configs/llm.json"
