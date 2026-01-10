@@ -239,6 +239,77 @@ Access points:
 
 ## Development Workflow
 
+### Standard Workflow: Plan → Issues → PRs
+
+**ALWAYS follow this workflow for features, bug fixes, and cross-repo changes:**
+
+See **[../.github/copilot-instructions.md](../.github/copilot-instructions.md)** for complete guidance and **[../.github/prompts/](../.github/prompts/)** for templates.
+
+#### 1. Planning Phase
+- Start with a clear specification (goal, scope, acceptance criteria, constraints)
+- Consider impact on [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- Use [planning template](../.github/prompts/planning-feature.md) to structure your plan
+- Break work into small issues (< 200 lines changed per PR)
+
+#### 2. Issue Creation
+- Create focused issues using [issue template](../.github/prompts/drafting-issue.md)
+- Include specific acceptance criteria and validation steps
+- Link related issues across repositories for cross-repo work
+- One issue = one PR
+
+#### 3. Implementation
+- Create feature branch from `main`
+- Make minimal, focused changes
+- Follow existing code patterns and conventions
+- Never commit `projectDocs/` or `configs/llm.json`
+
+#### 4. Validation (Before PR)
+Run these validation steps locally:
+
+```bash
+# Activate environment
+source .venv/bin/activate
+
+# Lint code (optional but recommended)
+python -m black apps/api/
+python -m flake8 apps/api/
+
+# Test API
+cd apps/api
+PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+# In another terminal:
+curl http://localhost:8000/health
+
+# Test frontend (if changed)
+cd apps/web
+npm run lint
+npm run build
+
+# Verify git status
+git status  # Ensure no unwanted files staged
+```
+
+#### 5. Pull Request
+- Use [PR template](../.github/prompts/drafting-pr.md) for description
+- Include copy-pasteable validation steps for reviewers
+- Reference issue with "Fixes #123" or "Closes #123"
+- Keep PR size small (prefer < 200 lines)
+- Add screenshots for UI changes
+
+#### 6. Review & Merge
+- Address review feedback
+- Squash merge preferred (keeps history clean)
+- Delete branch after merge
+
+### Cross-Repository Coordination
+
+When changes span backend and frontend:
+- Use [cross-repo coordination template](../.github/prompts/cross-repo-coordination.md)
+- Document API contract explicitly
+- Create issues in both repos with cross-references
+- Plan implementation order (usually backend first)
+- Test integration before final merge
+
 ### Making Code Changes
 
 1. **Activate virtual environment:**

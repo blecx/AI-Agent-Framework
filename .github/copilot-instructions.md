@@ -3,6 +3,43 @@
 ## Overview
 ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10+) + React/Vite. Docker deployment or local venv. ~190MB, 8000+ files. Git-based document storage in `projectDocs/` (separate repo, NEVER commit to code). Two containers: API + web/nginx.
 
+## Development Workflow
+
+### Plan → Issues → PRs
+**ALWAYS follow this standard workflow for all feature work, bug fixes, and cross-repo coordination:**
+
+1. **Start with a Plan/Spec**
+   - Define clear goal, scope, acceptance criteria, and constraints
+   - Consider impact on related repo: [`blecx/AI-Agent-Framework-Client`](https://github.com/blecx/AI-Agent-Framework-Client)
+   - Document any cross-repo dependencies or API changes
+
+2. **Break Work into Small Issues**
+   - Each issue should be sized for a single PR
+   - Issues must include acceptance criteria and validation steps
+   - Link related issues across repositories when coordinating changes
+
+3. **Implement One Issue Per PR**
+   - Keep diffs small and reviewable (prefer < 200 lines changed)
+   - Include validation steps in PR description
+   - Reference the issue number in PR title and description
+   - Use descriptive commit messages following conventional commits
+
+4. **Validation Requirements** (see below for repo-specific steps)
+   - Run linting and builds before submitting PR
+   - Test locally with both Docker and venv setups
+   - Verify no unintended files are committed
+
+5. **Merge Strategy**
+   - Prefer squash merges to keep history clean
+   - Ensure PR title is clear (becomes squash commit message)
+   - Delete branch after merge
+
+### Traceability
+Maintain clear links: Plan → Issue → PR → Commits
+- Use issue references in PRs: "Fixes #123" or "Closes #123"
+- Include context in PR descriptions
+- Link to related issues in other repos when coordinating changes
+
 ## Build & Setup (ALWAYS follow this sequence)
 
 **Local Dev (5-10 min):**
@@ -27,6 +64,57 @@ docker compose up --build  # Web: :8080, API: :8000
 ```
 
 **Prerequisites:** Python 3.10+ (3.12 tested), Node 20+, Git, Docker 28+ (optional)
+
+## Validation Steps (Backend - AI-Agent-Framework)
+
+### Critical Environment Requirements
+- **NEVER commit `projectDocs/` directory** - it's a separate git repository
+- **NEVER commit `configs/llm.json`** - contains local LLM configuration
+- Always set `PROJECT_DOCS_PATH` when running the API locally
+
+### Pre-Commit Validation Checklist
+1. **Setup Python Environment**
+   ```bash
+   ./setup.sh  # Creates .venv if not exists
+   source .venv/bin/activate  # REQUIRED for all Python commands
+   mkdir -p projectDocs  # MUST exist before API starts
+   ```
+
+2. **Run Linters** (optional but recommended)
+   ```bash
+   python -m black apps/api/
+   python -m flake8 apps/api/
+   ```
+
+3. **Test API Locally**
+   ```bash
+   cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
+   # In another terminal:
+   curl http://localhost:8000/health
+   # Should return: {"status":"healthy","docs_path":"..."}
+   ```
+
+4. **Test Frontend** (if changed)
+   ```bash
+   cd apps/web
+   npm install
+   npm run lint  # 1 warning in ProjectView.jsx is acceptable
+   npm run build  # Should complete in ~120ms
+   ```
+
+5. **Test Docker Build** (if Dockerfile changed)
+   ```bash
+   docker compose build
+   docker compose up
+   # Verify web at :8080 and API at :8000
+   ```
+
+6. **Verify Git Status**
+   ```bash
+   git status
+   # Ensure projectDocs/ and configs/llm.json are NOT staged
+   # Check .gitignore if they appear
+   ```
 
 ## Key Files
 
@@ -64,6 +152,19 @@ docker compose up --build  # Web: :8080, API: :8000
 
 **Security:** NEVER commit projectDocs/ or configs/llm.json (.gitignored). Use env vars for secrets. Audit logs store hashes only (default).
 
+### Adding New Dependencies
+When adding Python dependencies:
+- **Runtime dependencies** → Add to BOTH `requirements.txt` (root) AND `apps/api/requirements.txt`
+- **Development/testing dependencies** → Add to `requirements.txt` (root) ONLY
+- Always specify versions for reproducibility
+- Run `pip install -r requirements.txt` after changes
+- Update Docker image if runtime deps changed
+
+When adding JavaScript dependencies:
+- Run from `apps/web/`: `npm install <package>`
+- Commit updated `package.json` and `package-lock.json`
+- Test build: `npm run build`
+
 ## Conventions
 
 **Git:** projectDocs/ is separate repo, auto-initialized by API. Each command = commit `[PROJECT_KEY] Description`. Let API manage projectDocs/, don't modify manually.
@@ -71,6 +172,65 @@ docker compose up --build  # Web: :8080, API: :8000
 **Code:** Backend=no strict style (black/flake8 available), Frontend=modern React hooks. Minimal comments (prefer self-documenting). RESTful API with propose/apply pattern. CORS enabled (configure for prod).
 
 **Env:** PROJECT_DOCS_PATH (required for API), LLM_CONFIG_PATH (defaults /config/llm.json in Docker).
+
+## Cross-Repository Coordination
+
+### Working with AI-Agent-Framework-Client
+This backend often requires coordinated changes with the React/Vite client in [`blecx/AI-Agent-Framework-Client`](https://github.com/blecx/AI-Agent-Framework-Client).
+
+**When making API changes:**
+1. **Document breaking changes** in PR description
+2. **Version API endpoints** if breaking compatibility
+3. **Create matching client issue** before merging backend changes
+4. **Link issues across repos**: "Requires blecx/AI-Agent-Framework-Client#123"
+5. **Test integration** by running both services together
+
+**Common coordination scenarios:**
+- **New API endpoint** → Client needs to consume it
+- **Changed response format** → Client needs to update interfaces
+- **New project command** → Client needs UI components
+- **Changed authentication** → Client needs to update requests
+
+**Coordination workflow:**
+1. Create backend issue with API spec
+2. Create client issue referencing backend issue
+3. Implement backend PR first (if backward compatible)
+4. Implement client PR with backend PR reference
+5. Merge backend, then client
+
+For breaking changes, coordinate timing with client maintainers.
+
+## Path-Specific Guidance
+
+### Backend Code (`apps/api/`)
+- Follow existing FastAPI patterns (routers, services, models)
+- Use Pydantic models for all request/response schemas
+- Add docstrings to public functions
+- Keep routers thin, logic in services
+- Handle errors with appropriate HTTP status codes
+- Test with `PROJECT_DOCS_PATH` set
+
+**Key files:**
+- `main.py` - FastAPI app initialization, middleware, CORS
+- `models.py` - Pydantic models for API contracts
+- `routers/` - HTTP endpoint definitions
+- `services/` - Business logic (command_service, git_manager, llm_service)
+
+### Templates (`templates/`)
+- Prompts use Jinja2 syntax (`.j2` files)
+- Output templates are Markdown (`.md` files)
+- Organized by ISO 21500 standard
+- Keep prompts focused and specific
+- Test template rendering with actual data
+
+**Structure:**
+- `templates/prompts/iso21500/` - LLM prompts for each command
+- `templates/output/iso21500/` - Markdown templates for artifacts
+
+### Configuration (`configs/`)
+- NEVER commit `configs/llm.json` (user-specific, gitignored)
+- Use `configs/llm.default.json` as reference
+- Document new config options in README
 
 ## Quick Command Reference
 
@@ -109,3 +269,17 @@ These instructions have been validated by running all commands in a clean enviro
 3. Requirements or specifications are unclear from this document
 
 When in doubt, consult README.md, QUICKSTART.md, or docs/development.md for extended details.
+
+## Additional Resources
+
+**Workflow Templates:** See `.github/prompts/` for reusable templates to help with:
+- Planning features and creating specs
+- Drafting implementation issues
+- Writing PR descriptions
+- Coordinating cross-repo changes
+
+**Documentation:**
+- `README.md` - Full project overview and architecture
+- `QUICKSTART.md` - Fast setup guide
+- `docs/development.md` - Detailed development guide
+- `docs/architecture/` - System design and ADRs
