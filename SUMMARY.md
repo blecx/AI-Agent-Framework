@@ -51,6 +51,34 @@ This document provides a summary of the completed ISO 21500 Project Management A
 - ✅ Apply & Commit functionality
 - ✅ Artifacts list (for `artifacts/` folder)
 
+### ✅ Client Interfaces
+
+Multiple client interfaces for different workflows:
+
+**TUI Client (`apps/tui/`):**
+- Simple command-line interface for automation
+- Project management, command workflow, artifact access
+- CI/CD and scripting-friendly
+- Documentation: [apps/tui/README.md](apps/tui/README.md)
+
+**Advanced Client (`client/`):**
+- Python client with CLI + Interactive TUI modes (using Textual)
+- Visual terminal navigation with mouse/keyboard support
+- Demo workflows and API testing
+- Documentation: [client/README.md](client/README.md)
+
+**WebUI (Separate Repository):**
+- Enhanced web interface in separate repository
+- Repository: [blecx/AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
+- Independent updates and additional features
+- Alternative to the included web UI at `apps/web/`
+
+**Client Documentation:**
+- Comprehensive client guide: [docs/clients/README.md](docs/clients/README.md)
+- API integration guide for building custom clients
+- Examples in Python, JavaScript/TypeScript
+- Full API reference and best practices
+
 ### ✅ Templates
 
 **Prompt Templates:** `templates/prompts/iso21500/`
