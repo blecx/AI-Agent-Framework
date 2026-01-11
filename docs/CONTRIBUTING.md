@@ -22,8 +22,8 @@
 **Start here:**
 1. Read [README.md](../README.md) - System overview and features
 2. Read [QUICKSTART.md](../QUICKSTART.md) - Setup and basic usage
-3. Browse [docs/README.md](docs/README.md) - Documentation index
-4. Review [docs/architecture/overview.md](docs/architecture/overview.md) - High-level architecture
+3. Browse [docs/README.md](README.md) - Documentation index
+4. Review [docs/architecture/overview.md](architecture/overview.md) - High-level architecture
 
 **Core concepts to grasp:**
 - **Propose/Apply Workflow:** Two-phase command execution (review before commit)
@@ -818,8 +818,8 @@ Describe how you tested:
 
 - [README.md](../README.md) - Project overview
 - [QUICKSTART.md](../QUICKSTART.md) - Setup guide
-- [docs/](docs/) - Complete documentation
-- [Architecture docs](docs/architecture/) - System design
+- [docs/](.) - Complete documentation
+- [Architecture docs](architecture/) - System design
 
 ### Communication
 
@@ -844,7 +844,7 @@ export PROJECT_DOCS_PATH=../../projectDocs
 
 **Q: How do I add a new command?**
 
-See [Extensibility Guide](docs/architecture/extensibility.md#1-adding-new-commands)
+See [Extensibility Guide](architecture/extensibility.md#1-adding-new-commands)
 
 **Q: Where should I add my new feature?**
 
@@ -862,10 +862,10 @@ Follow the layered architecture:
 
 ## Related Documentation
 
-- [Architecture Overview](docs/architecture/overview.md) - System design
-- [Module Documentation](docs/architecture/modules.md) - Component details
-- [Extensibility Guide](docs/architecture/extensibility.md) - Extension points
-- [Development Guide](docs/development.md) - Detailed dev setup
+- [Architecture Overview](architecture/overview.md) - System design
+- [Module Documentation](architecture/modules.md) - Component details
+- [Extensibility Guide](architecture/extensibility.md) - Extension points
+- [Development Guide](development.md) - Detailed dev setup
 
 ---
 
