@@ -1,0 +1,279 @@
+# Step 3 — Hardening, TUI-driven E2E, Quality Gates & Enforcement
+# Complete system hardening with deterministic E2E tests, comprehensive audits, diff stability, and CI quality gates.
+# Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
+
+AI-Agent-Framework:
+  - title: "Step 3 — TUI-driven deterministic E2E test suite (backend)"
+    body: |
+      ## Goal
+      Establish a comprehensive, deterministic, non-interactive E2E test suite using the TUI that covers the complete workflow spine.
+
+      ## Scope
+      - **TUI E2E scenarios**:
+        - Project creation → artifact generation (PMP + RAID) → editing → proposal workflow → audit execution → fix issues → re-audit
+        - Workflow state transitions with audit events
+        - Cross-artifact reference validation
+        - Error recovery scenarios
+      - **Test framework requirements**:
+        - Fully scripted (no manual interaction)
+        - Deterministic (no sleep-based timing, use proper awaits/retries)
+        - Runnable in CI (headless/automated)
+        - Comprehensive coverage of all Step 1 and Step 2 features
+      - **Test infrastructure**:
+        - TUI automation helpers/fixtures
+        - Test data factories
+        - Snapshot/golden file comparison for outputs
+        - Clear setup/teardown
+
+      ## Requirements
+      - Place tests under `tests/e2e/tui/`
+      - Document TUI E2E setup in `tests/README.md` (environment, commands, CI integration)
+      - No flaky tests (stable retries, proper wait conditions)
+      - Coverage report integration
+      - Labels: `step:3`, `tests/e2e`, `backend/tui`
+
+      ## Mandatory tests
+      - `tests/e2e/tui/workflow_spine_test` - full workflow from project creation to audit
+      - `tests/e2e/tui/proposal_workflow_test` - complete proposal lifecycle
+      - `tests/e2e/tui/audit_fix_cycle_test` - audit → fix → re-audit cycle
+      - Update `tests/README.md` with detailed TUI E2E instructions
+
+      ## Acceptance criteria
+      - TUI E2E suite runs reliably in CI without manual intervention
+      - All workflow stages covered
+      - Tests pass consistently (5 consecutive runs)
+      - Documentation complete
+
+    labels:
+      - step:3
+      - tests/e2e
+      - backend/tui
+
+  - title: "Step 3 — Enhanced cross-artifact audit rules + diff stability (backend)"
+    body: |
+      ## Goal
+      Harden audit system with comprehensive cross-artifact validation and ensure proposal diffs are stable and correct.
+
+      ## Scope
+      - **Enhanced audit rules**:
+        - Cross-reference validation (RAID items ↔ PMP deliverables/milestones)
+        - Date consistency checks (milestone dates vs. project dates)
+        - Owner validation (referenced users exist)
+        - Dependency cycle detection
+        - Completeness scoring (percentage of required fields filled)
+      - **Diff stability**:
+        - Standardize diff format (unified or structured JSON)
+        - Ensure diffs are deterministic (same changes → same diff)
+        - Handle whitespace/formatting consistently
+        - Prevent diff conflicts (concurrent proposals)
+        - Diff preview accuracy (preview matches actual apply)
+      - **Audit improvements**:
+        - Configurable rule sets per blueprint
+        - Custom rule definition interface
+        - Bulk audit across all projects
+        - Audit history tracking
+
+      ## Requirements
+      - All audit rules have unit tests
+      - Diff generation is deterministic and tested
+      - Concurrent proposal detection and handling
+      - Labels: `step:3`, `backend/api/tui`
+
+      ## Mandatory tests
+      - `tests/unit`: each audit rule individually, diff generation determinism
+      - `tests/integration`: full audit with all rules, concurrent proposal scenarios
+      - `tests/e2e`: complex cross-artifact validation scenarios
+      - Update `tests/README.md` with audit rule and diff testing instructions
+
+      ## Acceptance criteria
+      - All audit rules implemented and tested
+      - Diffs are stable across identical changes
+      - Concurrent proposals handled gracefully
+      - All tests pass
+
+    labels:
+      - step:3
+      - backend/api/tui
+
+  - title: "Step 3 — CI quality gates + documentation enforcement (backend)"
+    body: |
+      ## Goal
+      Implement comprehensive CI quality gates that enforce testing, documentation, and code quality standards.
+
+      ## Scope
+      - **CI pipeline gates**:
+        - All tests must pass (unit + integration + E2E)
+        - Test coverage threshold (80%+ for new code)
+        - No missing tests for new features (coverage diff check)
+        - Documentation completeness check
+        - Linting and code quality checks
+      - **Documentation requirements**:
+        - `tests/README.md` must be current (fail if out of sync with test structure)
+        - API documentation (OpenAPI/Swagger) must be complete
+        - All public APIs have docstrings
+        - Architecture decision records (ADRs) for major changes
+      - **Quality metrics**:
+        - Test execution time monitoring
+        - Flaky test detection and reporting
+        - Code complexity metrics
+        - Security vulnerability scanning
+
+      ## Requirements
+      - CI configuration for all quality gates
+      - Automated documentation validation
+      - Clear failure messages with remediation steps
+      - Labels: `step:3`, `ci/cd`, `docs`
+
+      ## Mandatory tests
+      - CI pipeline validation tests
+      - Documentation checker tests
+      - Coverage validation tests
+      - Update `tests/README.md` with CI/CD testing information
+
+      ## Acceptance criteria
+      - CI fails if tests are missing for new features
+      - CI fails if `tests/README.md` is outdated
+      - Documentation coverage meets standards
+      - All quality gates documented and enforced
+
+    labels:
+      - step:3
+      - ci/cd
+      - docs
+
+AI-Agent-Framework-Client:
+  - title: "Step 3 — TUI-driven client E2E test suite (client)"
+    body: |
+      ## Goal
+      Establish deterministic E2E tests for the Web UI that cover the complete user workflow using automation tools.
+
+      ## Scope
+      - **Client E2E scenarios** (using Playwright, Cypress, or similar):
+        - Complete workflow: login → create project → generate artifacts → edit PMP/RAID → create proposal → review → apply → run audit → fix issues
+        - Multi-artifact navigation and editing
+        - Proposal diff visualization and interaction
+        - Audit results interaction and navigation
+        - Error states and recovery
+      - **Test framework requirements**:
+        - Fully automated (no manual steps)
+        - Deterministic (proper waits, no race conditions)
+        - Visual regression testing for key screens
+        - API mocking or real backend integration
+        - Runnable in CI (headless mode)
+
+      ## Requirements
+      - Place tests under `tests/e2e/`
+      - Use page object model or component testing pattern
+      - Document E2E setup in `tests/README.md` (dependencies, commands, CI integration)
+      - Capture screenshots on failure
+      - Labels: `step:3`, `tests/e2e`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/e2e/full_workflow_spec` - complete user journey
+      - `tests/e2e/proposal_workflow_spec` - proposal creation to application
+      - `tests/e2e/audit_interaction_spec` - audit results to fix cycle
+      - Update `tests/README.md` with Web UI E2E instructions
+
+      ## Acceptance criteria
+      - E2E suite runs reliably in CI
+      - All critical user paths covered
+      - Tests pass consistently (5 consecutive runs)
+      - Visual regressions caught
+
+    labels:
+      - step:3
+      - tests/e2e
+      - webui/ux
+
+  - title: "Step 3 — Client-side validation and error handling hardening (client)"
+    body: |
+      ## Goal
+      Harden the Web UI with comprehensive validation, error handling, and resilience patterns.
+
+      ## Scope
+      - **Client-side validation**:
+        - Form validation matching backend schemas
+        - Real-time validation feedback
+        - Prevent invalid submissions
+        - Validation error aggregation and display
+      - **Error handling**:
+        - Network error recovery (retry, offline mode)
+        - API error response handling (user-friendly messages)
+        - Optimistic updates with rollback
+        - Loading states and skeletons
+        - Global error boundary
+      - **User experience hardening**:
+        - Unsaved changes warning
+        - Confirmation dialogs for destructive actions
+        - Keyboard navigation support
+        - Accessibility improvements (ARIA, screen reader)
+        - Performance optimization (lazy loading, memoization)
+
+      ## Requirements
+      - All forms have client-side validation
+      - Network errors are handled gracefully
+      - User is never left in ambiguous state
+      - Labels: `step:3`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/unit`: validation logic, error handling utilities
+      - `tests/integration`: API error scenarios, network failure simulation
+      - `tests/e2e`: error recovery workflows
+      - Update `tests/README.md` with validation and error handling test instructions
+
+      ## Acceptance criteria
+      - All validation scenarios covered
+      - Error handling is consistent across the app
+      - Accessibility audit passes
+      - All tests pass
+
+    labels:
+      - step:3
+      - webui/ux
+
+  - title: "Step 3 — Client CI quality gates + documentation (client)"
+    body: |
+      ## Goal
+      Implement CI quality gates for the client that enforce testing, documentation, and code quality standards.
+
+      ## Scope
+      - **CI pipeline gates**:
+        - All tests pass (unit + integration + E2E)
+        - Test coverage threshold (80%+ for components)
+        - No missing tests for new components (coverage diff check)
+        - Build succeeds without warnings
+        - Bundle size limits enforced
+        - Linting and formatting checks
+      - **Documentation requirements**:
+        - `tests/README.md` must be current
+        - Component documentation (props, usage examples)
+        - Storybook or component catalog up to date
+        - README reflects current features
+      - **Quality metrics**:
+        - Lighthouse score thresholds (performance, accessibility, best practices)
+        - TypeScript strict mode (if applicable)
+        - No console errors in production build
+        - Visual regression baseline updates
+
+      ## Requirements
+      - CI configuration for all quality gates
+      - Automated documentation validation
+      - Performance budgets enforced
+      - Labels: `step:3`, `ci/cd`, `docs`
+
+      ## Mandatory tests
+      - CI pipeline validation
+      - Documentation checker
+      - Bundle size tests
+      - Update `tests/README.md` with client CI/CD information
+
+      ## Acceptance criteria
+      - CI fails if tests are missing for new components
+      - CI fails if `tests/README.md` is outdated
+      - Documentation meets standards
+      - Performance budgets enforced
+
+    labels:
+      - step:3
+      - ci/cd
+      - docs

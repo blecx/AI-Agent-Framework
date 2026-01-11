@@ -1,0 +1,254 @@
+# Step 2 — Complete ISO Workflow Spine (Projects/Artifacts/Templates/Blueprints/Proposals/Audit)
+# Extend Step 1's PMP+RAID backbone with full artifact lifecycle, templates, blueprints, proposals, and audits.
+# Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
+
+AI-Agent-Framework:
+  - title: "Step 2 — Implement artifact templates + blueprint system (backend)"
+    body: |
+      ## Goal
+      Provide a template and blueprint system that drives artifact generation and validation for PMP and RAID.
+
+      ## Scope
+      - Define **Templates** for artifacts with:
+        - Structured schema (required fields, field types, validation rules)
+        - Markdown templates for rendering
+        - Support for PMP minimum sections (purpose, scope, deliverables, milestones, roles, communications, change control)
+        - Support for RAID minimum columns (type, description, owner, status, impact, due date)
+      - Define **Blueprints** that:
+        - Specify collections of required templates (PMP + RAID for Step 1)
+        - Define artifact relationships and dependencies
+        - Drive UI navigation and workflow requirements
+      - API:
+        - `/api/v1/templates` - CRUD for templates
+        - `/api/v1/blueprints` - CRUD for blueprints
+        - `/api/v1/artifacts/generate` - Generate artifacts from templates/blueprints
+
+      ## Requirements
+      - Templates include validation schemas (JSON Schema or equivalent)
+      - Blueprints reference templates by ID/name
+      - Generation service creates artifacts from templates with default values
+      - Labels: `step:2`, `backend/api/tui`
+
+      ## Mandatory tests
+      - `tests/unit`: template validation, blueprint resolution, artifact generation logic
+      - `tests/integration`: API endpoints for templates/blueprints, artifact generation
+      - Update `tests/README.md` with template/blueprint test instructions
+
+      ## Acceptance criteria
+      - Templates and blueprints are persisted and retrievable
+      - Artifact generation creates valid PMP and RAID artifacts
+      - All tests pass in CI
+
+    labels:
+      - step:2
+      - backend/api/tui
+
+  - title: "Step 2 — Implement proposal system for artifact changes (backend)"
+    body: |
+      ## Goal
+      Enable structured, auditable changes to artifacts via a proposal workflow (AI-generated or human-authored).
+
+      ## Scope
+      - **Proposal** model:
+        - Target artifact reference
+        - Change type (create/update/delete)
+        - Diff/patch content
+        - Rationale/description
+        - Status (pending/accepted/rejected)
+        - Author, timestamp
+      - Proposal lifecycle:
+        - Create proposal (manual or AI-assisted)
+        - Review proposal (show diff)
+        - Apply proposal (merge changes into artifact, record audit event)
+        - Reject proposal (record decision)
+      - API:
+        - `/api/v1/proposals` - CRUD for proposals
+        - `/api/v1/proposals/{id}/apply` - Apply accepted proposal
+        - `/api/v1/proposals/{id}/reject` - Reject proposal
+      - AI integration hook for proposal generation (interface, not full implementation)
+
+      ## Requirements
+      - Proposals generate diffs that can be previewed
+      - Apply operation is atomic and creates audit event
+      - Rejected proposals are kept for history
+      - Labels: `step:2`, `backend/api/tui`
+
+      ## Mandatory tests
+      - `tests/unit`: proposal model validation, diff generation
+      - `tests/integration`: proposal CRUD, apply/reject operations
+      - `tests/e2e`: create artifact → propose change → apply → verify artifact updated
+      - Update `tests/README.md` with proposal workflow test instructions
+
+      ## Acceptance criteria
+      - Proposals can be created, reviewed, applied, and rejected
+      - Artifact changes via proposals are audited
+      - All tests pass
+
+    labels:
+      - step:2
+      - backend/api/tui
+
+  - title: "Step 2 — Implement cross-artifact audit system (backend)"
+    body: |
+      ## Goal
+      Provide automated validation and consistency checks across artifacts to ensure completeness and compliance.
+
+      ## Scope
+      - **Audit** framework:
+        - Check required fields (per template schema)
+        - Validate cross-artifact references (e.g., RAID items reference PMP deliverables)
+        - Consistency checks (dates, owners, statuses)
+      - Audit results:
+        - Error/warning/info levels
+        - Link back to specific artifact + field
+        - Actionable suggestions
+      - API:
+        - `/api/v1/audit/run` - Trigger audit for project
+        - `/api/v1/audit/results` - Retrieve audit results
+      - Scheduled/triggered audit execution
+
+      ## Requirements
+      - Audit rules are configurable per blueprint
+      - Results include location (artifact, section, field) and severity
+      - Audit can auto-open issues for errors (prepare hook)
+      - Labels: `step:2`, `backend/api/tui`
+
+      ## Mandatory tests
+      - `tests/unit`: individual audit rule validation
+      - `tests/integration`: full audit run, results retrieval
+      - `tests/e2e`: create incomplete artifact → run audit → verify errors reported
+      - Update `tests/README.md` with audit test instructions
+
+      ## Acceptance criteria
+      - Audit detects missing required fields
+      - Audit validates cross-references
+      - Results are actionable with clear location info
+      - All tests pass
+
+    labels:
+      - step:2
+      - backend/api/tui
+
+AI-Agent-Framework-Client:
+  - title: "Step 2 — Web UI: Artifact editor with template-driven forms (client)"
+    body: |
+      ## Goal
+      Provide a structured, template-driven artifact editor for PMP and RAID in the Web UI.
+
+      ## Scope
+      - **Artifact editor** components:
+        - Render forms based on template schemas
+        - Support PMP sections (purpose, scope, deliverables, milestones, roles, communications, change control)
+        - Support RAID table with required columns (type, description, owner, status, impact, due date)
+        - Field validation (required, types, constraints)
+        - Save/draft capabilities
+        - Version tracking display
+      - Navigation:
+        - Project selector → artifact list → artifact editor
+        - Breadcrumb navigation
+      - Template/blueprint integration:
+        - Fetch templates from backend
+        - Render fields dynamically based on template schema
+
+      ## Requirements
+      - Forms are generated from template JSON schemas
+      - Validation feedback is inline and clear
+      - Support markdown editing for appropriate fields
+      - Labels: `step:2`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/unit`: artifact editor components, form rendering, validation
+      - `tests/integration`: API client for artifacts, templates
+      - Update `tests/README.md` with artifact editor test instructions
+
+      ## Acceptance criteria
+      - Users can create and edit PMP and RAID artifacts
+      - Template-driven forms render correctly
+      - Validation works and provides feedback
+      - All tests pass
+
+    labels:
+      - step:2
+      - webui/ux
+
+  - title: "Step 2 — Web UI: Proposal creation, review, and apply workflow (client)"
+    body: |
+      ## Goal
+      Enable users to create, review, and apply proposals in the Web UI with clear diff visualization.
+
+      ## Scope
+      - **Proposal creation** UI:
+        - Manual proposal: edit artifact → generate proposal with changes
+        - AI-assisted proposal: request AI suggestion → review → save as proposal
+      - **Proposal review** UI:
+        - List proposals (pending/accepted/rejected)
+        - Proposal detail view with diff visualization
+        - Side-by-side or unified diff view
+        - Rationale/description display
+      - **Proposal actions**:
+        - Accept → apply changes to artifact
+        - Reject → record decision with reason
+        - Edit proposal before applying
+      - Integration with backend proposal API
+
+      ## Requirements
+      - Diff visualization is clear and readable
+      - Accept/reject operations are confirmed
+      - Applied proposals update artifact immediately in UI
+      - Labels: `step:2`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/unit`: proposal components, diff rendering
+      - `tests/integration`: proposal API client, apply/reject operations
+      - `tests/e2e`: full proposal workflow (create → review → apply → verify)
+      - Update `tests/README.md` with proposal workflow test instructions
+
+      ## Acceptance criteria
+      - Users can create and review proposals
+      - Diffs are visualized clearly
+      - Apply/reject operations work correctly
+      - All tests pass
+
+    labels:
+      - step:2
+      - webui/ux
+
+  - title: "Step 2 — Web UI: Audit results viewer with actionable links (client)"
+    body: |
+      ## Goal
+      Display audit results in the Web UI with clear errors, warnings, and links back to artifacts for fixing.
+
+      ## Scope
+      - **Audit page**:
+        - Trigger audit run (button)
+        - Display audit results grouped by severity (error/warning/info)
+        - Show audit result details (artifact, field, message)
+        - Link to artifact editor for each issue
+        - Filter/sort audit results
+      - **Status indicators**:
+        - Project-level audit status badge
+        - Artifact-level completeness indicators
+        - Last audit run timestamp
+      - Integration with backend audit API
+
+      ## Requirements
+      - Audit results are clearly organized and readable
+      - Links to artifact editor pre-populate the relevant field
+      - Audit can be re-run on demand
+      - Labels: `step:2`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/unit`: audit results components, filtering, sorting
+      - `tests/integration`: audit API client
+      - `tests/e2e`: trigger audit → view results → navigate to artifact → fix issue → re-audit
+      - Update `tests/README.md` with audit viewer test instructions
+
+      ## Acceptance criteria
+      - Audit results are displayed with clear severity levels
+      - Users can navigate from audit results to artifact editors
+      - Re-running audit shows updated results
+      - All tests pass
+
+    labels:
+      - step:2
+      - webui/ux
