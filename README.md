@@ -607,6 +607,57 @@ The system supports generating standard ISO 21500 project management artifacts:
 9. Communication Plan
 10. Procurement Plan
 
+## ISO 21500/21502 Governance & RAID Register
+
+The system includes a comprehensive governance backbone aligned with ISO 21500/21502 standards:
+
+### Governance Features
+
+- **Governance Metadata**: Track project objectives, scope, stakeholders, decision rights, stage gates, and approvals
+- **Decision Log**: Record and track key project decisions with rationale and impact analysis
+- **Traceability**: Bidirectional linking between decisions and RAID items
+- **Audit Trail**: Complete history of all governance activities
+
+### RAID Register
+
+Comprehensive management of:
+
+- **Risks**: Potential events that may negatively impact the project
+- **Assumptions**: Factors believed to be true for planning purposes
+- **Issues**: Current problems requiring resolution
+- **Dependencies**: Reliance on external factors, teams, or deliverables
+
+Features include:
+- CRUD operations with full lifecycle tracking
+- Filtering by type, status, owner, and priority
+- Impact and likelihood assessment for risks
+- Mitigation planning and next actions
+- Links to governance decisions and change requests
+- Audit trail with created/updated timestamps
+
+### API Endpoints
+
+**Governance:**
+- `GET/POST/PUT /projects/{key}/governance/metadata` - Governance metadata management
+- `GET/POST /projects/{key}/governance/decisions` - Decision log management
+- `GET /projects/{key}/governance/decisions/{id}` - Single decision retrieval
+- `POST /projects/{key}/governance/decisions/{id}/link-raid/{raid_id}` - Link decision to RAID
+
+**RAID Register:**
+- `GET /projects/{key}/raid` - List/filter RAID items
+- `GET /projects/{key}/raid/{id}` - Get RAID item
+- `POST /projects/{key}/raid` - Create RAID item
+- `PUT /projects/{key}/raid/{id}` - Update RAID item
+- `DELETE /projects/{key}/raid/{id}` - Delete RAID item
+- `POST /projects/{key}/raid/{id}/link-decision/{decision_id}` - Link RAID to decision
+- `GET /projects/{key}/raid/by-decision/{decision_id}` - Get RAID items by decision
+
+### Documentation
+
+For detailed information, see:
+- [Governance Documentation](docs/governance.md) - Complete governance backbone guide
+- [RAID Register Documentation](docs/raid_register.md) - Comprehensive RAID register reference
+
 ## Troubleshooting
 
 ### API Container Issues

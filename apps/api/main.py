@@ -1,6 +1,7 @@
 """
 Main FastAPI application for ISO 21500 Project Management AI Agent System.
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -10,7 +11,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from routers import projects, commands, artifacts
+from routers import projects, commands, artifacts, governance, raid
 from services.git_manager import GitManager
 from services.llm_service import LLMService
 
@@ -22,21 +23,19 @@ async def lifespan(app: FastAPI):
     docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
     git_manager = GitManager(docs_path)
     git_manager.ensure_repository()
-    
+
     # Store in app state
     app.state.git_manager = git_manager
     app.state.llm_service = LLMService()
-    
+
     yield
-    
+
     # Cleanup if needed
     pass
 
 
 app = FastAPI(
-    title="ISO 21500 Project Management AI Agent",
-    version="1.0.0",
-    lifespan=lifespan
+    title="ISO 21500 Project Management AI Agent", version="1.0.0", lifespan=lifespan
 )
 
 # Configure CORS
@@ -50,8 +49,16 @@ app.add_middleware(
 
 # Include routers
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
-app.include_router(commands.router, prefix="/projects/{project_key}/commands", tags=["commands"])
-app.include_router(artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"])
+app.include_router(
+    commands.router, prefix="/projects/{project_key}/commands", tags=["commands"]
+)
+app.include_router(
+    artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"]
+)
+app.include_router(
+    governance.router, prefix="/projects/{project_key}/governance", tags=["governance"]
+)
+app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid"])
 
 
 @app.get("/")
@@ -60,7 +67,7 @@ async def root():
     return {
         "status": "healthy",
         "service": "ISO 21500 Project Management AI Agent",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 
@@ -72,5 +79,5 @@ async def health():
         "status": "healthy",
         "docs_path": docs_path,
         "docs_exists": os.path.exists(docs_path),
-        "docs_is_git": os.path.exists(os.path.join(docs_path, ".git"))
+        "docs_is_git": os.path.exists(os.path.join(docs_path, ".git")),
     }
