@@ -28,10 +28,13 @@ jobs:
         pip install pytest
     
     - name: Run unit tests
+      if: hashFiles('tests/unit/**') != ''
       run: pytest -q tests/unit
     
     - name: Run integration tests
+      if: hashFiles('tests/integration/**') != ''
       run: pytest -q tests/integration
     
     - name: Run e2e tests
-      run:  TERM=xterm-256color pytest -q tests/e2e
+      if: hashFiles('tests/e2e/**') != ''
+      run: TERM=xterm-256color pytest -q tests/e2e
