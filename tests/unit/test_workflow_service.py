@@ -4,14 +4,9 @@ Unit tests for WorkflowService.
 import pytest
 import tempfile
 import shutil
-import sys
-import os
 
-# Add apps/api to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
-
-from services.workflow_service import WorkflowService, VALID_TRANSITIONS
-from services.git_manager import GitManager
+from apps.api.services.workflow_service import WorkflowService, VALID_TRANSITIONS
+from apps.api.services.git_manager import GitManager
 
 
 @pytest.fixture(scope="function")

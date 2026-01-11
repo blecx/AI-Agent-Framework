@@ -145,7 +145,11 @@ class WorkflowService:
         )
 
         # Create audit event
-        from services.audit_service import AuditService
+        # Import here to avoid circular dependency
+        try:
+            from services.audit_service import AuditService
+        except ImportError:
+            from apps.api.services.audit_service import AuditService
 
         audit_service = AuditService()
         audit_service.log_audit_event(

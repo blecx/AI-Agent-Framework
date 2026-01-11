@@ -4,15 +4,10 @@ Unit tests for AuditService.
 import pytest
 import tempfile
 import shutil
-import sys
-import os
 import json
 
-# Add apps/api to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
-
-from services.audit_service import AuditService
-from services.git_manager import GitManager
+from apps.api.services.audit_service import AuditService
+from apps.api.services.git_manager import GitManager
 
 
 @pytest.fixture(scope="function")
