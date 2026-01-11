@@ -264,6 +264,9 @@ class RAIDItemCreate(BaseModel):
     type: RAIDType = Field(..., description="RAID item type")
     title: str = Field(..., description="RAID item title", min_length=1)
     description: str = Field(..., description="Detailed description", min_length=1)
+    status: Optional[RAIDStatus] = Field(
+        default=RAIDStatus.OPEN, description="Initial status"
+    )
     owner: str = Field(..., description="Owner/assignee")
     priority: Optional[RAIDPriority] = Field(default=RAIDPriority.MEDIUM)
     impact: Optional[RAIDImpactLevel] = None

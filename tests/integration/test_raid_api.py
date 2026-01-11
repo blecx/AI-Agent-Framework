@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
 from main import app
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def temp_project_dir():
     """Create a temporary project directory for testing."""
     temp_dir = tempfile.mkdtemp()
@@ -22,20 +22,43 @@ def temp_project_dir():
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def client(temp_project_dir):
     """Create a test client with temporary project directory."""
     # Override the PROJECT_DOCS_PATH environment variable
     os.environ["PROJECT_DOCS_PATH"] = temp_project_dir
     
-    # Force app to reinitialize with new path
+    # Create a new app instance for this test to avoid state sharing
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    
+    test_app = FastAPI(title="Test App")
+    test_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Import and register routers
+    from routers import projects, commands, artifacts, governance, raid
+    test_app.include_router(projects.router, prefix="/projects", tags=["projects"])
+    test_app.include_router(commands.router, prefix="/projects/{project_key}/commands", tags=["commands"])
+    test_app.include_router(artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"])
+    test_app.include_router(governance.router, prefix="/projects/{project_key}/governance", tags=["governance"])
+    test_app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid"])
+    
+    # Initialize services
     from services.git_manager import GitManager
+    from services.llm_service import LLMService
     git_manager = GitManager(temp_project_dir)
     git_manager.ensure_repository()
-    app.state.git_manager = git_manager
+    test_app.state.git_manager = git_manager
+    test_app.state.llm_service = LLMService()
     
-    with TestClient(app) as client:
-        yield client
+    with TestClient(test_app) as test_client:
+        yield test_client
 
 
 @pytest.fixture
@@ -200,7 +223,6 @@ class TestRAIDItemFilteringAPI:
         assert data["total"] == 2
         assert all(item["type"] == "risk" for item in data["items"])
 
-    @pytest.mark.xfail(reason="Known test isolation issue - items from previous tests may leak due to fixture state")
     def test_filter_by_status(self, client):
         """Test filtering RAID items by status via API."""
         # Create a fresh project for this test
@@ -275,7 +297,6 @@ class TestRAIDItemFilteringAPI:
         assert data["total"] == 1
         assert data["items"][0]["priority"] == "high"
 
-    @pytest.mark.xfail(reason="Known test isolation issue - items from previous tests may leak due to fixture state")
     def test_filter_multiple_criteria(self, client):
         """Test filtering with multiple criteria via API."""
         # Create a fresh project for this test

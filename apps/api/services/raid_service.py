@@ -6,7 +6,7 @@ Aligned with ISO 21500/21502 standards.
 import uuid
 import json
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class RAIDService:
@@ -47,7 +47,7 @@ class RAIDService:
 
         # Generate unique ID
         raid_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         raid_item = {
             "id": raid_id,
@@ -107,7 +107,7 @@ class RAIDService:
         updated_item = None
         for item in items:
             if item["id"] == raid_id:
-                now = datetime.utcnow().isoformat() + "Z"
+                now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
                 # Update fields
                 for key, value in updates.items():

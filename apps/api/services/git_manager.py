@@ -8,7 +8,7 @@ import git
 import subprocess
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
 
@@ -71,7 +71,7 @@ class GitManager:
                     try:
                         backup = (
                             self.base_path
-                            / f".git.broken.{int(datetime.utcnow().timestamp())}"
+                            / f".git.broken.{int(datetime.now(timezone.utc).timestamp())}"
                         )
                         if git_dir.exists():
                             git_dir.rename(backup)
@@ -108,7 +108,7 @@ class GitManager:
                 try:
                     backup = (
                         self.base_path
-                        / f".git.broken.{int(datetime.utcnow().timestamp())}"
+                        / f".git.broken.{int(datetime.now(timezone.utc).timestamp())}"
                     )
                     git_dir.rename(backup)
                 except Exception:
@@ -154,7 +154,7 @@ class GitManager:
 
         # Write project.json
         project_json_path = project_path / "project.json"
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         project_info = {
             **project_data,
             "methodology": "ISO21500",
@@ -298,7 +298,12 @@ class GitManager:
         events_path.parent.mkdir(parents=True, exist_ok=True)
 
         event_line = json.dumps(
-            {**event_data, "timestamp": datetime.utcnow().isoformat() + "Z"}
+            {
+                **event_data,
+                "timestamp": datetime.now(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z"),
+            }
         )
 
         with events_path.open("a") as f:
