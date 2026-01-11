@@ -1,149 +1,174 @@
-# Step 1: Issue seed file for Copilot agent
-# Repo set: blecx/AI-Agent-Framework and blecx/AI-Agent-Framework-Client
-# Generated: 2026-01-10 22:58:06 UTC
+# Step 1 — ISO 21500/21502 Workflow Spine (PMP + RAID)
+# Replace generic Step 1 issues with a project-management backbone aligned to ISO 21500/21502.
+# Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
 
-version: 1
-step: 1
-name: "Step 1 issue seed"
-created_utc: "2026-01-10 22:58:06"
-repos:
-  - owner: blecx
-    repo: AI-Agent-Framework
-    issues:
-      - key: "framework-01"
-        title: "Step 1: Define core agent interfaces and message schema"
-        description: |
-          Create the foundational interfaces for the agent framework so downstream features can build on a stable contract.
+AI-Agent-Framework:
+  - title: "Step 1 — Establish ISO 21500/21502 project governance + RAID register (backend)"
+    body: |
+      ## Goal
+      Add a minimal, standards-aligned project governance backbone in the backend to support PMP-style planning and RAID tracking.
 
-          Requirements:
-          - Define core types/interfaces for Agent, Tool, Action/Command, Message, and Context.
-          - Provide a minimal message schema (role, content, metadata, timestamps) and a validation strategy.
-          - Document public API surface with inline docs.
+      ## Scope
+      - Define an ISO 21500/21502-inspired workflow spine: Initiate → Plan → Implement → Control → Close
+      - Introduce a **RAID register** (Risks, Assumptions, Issues, Dependencies) with CRUD and lifecycle states.
+      - Provide a basic **Project Charter** + **Project Management Plan (PMP)** document model.
 
-          Acceptance Criteria:
-          - Types/interfaces exist and are exported from the main package entrypoint.
-          - Basic unit tests exist for schema validation (if applicable).
-          - README or docs reference the new interfaces.
+      ## Requirements
+      - Data model:
+        - Project
+        - WorkPackage / Deliverable
+        - RAIDItem with type {Risk, Assumption, Issue, Dependency}, status, owner, probability/impact (for risks), due date, links.
+      - API:
+        - REST endpoints for RAID CRUD + list/filter.
+        - Versioned API route layout (e.g., `/api/v1`).
+      - Labels: `step:1`, `backend/api/tui`
 
-          Code links (placeholders):
-          - [ ] framework interfaces: <LINK_TO_CODE>
-          - [ ] message schema: <LINK_TO_CODE>
-          - [ ] tests: <LINK_TO_CODE>
-        labels:
-          - "enhancement"
-          - "architecture"
-          - "step-1"
+      ## Mandatory tests
+      - Add/update documentation in `tests/README.md` describing how to run RAID-related tests.
+      - `tests/unit`: models/validation for RAID fields.
+      - `tests/integration`: API CRUD for RAID endpoints.
+      - (If not applicable yet) create placeholders/skips with clear TODOs, not empty suites.
 
-      - key: "framework-02"
-        title: "Step 1: Add baseline configuration and environment loading"
-        description: |
-          Implement a small configuration layer for the framework to standardize environment variables and runtime settings.
+      ## Acceptance criteria
+      - RAID endpoints exist, validated, and documented.
+      - Unit + integration tests pass in CI.
+      - Clear mapping of fields to RAID semantics.
 
-          Requirements:
-          - Add config module with typed configuration object.
-          - Load values from environment with sensible defaults.
-          - Document required env vars.
+    labels:
+      - step:1
+      - backend/api/tui
 
-          Acceptance Criteria:
-          - Config can be imported and used by other modules.
-          - Invalid/missing critical settings produce clear errors.
+  - title: "Step 1 — Implement ISO workflow states + audit/events (backend)"
+    body: |
+      ## Goal
+      Provide an execution-control backbone aligned to ISO 21500/21502 by modeling workflow stages and capturing auditable state transitions.
 
-          Code links (placeholders):
-          - [ ] config module: <LINK_TO_CODE>
-          - [ ] documentation: <LINK_TO_CODE>
-        labels:
-          - "enhancement"
-          - "configuration"
-          - "step-1"
+      ## Scope
+      - Introduce workflow state machine for Projects and WorkPackages:
+        - Initiate, Plan, Implement, Control, Close
+      - Record state transitions as audit events.
+      - Expose read-only endpoints for audit/event streams.
 
-      - key: "framework-03"
-        title: "Step 1: Implement minimal tool runner with error handling"
-        description: |
-          Provide a minimal ToolRunner that can execute registered tools safely.
+      ## Requirements
+      - Deterministic state transition rules (documented).
+      - Audit/Event schema includes: entity, from/to state, actor, timestamp, note.
+      - Labels: `step:1`, `backend/api/tui`
 
-          Requirements:
-          - Registry for tools by name.
-          - Execute tool with validated inputs.
-          - Standard error type for tool failures.
+      ## Mandatory tests
+      - `tests/unit`: state transition validation, invalid transitions.
+      - `tests/integration`: API exposes audit/event stream; verify transition writes.
+      - Update `tests/README.md` with how to run workflow/audit tests.
 
-          Acceptance Criteria:
-          - ToolRunner can register and run tools.
-          - Errors are surfaced with consistent structure.
-          - Example tool included.
+      ## Acceptance criteria
+      - Workflow stages implemented with documented rules.
+      - Audit events persist and are retrievable.
+      - Unit + integration tests green.
 
-          Code links (placeholders):
-          - [ ] tool runner: <LINK_TO_CODE>
-          - [ ] example tool: <LINK_TO_CODE>
-        labels:
-          - "enhancement"
-          - "tooling"
-          - "step-1"
+    labels:
+      - step:1
+      - backend/api/tui
 
-  - owner: blecx
-    repo: AI-Agent-Framework-Client
-    issues:
-      - key: "client-01"
-        title: "Step 1: Create client SDK skeleton and package structure"
-        description: |
-          Scaffold the client SDK repository with a minimal package structure ready for implementation.
+  - title: "Step 1 — End-to-end smoke for RAID + workflow spine (tests/e2e)"
+    body: |
+      ## Goal
+      Establish an E2E baseline that proves the ISO workflow spine and RAID register can be exercised through the exposed interfaces.
 
-          Requirements:
-          - Establish src/ layout and build tooling.
-          - Export a public Client class placeholder.
-          - Add basic lint/test configuration.
+      ## Scope
+      - Add E2E tests covering:
+        - Create project → advance through at least 2 workflow states
+        - Create/read/update a RAID item
+        - Verify audit/event shows the transition
 
-          Acceptance Criteria:
-          - `npm test` (or equivalent) runs successfully.
-          - Package builds and exports a module.
+      ## Requirements
+      - Place tests under `tests/e2e`.
+      - Ensure `tests/README.md` documents E2E setup and commands.
+      - Labels: `step:1`, `tests/e2e`
 
-          Code links (placeholders):
-          - [ ] package entrypoint: <LINK_TO_CODE>
-          - [ ] build config: <LINK_TO_CODE>
-        labels:
-          - "enhancement"
-          - "client"
-          - "step-1"
+      ## Acceptance criteria
+      - E2E suite runnable locally + CI.
+      - Tests are stable (no sleep-based flakiness; use retries/awaits).
 
-      - key: "client-02"
-        title: "Step 1: Define client ↔ framework message contract types"
-        description: |
-          Define the shared message/command contract used between the client SDK and the agent framework.
+    labels:
+      - step:1
+      - tests/e2e
 
-          Requirements:
-          - Mirror message schema types from the framework.
-          - Add serialization/deserialization helpers.
-          - Document compatibility expectations.
+AI-Agent-Framework-Client:
+  - title: "Step 1 — Web UI: RAID register views (list + detail + filters)"
+    body: |
+      ## Goal
+      Build the first client-facing surface for PMP + RAID by exposing the RAID register in the Web UI.
 
-          Acceptance Criteria:
-          - Types compile and are exported.
-          - Simple tests cover serialization round-trip.
+      ## Scope
+      - RAID list view with filters (type/status/owner/due date).
+      - RAID detail view with editable fields.
+      - Basic create flow.
 
-          Code links (placeholders):
-          - [ ] contract types: <LINK_TO_CODE>
-          - [ ] serialization helpers: <LINK_TO_CODE>
-        labels:
-          - "enhancement"
-          - "client"
-          - "protocol"
-          - "step-1"
+      ## Requirements
+      - Align field naming with backend API.
+      - UX: clear type badges, severity indicators for risks.
+      - Labels: `step:1`, `webui/ux`
 
-      - key: "client-03"
-        title: "Step 1: Add example usage project/snippet"
-        description: |
-          Provide a minimal example showing how a consumer would use the client SDK to send messages/commands.
+      ## Mandatory tests
+      - `tests/unit`: component/unit tests for list + detail.
+      - `tests/integration`: API client integration (mock server or contract tests).
+      - Update `tests/README.md` with client test commands.
 
-          Requirements:
-          - Add example folder or README snippet.
-          - Include basic initialization and one request/response flow.
+      ## Acceptance criteria
+      - User can manage RAID items from UI.
+      - Unit + integration tests pass.
 
-          Acceptance Criteria:
-          - Example is referenced from README.
-          - Example builds/runs (if executable).
+    labels:
+      - step:1
+      - webui/ux
 
-          Code links (placeholders):
-          - [ ] example code: <LINK_TO_CODE>
-          - [ ] README section: <LINK_TO_CODE>
-        labels:
-          - "documentation"
-          - "client"
-          - "step-1"
+  - title: "Step 1 — Client workflow spine UI (project stage indicator + transitions)"
+    body: |
+      ## Goal
+      Provide a visible ISO 21500/21502 workflow spine in the client so users can see and drive project/work-package stages.
+
+      ## Scope
+      - Stage indicator (Initiate/Plan/Implement/Control/Close).
+      - Transition UI with confirmation + optional note.
+      - Basic audit trail viewer (read-only).
+
+      ## Requirements
+      - Must consume backend audit/event endpoints.
+      - Labels: `step:1`, `webui/ux`
+
+      ## Mandatory tests
+      - `tests/unit`: stage indicator + transition UI.
+      - `tests/integration`: verify audit trail renders from mocked/contracted API.
+      - Update `tests/README.md` accordingly.
+
+      ## Acceptance criteria
+      - Stages render correctly, transitions trigger API.
+      - Audit trail visible and correct.
+
+    labels:
+      - step:1
+      - webui/ux
+
+  - title: "Step 1 — Client E2E: RAID + workflow happy path (tests/e2e)"
+    body: |
+      ## Goal
+      Ensure the client can execute the core Step 1 PMP+RAID workflow end-to-end.
+
+      ## Scope
+      - E2E scenario:
+        - Open project
+        - Advance stage
+        - Create a RAID risk
+        - Verify it appears in list and detail
+
+      ## Requirements
+      - Add tests under `tests/e2e`.
+      - Update `tests/README.md` with environment variables, headless mode, and CI commands.
+      - Labels: `step:1`, `tests/e2e`
+
+      ## Acceptance criteria
+      - Client E2E suite runs reliably.
+      - Scenario passes in CI.
+
+    labels:
+      - step:1
+      - tests/e2e
