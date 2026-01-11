@@ -4,7 +4,6 @@ Unit tests for Governance Service.
 import pytest
 import tempfile
 import shutil
-from pathlib import Path
 from apps.api.services.governance_service import GovernanceService
 from apps.api.services.git_manager import GitManager
 

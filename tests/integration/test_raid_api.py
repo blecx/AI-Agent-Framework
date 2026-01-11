@@ -5,7 +5,6 @@ import pytest
 from fastapi.testclient import TestClient
 import tempfile
 import shutil
-from pathlib import Path
 import sys
 import os
 
