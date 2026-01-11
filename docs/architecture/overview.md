@@ -10,7 +10,83 @@ The AI-Agent-Framework is an ISO 21500 Project Management system built with a mo
 
 ## System Architecture
 
-### Component Diagram
+### High-Level Component Diagram
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WebUI[Web UI<br/>React/Vite<br/>Port 8080]
+        TUI[TUI Client<br/>Python/Click<br/>CLI]
+        Client[Advanced Client<br/>Python/Textual<br/>Interactive]
+    end
+    
+    subgraph "API Layer"
+        API[API Server<br/>FastAPI<br/>Port 8000]
+        Router1[Projects Router]
+        Router2[Commands Router]
+        Router3[Artifacts Router]
+        Router4[Governance Router]
+        Router5[RAID Router]
+        Router6[Workflow Router]
+    end
+    
+    subgraph "Service Layer"
+        GitMgr[Git Manager<br/>Storage Operations]
+        LLMSvc[LLM Service<br/>Content Generation]
+        CmdSvc[Command Service<br/>Propose/Apply]
+        GovSvc[Governance Service<br/>ISO 21500/21502]
+        RAIDSvc[RAID Service<br/>Risk Management]
+        WFSvc[Workflow Service<br/>State Management]
+        AuditSvc[Audit Service<br/>Event Logging]
+    end
+    
+    subgraph "Storage Layer"
+        Docs[(Project Docs<br/>Git Repository)]
+        Templates[Jinja2 Templates<br/>Prompts & Output]
+        Config[LLM Config<br/>JSON]
+    end
+    
+    WebUI --> API
+    TUI --> API
+    Client --> API
+    
+    API --> Router1
+    API --> Router2
+    API --> Router3
+    API --> Router4
+    API --> Router5
+    API --> Router6
+    
+    Router1 --> GitMgr
+    Router2 --> CmdSvc
+    Router3 --> GitMgr
+    Router4 --> GovSvc
+    Router5 --> RAIDSvc
+    Router6 --> WFSvc
+    
+    CmdSvc --> LLMSvc
+    CmdSvc --> GitMgr
+    CmdSvc --> AuditSvc
+    GovSvc --> GitMgr
+    RAIDSvc --> GitMgr
+    WFSvc --> GitMgr
+    WFSvc --> AuditSvc
+    
+    LLMSvc --> Config
+    LLMSvc --> Templates
+    GitMgr --> Docs
+    AuditSvc --> Docs
+    
+    style WebUI fill:#e1f5ff
+    style TUI fill:#e1f5ff
+    style Client fill:#e1f5ff
+    style API fill:#fff4e1
+    style GitMgr fill:#f0fff4
+    style LLMSvc fill:#f0fff4
+    style Docs fill:#ffe1f5
+```
+
+### Detailed Component Diagram (ASCII)
 
 ```
 ┌─────────────────────────────────────────┐

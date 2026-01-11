@@ -12,11 +12,13 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 1. **[Project README](../README.md)** - Overview, architecture, and features
 2. **[Quick Start Guide](../QUICKSTART.md)** - Step-by-step setup instructions
-3. **[Development Guide](development.md)** - Complete local development guide
-4. **[MVP Specification](spec/mvp-iso21500-agent.md)** - Detailed system specification
+3. **[Contributing Guide](CONTRIBUTING.md)** - How to contribute (onboarding for new developers) ✨
+4. **[Development Guide](development.md)** - Complete local development guide
+5. **[MVP Specification](spec/mvp-iso21500-agent.md)** - Detailed system specification
 
 **Quick Links:**
 - 🚀 [Setup Guide](../QUICKSTART.md)
+- 🤝 [Contributing Guide](CONTRIBUTING.md) - **Start here if you want to contribute!**
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
 - 🎮 [Client Documentation](clients/README.md) - All client interfaces
@@ -268,16 +270,25 @@ Comprehensive system architecture and design documentation.
 
 | Document | Description | Last Updated |
 |----------|-------------|--------------|
-| [Architecture Overview](architecture/overview.md) | Complete system architecture including components, communication patterns, deployment architecture, and data flow | 2026-01-10 |
+| [Architecture Overview](architecture/overview.md) | Complete system architecture including components, communication patterns, deployment architecture, and data flow | 2026-01-11 |
+| [Module Documentation](architecture/modules.md) | Detailed module boundaries, responsibilities, and interactions with Mermaid diagrams | 2026-01-11 |
+| [Data Models](architecture/data-models.md) | Complete reference for all Pydantic models, schemas, and persistence formats | 2026-01-11 |
+| [Interaction Flows](architecture/flows.md) | Detailed sequence diagrams for all major workflows and operations | 2026-01-11 |
+| [Extensibility Guide](architecture/extensibility.md) | How to extend the system with new commands, endpoints, storage backends, and clients | 2026-01-11 |
 
 **Topics Covered:**
-- Component diagram and architecture layers
-- Repository structure (main repo + future client repo)
-- REST API communication patterns
-- Deployment architecture (Docker Compose, Kubernetes, cloud platforms)
-- Security architecture and audit logging
-- Technology stack and scalability considerations
-- Extension points for adding new clients and commands
+- **Overview:** Component diagram, architecture layers, repository structure, communication patterns, deployment architecture
+- **Modules:** All API routers, service layer components, storage layer, module interactions, extension points, testing strategy
+- **Data Models:** Core models (Project, Command, Artifact), Governance models (ISO 21500/21502), RAID models, Workflow models, Audit events, persistence formats
+- **Flows:** Project creation, propose/apply workflow, governance with RAID linkage, workflow state transitions, artifact browsing, RAID filtering, audit events
+- **Extensibility:** Adding commands, API endpoints, storage backends, LLM providers, client interfaces, middleware, testing extensions
+
+**Quick Navigation:**
+- 🏗️ [System Architecture Overview](architecture/overview.md) - Start here for high-level understanding
+- 🧩 [Module Responsibilities](architecture/modules.md#module-inventory) - Find which module does what
+- 📊 [Data Schemas](architecture/data-models.md#model-organization) - Understand API contracts
+- 🔄 [Key Workflows](architecture/flows.md#core-flows) - See how operations work end-to-end
+- 🔧 [Extension Points](architecture/extensibility.md#extension-points-overview) - Learn how to add features
 
 ---
 
