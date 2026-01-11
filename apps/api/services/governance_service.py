@@ -6,7 +6,7 @@ Aligned with ISO 21500/21502 standards.
 import uuid
 import json
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class GovernanceService:
@@ -33,7 +33,7 @@ class GovernanceService:
         self, project_key: str, metadata: Dict[str, Any], git_manager
     ) -> Dict[str, Any]:
         """Create governance metadata for a project."""
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         governance_data = {
             "objectives": metadata.get("objectives", []),
@@ -81,7 +81,7 @@ class GovernanceService:
             raise ValueError(f"Governance metadata not found for project {project_key}")
 
         # Update fields
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         for key, value in updates.items():
             if key not in ["created_at", "created_by"] and value is not None:
                 existing[key] = value
@@ -144,7 +144,7 @@ class GovernanceService:
 
         # Generate unique ID
         decision_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         decision = {
             "id": decision_id,

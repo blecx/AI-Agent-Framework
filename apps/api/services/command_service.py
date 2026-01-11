@@ -5,7 +5,7 @@ Command service for handling project commands with propose/apply flow.
 import uuid
 import hashlib
 from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class CommandService:
@@ -170,7 +170,9 @@ class CommandService:
                 "missing_artifacts": missing,
                 "present_artifacts": present,
                 "llm_analysis": llm_response,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z"),
             },
         )
 
@@ -232,7 +234,9 @@ class CommandService:
                     "project_key": project_key,
                     "project_name": project_info.get("name", "Unknown"),
                     "generated_content": llm_response,
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "timestamp": datetime.now(timezone.utc)
+                    .isoformat()
+                    .replace("+00:00", "Z"),
                 },
             )
         except:
@@ -241,7 +245,7 @@ class CommandService:
 
 Project: {project_info.get("name", "Unknown")}
 Key: {project_key}
-Generated: {datetime.utcnow().isoformat() + "Z"}
+Generated: {datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
 
 {llm_response}
 """
@@ -295,7 +299,9 @@ Generated: {datetime.utcnow().isoformat() + "Z"}
                 "project_key": project_key,
                 "project_name": project_info.get("name", "Unknown"),
                 "llm_schedule": llm_response,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z"),
             },
         )
 
