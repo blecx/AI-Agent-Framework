@@ -11,6 +11,28 @@ This system provides intelligent project management following ISO 21500 standard
 - **Docker Deployment**: Two-container setup for easy deployment
 - **Git-based Storage**: All project documents stored in a separate git repository with full version history
 
+## 📚 Documentation
+
+**New to the project?** Start here:
+
+- 🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 10 minutes
+- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
+- 📖 **[Documentation Hub](docs/README.md)** - Complete documentation index
+
+**Architecture & Design:**
+
+- 🏗️ **[Architecture Overview](docs/architecture/overview.md)** - High-level system design
+- 🧩 **[Module Documentation](docs/architecture/modules.md)** - Detailed module boundaries and responsibilities
+- 📊 **[Data Models](docs/architecture/data-models.md)** - Pydantic models and schemas
+- 🔄 **[Interaction Flows](docs/architecture/flows.md)** - Sequence diagrams and data flows
+- 🔧 **[Extensibility Guide](docs/architecture/extensibility.md)** - How to extend the system
+
+**Developer Resources:**
+
+- 💻 **[Development Guide](docs/development.md)** - Local development setup and workflow
+- 🎯 **[API Integration Guide](docs/api/client-integration-guide.md)** - Building custom clients
+- 🏛️ **[Architecture Decision Records](docs/adr/)** - Key architectural decisions
+
 ## Architecture
 
 ### Three-Container Setup
