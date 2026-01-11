@@ -6,8 +6,10 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
 from models import ProjectCreate, ProjectInfo, ProjectState
+from services.workflow_service import WorkflowService
 
 router = APIRouter()
+workflow_service = WorkflowService()
 
 
 @router.post("", response_model=ProjectInfo, status_code=201)
@@ -26,6 +28,9 @@ async def create_project(project: ProjectCreate, request: Request):
     project_info = git_manager.create_project(
         project.key, {"key": project.key, "name": project.name}
     )
+
+    # Initialize workflow state
+    workflow_service.initialize_workflow_state(project.key, git_manager)
 
     # Log event
     git_manager.log_event(

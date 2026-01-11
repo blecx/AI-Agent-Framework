@@ -26,6 +26,7 @@ The spine is the set of workflow stages the product must support:
 1. **Projects**
    - Create/select a project.
    - Configure metadata (name, sponsor, manager, dates, constraints).
+   - **Workflow State Management**: Projects follow ISO 21500 aligned states with deterministic transitions.
 
 2. **Artifacts**
    - Generate and manage project artifacts (e.g., charter, PMP, RAID, schedule baseline).
@@ -46,6 +47,88 @@ The spine is the set of workflow stages the product must support:
 6. **Audit**
    - Automated checks across artifacts (consistency, required fields, cross-references).
    - Audit results are actionable (errors/warnings) and can open issues.
+   - **Audit Event System**: All significant actions are tracked in NDJSON format with full traceability.
+
+---
+
+## Workflow State Machine (ISO 21500 Aligned)
+
+Projects follow a deterministic workflow state machine aligned with ISO 21500 project phases:
+
+### States
+
+1. **Initiating** - Project initiation and authorization
+2. **Planning** - Project planning and preparation
+3. **Executing** - Project execution and deliverable production
+4. **Monitoring** - Performance monitoring and control
+5. **Closing** - Project closure activities
+6. **Closed** - Project formally closed (terminal state)
+
+### Valid State Transitions
+
+The workflow enforces these valid transitions:
+
+- **Initiating → Planning**: Move to planning phase
+- **Planning → Executing**: Start execution
+- **Planning → Initiating**: Return to initiation for refinement
+- **Executing → Monitoring**: Begin monitoring phase
+- **Executing → Planning**: Return to planning for adjustment
+- **Monitoring → Executing**: Return to execution for corrections
+- **Monitoring → Closing**: Begin closure activities
+- **Closing → Closed**: Finalize project closure
+
+Invalid transitions (e.g., Initiating → Closed) are rejected with validation errors.
+
+### API Endpoints
+
+- `GET /api/v1/projects/{id}/workflow/state` - Get current workflow state
+- `PATCH /api/v1/projects/{id}/workflow/state` - Transition to new state (validated)
+- `GET /api/v1/projects/{id}/workflow/allowed-transitions` - Get valid transitions from current state
+
+---
+
+## Audit Event System
+
+All significant project actions are logged as audit events in NDJSON format for compliance and traceability.
+
+### Event Schema
+
+Each audit event includes:
+
+- `event_id`: Unique identifier (UUID)
+- `event_type`: Type of event (e.g., workflow_state_changed, governance_metadata_created)
+- `timestamp`: ISO 8601 timestamp
+- `actor`: User or system that triggered the event
+- `correlation_id`: Optional request correlation ID for tracing
+- `project_key`: Associated project
+- `payload_summary`: Event-specific data summary
+- `resource_hash`: Optional SHA-256 hash for compliance
+
+### Event Types
+
+- `project_created` - Project creation
+- `project_updated` - Project metadata updates
+- `workflow_state_changed` - Workflow state transitions
+- `governance_metadata_created/updated` - Governance changes
+- `decision_created` - Decision log entries
+- `raid_item_created/updated` - RAID register updates
+- `artifact_created/updated` - Artifact changes
+- `command_proposed/applied` - Command workflow actions
+
+### API Endpoints
+
+- `GET /api/v1/projects/{id}/audit-events` - Retrieve audit events
+  - Query parameters: `event_type`, `actor`, `since`, `until`, `limit`, `offset`
+  - Supports filtering and pagination
+
+### Storage
+
+Events are stored in `{project}/events/audit.ndjson` as append-only NDJSON (newline-delimited JSON) for:
+
+- Efficient append operations
+- Easy parsing and streaming
+- Git-friendly format
+- Compliance audit trails
 
 ---
 

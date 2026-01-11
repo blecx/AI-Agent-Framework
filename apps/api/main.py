@@ -11,7 +11,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from routers import projects, commands, artifacts, governance, raid
+from routers import projects, commands, artifacts, governance, raid, workflow
 from services.git_manager import GitManager
 from services.llm_service import LLMService
 
@@ -59,6 +59,7 @@ app.include_router(
     governance.router, prefix="/projects/{project_key}/governance", tags=["governance"]
 )
 app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid"])
+app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow"])
 
 
 @app.get("/")

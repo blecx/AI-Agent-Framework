@@ -303,3 +303,98 @@ class RAIDItemList(BaseModel):
     items: List[RAIDItem]
     total: int
     filtered_by: Optional[Dict[str, Any]] = None
+
+
+# ============================================================================
+# Workflow State Models (ISO 21500 aligned)
+# ============================================================================
+
+
+class WorkflowStateEnum(str, Enum):
+    """ISO 21500 aligned project workflow states."""
+
+    INITIATING = "initiating"
+    PLANNING = "planning"
+    EXECUTING = "executing"
+    MONITORING = "monitoring"
+    CLOSING = "closing"
+    CLOSED = "closed"
+
+
+class WorkflowTransition(BaseModel):
+    """Workflow state transition information."""
+
+    from_state: WorkflowStateEnum
+    to_state: WorkflowStateEnum
+    timestamp: str
+    actor: str = Field(default="system")
+    reason: Optional[str] = None
+
+
+class WorkflowStateUpdate(BaseModel):
+    """Request model for updating workflow state."""
+
+    to_state: WorkflowStateEnum = Field(..., description="Target state to transition to")
+    actor: Optional[str] = Field(default="system", description="User/actor performing transition")
+    reason: Optional[str] = Field(default=None, description="Reason for state transition")
+
+
+class WorkflowStateInfo(BaseModel):
+    """Current workflow state information."""
+
+    current_state: WorkflowStateEnum
+    previous_state: Optional[WorkflowStateEnum] = None
+    transition_history: List[WorkflowTransition] = Field(default_factory=list)
+    updated_at: str
+    updated_by: str = Field(default="system")
+
+
+# ============================================================================
+# Audit Event Models (NDJSON storage)
+# ============================================================================
+
+
+class AuditEventType(str, Enum):
+    """Audit event types."""
+
+    PROJECT_CREATED = "project_created"
+    PROJECT_UPDATED = "project_updated"
+    WORKFLOW_STATE_CHANGED = "workflow_state_changed"
+    GOVERNANCE_METADATA_CREATED = "governance_metadata_created"
+    GOVERNANCE_METADATA_UPDATED = "governance_metadata_updated"
+    DECISION_CREATED = "decision_created"
+    RAID_ITEM_CREATED = "raid_item_created"
+    RAID_ITEM_UPDATED = "raid_item_updated"
+    ARTIFACT_CREATED = "artifact_created"
+    ARTIFACT_UPDATED = "artifact_updated"
+    COMMAND_PROPOSED = "command_proposed"
+    COMMAND_APPLIED = "command_applied"
+
+
+class AuditEvent(BaseModel):
+    """Audit event schema for NDJSON storage."""
+
+    event_id: str = Field(..., description="Unique event identifier")
+    event_type: AuditEventType = Field(..., description="Type of audit event")
+    timestamp: str = Field(..., description="ISO 8601 timestamp")
+    actor: str = Field(default="system", description="User/system that triggered event")
+    correlation_id: Optional[str] = Field(
+        default=None, description="Request/correlation ID for tracing"
+    )
+    project_key: str = Field(..., description="Project key this event relates to")
+    payload_summary: Dict[str, Any] = Field(
+        default_factory=dict, description="Summary of event payload"
+    )
+    resource_hash: Optional[str] = Field(
+        default=None, description="Hash of affected resource for compliance"
+    )
+
+
+class AuditEventList(BaseModel):
+    """Response model for audit event list."""
+
+    events: List[AuditEvent]
+    total: int
+    limit: int
+    offset: int
+    filtered_by: Optional[Dict[str, Any]] = None
