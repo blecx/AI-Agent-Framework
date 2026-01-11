@@ -712,6 +712,7 @@ We follow a **Plan → Issues → PRs** workflow for all contributions. Please r
 - Always set `PROJECT_DOCS_PATH=../../projectDocs` when running API locally
 - Add runtime dependencies to **both** `requirements.txt` files (root and `apps/api/`)
 - Test with both local venv (`./setup.sh`) and Docker before submitting
+- **Automated tests:** Add tests (unit/integration/E2E) when requested by issues or features - see `tests/README.md`
 - For cross-repo changes (backend + frontend), see [coordination guide](.github/prompts/cross-repo-coordination.md)
 
 ---

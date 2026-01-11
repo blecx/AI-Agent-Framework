@@ -128,7 +128,15 @@ docker compose up --build  # Web: :8080, API: :8000
 
 ## Testing & Linting
 
-**No automated tests:** No pytest files, no CI/CD workflows, no .github/workflows/. Manual testing via API docs (/docs) or web UI.
+**Automated tests are allowed and encouraged when requested by issues or feature requirements:**
+- **Unit tests:** Test individual components in isolation (place in `tests/unit/`)
+- **Integration tests:** Test component interactions (place in `tests/integration/`)
+- **E2E tests:** Test complete workflows via TUI (place in `tests/e2e/`)
+- Tests must be deterministic and CI-friendly (no flaky tests)
+- Run tests with: `pytest` (all), `pytest tests/unit` (unit), `pytest tests/integration` (integration), `TERM=xterm-256color pytest tests/e2e` (E2E)
+- CI workflow: `.github/workflows/ci.yml` runs tests automatically on push/PR
+
+**Manual testing:** Also validate via API docs (/docs) or web UI for interactive verification.
 
 **Linting (optional):** `python -m black apps/api/`, `python -m flake8 apps/api/`, `cd apps/web && npm run lint` (1 warning in ProjectView.jsx is OK).
 
