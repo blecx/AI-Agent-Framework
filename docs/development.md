@@ -436,6 +436,49 @@ Both setups use the same codebase and can access the same `projectDocs/` directo
 
 ## Testing
 
+### Automated Testing
+
+**Automated tests are allowed and encouraged when requested by issues or feature requirements.**
+
+The project supports multiple test types:
+- **Unit tests:** Test individual components in isolation (`tests/unit/`)
+- **Integration tests:** Test component interactions (`tests/integration/`)
+- **E2E tests:** Test complete workflows via TUI (`tests/e2e/`)
+
+All tests must be:
+- **Deterministic:** Produce consistent, reproducible results
+- **CI-friendly:** Run non-interactively in GitHub Actions
+- **No flaky tests:** Tests must reliably pass or fail
+
+#### Running Tests
+
+```bash
+# Install test dependencies (already in requirements.txt)
+pip install pytest pytest-asyncio
+
+# Run all tests
+pytest
+
+# Run specific test types
+pytest tests/unit           # Unit tests only
+pytest tests/integration    # Integration tests only
+TERM=xterm-256color pytest tests/e2e  # E2E tests (requires terminal emulation)
+
+# Run with verbose output
+pytest -v
+
+# Run with coverage
+pytest --cov=apps/api tests/
+```
+
+#### CI Integration
+
+Tests run automatically in CI via `.github/workflows/ci.yml`:
+- Push to `main` branch
+- Pull requests
+
+See `tests/README.md` for detailed testing documentation.
+
 ### Manual Testing
 
 1. **Start the API:**
@@ -452,18 +495,6 @@ Both setups use the same codebase and can access the same `projectDocs/` directo
    - Start the web dev server
    - Create a test project
    - Run commands and verify outputs
-
-### Testing with pytest
-
-Currently, there's no automated test suite, but the framework is ready for pytest:
-
-```bash
-# Install test dependencies (already in requirements.txt)
-pip install pytest pytest-asyncio
-
-# Run tests (when implemented)
-pytest
-```
 
 ### Testing the Setup Scripts
 
