@@ -1,5 +1,10 @@
 # AI-Agent-Framework
 
+[![Backend CI](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/blecx/AI-Agent-Framework/branch/main/graph/badge.svg)](https://codecov.io/gh/blecx/AI-Agent-Framework)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 An ISO 21500 Project Management AI Agent System with FastAPI backend and React/Vite frontend, deployed as Docker containers.
 
 ## Overview
@@ -30,6 +35,8 @@ This system provides intelligent project management following ISO 21500 standard
 **Developer Resources:**
 
 - 💻 **[Development Guide](docs/development.md)** - Local development setup and workflow
+- 🧪 **[Testing Guide](tests/README.md)** - Running tests and coverage
+- 🔗 **[E2E Testing](E2E_TESTING.md)** - Cross-repo E2E testing with client
 - 🎯 **[API Integration Guide](docs/api/client-integration-guide.md)** - Building custom clients
 - 🏛️ **[Architecture Decision Records](docs/adr/)** - Key architectural decisions
 
@@ -591,6 +598,94 @@ For detailed local development setup, see the [Local Development Setup](#local-d
 2. Create prompt template in `templates/prompts/iso21500/`
 3. Create output template in `templates/output/iso21500/`
 4. Update frontend `CommandPanel.jsx` with new command
+
+### Testing
+
+Comprehensive test suite with unit, integration, and E2E tests. **See [Testing Guide](tests/README.md) for full documentation.**
+
+#### Running Tests
+
+```bash
+# All tests
+pytest
+
+# Unit tests only
+pytest tests/unit
+
+# Integration tests only
+pytest tests/integration
+
+# E2E tests
+TERM=xterm-256color pytest tests/e2e
+
+# With coverage
+pytest --cov=apps/api --cov-report=html tests/
+# View coverage: open htmlcov/index.html
+```
+
+#### Test Structure
+
+- **Unit Tests** (`tests/unit/`): Test individual components in isolation
+  - `test_command_service.py` - Command propose/apply logic
+  - `test_git_manager.py` - Git operations
+  - `test_llm_service.py` - LLM client
+  - `test_governance_service.py` - Governance operations
+  - `test_raid_service.py` - RAID register
+  - `test_workflow_service.py` - Workflow state machine
+  - `test_audit_service.py` - Audit logging
+
+- **Integration Tests** (`tests/integration/`): Test API endpoints
+  - `test_core_api.py` - Health, projects, commands, artifacts
+  - `test_governance_api.py` - Governance endpoints
+  - `test_raid_api.py` - RAID endpoints
+  - `test_workflow_api.py` - Workflow endpoints
+
+- **E2E Tests** (`tests/e2e/`): Test complete workflows
+  - `test_governance_raid_workflow.py` - Full governance + RAID workflows
+  - `backend_e2e_runner.py` - E2E test harness for cross-repo testing
+
+#### Coverage Requirements
+
+- Overall: 80%+ (enforced in CI)
+- Services: 90%+
+- Routers: 85%+
+
+Current coverage: ![Coverage](https://codecov.io/gh/blecx/AI-Agent-Framework/branch/main/graph/badge.svg)
+
+#### E2E Testing with Client
+
+For cross-repository E2E testing with the client, see **[E2E Testing Guide](E2E_TESTING.md)**.
+
+Quick start:
+```bash
+# Terminal 1: Start backend
+python tests/e2e/backend_e2e_runner.py --mode server
+
+# Terminal 2: Run client E2E tests (in client repo)
+export BACKEND_URL=http://localhost:8000
+npm run test:e2e
+```
+
+#### Writing Tests
+
+**Unit tests** should:
+- Mock all external dependencies
+- Test one component at a time
+- Use fixtures for common setup
+- Be fast and deterministic
+
+**Integration tests** should:
+- Use FastAPI TestClient
+- Create isolated test environment per test
+- Test realistic API workflows
+- Verify both success and error responses
+
+**All tests** must:
+- Be independent (no shared state)
+- Use unique temp directories
+- Clean up after themselves
+- Work in any order
+- Be parallel-safe
 
 ### Adding New Templates
 
