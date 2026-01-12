@@ -17,7 +17,7 @@ jobs:
       with:
         python-version: '3.12'
     
-    - name:  Upgrade pip
+    - name: Upgrade pip
       run: python -m pip install --upgrade pip
     
     - name: Install dependencies
@@ -25,16 +25,53 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         if [ -f pyproject.toml ]; then pip install -e .; fi
-        pip install pytest
+        pip install pytest pytest-cov
     
-    - name: Run unit tests
+    - name: Configure git for tests
+      run: |
+        git config --global user.email "ci-test@example.com"
+        git config --global user.name "CI Test Runner"
+    
+    - name: Run unit tests with coverage
       if: hashFiles('tests/unit/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -q tests/unit
+      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-report=xml --cov-report=term-missing tests/unit
     
-    - name: Run integration tests
+    - name: Run integration tests with coverage
       if: hashFiles('tests/integration/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -q tests/integration
+      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-append --cov-report=xml --cov-report=term-missing tests/integration
+    
+    - name: Check coverage threshold
+      if: always()
+      run: |
+        python -m coverage report --fail-under=80 || echo "Coverage check failed but continuing..."
     
     - name: Run e2e tests
       if: hashFiles('tests/e2e/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE TERM=xterm-256color pytest -q tests/e2e
+      run: PYTHONPATH=$GITHUB_WORKSPACE TERM=xterm-256color pytest -v tests/e2e
+    
+    - name: Upload coverage reports to Codecov
+      if: always()
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    
+    - name: Generate coverage summary
+      if: always()
+      run: |
+        echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        python -m coverage report >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Coverage report generation skipped" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Archive coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: |
+          coverage.xml
+          htmlcov/
+        retention-days: 30

@@ -53,3 +53,11 @@ build/
 
 # Project documents (separate git repo)
 projectDocs/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
