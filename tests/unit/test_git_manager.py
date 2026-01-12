@@ -229,7 +229,7 @@ class TestCommitOperations:
         assert "hash" in last_commit
         assert "message" in last_commit
         assert "author" in last_commit
-        assert "timestamp" in last_commit
+        assert "date" in last_commit
 
 
 class TestDiffOperations:
@@ -281,7 +281,7 @@ class TestEventLogging:
         git_manager.log_event(test_project, event_data)
 
         # Verify event log file exists
-        log_file = git_manager.base_path / test_project / "events.jsonl"
+        log_file = git_manager.base_path / test_project / "events" / "events.ndjson"
         assert log_file.exists()
 
         # Verify event was written
@@ -295,7 +295,7 @@ class TestEventLogging:
         for i in range(3):
             git_manager.log_event(test_project, {"event_type": f"event_{i}"})
 
-        log_file = git_manager.base_path / test_project / "events.jsonl"
+        log_file = git_manager.base_path / test_project / "events" / "events.ndjson"
         lines = log_file.read_text().strip().split("\n")
         assert len(lines) == 3
 

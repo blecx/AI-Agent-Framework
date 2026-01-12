@@ -284,28 +284,29 @@ class TestArtifactsAPI:
     """Test artifact listing and retrieval endpoints."""
 
     @pytest.fixture
-    def test_project_with_artifacts(self, client):
+    def test_project_with_artifacts(self, client, temp_project_dir):
         """Create a test project with artifacts."""
         # Create project
-        client.post("/projects", json={"key": "ART001", "name": "Artifact Test"})
+        response = client.post("/projects", json={"key": "ART001", "name": "Artifact Test"})
+        assert response.status_code == 201
 
-        # Write some artifacts directly via git_manager
-        # Access through client app state
-        import sys
+        # Write some artifacts directly via filesystem
         import os
+        from pathlib import Path
 
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
-        from services.git_manager import GitManager
+        project_path = Path(temp_project_dir) / "ART001" / "artifacts"
+        project_path.mkdir(parents=True, exist_ok=True)
 
-        git_manager = GitManager(os.environ["PROJECT_DOCS_PATH"])
-        git_manager.write_file(
-            "ART001", "artifacts/charter.md", "# Project Charter\n\nTest content"
-        )
-        git_manager.write_file(
-            "ART001", "artifacts/plan.md", "# Project Plan\n\nTest plan"
-        )
-        git_manager.commit_changes(
-            "ART001", "[ART001] Add test artifacts", ["artifacts/charter.md", "artifacts/plan.md"]
+        (project_path / "charter.md").write_text("# Project Charter\n\nTest content")
+        (project_path / "plan.md").write_text("# Project Plan\n\nTest plan")
+
+        # Commit directly via git commands
+        import subprocess
+        subprocess.run(["git", "add", "."], cwd=temp_project_dir, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "[ART001] Add test artifacts"],
+            cwd=temp_project_dir,
+            check=True,
         )
 
         return "ART001"
@@ -350,7 +351,7 @@ class TestArtifactsAPI:
 
     def test_get_artifact_success(self, client, test_project_with_artifacts):
         """Test successfully getting an artifact."""
-        response = client.get("/projects/ART001/artifacts/charter.md")
+        response = client.get("/projects/ART001/artifacts/artifacts/charter.md")
 
         assert response.status_code == 200
         content = response.text
@@ -361,7 +362,7 @@ class TestArtifactsAPI:
         self, client, test_project_with_artifacts
     ):
         """Test that artifact content is correct."""
-        response = client.get("/projects/ART001/artifacts/plan.md")
+        response = client.get("/projects/ART001/artifacts/artifacts/plan.md")
 
         assert response.status_code == 200
         content = response.text
