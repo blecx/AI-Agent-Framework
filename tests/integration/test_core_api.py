@@ -8,6 +8,8 @@ import tempfile
 import shutil
 import sys
 import os
+import subprocess
+from pathlib import Path
 
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
@@ -301,13 +303,29 @@ class TestArtifactsAPI:
         (project_path / "plan.md").write_text("# Project Plan\n\nTest plan")
 
         # Commit directly via git commands
-        import subprocess
-        subprocess.run(["git", "add", "."], cwd=temp_project_dir, check=True)
-        subprocess.run(
-            ["git", "commit", "-m", "[ART001] Add test artifacts"],
-            cwd=temp_project_dir,
-            check=True,
-        )
+        try:
+            subprocess.run(
+                ["git", "add", "."],
+                cwd=temp_project_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "[ART001] Add test artifacts"],
+                cwd=temp_project_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            pytest.fail(
+                f"Git command failed in test fixture.\n"
+                f"  Command: {exc.cmd}\n"
+                f"  Return code: {exc.returncode}\n"
+                f"  Stdout: {exc.stdout}\n"
+                f"  Stderr: {exc.stderr}"
+            )
 
         return "ART001"
 

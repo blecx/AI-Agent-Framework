@@ -2,7 +2,7 @@
 Unit tests for Command Service.
 """
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 from apps.api.services.command_service import CommandService
 
 

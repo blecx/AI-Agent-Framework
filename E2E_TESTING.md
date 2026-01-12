@@ -117,7 +117,7 @@ services:
     volumes:
       - backend-docs:/tmp/test-docs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').getcode() == 200 else 1)"]
       interval: 5s
       timeout: 3s
       retries: 10

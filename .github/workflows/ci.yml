@@ -64,7 +64,7 @@ jobs:
       if: always()
       run: |
         echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
-        python -m coverage report --format=markdown >> $GITHUB_STEP_SUMMARY || echo "Coverage report generation skipped" >> $GITHUB_STEP_SUMMARY
+        python -m coverage report >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Coverage report generation skipped" >> $GITHUB_STEP_SUMMARY
     
     - name: Archive coverage report
       if: always()

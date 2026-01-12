@@ -21,7 +21,6 @@ import sys
 import os
 import subprocess
 import time
-import json
 from pathlib import Path
 import httpx
 
@@ -233,7 +232,7 @@ def wait_for_backend(base_url, timeout=30, interval=1):
             if response.status_code == 200:
                 print(f"✓ Backend is ready!")
                 return True
-        except:
+        except Exception:
             pass
         
         time.sleep(interval)
