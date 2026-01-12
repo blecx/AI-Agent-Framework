@@ -81,7 +81,7 @@ pytest -vv tests/integration
 ### With Coverage
 ```bash
 # Run tests with coverage report
-pytest --cov=apps/api tests/
+pytest --cov=apps/api --cov-report=term-missing tests/
 
 # Generate HTML coverage report
 pytest --cov=apps/api --cov-report=html tests/
@@ -89,7 +89,12 @@ pytest --cov=apps/api --cov-report=html tests/
 
 # Coverage with missing lines
 pytest --cov=apps/api --cov-report=term-missing tests/
+
+# Run with coverage threshold check (80%)
+pytest --cov=apps/api --cov-report=term-missing --cov-fail-under=80 tests/
 ```
+
+**Note**: Coverage options are not included in pytest.ini by default to allow flexible CI configurations. Always specify coverage options explicitly when needed.
 
 ### Running Specific Test Markers
 ```bash

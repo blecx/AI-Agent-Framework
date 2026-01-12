@@ -621,6 +621,9 @@ TERM=xterm-256color pytest tests/e2e
 # With coverage
 pytest --cov=apps/api --cov-report=html tests/
 # View coverage: open htmlcov/index.html
+
+# With coverage threshold check (80%)
+pytest --cov=apps/api --cov-report=term-missing --cov-fail-under=80 tests/
 ```
 
 #### Test Structure
