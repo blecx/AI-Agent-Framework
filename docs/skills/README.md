@@ -30,6 +30,7 @@ All skills implement the `Skill` protocol defined in `apps/api/skills/base.py`:
 
 ```python
 from typing import Protocol, Any, Dict
+from apps.api.skills.base import SkillResult
 
 class Skill(Protocol):
     # Class-level metadata

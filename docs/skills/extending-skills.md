@@ -20,7 +20,7 @@ My custom skill implementation.
 """
 
 from typing import Dict, Any
-from .base import SkillResult
+from apps.api.skills.base import SkillResult
 
 
 class MyCustomSkill:
@@ -86,11 +86,12 @@ def load_builtin_skills(self) -> None:
 
 ### Option B: Dynamic Registration (Recommended for Custom Skills)
 
-For custom or third-party skills, register them dynamically at application startup or runtime:
+For custom or third-party skills placed outside the core framework, register them dynamically at application startup or runtime:
 
 ```python
 from apps.api.skills.registry import get_global_registry
-from apps.api.skills.my_custom_skill import MyCustomSkill
+# Import your custom skill from wherever it's defined
+from my_custom_skills.my_custom_skill import MyCustomSkill
 
 registry = get_global_registry()
 registry.register(MyCustomSkill())
@@ -101,7 +102,8 @@ You can create a custom initialization file or plugin loader:
 ```python
 from fastapi import FastAPI
 from apps.api.skills.registry import get_global_registry
-from apps.api.skills.my_custom_skill import MyCustomSkill
+# Import your custom skill from wherever it's defined
+from my_custom_skills.my_custom_skill import MyCustomSkill
 
 app = FastAPI()
 
@@ -110,6 +112,8 @@ async def load_custom_skills() -> None:
     registry = get_global_registry()
     registry.register(MyCustomSkill())
 ```
+
+**Note**: Custom skills can be placed in any Python module accessible to your application. The examples above assume skills are in a `my_custom_skills` package, but you can organize them however you prefer.
 
 ## Step 3: Add API Endpoints (Optional)
 
@@ -207,7 +211,8 @@ class TestMyCustomSkill:
 ```python
 import os
 import json
-from .base import SkillResult
+from typing import Dict, Any
+from apps.api.skills.base import SkillResult
 
 class FileIOSkill:
     name = "file_io"
@@ -247,7 +252,8 @@ class FileIOSkill:
 ### LLM Integration Skill
 
 ```python
-from .base import SkillResult
+from typing import Dict, Any
+from apps.api.skills.base import SkillResult
 
 class ReasoningSkill:
     name = "reasoning"
