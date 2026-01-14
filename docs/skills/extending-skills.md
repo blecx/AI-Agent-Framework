@@ -20,65 +20,46 @@ My custom skill implementation.
 """
 
 from typing import Dict, Any
-from .base import SkillMetadata
+from .base import SkillResult
 
 
 class MyCustomSkill:
     """Custom skill that does something useful."""
     
-    def get_metadata(self) -> SkillMetadata:
-        """Define skill metadata and schemas."""
-        return SkillMetadata(
-            name="my_custom_skill",
-            version="1.0.0",
-            description="Does something useful",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "param1": {
-                        "type": "string",
-                        "description": "First parameter"
-                    },
-                    "param2": {
-                        "type": "number",
-                        "description": "Second parameter"
-                    }
-                },
-                "required": ["param1"]
-            },
-            output_schema={
-                "type": "object",
-                "properties": {
-                    "result": {"type": "string"},
-                    "computed_value": {"type": "number"}
-                }
-            }
-        )
+    # Required skill metadata (class attributes)
+    name: str = "my_custom_skill"
+    version: str = "1.0.0"
+    description: str = "Does something useful"
     
-    async def execute(
-        self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def execute(
+        self, agent_id: str, params: Dict[str, Any], **kwargs
+    ) -> SkillResult:
         """Execute the skill logic."""
         # Validate inputs
-        param1 = input_data.get("param1")
+        param1 = params.get("param1")
         if not param1:
             raise ValueError("param1 is required")
         
-        param2 = input_data.get("param2", 0)
+        param2 = params.get("param2", 0)
         
-        # Access services from context if needed
-        git_manager = context.get("git_manager")
-        llm_service = context.get("llm_service")
+        # Access services from kwargs if needed
+        docs_path = kwargs.get("docs_path")
+        git_manager = kwargs.get("git_manager")
+        llm_service = kwargs.get("llm_service")
         
         # Implement your skill logic here
         result = f"Processed {param1}"
         computed_value = param2 * 2
         
         # Return structured results
-        return {
-            "result": result,
-            "computed_value": computed_value
-        }
+        return SkillResult(
+            success=True,
+            data={
+                "result": result,
+                "computed_value": computed_value
+            },
+            message="Skill executed successfully"
+        )
 ```
 
 ## Step 2: Register the Skill
@@ -108,21 +89,26 @@ def load_builtin_skills(self) -> None:
 For custom or third-party skills, register them dynamically at application startup or runtime:
 
 ```python
-from skills.registry import get_registry
+from skills.registry import get_global_registry
 from skills.my_custom_skill import MyCustomSkill
 
-registry = get_registry()
+registry = get_global_registry()
 registry.register_skill(MyCustomSkill())
 ```
 
 You can create a custom initialization file or plugin loader:
 
 ```python
-from skills.registry import get_registry
+from fastapi import FastAPI
+from skills.registry import get_global_registry
 from skills.my_custom_skill import MyCustomSkill
 
-registry = get_registry()
-registry.register_skill(MyCustomSkill())
+app = FastAPI()
+
+@app.on_event("startup")
+async def load_custom_skills() -> None:
+    registry = get_global_registry()
+    registry.register_skill(MyCustomSkill())
 ```
 
 ## Step 3: Add API Endpoints (Optional)
@@ -135,25 +121,21 @@ async def execute_my_custom_skill(
     agent_id: str, request: MyCustomRequest, app_request: Request
 ):
     """Execute my custom skill."""
-    registry = get_registry()
-    skill = registry.get_skill("my_custom_skill")
+    registry = get_global_registry()
+    skill = registry.get("my_custom_skill")
     
     if not skill:
         raise HTTPException(status_code=500, detail="Skill not available")
     
-    git_manager = app_request.app.state.git_manager
-    llm_service = app_request.app.state.llm_service
+    docs_path = get_docs_path(app_request)
     
     try:
-        result = await skill.execute(
+        result = skill.execute(
             agent_id=agent_id,
-            input_data=request.dict(),
-            context={
-                "git_manager": git_manager,
-                "llm_service": llm_service
-            }
+            params=request.dict(),
+            docs_path=docs_path
         )
-        return MyCustomResponse(**result)
+        return MyCustomResponse(**result.data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 ```
@@ -177,16 +159,16 @@ Don't forget to add request/response models to `apps/api/models.py`.
 
 ### State Management
 
-- Use `git_manager.base_path` for file storage
-- Create subdirectories: `_agents/{skill_name}/`
+- Use `docs_path` from kwargs for file storage
+- Create subdirectories: `agents/{skill_name}/`
 - Use JSON for structured data
 - Use NDJSON for append-only logs
 
-### Async Operations
+### Synchronous Execution
 
-- Skills must be async (use `async def execute`)
-- Use `await` for async operations
-- Don't block the event loop
+- Skills use synchronous `execute()` methods
+- Return `SkillResult` objects
+- Use standard Python file I/O and operations
 
 ### Testing
 
@@ -204,19 +186,18 @@ def skill():
 
 class TestMyCustomSkill:
     def test_metadata(self, skill):
-        metadata = skill.get_metadata()
-        assert metadata.name == "my_custom_skill"
-        assert metadata.version == "1.0.0"
+        assert skill.name == "my_custom_skill"
+        assert skill.version == "1.0.0"
+        assert skill.description == "Does something useful"
     
-    @pytest.mark.asyncio
-    async def test_execute(self, skill):
-        result = await skill.execute(
+    def test_execute(self, skill):
+        result = skill.execute(
             agent_id="test",
-            input_data={"param1": "test", "param2": 5},
-            context={}
+            params={"param1": "test", "param2": 5}
         )
-        assert result["result"] == "Processed test"
-        assert result["computed_value"] == 10
+        assert result.success is True
+        assert result.data["result"] == "Processed test"
+        assert result.data["computed_value"] == 10
 ```
 
 ## Examples
@@ -226,99 +207,83 @@ class TestMyCustomSkill:
 ```python
 import os
 import json
+from .base import SkillResult
 
 class FileIOSkill:
-    def get_metadata(self) -> SkillMetadata:
-        return SkillMetadata(
-            name="file_io",
-            version="1.0.0",
-            description="Read and write agent files",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "operation": {"type": "string", "enum": ["read", "write"]},
-                    "filename": {"type": "string"},
-                    "content": {"type": "string"}
-                },
-                "required": ["operation", "filename"]
-            },
-            output_schema={
-                "type": "object",
-                "properties": {
-                    "success": {"type": "boolean"},
-                    "content": {"type": "string"}
-                }
-            }
-        )
+    name = "file_io"
+    version = "1.0.0"
+    description = "Read and write agent files"
     
-    async def execute(self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
-        git_manager = context.get("git_manager")
-        if not git_manager:
-            raise ValueError("git_manager required")
+    def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
+        docs_path = kwargs.get("docs_path")
+        if not docs_path:
+            return SkillResult(success=False, message="docs_path required")
         
-        operation = input_data["operation"]
-        filename = input_data["filename"]
+        operation = params.get("operation")
+        filename = params.get("filename")
         
-        agent_dir = os.path.join(str(git_manager.base_path), "_agents", agent_id)
+        if not operation or not filename:
+            return SkillResult(success=False, message="operation and filename required")
+        
+        agent_dir = os.path.join(docs_path, "agents", agent_id)
         os.makedirs(agent_dir, exist_ok=True)
         filepath = os.path.join(agent_dir, filename)
         
         if operation == "read":
             if not os.path.exists(filepath):
-                return {"success": False, "content": ""}
+                return SkillResult(success=False, data={"content": ""})
             with open(filepath, 'r') as f:
                 content = f.read()
-            return {"success": True, "content": content}
-        else:  # write
-            content = input_data.get("content", "")
+            return SkillResult(success=True, data={"content": content})
+        elif operation == "write":
+            content = params.get("content", "")
             with open(filepath, 'w') as f:
                 f.write(content)
-            return {"success": True, "content": content}
+            return SkillResult(success=True, data={"content": content}, message="File written successfully")
+        else:
+            return SkillResult(success=False, message=f"Invalid operation: {operation}")
 ```
 
 ### LLM Integration Skill
 
 ```python
+from .base import SkillResult
+
 class ReasoningSkill:
-    def get_metadata(self) -> SkillMetadata:
-        return SkillMetadata(
-            name="reasoning",
-            version="1.0.0",
-            description="Use LLM for reasoning tasks",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "prompt": {"type": "string"},
-                    "context": {"type": "object"}
-                },
-                "required": ["prompt"]
-            },
-            output_schema={
-                "type": "object",
-                "properties": {
-                    "response": {"type": "string"},
-                    "reasoning": {"type": "string"}
-                }
-            }
-        )
+    name = "reasoning"
+    version = "1.0.0"
+    description = "Use LLM for reasoning tasks"
     
-    async def execute(self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
-        llm_service = context.get("llm_service")
+    def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
+        llm_service = kwargs.get("llm_service")
         if not llm_service:
-            return {"response": "LLM not available", "reasoning": "Fallback response"}
+            return SkillResult(
+                success=False, 
+                message="LLM service not available",
+                data={"response": "Fallback response"}
+            )
         
-        prompt = input_data["prompt"]
+        prompt = params.get("prompt")
+        if not prompt:
+            return SkillResult(success=False, message="prompt is required")
         
         try:
-            response = await llm_service.chat_completion(
+            response = llm_service.chat_completion(
                 messages=[{"role": "user", "content": prompt}]
             )
-            return {
-                "response": response.get("content", ""),
-                "reasoning": "LLM-generated response"
-            }
-        except Exception:
-            return {"response": "Error", "reasoning": "LLM call failed"}
+            return SkillResult(
+                success=True,
+                data={
+                    "response": response.get("content", ""),
+                    "reasoning": "LLM-generated response"
+                }
+            )
+        except Exception as e:
+            return SkillResult(
+                success=False,
+                message=f"LLM call failed: {str(e)}",
+                data={"response": "Error"}
+            )
 ```
 
 ## Configuration

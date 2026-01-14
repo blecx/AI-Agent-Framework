@@ -29,15 +29,18 @@ The framework includes three foundational cognitive skills:
 All skills implement the `Skill` protocol defined in `apps/api/skills/base.py`:
 
 ```python
+from typing import Protocol, Any, Dict
+
 class Skill(Protocol):
-    def get_metadata(self) -> SkillMetadata:
-        """Get skill metadata including schemas."""
-        ...
+    # Class-level metadata
+    name: str
+    version: str
+    description: str
     
-    async def execute(
-        self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Execute the skill with given input."""
+    def execute(
+        self, agent_id: str, params: Dict[str, Any], **kwargs
+    ) -> SkillResult:
+        """Execute the skill with given parameters."""
         ...
 ```
 
@@ -51,9 +54,10 @@ The `SkillRegistry` manages all available skills:
 
 ### Execution Context
 
-Skills receive a context dictionary with services:
-- `git_manager`: For file operations and persistence
-- `llm_service`: For LLM interactions (if needed)
+Skills receive kwargs with services:
+- `docs_path`: Base path for document storage
+- `git_manager`: For git operations (optional)
+- `llm_service`: For LLM interactions (optional)
 
 ## Built-in Skills Reference
 
@@ -61,29 +65,34 @@ Skills receive a context dictionary with services:
 
 **Purpose**: Manage agent short-term and long-term memory.
 
-**Input Schema**:
+**Input Parameters**:
 ```json
 {
   "operation": "get" | "set",
-  "short_term": {...},  // Optional, for set operation
-  "long_term": {...}    // Optional, for set operation
+  "memory_type": "short_term" | "long_term",
+  "data": {...}  // Required for set operation
 }
 ```
 
-**Output Schema**:
+**Output Format**:
 ```json
 {
-  "agent_id": "string",
-  "short_term": {...},
-  "long_term": {...},
-  "metadata": {
-    "created_at": "ISO timestamp",
-    "updated_at": "ISO timestamp"
-  }
+  "success": true,
+  "data": {
+    "agent_id": "string",
+    "short_term": {...},
+    "long_term": {...},
+    "metadata": {
+      "created_at": "ISO timestamp",
+      "updated_at": "ISO timestamp"
+    }
+  },
+  "message": "string",
+  "timestamp": "ISO timestamp"
 }
 ```
 
-**Storage**: Memory is persisted in `_agents/memory/{agent_id}.json`
+**Storage**: Memory is persisted in `agents/{agent_id}/memory/short_term.json` and `agents/{agent_id}/memory/long_term.json`
 
 **Use Cases**:
 - Maintain working memory during task execution
@@ -156,7 +165,7 @@ Skills receive a context dictionary with services:
 }
 ```
 
-**Storage**: Experiences are appended to `_agents/experiences/{agent_id}.ndjson` in NDJSON format.
+**Storage**: Experiences are appended to `agents/experiences/{agent_id}.ndjson` in NDJSON format.
 
 **Use Cases**:
 - Build experience database for pattern recognition
