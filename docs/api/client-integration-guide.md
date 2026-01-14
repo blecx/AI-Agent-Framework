@@ -1,8 +1,8 @@
 # Client Integration Guide
 
-**Date:** 2026-01-10  
+**Date:** 2026-01-14  
 **Status:** Active  
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-14
 
 ## Overview
 
@@ -11,7 +11,8 @@ This guide is for developers who want to build custom clients that integrate wit
 ## API Overview
 
 **Base URL:** `http://localhost:8000` (development)  
-**Production:** `https://api.your-domain.com`  
+**Versioned Base URL:** `http://localhost:8000/api/v1` (recommended)  
+**Production:** `https://api.your-domain.com/api/v1`  
 **Protocol:** REST over HTTP/HTTPS  
 **Content Type:** `application/json`  
 **API Documentation:** `http://localhost:8000/docs` (FastAPI auto-generated Swagger UI)
@@ -23,6 +24,54 @@ This guide is for developers who want to build custom clients that integrate wit
 3. **Stateless:** Each request is independent
 4. **Standard HTTP:** Uses conventional HTTP methods and status codes
 5. **JSON Everywhere:** All requests and responses use JSON
+6. **Versioned API:** All endpoints available under `/api/v1/` prefix for stability
+
+## API Versioning
+
+**Current Version:** `v1`
+
+### Versioned Endpoints (Recommended)
+
+All endpoints are available under the `/api/v1/` prefix for API stability and future compatibility:
+
+```bash
+# Recommended: Use versioned endpoints
+curl http://localhost:8000/api/v1/projects
+curl http://localhost:8000/api/v1/health
+```
+
+### Backward Compatibility (Deprecated)
+
+Legacy unversioned endpoints are still supported but **deprecated**:
+
+```bash
+# Deprecated: Will be removed in future versions
+curl http://localhost:8000/projects
+curl http://localhost:8000/health
+```
+
+**Migration Path:**
+- New clients should use `/api/v1/` prefix from the start
+- Existing clients should migrate to versioned endpoints
+- Unversioned endpoints will be removed in a future major version (v2.0.0)
+
+### Version Detection
+
+Check API version via the health endpoint:
+
+```bash
+curl http://localhost:8000/api/v1/health
+```
+
+Response includes `api_version` field:
+
+```json
+{
+  "status": "healthy",
+  "api_version": "v1",
+  ...
+}
+```
 
 ## Authentication
 
@@ -48,6 +97,203 @@ curl -H "X-API-Key: your-api-key" \
 ```bash
 export API_KEY=your-api-key
 ```
+
+## Client Workflow Contract Checklist
+
+This section maps common client workflows to their required API endpoints, ensuring clients have a clear contract for integration.
+
+### Core Client Workflows
+
+#### 1. Application Initialization
+**Goal:** Verify API is available and ready
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| Check API health | `/api/v1/health` | GET | ✅ |
+| Verify git repository | `/api/v1/health` | GET | ✅ |
+
+**Expected Flow:**
+```
+1. GET /api/v1/health
+   → Verify status = "healthy" and docs_is_git = true
+```
+
+---
+
+#### 2. Project Management
+**Goal:** Create and manage projects
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| List all projects | `/api/v1/projects` | GET | ✅ |
+| Create new project | `/api/v1/projects` | POST | ✅ |
+| Get project state | `/api/v1/projects/{key}/state` | GET | ✅ |
+| Get workflow state | `/api/v1/projects/{key}/workflow/state` | GET | ✅ |
+| Transition workflow | `/api/v1/projects/{key}/workflow/state` | PATCH | ✅ |
+
+**Expected Flow:**
+```
+1. GET /api/v1/projects
+   → Display project list
+2. POST /api/v1/projects with {key, name}
+   → Create new project
+3. GET /api/v1/projects/{key}/state
+   → Get project details and artifacts
+4. GET /api/v1/projects/{key}/workflow/state
+   → Display current workflow phase
+```
+
+---
+
+#### 3. RAID Register Management
+**Goal:** Manage risks, assumptions, issues, and dependencies
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| List RAID items | `/api/v1/projects/{key}/raid` | GET | ✅ |
+| Filter RAID items | `/api/v1/projects/{key}/raid?type={type}&status={status}` | GET | ✅ |
+| Get RAID item detail | `/api/v1/projects/{key}/raid/{id}` | GET | ✅ |
+| Create RAID item | `/api/v1/projects/{key}/raid` | POST | ✅ |
+| Update RAID item | `/api/v1/projects/{key}/raid/{id}` | PUT | ✅ |
+| Delete RAID item | `/api/v1/projects/{key}/raid/{id}` | DELETE | ✅ |
+
+**Expected Flow:**
+```
+1. GET /api/v1/projects/{key}/raid
+   → Display RAID register
+2. POST /api/v1/projects/{key}/raid with {type, title, description, owner}
+   → Create new RAID item
+3. GET /api/v1/projects/{key}/raid/{id}
+   → Show item details
+4. PUT /api/v1/projects/{key}/raid/{id} with updates
+   → Update RAID item
+```
+
+---
+
+#### 4. Command Execution (Propose/Apply)
+**Goal:** Execute AI-assisted commands with preview
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| Propose command | `/api/v1/projects/{key}/commands/propose` | POST | ✅ |
+| Apply proposal | `/api/v1/projects/{key}/commands/apply` | POST | ✅ |
+
+**Expected Flow:**
+```
+1. POST /api/v1/projects/{key}/commands/propose
+   with {command, params}
+   → Get proposal with file_changes preview
+2. User reviews file_changes
+3. POST /api/v1/projects/{key}/commands/apply
+   with {proposal_id}
+   → Commit changes to git
+```
+
+---
+
+#### 5. Artifact Management
+**Goal:** View and manage project artifacts
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| List artifacts | `/api/v1/projects/{key}/artifacts` | GET | ✅ |
+| Get artifact content | `/api/v1/projects/{key}/artifacts/{path}` | GET | ✅ |
+
+**Expected Flow:**
+```
+1. GET /api/v1/projects/{key}/artifacts
+   → Display artifact list
+2. GET /api/v1/projects/{key}/artifacts/{path}
+   → Display artifact content
+```
+
+---
+
+#### 6. Governance & Compliance
+**Goal:** Manage governance metadata and audit trail
+
+| Workflow Step | Endpoint | Method | Required |
+|---------------|----------|--------|----------|
+| Get governance metadata | `/api/v1/projects/{key}/governance` | GET | ✅ |
+| Update governance | `/api/v1/projects/{key}/governance` | PUT | ✅ |
+| Get audit events | `/api/v1/projects/{key}/audit-events` | GET | ✅ |
+| Filter audit events | `/api/v1/projects/{key}/audit-events?event_type={type}` | GET | ✅ |
+
+**Expected Flow:**
+```
+1. GET /api/v1/projects/{key}/governance
+   → Display governance structure
+2. GET /api/v1/projects/{key}/audit-events
+   → Display audit trail
+3. GET /api/v1/projects/{key}/audit-events?since={timestamp}
+   → Show recent events
+```
+
+---
+
+### Complete End-to-End Workflow
+
+**Scenario:** Create project → Add RAID item → Transition workflow → View audit
+
+```bash
+# 1. Create project
+curl -X POST http://localhost:8000/api/v1/projects \
+  -H "Content-Type: application/json" \
+  -d '{"key": "PROJ001", "name": "My Project"}'
+
+# 2. Verify initial workflow state
+curl http://localhost:8000/api/v1/projects/PROJ001/workflow/state
+# Expected: current_state = "initiating"
+
+# 3. Create a RAID risk
+curl -X POST http://localhost:8000/api/v1/projects/PROJ001/raid \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "risk",
+    "title": "Budget overrun risk",
+    "description": "Risk of exceeding budget",
+    "owner": "pm@example.com",
+    "priority": "high"
+  }'
+
+# 4. Transition to planning phase
+curl -X PATCH http://localhost:8000/api/v1/projects/PROJ001/workflow/state \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_state": "planning",
+    "actor": "pm@example.com",
+    "reason": "Initial planning"
+  }'
+
+# 5. View audit trail
+curl http://localhost:8000/api/v1/projects/PROJ001/audit-events
+# Expected: project_created, raid_item_created, workflow_state_changed events
+```
+
+---
+
+### Contract Validation Checklist
+
+Use this checklist to verify your client implementation:
+
+- [ ] **Health Check**: Can verify API is running and healthy
+- [ ] **Project Creation**: Can create projects with valid key format
+- [ ] **Project Listing**: Can retrieve and display all projects
+- [ ] **Project State**: Can get comprehensive project state
+- [ ] **Workflow State**: Can view and transition workflow phases
+- [ ] **RAID CRUD**: Can create, read, update, delete RAID items
+- [ ] **RAID Filtering**: Can filter RAID by type, status, owner, priority
+- [ ] **Command Propose**: Can propose commands and preview changes
+- [ ] **Command Apply**: Can apply proposals and commit changes
+- [ ] **Artifact Listing**: Can list project artifacts
+- [ ] **Artifact Content**: Can retrieve artifact content
+- [ ] **Governance Read**: Can view governance metadata
+- [ ] **Audit Events**: Can retrieve and filter audit events
+- [ ] **Error Handling**: Properly handles 400, 404, 409, 500 errors
+- [ ] **API Versioning**: Uses `/api/v1/` prefix for all requests
+
+---
 
 ## API Endpoints
 
@@ -76,13 +322,13 @@ curl http://localhost:8000/
 
 ---
 
-#### GET /health - Detailed Health Check
+#### GET /api/v1/health - Detailed Health Check (Versioned)
 
-**Description:** Get detailed health information
+**Description:** Get detailed health information (versioned endpoint - recommended)
 
 **Request:**
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
 ```
 
 **Response:**
@@ -91,24 +337,27 @@ curl http://localhost:8000/health
   "status": "healthy",
   "docs_path": "/projectDocs",
   "docs_exists": true,
-  "docs_is_git": true
+  "docs_is_git": true,
+  "api_version": "v1"
 }
 ```
 
 **Status Codes:**
 - `200 OK` - Service is healthy
 
+**Note:** Legacy unversioned `/health` endpoint is still available but deprecated.
+
 ---
 
 ### Project Management
 
-#### GET /projects - List Projects
+#### GET /api/v1/projects - List Projects
 
 **Description:** Get a list of all projects
 
 **Request:**
 ```bash
-curl http://localhost:8000/projects
+curl http://localhost:8000/api/v1/projects
 ```
 
 **Response:**
@@ -137,13 +386,13 @@ curl http://localhost:8000/projects
 
 ---
 
-#### POST /projects - Create Project
+#### POST /api/v1/projects - Create Project
 
 **Description:** Create a new project
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/projects \
+curl -X POST http://localhost:8000/api/v1/projects \
   -H "Content-Type: application/json" \
   -d '{
     "key": "PROJECT001",
@@ -183,13 +432,13 @@ curl -X POST http://localhost:8000/projects \
 
 ---
 
-#### GET /projects/{key}/state - Get Project State
+#### GET /api/v1/projects/{key}/state - Get Project State
 
 **Description:** Get complete project state including artifacts and last commit
 
 **Request:**
 ```bash
-curl http://localhost:8000/projects/PROJECT001/state
+curl http://localhost:8000/api/v1/projects/PROJECT001/state
 ```
 
 **Response:**
@@ -233,13 +482,13 @@ curl http://localhost:8000/projects/PROJECT001/state
 
 ### Command Execution (Propose/Apply Pattern)
 
-#### POST /projects/{key}/commands/propose - Propose Command
+#### POST /api/v1/projects/{key}/commands/propose - Propose Command
 
 **Description:** Generate a proposal for command execution with preview of changes
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/projects/PROJECT001/commands/propose \
+curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/propose \
   -H "Content-Type: application/json" \
   -d '{
     "command": "generate_artifact",
@@ -299,13 +548,13 @@ curl -X POST http://localhost:8000/projects/PROJECT001/commands/propose \
 
 ---
 
-#### POST /projects/{key}/commands/apply - Apply Proposal
+#### POST /api/v1/projects/{key}/commands/apply - Apply Proposal
 
 **Description:** Apply a previously generated proposal and commit changes to git
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/projects/PROJECT001/commands/apply \
+curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/apply \
   -H "Content-Type: application/json" \
   -d '{
     "proposal_id": "prop_abc123"
@@ -346,13 +595,13 @@ curl -X POST http://localhost:8000/projects/PROJECT001/commands/apply \
 
 ### Artifact Management
 
-#### GET /projects/{key}/artifacts - List Artifacts
+#### GET /api/v1/projects/{key}/artifacts - List Artifacts
 
 **Description:** Get list of all artifacts in project's artifacts folder
 
 **Request:**
 ```bash
-curl http://localhost:8000/projects/PROJECT001/artifacts
+curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts
 ```
 
 **Response:**
@@ -390,13 +639,13 @@ curl http://localhost:8000/projects/PROJECT001/artifacts
 
 ---
 
-#### GET /projects/{key}/artifacts/{path} - Get Artifact Content
+#### GET /api/v1/projects/{key}/artifacts/{path} - Get Artifact Content
 
 **Description:** Retrieve content of a specific artifact
 
 **Request:**
 ```bash
-curl http://localhost:8000/projects/PROJECT001/artifacts/project_charter.md
+curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts/project_charter.md
 ```
 
 **Response:**
@@ -496,12 +745,12 @@ except (ConnectionError, Timeout) as e:
 
 ## Example Requests & Responses
 
-### Complete Workflow Example
+### Complete Workflow Example (Using Versioned API)
 
 **Step 1: Create Project**
 
 ```bash
-curl -X POST http://localhost:8000/projects \
+curl -X POST http://localhost:8000/api/v1/projects \
   -H "Content-Type: application/json" \
   -d '{"key": "DEMO001", "name": "Demo Project"}'
 ```
@@ -522,7 +771,7 @@ Response:
 **Step 2: Assess Gaps**
 
 ```bash
-curl -X POST http://localhost:8000/projects/DEMO001/commands/propose \
+curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/propose \
   -H "Content-Type: application/json" \
   -d '{"command": "assess_gaps"}'
 ```
@@ -548,7 +797,7 @@ Response:
 **Step 3: Apply Changes**
 
 ```bash
-curl -X POST http://localhost:8000/projects/DEMO001/commands/apply \
+curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/apply \
   -H "Content-Type: application/json" \
   -d '{"proposal_id": "prop_xyz789"}'
 ```
@@ -567,7 +816,7 @@ Response:
 **Step 4: Generate Artifact**
 
 ```bash
-curl -X POST http://localhost:8000/projects/DEMO001/commands/propose \
+curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/propose \
   -H "Content-Type: application/json" \
   -d '{
     "command": "generate_artifact",
@@ -596,7 +845,7 @@ Response:
 **Step 5: Apply Artifact**
 
 ```bash
-curl -X POST http://localhost:8000/projects/DEMO001/commands/apply \
+curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/apply \
   -H "Content-Type: application/json" \
   -d '{"proposal_id": "prop_charter123"}'
 ```
@@ -606,7 +855,7 @@ curl -X POST http://localhost:8000/projects/DEMO001/commands/apply \
 **Step 6: List Artifacts**
 
 ```bash
-curl http://localhost:8000/projects/DEMO001/artifacts
+curl http://localhost:8000/api/v1/projects/DEMO001/artifacts
 ```
 
 Response:
@@ -633,21 +882,26 @@ Response: (Markdown content of the charter)
 
 ## Client Implementation Examples
 
-### Python Client
+### Python Client (Versioned API)
 
 ```python
 import requests
 from typing import Dict, List, Optional
 
 class AIAgentClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
-        self.base_url = base_url
+    def __init__(self, base_url: str = "http://localhost:8000", api_version: str = "v1"):
+        self.base_url = base_url.rstrip("/")
+        self.api_version = api_version
         self.session = requests.Session()
+    
+    def _get_api_url(self, path: str) -> str:
+        """Construct versioned API URL."""
+        return f"{self.base_url}/api/{self.api_version}{path}"
     
     def create_project(self, key: str, name: str) -> Dict:
         """Create a new project."""
         response = self.session.post(
-            f"{self.base_url}/projects",
+            self._get_api_url("/projects"),
             json={"key": key, "name": name}
         )
         response.raise_for_status()
@@ -655,7 +909,7 @@ class AIAgentClient:
     
     def list_projects(self) -> List[Dict]:
         """List all projects."""
-        response = self.session.get(f"{self.base_url}/projects")
+        response = self.session.get(self._get_api_url("/projects"))
         response.raise_for_status()
         return response.json()
     
@@ -663,7 +917,7 @@ class AIAgentClient:
                        params: Optional[Dict] = None) -> Dict:
         """Propose a command execution."""
         response = self.session.post(
-            f"{self.base_url}/projects/{project_key}/commands/propose",
+            self._get_api_url(f"/projects/{project_key}/commands/propose"),
             json={"command": command, "params": params or {}}
         )
         response.raise_for_status()
@@ -672,7 +926,7 @@ class AIAgentClient:
     def apply_proposal(self, project_key: str, proposal_id: str) -> Dict:
         """Apply a proposal."""
         response = self.session.post(
-            f"{self.base_url}/projects/{project_key}/commands/apply",
+            self._get_api_url(f"/projects/{project_key}/commands/apply"),
             json={"proposal_id": proposal_id}
         )
         response.raise_for_status()
@@ -681,7 +935,7 @@ class AIAgentClient:
     def list_artifacts(self, project_key: str) -> List[Dict]:
         """List project artifacts."""
         response = self.session.get(
-            f"{self.base_url}/projects/{project_key}/artifacts"
+            self._get_api_url(f"/projects/{project_key}/artifacts")
         )
         response.raise_for_status()
         return response.json()
@@ -706,16 +960,21 @@ artifacts = client.list_artifacts("DEMO001")
 print(f"Artifacts: {len(artifacts)}")
 ```
 
-### JavaScript Client
+### JavaScript Client (Versioned API)
 
 ```javascript
 class AIAgentClient {
-  constructor(baseUrl = 'http://localhost:8000') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl = 'http://localhost:8000', apiVersion = 'v1') {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.apiVersion = apiVersion;
+  }
+
+  _getApiUrl(path) {
+    return `${this.baseUrl}/api/${this.apiVersion}${path}`;
   }
 
   async createProject(key, name) {
-    const response = await fetch(`${this.baseUrl}/projects`, {
+    const response = await fetch(this._getApiUrl('/projects'), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({key, name})
@@ -725,14 +984,14 @@ class AIAgentClient {
   }
 
   async listProjects() {
-    const response = await fetch(`${this.baseUrl}/projects`);
+    const response = await fetch(this._getApiUrl('/projects'));
     if (!response.ok) throw new Error(await response.text());
     return response.json();
   }
 
   async proposeCommand(projectKey, command, params = {}) {
     const response = await fetch(
-      `${this.baseUrl}/projects/${projectKey}/commands/propose`,
+      this._getApiUrl(`/projects/${projectKey}/commands/propose`),
       {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -745,7 +1004,7 @@ class AIAgentClient {
 
   async applyProposal(projectKey, proposalId) {
     const response = await fetch(
-      `${this.baseUrl}/projects/${projectKey}/commands/apply`,
+      this._getApiUrl(`/projects/${projectKey}/commands/apply`),
       {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -758,7 +1017,7 @@ class AIAgentClient {
 
   async listArtifacts(projectKey) {
     const response = await fetch(
-      `${this.baseUrl}/projects/${projectKey}/artifacts`
+      this._getApiUrl(`/projects/${projectKey}/artifacts`)
     );
     if (!response.ok) throw new Error(await response.text());
     return response.json();
