@@ -82,6 +82,7 @@ app.include_router(
     governance.router, prefix="/projects/{project_key}/governance", tags=["governance (deprecated)"]
 )
 app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid (deprecated)"])
+app.include_router(workflow.router, prefix="/projects", tags=["workflow (deprecated)"])
 
 
 @app.get("/")

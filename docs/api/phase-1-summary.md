@@ -39,7 +39,7 @@
 
 ### 3. Integration Test Suite
 
-**Added:** `tests/integration/test_versioned_api.py` (535 lines, 25 tests)
+**Added:** `tests/integration/test_versioned_api.py` (472 lines, 25 tests)
 
 **Coverage:**
 - ✅ Health & status endpoints
@@ -86,8 +86,8 @@
 | `apps/api/main.py` | +44 | API versioning |
 | `docs/api/client-integration-guide.md` | +200 | Documentation |
 | `tests/integration/test_versioned_api.py` | +535 | New test file |
-| `docs/api/cross-repo-validation.md` | +426 | New guide |
-| **Total** | **~1205 lines** | |
+| `docs/api/cross-repo-validation.md` | +455 | New guide |
+| **Total** | **~1234 lines** | |
 
 ---
 
@@ -136,7 +136,7 @@
 3. Migrate at own pace (unversioned still works)
 
 **Coordination:**
-- Backend commit: `e196bf8`
+- Backend commit: `c31f63d`
 - Reference this commit in client PRs
 - Link issues across repos for coordinated changes
 

@@ -1,7 +1,7 @@
 # Cross-Repository Validation Guide
 
 **Date:** 2026-01-14  
-**Backend Commit:** e196bf8  
+**Backend Commit:** c31f63d  
 **API Version:** v1  
 **Status:** Phase 1/3 Complete
 
@@ -238,7 +238,7 @@ curl http://localhost:8000/api/v1/projects/VALIDATE001/audit-events
 curl "http://localhost:8000/api/v1/projects/VALIDATE001/audit-events?event_type=workflow_state_changed"
 
 # 3. Get governance metadata
-curl http://localhost:8000/api/v1/projects/VALIDATE001/governance/metadata
+curl http://localhost:8000/api/v1/projects/VALIDATE001/governance
 ```
 
 **Expected:** Audit events include all actions performed, governance endpoint returns metadata
@@ -426,7 +426,7 @@ Use this checklist when validating client against backend:
 ### Backend Repository
 - **Repo:** https://github.com/blecx/AI-Agent-Framework
 - **Branch:** `copilot/align-api-contract-phase-1`
-- **Commit:** e196bf8
+- **Commit:** c31f63d
 - **Issues:** Report at https://github.com/blecx/AI-Agent-Framework/issues
 
 ### Client Repository  
@@ -446,7 +446,7 @@ When making changes that affect both repos:
 
 | Date       | Version | Commit  | Changes |
 |------------|---------|---------|---------|
-| 2026-01-14 | v1      | e196bf8 | Initial API versioning, all endpoints under /api/v1/, backward compatibility maintained |
+| 2026-01-14 | v1      | c31f63d | Initial API versioning, all endpoints under /api/v1/, backward compatibility maintained |
 
 ---
 
