@@ -169,20 +169,48 @@ class PlanningSkill:
 
     def _estimate_total_duration(self, steps: List[Dict[str, Any]]) -> str:
         """Estimate total duration from step durations."""
+        total_minutes = self._parse_duration_to_minutes(steps)
+        return self._format_duration(total_minutes)
+    
+    def _parse_duration_to_minutes(self, steps: List[Dict[str, Any]]) -> int:
+        """Parse step durations and sum to total minutes."""
         total_minutes = 0
         
         for step in steps:
             duration = step.get("estimated_duration", "0m")
-            # Parse duration (simple parser for Xh, Xm format)
+            total_minutes += self._parse_single_duration(duration)
+        
+        return total_minutes
+    
+    def _parse_single_duration(self, duration: str) -> int:
+        """Parse a single duration string (e.g., '1h 30m', '2h', '45m') to minutes."""
+        if not duration or not isinstance(duration, str):
+            return 0
+        
+        minutes = 0
+        duration = duration.strip()
+        
+        try:
+            # Parse hours
             if 'h' in duration:
-                hours = int(duration.split('h')[0])
-                total_minutes += hours * 60
+                hours_part = duration.split('h')[0].strip()
+                if hours_part:
+                    minutes += int(hours_part) * 60
+            
+            # Parse minutes
             if 'm' in duration:
                 minutes_part = duration.split('h')[-1] if 'h' in duration else duration
-                minutes = int(minutes_part.replace('m', ''))
-                total_minutes += minutes
+                minutes_part = minutes_part.replace('m', '').strip()
+                if minutes_part:
+                    minutes += int(minutes_part)
+        except (ValueError, AttributeError):
+            # Malformed duration, return 0
+            pass
         
-        # Format total
+        return minutes
+    
+    def _format_duration(self, total_minutes: int) -> str:
+        """Format minutes into duration string (e.g., '2h 30m')."""
         hours = total_minutes // 60
         minutes = total_minutes % 60
         
