@@ -5,6 +5,7 @@ Projects router for creating and managing projects.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 from datetime import datetime, timezone
+import json
 
 from models import ProjectCreate, ProjectInfo, ProjectState, ProjectUpdate
 from services.workflow_service import WorkflowService
@@ -122,7 +123,6 @@ async def update_project(project_key: str, update: ProjectUpdate, request: Reque
     project_info["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     # Write updated project.json
-    import json
     git_manager.write_file(project_key, "project.json", json.dumps(project_info, indent=2))
 
     # Commit the change
@@ -166,7 +166,6 @@ async def delete_project(project_key: str, request: Request):
     )
 
     # Soft-delete: Mark project as deleted in metadata
-    import json
     project_info["deleted"] = True
     project_info["deleted_at"] = datetime.now(timezone.utc).isoformat()
     git_manager.write_file(project_key, "project.json", json.dumps(project_info, indent=2))

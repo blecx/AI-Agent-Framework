@@ -4,7 +4,6 @@ Wraps the existing propose/apply command flow.
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from typing import List
 from datetime import datetime, timezone
 
 from models import (
@@ -12,7 +11,6 @@ from models import (
     ProposalCreate,
     ProposalList,
     ProposalStatus,
-    FileChange,
 )
 from services.command_service import CommandService
 

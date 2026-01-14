@@ -4,7 +4,9 @@ Command service for handling project commands with propose/apply flow.
 
 import uuid
 import hashlib
-from typing import Dict, Any, List, Tuple, Optional, TYPE_CHECKING
+import json
+from pathlib import Path
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
@@ -124,9 +126,6 @@ class CommandService:
         self, project_key: str, proposal_data: Dict[str, Any], git_manager: "GitManager"
     ) -> None:
         """Persist proposal to NDJSON file."""
-        import json
-        from pathlib import Path
-
         proposals_dir = Path(git_manager.base_path) / project_key / "proposals"
         proposals_dir.mkdir(parents=True, exist_ok=True)
         proposals_file = proposals_dir / "proposals.ndjson"
@@ -139,9 +138,6 @@ class CommandService:
         self, project_key: str, git_manager: "GitManager"
     ) -> List[Dict[str, Any]]:
         """Load all proposals for a project from NDJSON file."""
-        import json
-        from pathlib import Path
-
         proposals_file = (
             Path(git_manager.base_path) / project_key / "proposals" / "proposals.ndjson"
         )
@@ -171,9 +167,8 @@ class CommandService:
         self, project_key: str, proposal_id: str, updated_data: Dict[str, Any], git_manager: "GitManager"
     ) -> None:
         """Update a proposal in NDJSON file."""
-        import json
-        from pathlib import Path
-
+        import fcntl
+        
         proposals_file = (
             Path(git_manager.base_path) / project_key / "proposals" / "proposals.ndjson"
         )
@@ -181,31 +176,35 @@ class CommandService:
         if not proposals_file.exists():
             return
 
-        # Read all proposals
-        proposals = []
-        with open(proposals_file, "r") as f:
-            for line in f:
-                if line.strip():
-                    proposals.append(json.loads(line))
+        # Read all proposals with file locking to prevent race conditions
+        with open(proposals_file, "r+") as f:
+            # Acquire exclusive lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                proposals = []
+                for line in f:
+                    if line.strip():
+                        proposals.append(json.loads(line))
 
-        # Update the specific proposal
-        for i, proposal in enumerate(proposals):
-            if proposal.get("id") == proposal_id:
-                proposals[i] = updated_data
-                break
+                # Update the specific proposal
+                for i, proposal in enumerate(proposals):
+                    if proposal.get("id") == proposal_id:
+                        proposals[i] = updated_data
+                        break
 
-        # Write all proposals back
-        with open(proposals_file, "w") as f:
-            for proposal in proposals:
-                f.write(json.dumps(proposal) + "\n")
+                # Write all proposals back
+                f.seek(0)
+                f.truncate()
+                for proposal in proposals:
+                    f.write(json.dumps(proposal) + "\n")
+            finally:
+                # Release lock
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def log_command(
         self, command_data: Dict[str, Any], git_manager: "GitManager"
     ) -> None:
         """Log a command execution to NDJSON file."""
-        import json
-        from pathlib import Path
-
         project_key = command_data.get("project_key")
         commands_dir = Path(git_manager.base_path) / project_key / "commands"
         commands_dir.mkdir(parents=True, exist_ok=True)
@@ -219,9 +218,6 @@ class CommandService:
         self, project_key: str, git_manager: "GitManager"
     ) -> List[Dict[str, Any]]:
         """Load all commands for a project from NDJSON file."""
-        import json
-        from pathlib import Path
-
         commands_file = (
             Path(git_manager.base_path) / project_key / "commands" / "commands.ndjson"
         )
@@ -241,9 +237,6 @@ class CommandService:
         self, git_manager: "GitManager", project_key_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Load all commands across all projects, optionally filtered by project key."""
-        import json
-        from pathlib import Path
-
         all_commands = []
 
         # Iterate through all project directories
@@ -279,9 +272,8 @@ class CommandService:
         self, command_id: str, updated_data: Dict[str, Any], git_manager: "GitManager"
     ) -> None:
         """Update a command in NDJSON file."""
-        import json
-        from pathlib import Path
-
+        import fcntl
+        
         project_key = updated_data.get("project_key")
         commands_file = (
             Path(git_manager.base_path) / project_key / "commands" / "commands.ndjson"
@@ -290,23 +282,30 @@ class CommandService:
         if not commands_file.exists():
             return
 
-        # Read all commands
-        commands = []
-        with open(commands_file, "r") as f:
-            for line in f:
-                if line.strip():
-                    commands.append(json.loads(line))
+        # Read all commands with file locking to prevent race conditions
+        with open(commands_file, "r+") as f:
+            # Acquire exclusive lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                commands = []
+                for line in f:
+                    if line.strip():
+                        commands.append(json.loads(line))
 
-        # Update the specific command
-        for i, command in enumerate(commands):
-            if command.get("id") == command_id:
-                commands[i] = updated_data
-                break
+                # Update the specific command
+                for i, command in enumerate(commands):
+                    if command.get("id") == command_id:
+                        commands[i] = updated_data
+                        break
 
-        # Write all commands back
-        with open(commands_file, "w") as f:
-            for command in commands:
-                f.write(json.dumps(command) + "\n")
+                # Write all commands back
+                f.seek(0)
+                f.truncate()
+                for command in commands:
+                    f.write(json.dumps(command) + "\n")
+            finally:
+                # Release lock
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     async def _propose_assess_gaps(
         self, project_key: str, params: Dict[str, Any], llm_service, git_manager

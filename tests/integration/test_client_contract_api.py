@@ -8,7 +8,6 @@ import tempfile
 import shutil
 import sys
 import os
-from pathlib import Path
 
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
@@ -282,13 +281,6 @@ class TestProposalAPI:
 
 class TestBackwardCompatibility:
     """Test backward compatibility with unversioned routes."""
-
-    def test_project_crud_unversioned(self, client):
-        """Test that unversioned project CRUD routes work."""
-        # Create (unversioned POST /projects should work via main.py)
-        # For this test we use versioned since we only registered v1 routes
-        # In the full app, main.py registers both versioned and unversioned
-        pass  # Skip - this would require full app setup
 
     def test_info_unversioned(self, client):
         """Test that /info works without /api/v1 prefix."""
