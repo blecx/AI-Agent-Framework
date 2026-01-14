@@ -11,7 +11,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from routers import projects, commands, artifacts, governance, raid, workflow, proposals, commands_global
+from routers import projects, commands, artifacts, governance, raid, workflow, skills, proposals, commands_global
 from services.git_manager import GitManager
 from services.llm_service import LLMService
 
@@ -68,6 +68,7 @@ app.include_router(
 )
 app.include_router(raid.router, prefix="/api/v1/projects/{project_key}/raid", tags=["raid-v1"])
 app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow-v1"])
+app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills-v1"])
 
 # ============================================================================
 # Backward Compatibility Routes (Deprecated - use /api/v1/ instead)
@@ -91,6 +92,7 @@ app.include_router(
 )
 app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid (deprecated)"])
 app.include_router(workflow.router, prefix="/projects", tags=["workflow (deprecated)"])
+app.include_router(skills.router, prefix="/agents", tags=["skills (deprecated)"])
 
 
 @app.get("/")
