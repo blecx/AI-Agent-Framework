@@ -196,6 +196,115 @@ class CommandService:
             for proposal in proposals:
                 f.write(json.dumps(proposal) + "\n")
 
+    def log_command(
+        self, command_data: Dict[str, Any], git_manager
+    ):
+        """Log a command execution to NDJSON file."""
+        import json
+        from pathlib import Path
+
+        project_key = command_data.get("project_key")
+        commands_dir = Path(git_manager.base_path) / project_key / "commands"
+        commands_dir.mkdir(parents=True, exist_ok=True)
+        commands_file = commands_dir / "commands.ndjson"
+
+        # Append command as NDJSON line
+        with open(commands_file, "a") as f:
+            f.write(json.dumps(command_data) + "\n")
+
+    def load_commands(
+        self, project_key: str, git_manager
+    ) -> List[Dict[str, Any]]:
+        """Load all commands for a project from NDJSON file."""
+        import json
+        from pathlib import Path
+
+        commands_file = (
+            Path(git_manager.base_path) / project_key / "commands" / "commands.ndjson"
+        )
+
+        if not commands_file.exists():
+            return []
+
+        commands = []
+        with open(commands_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    commands.append(json.loads(line))
+
+        return commands
+
+    def load_all_commands(
+        self, git_manager, project_key_filter: str = None
+    ) -> List[Dict[str, Any]]:
+        """Load all commands across all projects, optionally filtered by project key."""
+        import json
+        from pathlib import Path
+
+        all_commands = []
+
+        # Iterate through all project directories
+        base_path = Path(git_manager.base_path)
+        for project_dir in base_path.iterdir():
+            if not project_dir.is_dir() or project_dir.name.startswith("."):
+                continue
+
+            # Skip if filtering by project key and this doesn't match
+            if project_key_filter and project_dir.name != project_key_filter:
+                continue
+
+            commands_file = project_dir / "commands" / "commands.ndjson"
+            if commands_file.exists():
+                with open(commands_file, "r") as f:
+                    for line in f:
+                        if line.strip():
+                            all_commands.append(json.loads(line))
+
+        return all_commands
+
+    def load_command(
+        self, command_id: str, git_manager
+    ) -> Dict[str, Any]:
+        """Load a specific command by ID across all projects."""
+        all_commands = self.load_all_commands(git_manager)
+        for command in all_commands:
+            if command.get("id") == command_id:
+                return command
+        return None
+
+    def update_command(
+        self, command_id: str, updated_data: Dict[str, Any], git_manager
+    ):
+        """Update a command in NDJSON file."""
+        import json
+        from pathlib import Path
+
+        project_key = updated_data.get("project_key")
+        commands_file = (
+            Path(git_manager.base_path) / project_key / "commands" / "commands.ndjson"
+        )
+
+        if not commands_file.exists():
+            return
+
+        # Read all commands
+        commands = []
+        with open(commands_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    commands.append(json.loads(line))
+
+        # Update the specific command
+        for i, command in enumerate(commands):
+            if command.get("id") == command_id:
+                commands[i] = updated_data
+                break
+
+        # Write all commands back
+        with open(commands_file, "w") as f:
+            for command in commands:
+                f.write(json.dumps(command) + "\n")
+
     async def _propose_assess_gaps(
         self, project_key: str, params: Dict[str, Any], llm_service, git_manager
     ) -> Dict[str, Any]:

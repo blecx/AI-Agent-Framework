@@ -42,13 +42,16 @@ def client(temp_project_dir):
     )
 
     # Import and register routers
-    from routers import projects, proposals
+    from routers import projects, proposals, commands_global
 
     test_app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
     test_app.include_router(
         proposals.router,
         prefix="/api/v1/projects/{project_key}/proposals",
         tags=["proposals"],
+    )
+    test_app.include_router(
+        commands_global.router, prefix="/api/v1/commands", tags=["commands"]
     )
 
     # Add /info endpoint
@@ -294,3 +297,75 @@ class TestBackwardCompatibility:
         data = response.json()
         assert "name" in data
         assert "version" in data
+
+
+class TestCommandHistoryAPI:
+    """Test global command execution and history endpoints."""
+
+    @pytest.fixture
+    def test_project(self, client):
+        """Create a test project."""
+        response = client.post(
+            "/api/v1/projects", json={"key": "CMD001", "name": "Command Test"}
+        )
+        assert response.status_code == 201
+        return response.json()
+
+    def test_execute_command(self, client, test_project):
+        """Test POST /api/v1/commands."""
+        response = client.post(
+            "/api/v1/commands",
+            json={
+                "project_key": "CMD001",
+                "command": "assess_gaps",
+                "params": {},
+            },
+        )
+
+        # May succeed or fail depending on LLM availability
+        if response.status_code == 201:
+            data = response.json()
+            assert "id" in data
+            assert data["project_key"] == "CMD001"
+            assert data["command"] == "assess_gaps"
+            assert data["status"] in ["running", "completed", "failed"]
+            assert "created_at" in data
+        else:
+            # LLM not available or other error
+            assert response.status_code in [400, 500]
+
+    def test_execute_command_nonexistent_project(self, client):
+        """Test POST /api/v1/commands for nonexistent project."""
+        response = client.post(
+            "/api/v1/commands",
+            json={
+                "project_key": "NOTFOUND",
+                "command": "assess_gaps",
+                "params": {},
+            },
+        )
+        assert response.status_code == 404
+
+    def test_list_commands(self, client, test_project):
+        """Test GET /api/v1/commands."""
+        response = client.get("/api/v1/commands")
+        assert response.status_code == 200
+        data = response.json()
+        assert "commands" in data
+        assert "total" in data
+        assert isinstance(data["commands"], list)
+
+    def test_list_commands_filtered_by_project(self, client, test_project):
+        """Test GET /api/v1/commands?projectKey=X."""
+        response = client.get("/api/v1/commands?projectKey=CMD001")
+        assert response.status_code == 200
+        data = response.json()
+        assert "commands" in data
+        # All commands should be for CMD001
+        for command in data["commands"]:
+            assert command["project_key"] == "CMD001"
+
+    def test_get_command_by_id_not_found(self, client):
+        """Test GET /api/v1/commands/{id} for nonexistent ID."""
+        response = client.get("/api/v1/commands/nonexistent-id")
+        assert response.status_code == 404

@@ -11,7 +11,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from routers import projects, commands, artifacts, governance, raid, workflow, proposals
+from routers import projects, commands, artifacts, governance, raid, workflow, proposals, commands_global
 from services.git_manager import GitManager
 from services.llm_service import LLMService
 
@@ -53,6 +53,7 @@ app.add_middleware(
 
 # Include versioned routers under /api/v1
 app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects-v1"])
+app.include_router(commands_global.router, prefix="/api/v1/commands", tags=["commands-global-v1"])
 app.include_router(
     commands.router, prefix="/api/v1/projects/{project_key}/commands", tags=["commands-v1"]
 )
@@ -75,6 +76,7 @@ app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow-v
 # Legacy unversioned routes for backward compatibility
 # These will be removed in a future major version
 app.include_router(projects.router, prefix="/projects", tags=["projects (deprecated)"])
+app.include_router(commands_global.router, prefix="/commands", tags=["commands-global (deprecated)"])
 app.include_router(
     commands.router, prefix="/projects/{project_key}/commands", tags=["commands (deprecated)"]
 )

@@ -120,6 +120,53 @@ class ProposalList(BaseModel):
     total: int
 
 
+# ============================================================================
+# Command History Models (Global Command Execution)
+# ============================================================================
+
+
+class CommandStatus(str, Enum):
+    """Command execution status."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class CommandHistory(BaseModel):
+    """Command execution history entry."""
+
+    id: str = Field(..., description="Unique command ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: CommandStatus = Field(..., description="Command status")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    started_at: Optional[str] = Field(None, description="Start timestamp (ISO format)")
+    completed_at: Optional[str] = Field(None, description="Completion timestamp (ISO format)")
+    proposal_id: Optional[str] = Field(None, description="Associated proposal ID")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+
+
+class CommandExecute(BaseModel):
+    """Request model for executing a command."""
+
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class CommandHistoryList(BaseModel):
+    """Response model for command history list."""
+
+    commands: List[CommandHistory]
+    total: int
+
+
 class ProjectState(BaseModel):
     """Aggregated project state."""
 
