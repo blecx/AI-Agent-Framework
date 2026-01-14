@@ -83,9 +83,13 @@ class MyCustomSkill:
 
 ## Step 2: Register the Skill
 
+<<<<<<< HEAD
 ### Option A: For Core Framework Skills Only
 
 **Note**: This option is for skills that will be part of the core framework. For custom/third-party skills, use Option B.
+=======
+### Option A: Register in the Global Registry (Recommended for built-in skills)
+>>>>>>> 41f79fc (docs: Add comprehensive documentation for skills system)
 
 Edit `apps/api/skills/registry.py` and add your skill to `load_builtin_skills()`:
 
@@ -103,6 +107,7 @@ def load_builtin_skills(self) -> None:
     self.register_skill(MyCustomSkill())  # Add this
 ```
 
+<<<<<<< HEAD
 ### Option B: Dynamic Registration (Recommended for Custom Skills)
 
 For custom or third-party skills, register them dynamically at application startup or runtime:
@@ -116,6 +121,11 @@ registry.register_skill(MyCustomSkill())
 ```
 
 You can create a custom initialization file or plugin loader:
+=======
+### Option B: Register Dynamically (For contributor/plugin skills)
+
+You can register skills at runtime:
+>>>>>>> 41f79fc (docs: Add comprehensive documentation for skills system)
 
 ```python
 from skills.registry import get_registry
