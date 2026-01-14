@@ -13,11 +13,17 @@ tests/
 │   ├── test_governance_service.py
 │   ├── test_llm_service.py
 │   ├── test_raid_service.py
-│   └── test_workflow_service.py
+│   ├── test_workflow_service.py
+│   ├── test_skills_framework.py      # Skills registry and base
+│   ├── test_memory_skill.py          # Memory skill tests
+│   ├── test_planning_skill.py        # Planning skill tests
+│   └── test_learning_skill.py        # Learning skill tests
 ├── integration/        # Integration tests for API endpoints
 │   ├── test_core_api.py
 │   ├── test_governance_api.py
 │   ├── test_raid_api.py
+│   ├── test_skills_api.py            # Skills API tests
+│   ├── test_versioned_api.py
 │   └── test_workflow_api.py
 ├── e2e/                # End-to-end tests
 │   ├── backend_e2e_runner.py  # E2E test harness
