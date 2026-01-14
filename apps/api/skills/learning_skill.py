@@ -116,7 +116,7 @@ class LearningSkill:
         self, git_manager, agent_id: str, experience: Dict[str, Any]
     ) -> None:
         """Store experience in NDJSON file."""
-        experiences_dir = os.path.join(git_manager.docs_path, "_agents", "experiences")
+        experiences_dir = os.path.join(str(git_manager.base_path), "_agents", "experiences")
         os.makedirs(experiences_dir, exist_ok=True)
         
         experiences_file = os.path.join(experiences_dir, f"{agent_id}.ndjson")

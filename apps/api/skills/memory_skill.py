@@ -76,7 +76,7 @@ class MemorySkill:
         if not git_manager:
             raise ValueError("git_manager required in context")
 
-        memory_dir = os.path.join(git_manager.docs_path, "_agents", "memory")
+        memory_dir = os.path.join(str(git_manager.base_path), "_agents", "memory")
         os.makedirs(memory_dir, exist_ok=True)
         memory_file = os.path.join(memory_dir, f"{agent_id}.json")
 
