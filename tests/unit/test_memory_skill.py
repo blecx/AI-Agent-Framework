@@ -5,7 +5,6 @@ import pytest
 import tempfile
 import shutil
 import os
-import json
 from apps.api.skills.memory_skill import MemorySkill
 
 

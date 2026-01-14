@@ -4,8 +4,8 @@ Learning skill for capturing and managing experience/learning data.
 
 import json
 import os
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+from typing import Dict, Any
 from .base import SkillResult
 
 
@@ -75,7 +75,7 @@ class LearningSkill:
             os.makedirs(learning_dir, exist_ok=True)
 
             experience_entry = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "context": context,
                 "action": action,
                 "outcome": outcome,

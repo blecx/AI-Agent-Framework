@@ -4,7 +4,7 @@ Base skill protocol and result types for cognitive skills.
 
 from typing import Protocol, Any, Dict, Optional
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class SkillResult(BaseModel):
@@ -13,7 +13,7 @@ class SkillResult(BaseModel):
     success: bool
     data: Optional[Any] = None
     message: str = ""
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

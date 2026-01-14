@@ -3,13 +3,11 @@ Skills API router for cognitive skills.
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from typing import Dict, Any
 import os
 
 from models import (
     SkillListResponse,
     SkillInfo,
-    MemoryGetRequest,
     MemorySetRequest,
     MemoryResponse,
     PlanRequest,
@@ -35,7 +33,8 @@ async def list_skills(agent_id: str):
     List all available skills for an agent.
 
     Args:
-        agent_id: Unique identifier for the agent
+        agent_id: Unique identifier for the agent (currently unused, 
+                  but maintains consistent API pattern for future per-agent filtering)
 
     Returns:
         List of available skills

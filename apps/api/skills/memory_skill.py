@@ -4,8 +4,8 @@ Memory skill for short-term and long-term memory management.
 
 import json
 import os
-from datetime import datetime
-from typing import Dict, Any, Optional
+from datetime import datetime, timezone
+from typing import Dict, Any
 from .base import SkillResult
 
 
@@ -96,8 +96,8 @@ class MemorySkill:
             # Add metadata
             memory_entry = {
                 "data": data,
-                "timestamp": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             }
 
             with open(memory_file, "w") as f:

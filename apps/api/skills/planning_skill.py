@@ -5,7 +5,7 @@ Planning skill for multi-step plan generation.
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 from .base import SkillResult
 
@@ -63,7 +63,7 @@ class PlanningSkill:
                 "constraints": constraints,
                 "context": context,
                 "steps": plan,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "status": "pending",
             }
 

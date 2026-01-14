@@ -1,9 +1,8 @@
 """
 Unit tests for Skill Registry.
 """
-import pytest
 from apps.api.skills.registry import SkillRegistry
-from apps.api.skills.base import Skill, SkillResult
+from apps.api.skills.base import SkillResult
 from typing import Dict, Any
 
 

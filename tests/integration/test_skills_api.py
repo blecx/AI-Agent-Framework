@@ -11,8 +11,6 @@ import os
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
 
-from main import app
-
 
 @pytest.fixture(scope="function")
 def temp_project_dir():
