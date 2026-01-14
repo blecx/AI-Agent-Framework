@@ -165,7 +165,7 @@ Skills receive kwargs with services:
 }
 ```
 
-**Storage**: Experiences are appended to `agents/experiences/{agent_id}.ndjson` in NDJSON format.
+**Storage**: Experiences are appended to `agents/{agent_id}/learning/experience.ndjson` in NDJSON format.
 
 **Use Cases**:
 - Build experience database for pattern recognition
