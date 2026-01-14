@@ -22,7 +22,7 @@ Get metadata for all registered skills.
 **Endpoint**: `GET /api/v1/agents/{agent_id}/skills`
 
 **Parameters**:
-- `agent_id` (path): Unique agent identifier
+- `agent_id` (path): Unique agent identifier (currently maintained for API consistency; skills list is global)
 
 **Response**: `200 OK`
 

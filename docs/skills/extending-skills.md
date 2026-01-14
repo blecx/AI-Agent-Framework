@@ -38,7 +38,10 @@ class MyCustomSkill:
         # Validate inputs
         param1 = params.get("param1")
         if not param1:
-            raise ValueError("param1 is required")
+            return SkillResult(
+                success=False,
+                message="param1 is required"
+            )
         
         param2 = params.get("param2", 0)
         
@@ -86,34 +89,43 @@ def load_builtin_skills(self) -> None:
 
 ### Option B: Dynamic Registration (Recommended for Custom Skills)
 
-For custom or third-party skills placed outside the core framework, register them dynamically at application startup or runtime:
+For custom or third-party skills placed outside the core framework, register them dynamically at application startup or runtime.
+
+**Simple registration example:**
 
 ```python
 from apps.api.skills.registry import get_global_registry
-# Import your custom skill from wherever it's defined
-from my_custom_skills.my_custom_skill import MyCustomSkill
+
+# Import your custom skill class
+# (from your own module/package where you've defined it)
+from your_project.skills import MyCustomSkill
 
 registry = get_global_registry()
 registry.register(MyCustomSkill())
 ```
 
-You can create a custom initialization file or plugin loader:
+**FastAPI application startup example:**
 
 ```python
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from apps.api.skills.registry import get_global_registry
-# Import your custom skill from wherever it's defined
-from my_custom_skills.my_custom_skill import MyCustomSkill
 
-app = FastAPI()
+# Import your custom skill
+from your_project.skills import MyCustomSkill
 
-@app.on_event("startup")
-async def load_custom_skills() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize custom skills on startup."""
     registry = get_global_registry()
     registry.register(MyCustomSkill())
+    yield
+    # Cleanup if needed
+
+app = FastAPI(lifespan=lifespan)
 ```
 
-**Note**: Custom skills can be placed in any Python module accessible to your application. The examples above assume skills are in a `my_custom_skills` package, but you can organize them however you prefer.
+**Note**: Place your custom skills in any Python package accessible to your application (e.g., `your_project/skills/`, `plugins/`, etc.). The `apps/api/skills/` directory is reserved for built-in framework skills.
 
 ## Step 3: Add API Endpoints (Optional)
 
