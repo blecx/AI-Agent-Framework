@@ -4,8 +4,9 @@ Projects router for creating and managing projects.
 
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
+from datetime import datetime, timezone
 
-from models import ProjectCreate, ProjectInfo, ProjectState
+from models import ProjectCreate, ProjectInfo, ProjectState, ProjectUpdate
 from services.workflow_service import WorkflowService
 
 router = APIRouter()
@@ -86,3 +87,81 @@ async def list_projects(request: Request):
                     projects.append(ProjectInfo(**project_info))
 
     return projects
+
+
+@router.get("/{project_key}", response_model=ProjectInfo)
+async def get_project(project_key: str, request: Request):
+    """Get a specific project by key."""
+    git_manager = request.app.state.git_manager
+
+    # Get project info
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    return ProjectInfo(**project_info)
+
+
+@router.put("/{project_key}", response_model=ProjectInfo)
+async def update_project(project_key: str, update: ProjectUpdate, request: Request):
+    """Update project metadata."""
+    git_manager = request.app.state.git_manager
+
+    # Check if project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    # Update fields that are provided
+    if update.name is not None:
+        project_info["name"] = update.name
+    if update.methodology is not None:
+        project_info["methodology"] = update.methodology
+
+    # Update timestamp
+    from datetime import datetime, timezone
+    project_info["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Write updated project.json
+    git_manager.write_project_json(project_key, project_info)
+
+    # Log event
+    git_manager.log_event(
+        project_key,
+        {
+            "event_type": "project_updated",
+            "project_key": project_key,
+            "updates": update.model_dump(exclude_none=True),
+        },
+    )
+
+    return ProjectInfo(**project_info)
+
+
+@router.delete("/{project_key}", status_code=204)
+async def delete_project(project_key: str, request: Request):
+    """Delete a project (soft-delete with audit trail)."""
+    git_manager = request.app.state.git_manager
+
+    # Check if project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    # Log event before deletion
+    git_manager.log_event(
+        project_key,
+        {
+            "event_type": "project_deleted",
+            "project_key": project_key,
+            "project_name": project_info.get("name"),
+        },
+    )
+
+    # Soft-delete: Mark project as deleted in metadata
+    project_info["deleted"] = True
+    project_info["deleted_at"] = datetime.now(timezone.utc).isoformat()
+    git_manager.write_project_json(project_key, project_info)
+
+    # Return 204 No Content
+    return None

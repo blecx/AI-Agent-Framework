@@ -24,6 +24,13 @@ class ProjectInfo(BaseModel):
     updated_at: str
 
 
+class ProjectUpdate(BaseModel):
+    """Request model for updating a project."""
+
+    name: Optional[str] = Field(None, description="Project name", min_length=1)
+    methodology: Optional[str] = Field(None, description="Project methodology")
+
+
 class FileChange(BaseModel):
     """Represents a file change with unified diff."""
 
@@ -64,6 +71,53 @@ class CommandApplyResult(BaseModel):
     commit_hash: str
     changed_files: List[str]
     message: str
+
+
+# ============================================================================
+# Proposal API Models (Compatibility Layer)
+# ============================================================================
+
+
+class ProposalStatus(str, Enum):
+    """Proposal status."""
+
+    PENDING = "pending"
+    APPLIED = "applied"
+    REJECTED = "rejected"
+
+
+class Proposal(BaseModel):
+    """Proposal for client compatibility."""
+
+    id: str = Field(..., description="Proposal ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: ProposalStatus = Field(default=ProposalStatus.PENDING, description="Proposal status")
+    assistant_message: str = Field(..., description="AI assistant message")
+    file_changes: List[FileChange] = Field(..., description="Proposed file changes")
+    draft_commit_message: str = Field(..., description="Draft commit message")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    updated_at: str = Field(..., description="Last update timestamp (ISO format)")
+    applied_at: Optional[str] = Field(None, description="Applied timestamp (ISO format)")
+    rejected_at: Optional[str] = Field(None, description="Rejected timestamp (ISO format)")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+
+
+class ProposalCreate(BaseModel):
+    """Request model for creating a proposal."""
+
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class ProposalList(BaseModel):
+    """Response model for proposal list."""
+
+    proposals: List[Proposal]
+    total: int
 
 
 class ProjectState(BaseModel):

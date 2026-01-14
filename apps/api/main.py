@@ -11,7 +11,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from routers import projects, commands, artifacts, governance, raid, workflow
+from routers import projects, commands, artifacts, governance, raid, workflow, proposals
 from services.git_manager import GitManager
 from services.llm_service import LLMService
 
@@ -57,6 +57,9 @@ app.include_router(
     commands.router, prefix="/api/v1/projects/{project_key}/commands", tags=["commands-v1"]
 )
 app.include_router(
+    proposals.router, prefix="/api/v1/projects/{project_key}/proposals", tags=["proposals-v1"]
+)
+app.include_router(
     artifacts.router, prefix="/api/v1/projects/{project_key}/artifacts", tags=["artifacts-v1"]
 )
 app.include_router(
@@ -76,6 +79,9 @@ app.include_router(
     commands.router, prefix="/projects/{project_key}/commands", tags=["commands (deprecated)"]
 )
 app.include_router(
+    proposals.router, prefix="/projects/{project_key}/proposals", tags=["proposals (deprecated)"]
+)
+app.include_router(
     artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts (deprecated)"]
 )
 app.include_router(
@@ -91,6 +97,25 @@ async def root():
     return {
         "status": "healthy",
         "service": "ISO 21500 Project Management AI Agent",
+        "version": "1.0.0",
+        "api_version": "v1",
+    }
+
+
+@app.get("/info")
+async def info():
+    """Info endpoint (returns name and version)."""
+    return {
+        "name": "ISO 21500 Project Management AI Agent",
+        "version": "1.0.0",
+    }
+
+
+@app.get("/api/v1/info")
+async def info_v1():
+    """Info endpoint (versioned)."""
+    return {
+        "name": "ISO 21500 Project Management AI Agent",
         "version": "1.0.0",
         "api_version": "v1",
     }

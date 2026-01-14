@@ -117,6 +117,85 @@ class CommandService:
             "message": "Changes applied successfully",
         }
 
+    def persist_proposal(
+        self, project_key: str, proposal_data: Dict[str, Any], git_manager
+    ):
+        """Persist proposal to NDJSON file."""
+        import json
+        from pathlib import Path
+
+        proposals_dir = Path(git_manager.base_path) / project_key / "proposals"
+        proposals_dir.mkdir(parents=True, exist_ok=True)
+        proposals_file = proposals_dir / "proposals.ndjson"
+
+        # Append proposal as NDJSON line
+        with open(proposals_file, "a") as f:
+            f.write(json.dumps(proposal_data) + "\n")
+
+    def load_proposals(
+        self, project_key: str, git_manager
+    ) -> List[Dict[str, Any]]:
+        """Load all proposals for a project from NDJSON file."""
+        import json
+        from pathlib import Path
+
+        proposals_file = (
+            Path(git_manager.base_path) / project_key / "proposals" / "proposals.ndjson"
+        )
+
+        if not proposals_file.exists():
+            return []
+
+        proposals = []
+        with open(proposals_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    proposals.append(json.loads(line))
+
+        return proposals
+
+    def load_proposal(
+        self, project_key: str, proposal_id: str, git_manager
+    ) -> Dict[str, Any]:
+        """Load a specific proposal by ID."""
+        proposals = self.load_proposals(project_key, git_manager)
+        for proposal in proposals:
+            if proposal.get("id") == proposal_id:
+                return proposal
+        return None
+
+    def update_proposal(
+        self, project_key: str, proposal_id: str, updated_data: Dict[str, Any], git_manager
+    ):
+        """Update a proposal in NDJSON file."""
+        import json
+        from pathlib import Path
+
+        proposals_file = (
+            Path(git_manager.base_path) / project_key / "proposals" / "proposals.ndjson"
+        )
+
+        if not proposals_file.exists():
+            return
+
+        # Read all proposals
+        proposals = []
+        with open(proposals_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    proposals.append(json.loads(line))
+
+        # Update the specific proposal
+        for i, proposal in enumerate(proposals):
+            if proposal.get("id") == proposal_id:
+                proposals[i] = updated_data
+                break
+
+        # Write all proposals back
+        with open(proposals_file, "w") as f:
+            for proposal in proposals:
+                f.write(json.dumps(proposal) + "\n")
+
     async def _propose_assess_gaps(
         self, project_key: str, params: Dict[str, Any], llm_service, git_manager
     ) -> Dict[str, Any]:
