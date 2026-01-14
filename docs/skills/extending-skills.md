@@ -89,26 +89,26 @@ def load_builtin_skills(self) -> None:
 For custom or third-party skills, register them dynamically at application startup or runtime:
 
 ```python
-from skills.registry import get_global_registry
-from skills.my_custom_skill import MyCustomSkill
+from apps.api.skills.registry import get_global_registry
+from apps.api.skills.my_custom_skill import MyCustomSkill
 
 registry = get_global_registry()
-registry.register_skill(MyCustomSkill())
+registry.register(MyCustomSkill())
 ```
 
 You can create a custom initialization file or plugin loader:
 
 ```python
 from fastapi import FastAPI
-from skills.registry import get_global_registry
-from skills.my_custom_skill import MyCustomSkill
+from apps.api.skills.registry import get_global_registry
+from apps.api.skills.my_custom_skill import MyCustomSkill
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def load_custom_skills() -> None:
     registry = get_global_registry()
-    registry.register_skill(MyCustomSkill())
+    registry.register(MyCustomSkill())
 ```
 
 ## Step 3: Add API Endpoints (Optional)
