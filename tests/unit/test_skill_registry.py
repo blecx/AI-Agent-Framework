@@ -16,6 +16,17 @@ class MockSkill:
         self.description = "Test skill"
 
     def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
+        """
+        Execute the mock skill.
+
+        Args:
+            agent_id: Agent identifier
+            params: Skill parameters
+            **kwargs: Additional context
+
+        Returns:
+            SkillResult with test execution
+        """
         return SkillResult(success=True, message="Test execution")
 
 
