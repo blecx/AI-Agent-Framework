@@ -1,55 +1,39 @@
 """
-Base skill protocol and interfaces for extensible AI agent skills.
+Base skill protocol and result types for cognitive skills.
 """
 
-from typing import Protocol, Dict, Any, Optional
-from pydantic import BaseModel
+from typing import Protocol, Any, Dict, Optional
+from pydantic import BaseModel, Field
+from datetime import datetime, timezone
 
 
-class SkillMetadata(BaseModel):
-    """Metadata describing a skill."""
+class SkillResult(BaseModel):
+    """Standardized skill execution result."""
+
+    success: bool
+    data: Optional[Any] = None
+    message: str = ""
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class Skill(Protocol):
+    """Protocol defining the interface for cognitive skills."""
 
     name: str
     version: str
     description: str
-    input_schema: Dict[str, Any]
-    output_schema: Dict[str, Any]
 
-
-class Skill(Protocol):
-    """
-    Protocol defining the interface that all skills must implement.
-    
-    Skills are modular capabilities that can be executed by AI agents.
-    Each skill has metadata describing its capabilities and schemas,
-    and an execute method that performs the skill's functionality.
-    """
-
-    def get_metadata(self) -> SkillMetadata:
+    def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
         """
-        Get skill metadata.
-        
-        Returns:
-            SkillMetadata: Metadata describing the skill's capabilities
-        """
-        ...
+        Execute the skill with given parameters.
 
-    async def execute(
-        self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Execute the skill with given input.
-        
         Args:
-            agent_id: Identifier of the agent executing the skill
-            input_data: Input parameters for skill execution (validated against input_schema)
-            context: Execution context including git_manager, llm_service, etc.
-            
+            agent_id: Unique identifier for the agent
+            params: Skill-specific parameters
+            **kwargs: Additional context (e.g., git_manager)
+
         Returns:
-            Dict containing execution results (conforms to output_schema)
-            
-        Raises:
-            ValueError: If input validation fails or execution parameters are invalid
-            Exception: For other execution failures
+            SkillResult with execution outcome
         """
         ...

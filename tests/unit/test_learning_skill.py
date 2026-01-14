@@ -4,257 +4,293 @@ Unit tests for Learning Skill.
 import pytest
 import tempfile
 import shutil
-import json
 import os
+import json
 from apps.api.skills.learning_skill import LearningSkill
-from apps.api.services.git_manager import GitManager
 
 
 @pytest.fixture
-def temp_project_dir():
-    """Create a temporary project directory for testing."""
+def temp_docs_path():
+    """Create a temporary docs directory."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture
-def git_manager(temp_project_dir):
-    """Create a GitManager instance with temporary directory."""
-    manager = GitManager(temp_project_dir)
-    manager.ensure_repository()
-    return manager
+class TestLearningSkill:
+    """Test LearningSkill functionality."""
 
+    def test_skill_metadata(self):
+        """Test skill metadata."""
+        skill = LearningSkill()
+        assert skill.name == "learning"
+        assert skill.version == "1.0.0"
+        assert skill.description
 
-@pytest.fixture
-def learning_skill():
-    """Create a LearningSkill instance."""
-    return LearningSkill()
+    def test_log_experience(self, temp_docs_path):
+        """Test logging an experience."""
+        skill = LearningSkill()
+        agent_id = "agent001"
 
-
-class TestLearningSkillMetadata:
-    """Test learning skill metadata."""
-
-    def test_get_metadata(self, learning_skill):
-        """Test getting learning skill metadata."""
-        metadata = learning_skill.get_metadata()
-        
-        assert metadata.name == "learning"
-        assert metadata.version == "1.0.0"
-        assert "learn" in metadata.description.lower() or "experience" in metadata.description.lower()
-        assert "experience" in metadata.input_schema["properties"]
-        assert "experience_id" in metadata.output_schema["properties"]
-
-
-@pytest.mark.asyncio
-class TestLearningSkillExecution:
-    """Test learning skill execution."""
-
-    async def test_record_experience(self, learning_skill, git_manager):
-        """Test recording a basic experience."""
-        experience = {
-            "input": {"action": "test", "parameters": {"x": 1}},
-            "outcome": {"success": True, "result": "completed"},
-            "feedback": "Good result",
-            "context": {"environment": "test"}
-        }
-        
-        result = await learning_skill.execute(
-            agent_id="test_agent",
-            input_data={"experience": experience},
-            context={"git_manager": git_manager}
-        )
-        
-        assert result["agent_id"] == "test_agent"
-        assert "experience_id" in result
-        assert "recorded_at" in result
-        assert result["message"] == "Experience recorded successfully"
-
-    async def test_experience_persistence(self, learning_skill, git_manager):
-        """Test that experiences are persisted to file."""
-        agent_id = "persist_test"
-        experience = {
-            "input": {"task": "test"},
-            "outcome": {"status": "success"}
-        }
-        
-        result = await learning_skill.execute(
-            agent_id=agent_id,
-            input_data={"experience": experience},
-            context={"git_manager": git_manager}
-        )
-        
-        # Verify file exists
-        experiences_file = os.path.join(
-            str(git_manager.base_path), "_agents", "experiences", f"{agent_id}.ndjson"
-        )
-        assert os.path.exists(experiences_file)
-        
-        # Verify content
-        with open(experiences_file, 'r') as f:
-            lines = f.readlines()
-        
-        assert len(lines) == 1
-        stored = json.loads(lines[0])
-        assert stored["agent_id"] == agent_id
-        assert stored["experience_id"] == result["experience_id"]
-        assert stored["input"]["task"] == "test"
-
-    async def test_multiple_experiences_append(self, learning_skill, git_manager):
-        """Test that multiple experiences append to the same file."""
-        agent_id = "multi_test"
-        
-        # Record first experience
-        await learning_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "experience": {
-                    "input": {"action": "first"},
-                    "outcome": {"result": 1}
-                }
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Working on authentication",
+                "action": "Implemented JWT tokens",
+                "outcome": "Authentication works correctly",
+                "feedback": "Good approach",
+                "tags": ["authentication", "security"],
             },
-            context={"git_manager": git_manager}
+            docs_path=temp_docs_path,
         )
-        
-        # Record second experience
-        await learning_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "experience": {
-                    "input": {"action": "second"},
-                    "outcome": {"result": 2}
-                }
+
+        assert result.success is True
+        assert "timestamp" in result.data
+
+        # Verify file was created
+        experience_file = os.path.join(
+            temp_docs_path, "agents", agent_id, "learning", "experience.ndjson"
+        )
+        assert os.path.exists(experience_file)
+
+    def test_log_multiple_experiences(self, temp_docs_path):
+        """Test logging multiple experiences."""
+        skill = LearningSkill()
+        agent_id = "agent002"
+
+        # Log first experience
+        skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Testing",
+                "action": "Wrote tests",
+                "outcome": "All tests pass",
+                "tags": ["testing"],
             },
-            context={"git_manager": git_manager}
+            docs_path=temp_docs_path,
         )
-        
-        # Verify both are in file
-        experiences_file = os.path.join(
-            str(git_manager.base_path), "_agents", "experiences", f"{agent_id}.ndjson"
+
+        # Log second experience
+        skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Debugging",
+                "action": "Fixed bug",
+                "outcome": "Bug resolved",
+                "tags": ["debugging"],
+            },
+            docs_path=temp_docs_path,
         )
-        
-        with open(experiences_file, 'r') as f:
+
+        # Verify both are stored
+        experience_file = os.path.join(
+            temp_docs_path, "agents", agent_id, "learning", "experience.ndjson"
+        )
+
+        with open(experience_file, "r") as f:
             lines = f.readlines()
-        
+
         assert len(lines) == 2
-        
-        exp1 = json.loads(lines[0])
-        exp2 = json.loads(lines[1])
-        
-        assert exp1["input"]["action"] == "first"
-        assert exp2["input"]["action"] == "second"
 
-    async def test_experience_with_feedback(self, learning_skill, git_manager):
-        """Test recording experience with feedback."""
-        experience = {
-            "input": {"task": "test"},
-            "outcome": {"success": True},
-            "feedback": "Excellent performance"
-        }
-        
-        result = await learning_skill.execute(
-            agent_id="test",
-            input_data={"experience": experience},
-            context={"git_manager": git_manager}
+    def test_get_summary_no_experiences(self, temp_docs_path):
+        """Test getting summary when no experiences exist."""
+        skill = LearningSkill()
+        agent_id = "agent003"
+
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "summary",
+            },
+            docs_path=temp_docs_path,
         )
-        
-        # Verify feedback is stored
-        experiences_file = os.path.join(
-            str(git_manager.base_path), "_agents", "experiences", f"test.ndjson"
+
+        assert result.success is True
+        assert result.data["total_experiences"] == 0
+
+    def test_get_summary_with_experiences(self, temp_docs_path):
+        """Test getting summary with experiences."""
+        skill = LearningSkill()
+        agent_id = "agent004"
+
+        # Log some experiences
+        for i in range(5):
+            skill.execute(
+                agent_id,
+                {
+                    "operation": "log",
+                    "context": f"Context {i}",
+                    "action": f"Action {i}",
+                    "outcome": f"Outcome {i}",
+                    "tags": ["tag1", "tag2"] if i % 2 == 0 else ["tag3"],
+                },
+                docs_path=temp_docs_path,
+            )
+
+        # Get summary
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "summary",
+            },
+            docs_path=temp_docs_path,
         )
-        
-        with open(experiences_file, 'r') as f:
-            stored = json.loads(f.readline())
-        
-        assert stored["feedback"] == "Excellent performance"
 
-    async def test_experience_without_feedback(self, learning_skill, git_manager):
-        """Test recording experience without optional feedback."""
-        experience = {
-            "input": {"task": "test"},
-            "outcome": {"success": True}
-        }
-        
-        result = await learning_skill.execute(
-            agent_id="test",
-            input_data={"experience": experience},
-            context={"git_manager": git_manager}
+        assert result.success is True
+        assert result.data["total_experiences"] == 5
+        assert len(result.data["tags"]) > 0
+        assert len(result.data["recent_experiences"]) == 5
+
+    def test_summary_tag_counts(self, temp_docs_path):
+        """Test that summary includes tag counts."""
+        skill = LearningSkill()
+        agent_id = "agent005"
+
+        # Log experiences with different tags
+        skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Test 1",
+                "action": "Action 1",
+                "outcome": "Outcome 1",
+                "tags": ["common", "unique1"],
+            },
+            docs_path=temp_docs_path,
         )
-        
-        assert "experience_id" in result
-        assert result["message"] == "Experience recorded successfully"
 
-    async def test_missing_experience_raises_error(self, learning_skill, git_manager):
-        """Test that missing experience raises error."""
-        with pytest.raises(ValueError, match="experience is required"):
-            await learning_skill.execute(
-                agent_id="test",
-                input_data={},
-                context={"git_manager": git_manager}
-            )
+        skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Test 2",
+                "action": "Action 2",
+                "outcome": "Outcome 2",
+                "tags": ["common", "unique2"],
+            },
+            docs_path=temp_docs_path,
+        )
 
-    async def test_missing_input_raises_error(self, learning_skill, git_manager):
-        """Test that experience without input raises error."""
-        with pytest.raises(ValueError, match="must contain 'input' and 'outcome'"):
-            await learning_skill.execute(
-                agent_id="test",
-                input_data={
-                    "experience": {"outcome": {"success": True}}
+        # Get summary
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "summary",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        tags = {tag["tag"]: tag["count"] for tag in result.data["tags"]}
+        assert tags["common"] == 2
+        assert tags["unique1"] == 1
+        assert tags["unique2"] == 1
+
+    def test_summary_recent_limit(self, temp_docs_path):
+        """Test that summary limits recent experiences to 10."""
+        skill = LearningSkill()
+        agent_id = "agent006"
+
+        # Log 15 experiences
+        for i in range(15):
+            skill.execute(
+                agent_id,
+                {
+                    "operation": "log",
+                    "context": f"Context {i}",
+                    "action": f"Action {i}",
+                    "outcome": f"Outcome {i}",
                 },
-                context={"git_manager": git_manager}
+                docs_path=temp_docs_path,
             )
 
-    async def test_missing_outcome_raises_error(self, learning_skill, git_manager):
-        """Test that experience without outcome raises error."""
-        with pytest.raises(ValueError, match="must contain 'input' and 'outcome'"):
-            await learning_skill.execute(
-                agent_id="test",
-                input_data={
-                    "experience": {"input": {"task": "test"}}
-                },
-                context={"git_manager": git_manager}
-            )
+        # Get summary
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "summary",
+            },
+            docs_path=temp_docs_path,
+        )
 
-    async def test_missing_git_manager_raises_error(self, learning_skill):
-        """Test that missing git_manager raises error."""
-        with pytest.raises(ValueError, match="git_manager required"):
-            await learning_skill.execute(
-                agent_id="test",
-                input_data={
-                    "experience": {
-                        "input": {"task": "test"},
-                        "outcome": {"success": True}
-                    }
-                },
-                context={}
-            )
+        assert result.data["total_experiences"] == 15
+        assert len(result.data["recent_experiences"]) == 10
 
-    async def test_ndjson_format(self, learning_skill, git_manager):
+    def test_missing_required_fields(self, temp_docs_path):
+        """Test error when required fields are missing."""
+        skill = LearningSkill()
+
+        result = skill.execute(
+            "agent007",
+            {
+                "operation": "log",
+                "context": "Test",
+                # Missing action and outcome
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is False
+        assert "required" in result.message.lower()
+
+    def test_invalid_operation(self, temp_docs_path):
+        """Test error with invalid operation."""
+        skill = LearningSkill()
+
+        result = skill.execute(
+            "agent008",
+            {
+                "operation": "invalid",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is False
+        assert "Invalid operation" in result.message
+
+    def test_missing_docs_path(self):
+        """Test error when docs_path is missing."""
+        skill = LearningSkill()
+
+        result = skill.execute(
+            "agent009",
+            {
+                "operation": "log",
+                "context": "Test",
+                "action": "Test",
+                "outcome": "Test",
+            },
+        )
+
+        assert result.success is False
+        assert "docs_path required" in result.message
+
+    def test_ndjson_format(self, temp_docs_path):
         """Test that experiences are stored in valid NDJSON format."""
-        agent_id = "ndjson_test"
-        
-        # Record multiple experiences
-        for i in range(3):
-            await learning_skill.execute(
-                agent_id=agent_id,
-                input_data={
-                    "experience": {
-                        "input": {"iteration": i},
-                        "outcome": {"value": i * 2}
-                    }
-                },
-                context={"git_manager": git_manager}
-            )
-        
-        # Verify NDJSON format (each line is valid JSON)
-        experiences_file = os.path.join(
-            str(git_manager.base_path), "_agents", "experiences", f"{agent_id}.ndjson"
+        skill = LearningSkill()
+        agent_id = "agent010"
+
+        # Log experiences
+        skill.execute(
+            agent_id,
+            {
+                "operation": "log",
+                "context": "Test",
+                "action": "Test action",
+                "outcome": "Test outcome",
+            },
+            docs_path=temp_docs_path,
         )
-        
-        with open(experiences_file, 'r') as f:
-            for line_num, line in enumerate(f):
-                # Each line should be valid JSON
-                data = json.loads(line.strip())
-                assert data["agent_id"] == agent_id
-                assert "experience_id" in data
-                assert data["input"]["iteration"] == line_num
+
+        experience_file = os.path.join(
+            temp_docs_path, "agents", agent_id, "learning", "experience.ndjson"
+        )
+
+        # Verify each line is valid JSON
+        with open(experience_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    # Should not raise exception
+                    json.loads(line)

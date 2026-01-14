@@ -24,6 +24,13 @@ class ProjectInfo(BaseModel):
     updated_at: str
 
 
+class ProjectUpdate(BaseModel):
+    """Request model for updating a project."""
+
+    name: Optional[str] = Field(None, description="Project name", min_length=1)
+    methodology: Optional[str] = Field(None, description="Project methodology")
+
+
 class FileChange(BaseModel):
     """Represents a file change with unified diff."""
 
@@ -64,6 +71,100 @@ class CommandApplyResult(BaseModel):
     commit_hash: str
     changed_files: List[str]
     message: str
+
+
+# ============================================================================
+# Proposal API Models (Compatibility Layer)
+# ============================================================================
+
+
+class ProposalStatus(str, Enum):
+    """Proposal status."""
+
+    PENDING = "pending"
+    APPLIED = "applied"
+    REJECTED = "rejected"
+
+
+class Proposal(BaseModel):
+    """Proposal for client compatibility."""
+
+    id: str = Field(..., description="Proposal ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: ProposalStatus = Field(default=ProposalStatus.PENDING, description="Proposal status")
+    assistant_message: str = Field(..., description="AI assistant message")
+    file_changes: List[FileChange] = Field(..., description="Proposed file changes")
+    draft_commit_message: str = Field(..., description="Draft commit message")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    updated_at: str = Field(..., description="Last update timestamp (ISO format)")
+    applied_at: Optional[str] = Field(None, description="Applied timestamp (ISO format)")
+    rejected_at: Optional[str] = Field(None, description="Rejected timestamp (ISO format)")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+
+
+class ProposalCreate(BaseModel):
+    """Request model for creating a proposal."""
+
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class ProposalList(BaseModel):
+    """Response model for proposal list."""
+
+    proposals: List[Proposal]
+    total: int
+
+
+# ============================================================================
+# Command History Models (Global Command Execution)
+# ============================================================================
+
+
+class CommandStatus(str, Enum):
+    """Command execution status."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class CommandHistory(BaseModel):
+    """Command execution history entry."""
+
+    id: str = Field(..., description="Unique command ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: CommandStatus = Field(..., description="Command status")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    started_at: Optional[str] = Field(None, description="Start timestamp (ISO format)")
+    completed_at: Optional[str] = Field(None, description="Completion timestamp (ISO format)")
+    proposal_id: Optional[str] = Field(None, description="Associated proposal ID")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+
+
+class CommandExecute(BaseModel):
+    """Request model for executing a command."""
+
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class CommandHistoryList(BaseModel):
+    """Response model for command history list."""
+
+    commands: List[CommandHistory]
+    total: int
 
 
 class ProjectState(BaseModel):
@@ -401,49 +502,50 @@ class AuditEventList(BaseModel):
 
 
 # ============================================================================
-# Skills API Models (Cognitive Skills)
+# Agent Skills Models (Cognitive Skills)
 # ============================================================================
 
 
-class MemoryState(BaseModel):
-    """Agent memory state for short-term and long-term memory."""
+class SkillInfo(BaseModel):
+    """Information about a cognitive skill."""
 
-    agent_id: str = Field(..., description="Agent identifier")
-    short_term: Dict[str, Any] = Field(
-        default_factory=dict, description="Short-term memory (working memory)"
-    )
-    long_term: Dict[str, Any] = Field(
-        default_factory=dict, description="Long-term memory (persistent facts)"
-    )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Memory metadata (timestamps, etc.)"
-    )
+    name: str = Field(..., description="Skill name")
+    version: str = Field(..., description="Skill version")
+    description: str = Field(..., description="Skill description")
+    enabled: bool = Field(..., description="Whether skill is enabled")
 
 
-class MemoryStateUpdate(BaseModel):
-    """Request model for updating agent memory."""
+class SkillListResponse(BaseModel):
+    """Response model for listing skills."""
 
-    short_term: Optional[Dict[str, Any]] = Field(
-        default=None, description="Short-term memory updates (merges with existing)"
-    )
-    long_term: Optional[Dict[str, Any]] = Field(
-        default=None, description="Long-term memory updates (merges with existing)"
+    skills: List[SkillInfo]
+    total: int
+
+
+class MemoryGetRequest(BaseModel):
+    """Request model for getting memory."""
+
+    memory_type: str = Field(
+        ..., description="Memory type: 'short_term' or 'long_term'"
     )
 
 
-class PlanStep(BaseModel):
-    """A single step in a multi-step plan."""
+class MemorySetRequest(BaseModel):
+    """Request model for setting memory."""
 
-    step_number: int = Field(..., description="Step sequence number (1-indexed)")
-    title: str = Field(..., description="Step title")
-    description: str = Field(..., description="Step description")
-    estimated_duration: Optional[str] = Field(
-        default=None, description="Estimated duration (e.g., '2h', '30m')"
+    memory_type: str = Field(
+        ..., description="Memory type: 'short_term' or 'long_term'"
     )
-    dependencies: List[int] = Field(
-        default_factory=list, description="Step numbers this step depends on"
-    )
-    status: str = Field(default="pending", description="Step status (pending/in_progress/completed)")
+    data: Dict[str, Any] = Field(..., description="Memory data to store")
+
+
+class MemoryResponse(BaseModel):
+    """Response model for memory operations."""
+
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    message: str
+    timestamp: str
 
 
 class PlanRequest(BaseModel):
@@ -454,43 +556,48 @@ class PlanRequest(BaseModel):
         default_factory=list, description="Constraints to consider"
     )
     context: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional context for planning"
+        default_factory=dict, description="Additional context"
+    )
+
+
+class PlanStep(BaseModel):
+    """A step in a plan."""
+
+    step: int = Field(..., description="Step number")
+    action: str = Field(..., description="Action to take")
+    description: str = Field(..., description="Step description")
+    status: str = Field(default="pending", description="Step status")
+    dependencies: List[int] = Field(
+        default_factory=list, description="Dependencies on other steps"
     )
 
 
 class PlanResponse(BaseModel):
-    """Response model for a generated plan."""
+    """Response model for plan generation."""
 
-    agent_id: str = Field(..., description="Agent identifier")
-    goal: str = Field(..., description="Goal being planned for")
-    steps: List[PlanStep] = Field(..., description="Ordered plan steps")
-    estimated_total_duration: Optional[str] = Field(
-        default=None, description="Total estimated duration"
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    message: str
+    timestamp: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class LearnRequest(BaseModel):
+    """Request model for logging an experience."""
+
+    context: str = Field(..., description="Context of the experience", min_length=1)
+    action: str = Field(..., description="Action taken", min_length=1)
+    outcome: str = Field(..., description="Outcome observed", min_length=1)
+    feedback: Optional[str] = Field(default="", description="Feedback or reflection")
+    tags: Optional[List[str]] = Field(
+        default_factory=list, description="Tags for categorization"
     )
-    created_at: str = Field(..., description="Plan creation timestamp")
 
 
-class ExperienceEntry(BaseModel):
-    """A learning experience entry."""
+class LearnResponse(BaseModel):
+    """Response model for learning operations."""
 
-    input: Dict[str, Any] = Field(..., description="Input that led to this experience")
-    outcome: Dict[str, Any] = Field(..., description="Observed outcome")
-    feedback: Optional[str] = Field(default=None, description="Feedback on the outcome")
-    context: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Context in which experience occurred"
-    )
-
-
-class LearningRequest(BaseModel):
-    """Request model for recording a learning experience."""
-
-    experience: ExperienceEntry = Field(..., description="Experience to learn from")
-
-
-class LearningResponse(BaseModel):
-    """Response model for learning operation."""
-
-    agent_id: str = Field(..., description="Agent identifier")
-    experience_id: str = Field(..., description="Unique experience identifier")
-    recorded_at: str = Field(..., description="Recording timestamp")
-    message: str = Field(default="Experience recorded", description="Status message")
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    message: str
+    timestamp: str

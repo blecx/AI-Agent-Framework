@@ -4,179 +4,203 @@ Unit tests for Memory Skill.
 import pytest
 import tempfile
 import shutil
-import json
 import os
 from apps.api.skills.memory_skill import MemorySkill
-from apps.api.services.git_manager import GitManager
 
 
 @pytest.fixture
-def temp_project_dir():
-    """Create a temporary project directory for testing."""
+def temp_docs_path():
+    """Create a temporary docs directory."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture
-def git_manager(temp_project_dir):
-    """Create a GitManager instance with temporary directory."""
-    manager = GitManager(temp_project_dir)
-    manager.ensure_repository()
-    return manager
+class TestMemorySkill:
+    """Test MemorySkill functionality."""
 
+    def test_skill_metadata(self):
+        """Test skill metadata."""
+        skill = MemorySkill()
+        assert skill.name == "memory"
+        assert skill.version == "1.0.0"
+        assert skill.description
 
-@pytest.fixture
-def memory_skill():
-    """Create a MemorySkill instance."""
-    return MemorySkill()
+    def test_set_short_term_memory(self, temp_docs_path):
+        """Test setting short-term memory."""
+        skill = MemorySkill()
+        agent_id = "agent001"
+        test_data = {"key": "value", "number": 42}
 
-
-class TestMemorySkillMetadata:
-    """Test memory skill metadata."""
-
-    def test_get_metadata(self, memory_skill):
-        """Test getting memory skill metadata."""
-        metadata = memory_skill.get_metadata()
-        
-        assert metadata.name == "memory"
-        assert metadata.version == "1.0.0"
-        assert "memory" in metadata.description.lower()
-        assert "operation" in metadata.input_schema["properties"]
-        assert metadata.output_schema["type"] == "object"
-
-
-@pytest.mark.asyncio
-class TestMemorySkillExecution:
-    """Test memory skill execution."""
-
-    async def test_get_empty_memory(self, memory_skill, git_manager):
-        """Test getting memory when none exists."""
-        result = await memory_skill.execute(
-            agent_id="test_agent",
-            input_data={"operation": "get"},
-            context={"git_manager": git_manager}
-        )
-        
-        assert result["agent_id"] == "test_agent"
-        assert result["short_term"] == {}
-        assert result["long_term"] == {}
-        assert "metadata" in result
-        assert "created_at" in result["metadata"]
-
-    async def test_set_memory(self, memory_skill, git_manager):
-        """Test setting memory."""
-        short_term = {"working": "data", "count": 42}
-        long_term = {"fact": "important", "learned": True}
-        
-        result = await memory_skill.execute(
-            agent_id="test_agent",
-            input_data={
+        result = skill.execute(
+            agent_id,
+            {
                 "operation": "set",
-                "short_term": short_term,
-                "long_term": long_term
+                "memory_type": "short_term",
+                "data": test_data,
             },
-            context={"git_manager": git_manager}
+            docs_path=temp_docs_path,
         )
-        
-        assert result["agent_id"] == "test_agent"
-        assert result["short_term"] == short_term
-        assert result["long_term"] == long_term
-        assert "updated_at" in result["metadata"]
 
-    async def test_memory_persistence(self, memory_skill, git_manager):
-        """Test that memory persists across operations."""
-        agent_id = "persist_test"
-        
-        # Set initial memory
-        await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "operation": "set",
-                "short_term": {"key1": "value1"},
-                "long_term": {"fact1": "data1"}
-            },
-            context={"git_manager": git_manager}
-        )
-        
-        # Get memory to verify persistence
-        result = await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={"operation": "get"},
-            context={"git_manager": git_manager}
-        )
-        
-        assert result["short_term"]["key1"] == "value1"
-        assert result["long_term"]["fact1"] == "data1"
+        assert result.success is True
+        assert result.data["data"] == test_data
+        assert "timestamp" in result.data
 
-    async def test_memory_merge(self, memory_skill, git_manager):
-        """Test that memory updates merge with existing data."""
-        agent_id = "merge_test"
-        
-        # Set initial memory
-        await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "operation": "set",
-                "short_term": {"key1": "value1", "key2": "value2"}
-            },
-            context={"git_manager": git_manager}
-        )
-        
-        # Update with partial data
-        result = await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "operation": "set",
-                "short_term": {"key2": "updated", "key3": "new"}
-            },
-            context={"git_manager": git_manager}
-        )
-        
-        assert result["short_term"]["key1"] == "value1"  # Preserved
-        assert result["short_term"]["key2"] == "updated"  # Updated
-        assert result["short_term"]["key3"] == "new"  # Added
-
-    async def test_invalid_operation_raises_error(self, memory_skill, git_manager):
-        """Test that invalid operation raises error."""
-        with pytest.raises(ValueError, match="Invalid operation"):
-            await memory_skill.execute(
-                agent_id="test",
-                input_data={"operation": "invalid"},
-                context={"git_manager": git_manager}
-            )
-
-    async def test_missing_git_manager_raises_error(self, memory_skill):
-        """Test that missing git_manager raises error."""
-        with pytest.raises(ValueError, match="git_manager required"):
-            await memory_skill.execute(
-                agent_id="test",
-                input_data={"operation": "get"},
-                context={}
-            )
-
-    async def test_memory_file_location(self, memory_skill, git_manager):
-        """Test that memory is stored in correct location."""
-        agent_id = "location_test"
-        
-        await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={
-                "operation": "set",
-                "short_term": {"test": "data"}
-            },
-            context={"git_manager": git_manager}
-        )
-        
-        # Verify file exists
+        # Verify file was created
         memory_file = os.path.join(
-            str(git_manager.base_path), "_agents", "memory", f"{agent_id}.json"
+            temp_docs_path, "agents", agent_id, "memory", "short_term.json"
         )
         assert os.path.exists(memory_file)
-        
-        # Verify content
-        with open(memory_file, 'r') as f:
-            data = json.load(f)
-        
-        assert data["agent_id"] == agent_id
-        assert data["short_term"]["test"] == "data"
+
+    def test_set_long_term_memory(self, temp_docs_path):
+        """Test setting long-term memory."""
+        skill = MemorySkill()
+        agent_id = "agent002"
+        test_data = {"knowledge": "important fact"}
+
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "set",
+                "memory_type": "long_term",
+                "data": test_data,
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is True
+        assert result.data["data"] == test_data
+
+        # Verify file was created
+        memory_file = os.path.join(
+            temp_docs_path, "agents", agent_id, "memory", "long_term.json"
+        )
+        assert os.path.exists(memory_file)
+
+    def test_get_nonexistent_memory(self, temp_docs_path):
+        """Test getting memory that doesn't exist."""
+        skill = MemorySkill()
+        agent_id = "agent003"
+
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "get",
+                "memory_type": "short_term",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is True
+        assert result.data == {}
+
+    def test_get_existing_memory(self, temp_docs_path):
+        """Test getting existing memory."""
+        skill = MemorySkill()
+        agent_id = "agent004"
+        test_data = {"stored": "data"}
+
+        # First set memory
+        skill.execute(
+            agent_id,
+            {
+                "operation": "set",
+                "memory_type": "short_term",
+                "data": test_data,
+            },
+            docs_path=temp_docs_path,
+        )
+
+        # Then get it
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "get",
+                "memory_type": "short_term",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is True
+        assert result.data["data"] == test_data
+
+    def test_missing_docs_path(self):
+        """Test error when docs_path is missing."""
+        skill = MemorySkill()
+
+        result = skill.execute(
+            "agent005",
+            {
+                "operation": "get",
+                "memory_type": "short_term",
+            },
+        )
+
+        assert result.success is False
+        assert "docs_path required" in result.message
+
+    def test_invalid_operation(self, temp_docs_path):
+        """Test error with invalid operation."""
+        skill = MemorySkill()
+
+        result = skill.execute(
+            "agent006",
+            {
+                "operation": "invalid",
+                "memory_type": "short_term",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is False
+        assert "Invalid operation" in result.message
+
+    def test_invalid_memory_type(self, temp_docs_path):
+        """Test error with invalid memory type."""
+        skill = MemorySkill()
+
+        result = skill.execute(
+            "agent007",
+            {
+                "operation": "get",
+                "memory_type": "invalid_type",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is False
+        assert "Invalid memory_type" in result.message
+
+    def test_set_without_data(self, temp_docs_path):
+        """Test error when setting memory without data."""
+        skill = MemorySkill()
+
+        result = skill.execute(
+            "agent008",
+            {
+                "operation": "set",
+                "memory_type": "short_term",
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert result.success is False
+        assert "data required" in result.message
+
+    def test_memory_update_timestamp(self, temp_docs_path):
+        """Test that memory updates have timestamps."""
+        skill = MemorySkill()
+        agent_id = "agent009"
+
+        result = skill.execute(
+            agent_id,
+            {
+                "operation": "set",
+                "memory_type": "short_term",
+                "data": {"test": "data"},
+            },
+            docs_path=temp_docs_path,
+        )
+
+        assert "timestamp" in result.data
+        assert "updated_at" in result.data

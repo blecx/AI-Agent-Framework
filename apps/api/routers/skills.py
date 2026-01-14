@@ -1,179 +1,237 @@
 """
-Skills router for AI agent cognitive capabilities.
+Skills API router for cognitive skills.
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from typing import List
+import os
 
 from models import (
-    MemoryState,
-    MemoryStateUpdate,
+    SkillListResponse,
+    SkillInfo,
+    MemorySetRequest,
+    MemoryResponse,
     PlanRequest,
     PlanResponse,
-    LearningRequest,
-    LearningResponse,
+    LearnRequest,
+    LearnResponse,
 )
-from skills.registry import get_registry
-from skills.base import SkillMetadata
+from skills.registry import get_global_registry
 
 router = APIRouter()
 
 
-@router.get("/skills", response_model=List[SkillMetadata])
-async def list_skills():
-    """
-    List all available skills.
-    
-    Returns metadata for all registered skills including name, version,
-    description, and input/output schemas.
-    """
-    registry = get_registry()
-    return registry.list_skills()
+def get_docs_path(request: Request) -> str:
+    """Get the docs path from app state or environment."""
+    if hasattr(request.app.state, "git_manager"):
+        return str(request.app.state.git_manager.base_path)
+    return os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
 
 
-@router.get("/{agent_id}/skills/memory", response_model=MemoryState)
-async def get_memory(agent_id: str, request: Request):
+@router.get("/{agent_id}/skills", response_model=SkillListResponse)
+async def list_skills(agent_id: str):
     """
-    Get agent memory state.
-    
-    Retrieves both short-term and long-term memory for the specified agent.
+    List all available skills for an agent.
+
+    Args:
+        agent_id: Unique identifier for the agent (currently unused, 
+                  but maintains consistent API pattern for future per-agent filtering)
+
+    Returns:
+        List of available skills
     """
-    registry = get_registry()
-    memory_skill = registry.get_skill("memory")
-    
-    if not memory_skill:
-        raise HTTPException(status_code=500, detail="Memory skill not available")
-    
-    git_manager = request.app.state.git_manager
-    
-    try:
-        result = await memory_skill.execute(
-            agent_id=agent_id,
-            input_data={"operation": "get"},
-            context={"git_manager": git_manager}
-        )
-        return MemoryState(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get memory: {str(e)}"
-        )
+    registry = get_global_registry()
+    skills = registry.list_available()
+
+    return SkillListResponse(
+        skills=[SkillInfo(**skill) for skill in skills], total=len(skills)
+    )
 
 
-@router.post("/{agent_id}/skills/memory", response_model=MemoryState)
-async def update_memory(
-    agent_id: str, memory_update: MemoryStateUpdate, request: Request
-):
+@router.get("/{agent_id}/skills/memory", response_model=MemoryResponse)
+async def get_memory(agent_id: str, memory_type: str, request: Request):
     """
-    Update agent memory state.
-    
-    Merges the provided short-term and long-term memory updates
-    with the existing memory state. Returns the updated memory.
+    Get memory for an agent.
+
+    Args:
+        agent_id: Unique identifier for the agent
+        memory_type: Type of memory ('short_term' or 'long_term')
+        request: FastAPI request object
+
+    Returns:
+        Memory data
     """
-    registry = get_registry()
-    memory_skill = registry.get_skill("memory")
-    
-    if not memory_skill:
-        raise HTTPException(status_code=500, detail="Memory skill not available")
-    
-    git_manager = request.app.state.git_manager
-    
-    try:
-        input_data = {
+    registry = get_global_registry()
+    skill = registry.get("memory")
+
+    if not skill:
+        raise HTTPException(status_code=404, detail="Memory skill not available")
+
+    docs_path = get_docs_path(request)
+
+    result = skill.execute(
+        agent_id,
+        {"operation": "get", "memory_type": memory_type},
+        docs_path=docs_path,
+    )
+
+    return MemoryResponse(
+        success=result.success,
+        data=result.data,
+        message=result.message,
+        timestamp=result.timestamp,
+    )
+
+
+@router.post("/{agent_id}/skills/memory", response_model=MemoryResponse)
+async def set_memory(agent_id: str, body: MemorySetRequest, request: Request):
+    """
+    Set memory for an agent.
+
+    Args:
+        agent_id: Unique identifier for the agent
+        body: Memory set request with memory_type and data
+        request: FastAPI request object
+
+    Returns:
+        Operation result with updated memory
+    """
+    registry = get_global_registry()
+    skill = registry.get("memory")
+
+    if not skill:
+        raise HTTPException(status_code=404, detail="Memory skill not available")
+
+    docs_path = get_docs_path(request)
+
+    result = skill.execute(
+        agent_id,
+        {
             "operation": "set",
-            "short_term": memory_update.short_term,
-            "long_term": memory_update.long_term,
-        }
-        
-        result = await memory_skill.execute(
-            agent_id=agent_id,
-            input_data=input_data,
-            context={"git_manager": git_manager}
-        )
-        return MemoryState(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update memory: {str(e)}"
-        )
+            "memory_type": body.memory_type,
+            "data": body.data,
+        },
+        docs_path=docs_path,
+    )
+
+    return MemoryResponse(
+        success=result.success,
+        data=result.data,
+        message=result.message,
+        timestamp=result.timestamp,
+    )
 
 
 @router.post("/{agent_id}/skills/plan", response_model=PlanResponse)
-async def create_plan(agent_id: str, plan_request: PlanRequest, request: Request):
+async def create_plan(agent_id: str, body: PlanRequest, request: Request):
     """
-    Generate a multi-step plan for the given goal.
-    
-    Creates a structured plan with ordered steps, dependencies,
-    and time estimates based on the goal and constraints.
+    Generate a multi-step plan for achieving a goal.
+
+    Args:
+        agent_id: Unique identifier for the agent
+        body: Plan request with goal, constraints, and context
+        request: FastAPI request object
+
+    Returns:
+        Generated plan with steps
     """
-    registry = get_registry()
-    planning_skill = registry.get_skill("planning")
-    
-    if not planning_skill:
-        raise HTTPException(status_code=500, detail="Planning skill not available")
-    
-    llm_service = request.app.state.llm_service
-    
-    try:
-        input_data = {
-            "goal": plan_request.goal,
-            "constraints": plan_request.constraints or [],
-            "context": plan_request.context or {},
-        }
-        
-        result = await planning_skill.execute(
-            agent_id=agent_id,
-            input_data=input_data,
-            context={"llm_service": llm_service}
-        )
-        return PlanResponse(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create plan: {str(e)}"
-        )
+    registry = get_global_registry()
+    skill = registry.get("planning")
+
+    if not skill:
+        raise HTTPException(status_code=404, detail="Planning skill not available")
+
+    docs_path = get_docs_path(request)
+
+    result = skill.execute(
+        agent_id,
+        {
+            "goal": body.goal,
+            "constraints": body.constraints or [],
+            "context": body.context or {},
+        },
+        docs_path=docs_path,
+    )
+
+    return PlanResponse(
+        success=result.success,
+        data=result.data,
+        message=result.message,
+        timestamp=result.timestamp,
+        metadata=result.metadata,
+    )
 
 
-@router.post("/{agent_id}/skills/learn", response_model=LearningResponse)
-async def record_experience(
-    agent_id: str, learning_request: LearningRequest, request: Request
-):
+@router.post("/{agent_id}/skills/learn", response_model=LearnResponse)
+async def log_experience(agent_id: str, body: LearnRequest, request: Request):
     """
-    Record a learning experience for the agent.
-    
-    Stores the input, outcome, and optional feedback for future
-    learning and improvement.
+    Log an experience event for learning.
+
+    Args:
+        agent_id: Unique identifier for the agent
+        body: Learning request with experience details
+        request: FastAPI request object
+
+    Returns:
+        Operation result
     """
-    registry = get_registry()
-    learning_skill = registry.get_skill("learning")
-    
-    if not learning_skill:
-        raise HTTPException(status_code=500, detail="Learning skill not available")
-    
-    git_manager = request.app.state.git_manager
-    
-    try:
-        input_data = {
-            "experience": {
-                "input": learning_request.experience.input,
-                "outcome": learning_request.experience.outcome,
-                "feedback": learning_request.experience.feedback,
-                "context": learning_request.experience.context or {},
-            }
-        }
-        
-        result = await learning_skill.execute(
-            agent_id=agent_id,
-            input_data=input_data,
-            context={"git_manager": git_manager}
-        )
-        return LearningResponse(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to record experience: {str(e)}"
-        )
+    registry = get_global_registry()
+    skill = registry.get("learning")
+
+    if not skill:
+        raise HTTPException(status_code=404, detail="Learning skill not available")
+
+    docs_path = get_docs_path(request)
+
+    result = skill.execute(
+        agent_id,
+        {
+            "operation": "log",
+            "context": body.context,
+            "action": body.action,
+            "outcome": body.outcome,
+            "feedback": body.feedback or "",
+            "tags": body.tags or [],
+        },
+        docs_path=docs_path,
+    )
+
+    return LearnResponse(
+        success=result.success,
+        data=result.data,
+        message=result.message,
+        timestamp=result.timestamp,
+    )
+
+
+@router.get("/{agent_id}/skills/learn/summary", response_model=LearnResponse)
+async def get_learning_summary(agent_id: str, request: Request):
+    """
+    Get a summary of learning experiences.
+
+    Args:
+        agent_id: Unique identifier for the agent
+        request: FastAPI request object
+
+    Returns:
+        Summary of experiences
+    """
+    registry = get_global_registry()
+    skill = registry.get("learning")
+
+    if not skill:
+        raise HTTPException(status_code=404, detail="Learning skill not available")
+
+    docs_path = get_docs_path(request)
+
+    result = skill.execute(
+        agent_id,
+        {"operation": "summary"},
+        docs_path=docs_path,
+    )
+
+    return LearnResponse(
+        success=result.success,
+        data=result.data,
+        message=result.message,
+        timestamp=result.timestamp,
+    )

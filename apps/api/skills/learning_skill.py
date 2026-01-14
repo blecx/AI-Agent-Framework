@@ -1,126 +1,152 @@
 """
-Learning skill for AI agent experience capture and learning.
+Learning skill for capturing and managing experience/learning data.
 """
 
 import json
 import os
-import uuid
-from typing import Dict, Any
 from datetime import datetime, timezone
-
-from .base import SkillMetadata
+from typing import Dict, Any
+from .base import SkillResult
 
 
 class LearningSkill:
-    """
-    Learning skill for capturing and storing agent experiences.
-    
-    Experiences are stored in the project docs directory as NDJSON
-    (newline-delimited JSON) for efficient append operations.
-    """
+    """Skill for capturing experiences and learning from outcomes."""
 
-    def get_metadata(self) -> SkillMetadata:
-        """Get learning skill metadata."""
-        return SkillMetadata(
-            name="learning",
-            version="1.0.0",
-            description="Record and learn from agent experiences",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "experience": {
-                        "type": "object",
-                        "properties": {
-                            "input": {
-                                "type": "object",
-                                "description": "Input that led to experience"
-                            },
-                            "outcome": {
-                                "type": "object",
-                                "description": "Observed outcome"
-                            },
-                            "feedback": {
-                                "type": "string",
-                                "description": "Feedback on outcome"
-                            },
-                            "context": {
-                                "type": "object",
-                                "description": "Context of experience"
-                            }
-                        },
-                        "required": ["input", "outcome"]
-                    }
-                },
-                "required": ["experience"]
-            },
-            output_schema={
-                "type": "object",
-                "properties": {
-                    "agent_id": {"type": "string"},
-                    "experience_id": {"type": "string"},
-                    "recorded_at": {"type": "string"},
-                    "message": {"type": "string"}
-                }
-            }
-        )
+    name = "learning"
+    version = "1.0.0"
+    description = "Capture and learn from experience events"
 
-    async def execute(
-        self, agent_id: str, input_data: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
         """
-        Execute learning operation (record experience).
-        
+        Execute learning operations (log experience or get summary).
+
         Args:
-            agent_id: Agent identifier
-            input_data: Contains experience to record
-            context: Must contain 'git_manager' for persistence
-            
+            agent_id: Unique identifier for the agent
+            params: {
+                "operation": "log" | "summary",
+                "context": Optional[str] - Context of the experience,
+                "action": Optional[str] - Action taken,
+                "outcome": Optional[str] - Outcome observed,
+                "feedback": Optional[str] - Feedback or reflection,
+                "tags": Optional[List[str]] - Tags for categorization
+            }
+            **kwargs: Must include "docs_path" - base path for document storage
+
         Returns:
-            Confirmation with experience ID
+            SkillResult with operation status or summary
         """
-        experience = input_data.get("experience")
-        if not experience:
-            raise ValueError("experience is required")
+        docs_path = kwargs.get("docs_path")
+        if not docs_path:
+            return SkillResult(
+                success=False, message="docs_path required in kwargs"
+            )
 
-        if "input" not in experience or "outcome" not in experience:
-            raise ValueError("experience must contain 'input' and 'outcome'")
+        operation = params.get("operation", "log")
 
-        git_manager = context.get("git_manager")
-        if not git_manager:
-            raise ValueError("git_manager required in context")
+        if operation == "log":
+            return self._log_experience(agent_id, params, docs_path)
+        elif operation == "summary":
+            return self._get_summary(agent_id, docs_path)
+        else:
+            return SkillResult(
+                success=False, message=f"Invalid operation: {operation}"
+            )
 
-        # Store experience
-        experience_id = str(uuid.uuid4())
-        recorded_at = datetime.now(timezone.utc).isoformat()
+    def _log_experience(
+        self, agent_id: str, params: Dict[str, Any], docs_path: str
+    ) -> SkillResult:
+        """Log an experience event to NDJSON."""
+        context = params.get("context", "")
+        action = params.get("action", "")
+        outcome = params.get("outcome", "")
+        feedback = params.get("feedback", "")
+        tags = params.get("tags", [])
 
-        experience_entry = {
-            "experience_id": experience_id,
-            "agent_id": agent_id,
-            "recorded_at": recorded_at,
-            "input": experience.get("input"),
-            "outcome": experience.get("outcome"),
-            "feedback": experience.get("feedback"),
-            "context": experience.get("context", {})
-        }
+        if not context or not action or not outcome:
+            return SkillResult(
+                success=False,
+                message="context, action, and outcome are required for logging",
+            )
 
-        self._store_experience(git_manager, agent_id, experience_entry)
+        learning_dir = os.path.join(docs_path, "agents", agent_id, "learning")
+        experience_file = os.path.join(learning_dir, "experience.ndjson")
 
-        return {
-            "agent_id": agent_id,
-            "experience_id": experience_id,
-            "recorded_at": recorded_at,
-            "message": "Experience recorded successfully"
-        }
+        try:
+            os.makedirs(learning_dir, exist_ok=True)
 
-    def _store_experience(
-        self, git_manager, agent_id: str, experience: Dict[str, Any]
-    ) -> None:
-        """Store experience in NDJSON file."""
-        experiences_dir = os.path.join(str(git_manager.base_path), "_agents", "experiences")
-        os.makedirs(experiences_dir, exist_ok=True)
-        
-        experiences_file = os.path.join(experiences_dir, f"{agent_id}.ndjson")
-        
-        # Append to NDJSON file
-        with open(experiences_file, 'a') as f:
-            f.write(json.dumps(experience) + '\n')
+            experience_entry = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "context": context,
+                "action": action,
+                "outcome": outcome,
+                "feedback": feedback,
+                "tags": tags,
+            }
+
+            # Append to NDJSON file
+            with open(experience_file, "a") as f:
+                f.write(json.dumps(experience_entry) + "\n")
+
+            return SkillResult(
+                success=True,
+                data=experience_entry,
+                message="Experience logged successfully",
+            )
+        except Exception as e:
+            return SkillResult(
+                success=False, message=f"Error logging experience: {str(e)}"
+            )
+
+    def _get_summary(self, agent_id: str, docs_path: str) -> SkillResult:
+        """Get a summary of learning experiences."""
+        learning_dir = os.path.join(docs_path, "agents", agent_id, "learning")
+        experience_file = os.path.join(learning_dir, "experience.ndjson")
+
+        if not os.path.exists(experience_file):
+            return SkillResult(
+                success=True,
+                data={
+                    "total_experiences": 0,
+                    "tags": [],
+                    "recent_experiences": [],
+                },
+                message="No experiences logged yet",
+            )
+
+        try:
+            experiences = []
+            tag_counts = {}
+
+            with open(experience_file, "r") as f:
+                for line in f:
+                    if line.strip():
+                        exp = json.loads(line)
+                        experiences.append(exp)
+
+                        # Count tags
+                        for tag in exp.get("tags", []):
+                            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+            # Get most recent 10 experiences
+            recent = experiences[-10:] if len(experiences) > 10 else experiences
+
+            summary = {
+                "total_experiences": len(experiences),
+                "tags": [
+                    {"tag": tag, "count": count}
+                    for tag, count in sorted(
+                        tag_counts.items(), key=lambda x: x[1], reverse=True
+                    )
+                ],
+                "recent_experiences": recent,
+            }
+
+            return SkillResult(
+                success=True,
+                data=summary,
+                message=f"Summary of {len(experiences)} experiences",
+            )
+        except Exception as e:
+            return SkillResult(
+                success=False, message=f"Error generating summary: {str(e)}"
+            )

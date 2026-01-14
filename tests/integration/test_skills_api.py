@@ -1,6 +1,5 @@
 """
 Integration tests for Skills API endpoints.
-Tests the skills endpoints: list skills, memory, planning, and learning.
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -40,10 +39,10 @@ def client(temp_project_dir):
         allow_headers=["*"],
     )
 
-    # Import and register skills router
+    # Import and register routers
     from routers import skills
 
-    test_app.include_router(skills.router, prefix="/agents", tags=["skills"])
+    test_app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills"])
 
     # Initialize services
     from services.git_manager import GitManager
@@ -58,329 +57,254 @@ def client(temp_project_dir):
         yield test_client
 
 
-class TestSkillsListEndpoint:
-    """Test skills list endpoint."""
+class TestSkillsAPI:
+    """Test Skills API endpoints."""
 
-    def test_list_skills_returns_200(self, client):
-        """Test that list skills endpoint returns 200 OK."""
-        response = client.get("/agents/skills")
+    def test_list_skills(self, client):
+        """Test listing available skills."""
+        response = client.get("/api/v1/agents/test-agent/skills")
         assert response.status_code == 200
 
-    def test_list_skills_returns_builtin_skills(self, client):
-        """Test that list skills returns built-in skills."""
-        response = client.get("/agents/skills")
         data = response.json()
-        
-        assert isinstance(data, list)
-        assert len(data) >= 3  # At least memory, planning, learning
-        
-        skill_names = {skill["name"] for skill in data}
+        assert "skills" in data
+        assert "total" in data
+        assert data["total"] > 0
+
+        # Check that built-in skills are present
+        skill_names = {skill["name"] for skill in data["skills"]}
         assert "memory" in skill_names
         assert "planning" in skill_names
         assert "learning" in skill_names
 
-    def test_skill_metadata_structure(self, client):
-        """Test that skill metadata has correct structure."""
-        response = client.get("/agents/skills")
-        data = response.json()
-        
-        for skill in data:
-            assert "name" in skill
-            assert "version" in skill
-            assert "description" in skill
-            assert "input_schema" in skill
-            assert "output_schema" in skill
-
-
-class TestMemoryEndpoints:
-    """Test memory skill endpoints."""
-
-    def test_get_empty_memory(self, client):
-        """Test getting memory when none exists."""
-        response = client.get("/agents/test_agent/skills/memory")
-        assert response.status_code == 200
-        
-        data = response.json()
-        assert data["agent_id"] == "test_agent"
-        assert data["short_term"] == {}
-        assert data["long_term"] == {}
-        assert "metadata" in data
-
-    def test_set_memory(self, client):
-        """Test setting memory."""
-        memory_data = {
-            "short_term": {"current_task": "testing", "count": 42},
-            "long_term": {"learned_fact": "important data"}
-        }
-        
-        response = client.post(
-            "/agents/test_agent/skills/memory",
-            json=memory_data
+    def test_get_memory_nonexistent(self, client):
+        """Test getting non-existent memory."""
+        response = client.get(
+            "/api/v1/agents/test-agent/skills/memory",
+            params={"memory_type": "short_term"},
         )
         assert response.status_code == 200
-        
-        data = response.json()
-        assert data["agent_id"] == "test_agent"
-        assert data["short_term"]["current_task"] == "testing"
-        assert data["short_term"]["count"] == 42
-        assert data["long_term"]["learned_fact"] == "important data"
 
-    def test_memory_persistence(self, client):
-        """Test that memory persists across requests."""
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"] == {}
+
+    def test_set_and_get_memory(self, client):
+        """Test setting and getting memory."""
         # Set memory
-        memory_data = {
-            "short_term": {"session": "test"},
-            "long_term": {"fact": "persistent"}
-        }
-        client.post("/agents/persist_test/skills/memory", json=memory_data)
-        
+        set_response = client.post(
+            "/api/v1/agents/test-agent/skills/memory",
+            json={"memory_type": "short_term", "data": {"key": "value"}},
+        )
+        assert set_response.status_code == 200
+
+        set_data = set_response.json()
+        assert set_data["success"] is True
+        assert set_data["data"]["data"]["key"] == "value"
+
         # Get memory
-        response = client.get("/agents/persist_test/skills/memory")
-        data = response.json()
-        
-        assert data["short_term"]["session"] == "test"
-        assert data["long_term"]["fact"] == "persistent"
-
-    def test_memory_merge_updates(self, client):
-        """Test that memory updates merge with existing data."""
-        agent_id = "merge_test"
-        
-        # Set initial memory
-        client.post(
-            f"/agents/{agent_id}/skills/memory",
-            json={"short_term": {"key1": "value1", "key2": "value2"}}
+        get_response = client.get(
+            "/api/v1/agents/test-agent/skills/memory",
+            params={"memory_type": "short_term"},
         )
-        
-        # Update with partial data
+        assert get_response.status_code == 200
+
+        get_data = get_response.json()
+        assert get_data["success"] is True
+        assert get_data["data"]["data"]["key"] == "value"
+
+    def test_set_long_term_memory(self, client):
+        """Test setting long-term memory."""
         response = client.post(
-            f"/agents/{agent_id}/skills/memory",
-            json={"short_term": {"key2": "updated", "key3": "new"}}
+            "/api/v1/agents/test-agent/skills/memory",
+            json={
+                "memory_type": "long_term",
+                "data": {"knowledge": "important fact"},
+            },
         )
-        
+        assert response.status_code == 200
+
         data = response.json()
-        assert data["short_term"]["key1"] == "value1"  # Preserved
-        assert data["short_term"]["key2"] == "updated"  # Updated
-        assert data["short_term"]["key3"] == "new"  # Added
-
-    def test_different_agents_have_separate_memory(self, client):
-        """Test that different agents have isolated memory."""
-        # Set memory for agent 1
-        client.post(
-            "/agents/agent1/skills/memory",
-            json={"short_term": {"data": "agent1"}}
-        )
-        
-        # Set memory for agent 2
-        client.post(
-            "/agents/agent2/skills/memory",
-            json={"short_term": {"data": "agent2"}}
-        )
-        
-        # Verify isolation
-        response1 = client.get("/agents/agent1/skills/memory")
-        response2 = client.get("/agents/agent2/skills/memory")
-        
-        assert response1.json()["short_term"]["data"] == "agent1"
-        assert response2.json()["short_term"]["data"] == "agent2"
-
-
-class TestPlanningEndpoint:
-    """Test planning skill endpoint."""
+        assert data["success"] is True
+        assert data["data"]["data"]["knowledge"] == "important fact"
 
     def test_create_plan(self, client):
-        """Test creating a basic plan."""
-        plan_request = {
-            "goal": "Implement a new feature",
-            "constraints": ["2 days", "1 developer"],
-            "context": {"priority": "high"}
-        }
-        
+        """Test creating a plan."""
         response = client.post(
-            "/agents/test_agent/skills/plan",
-            json=plan_request
-        )
-        assert response.status_code == 200
-        
-        data = response.json()
-        assert data["agent_id"] == "test_agent"
-        assert data["goal"] == "Implement a new feature"
-        assert len(data["steps"]) > 0
-        assert "created_at" in data
-        assert "estimated_total_duration" in data
-
-    def test_plan_steps_structure(self, client):
-        """Test that plan steps have correct structure."""
-        response = client.post(
-            "/agents/test_agent/skills/plan",
-            json={"goal": "Test goal"}
-        )
-        
-        data = response.json()
-        steps = data["steps"]
-        
-        for step in steps:
-            assert "step_number" in step
-            assert "title" in step
-            assert "description" in step
-            assert "estimated_duration" in step
-            assert "dependencies" in step
-            assert "status" in step
-
-    def test_plan_with_constraints(self, client):
-        """Test creating plan with constraints."""
-        response = client.post(
-            "/agents/test_agent/skills/plan",
+            "/api/v1/agents/test-agent/skills/plan",
             json={
-                "goal": "Deploy application",
-                "constraints": ["Budget: $1000", "Time: 1 week"]
-            }
+                "goal": "Complete project deliverable",
+                "constraints": ["Limited time", "Budget constraint"],
+                "context": {"priority": "high"},
+            },
         )
-        
         assert response.status_code == 200
-        data = response.json()
-        # Should have extra step for constraint verification
-        assert len(data["steps"]) >= 4
 
-    def test_plan_missing_goal_returns_400(self, client):
-        """Test that missing goal returns 400."""
+        data = response.json()
+        assert data["success"] is True
+        assert "steps" in data["data"]
+        assert len(data["data"]["steps"]) > 0
+        assert "plan_id" in data["metadata"]
+        assert data["data"]["goal"] == "Complete project deliverable"
+        assert len(data["data"]["constraints"]) == 2
+
+    def test_create_plan_minimal(self, client):
+        """Test creating a plan with minimal parameters."""
         response = client.post(
-            "/agents/test_agent/skills/plan",
-            json={}
+            "/api/v1/agents/test-agent/skills/plan", json={"goal": "Simple task"}
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["success"] is True
+        assert "steps" in data["data"]
+
+    def test_create_plan_missing_goal(self, client):
+        """Test creating a plan without goal fails validation."""
+        response = client.post(
+            "/api/v1/agents/test-agent/skills/plan", json={"constraints": []}
         )
         assert response.status_code == 422  # Validation error
 
-    def test_plan_empty_goal_returns_400(self, client):
-        """Test that empty goal returns 400."""
+    def test_log_experience(self, client):
+        """Test logging an experience."""
         response = client.post(
-            "/agents/test_agent/skills/plan",
-            json={"goal": ""}
+            "/api/v1/agents/test-agent/skills/learn",
+            json={
+                "context": "Working on authentication feature",
+                "action": "Implemented OAuth2",
+                "outcome": "Successful authentication flow",
+                "feedback": "Works well with the existing system",
+                "tags": ["authentication", "oauth2"],
+            },
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["success"] is True
+        assert "timestamp" in data["data"]
+
+    def test_log_experience_minimal(self, client):
+        """Test logging experience with minimal fields."""
+        response = client.post(
+            "/api/v1/agents/test-agent/skills/learn",
+            json={
+                "context": "Testing",
+                "action": "Wrote tests",
+                "outcome": "All tests pass",
+            },
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["success"] is True
+
+    def test_log_experience_missing_required(self, client):
+        """Test logging experience without required fields fails."""
+        response = client.post(
+            "/api/v1/agents/test-agent/skills/learn",
+            json={
+                "context": "Test",
+                # Missing action and outcome
+            },
         )
         assert response.status_code == 422  # Validation error
 
-
-class TestLearningEndpoint:
-    """Test learning skill endpoint."""
-
-    def test_record_experience(self, client):
-        """Test recording a basic experience."""
-        learning_request = {
-            "experience": {
-                "input": {"action": "test", "parameters": {"x": 1}},
-                "outcome": {"success": True, "result": "completed"},
-                "feedback": "Good result",
-                "context": {"environment": "test"}
-            }
-        }
-        
-        response = client.post(
-            "/agents/test_agent/skills/learn",
-            json=learning_request
-        )
+    def test_get_learning_summary_empty(self, client):
+        """Test getting learning summary when no experiences exist."""
+        response = client.get("/api/v1/agents/test-agent/skills/learn/summary")
         assert response.status_code == 200
-        
+
         data = response.json()
-        assert data["agent_id"] == "test_agent"
-        assert "experience_id" in data
-        assert "recorded_at" in data
-        assert data["message"] == "Experience recorded successfully"
+        assert data["success"] is True
+        assert data["data"]["total_experiences"] == 0
 
-    def test_record_experience_without_feedback(self, client):
-        """Test recording experience without optional feedback."""
-        learning_request = {
-            "experience": {
-                "input": {"task": "test"},
-                "outcome": {"success": True}
-            }
-        }
-        
-        response = client.post(
-            "/agents/test_agent/skills/learn",
-            json=learning_request
-        )
+    def test_get_learning_summary_with_data(self, client):
+        """Test getting learning summary after logging experiences."""
+        # Log some experiences
+        for i in range(3):
+            client.post(
+                "/api/v1/agents/test-agent/skills/learn",
+                json={
+                    "context": f"Context {i}",
+                    "action": f"Action {i}",
+                    "outcome": f"Outcome {i}",
+                    "tags": ["test", f"tag{i}"],
+                },
+            )
+
+        # Get summary
+        response = client.get("/api/v1/agents/test-agent/skills/learn/summary")
         assert response.status_code == 200
-        assert "experience_id" in response.json()
 
-    def test_multiple_experiences(self, client):
-        """Test recording multiple experiences."""
-        agent_id = "multi_learn_agent"
-        
-        # Record first experience
-        response1 = client.post(
-            f"/agents/{agent_id}/skills/learn",
-            json={
-                "experience": {
-                    "input": {"task": "first"},
-                    "outcome": {"result": 1}
-                }
-            }
-        )
-        
-        # Record second experience
-        response2 = client.post(
-            f"/agents/{agent_id}/skills/learn",
-            json={
-                "experience": {
-                    "input": {"task": "second"},
-                    "outcome": {"result": 2}
-                }
-            }
-        )
-        
-        assert response1.status_code == 200
-        assert response2.status_code == 200
-        
-        # Both should have unique IDs
-        exp_id1 = response1.json()["experience_id"]
-        exp_id2 = response2.json()["experience_id"]
-        assert exp_id1 != exp_id2
-
-    def test_missing_experience_returns_422(self, client):
-        """Test that missing experience returns validation error."""
-        response = client.post(
-            "/agents/test_agent/skills/learn",
-            json={}
-        )
-        assert response.status_code == 422
-
-    def test_missing_input_returns_400(self, client):
-        """Test that experience without input returns validation error."""
-        response = client.post(
-            "/agents/test_agent/skills/learn",
-            json={
-                "experience": {
-                    "outcome": {"success": True}
-                }
-            }
-        )
-        # Pydantic validation or skill validation
-        assert response.status_code in [400, 422]
-
-    def test_missing_outcome_returns_400(self, client):
-        """Test that experience without outcome returns validation error."""
-        response = client.post(
-            "/agents/test_agent/skills/learn",
-            json={
-                "experience": {
-                    "input": {"task": "test"}
-                }
-            }
-        )
-        # Pydantic validation or skill validation
-        assert response.status_code in [400, 422]
-
-
-class TestVersionedEndpoints:
-    """Test versioned API endpoints."""
-
-    def test_versioned_skills_list(self, client):
-        """Test versioned skills list endpoint."""
-        # Re-register with versioned prefix
-        from routers import skills
-        client.app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills-v1"])
-        
-        response = client.get("/api/v1/agents/skills")
-        assert response.status_code == 200
-        
         data = response.json()
-        skill_names = {skill["name"] for skill in data}
-        assert "memory" in skill_names
+        assert data["success"] is True
+        assert data["data"]["total_experiences"] == 3
+        assert len(data["data"]["tags"]) > 0
+
+    def test_different_agents_isolated(self, client):
+        """Test that different agents have isolated data."""
+        # Set memory for agent1
+        client.post(
+            "/api/v1/agents/agent1/skills/memory",
+            json={"memory_type": "short_term", "data": {"agent": "one"}},
+        )
+
+        # Set memory for agent2
+        client.post(
+            "/api/v1/agents/agent2/skills/memory",
+            json={"memory_type": "short_term", "data": {"agent": "two"}},
+        )
+
+        # Get agent1 memory
+        response1 = client.get(
+            "/api/v1/agents/agent1/skills/memory", params={"memory_type": "short_term"}
+        )
+        data1 = response1.json()
+        assert data1["data"]["data"]["agent"] == "one"
+
+        # Get agent2 memory
+        response2 = client.get(
+            "/api/v1/agents/agent2/skills/memory", params={"memory_type": "short_term"}
+        )
+        data2 = response2.json()
+        assert data2["data"]["data"]["agent"] == "two"
+
+    def test_skill_workflow(self, client):
+        """Test a complete workflow using multiple skills."""
+        agent_id = "workflow-agent"
+
+        # 1. Create a plan
+        plan_response = client.post(
+            f"/api/v1/agents/{agent_id}/skills/plan",
+            json={"goal": "Implement new feature"},
+        )
+        assert plan_response.status_code == 200
+        plan_data = plan_response.json()
+        assert plan_data["success"] is True
+
+        # 2. Store plan in memory
+        memory_response = client.post(
+            f"/api/v1/agents/{agent_id}/skills/memory",
+            json={"memory_type": "short_term", "data": {"current_plan": plan_data["data"]}},
+        )
+        assert memory_response.status_code == 200
+
+        # 3. Log experience
+        learn_response = client.post(
+            f"/api/v1/agents/{agent_id}/skills/learn",
+            json={
+                "context": "Executing plan for new feature",
+                "action": "Completed design phase",
+                "outcome": "Design approved",
+                "tags": ["planning", "design"],
+            },
+        )
+        assert learn_response.status_code == 200
+
+        # 4. Verify memory was stored
+        get_memory_response = client.get(
+            f"/api/v1/agents/{agent_id}/skills/memory",
+            params={"memory_type": "short_term"},
+        )
+        memory_data = get_memory_response.json()
+        assert "current_plan" in memory_data["data"]["data"]
