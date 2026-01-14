@@ -4,8 +4,11 @@ Command service for handling project commands with propose/apply flow.
 
 import uuid
 import hashlib
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional, TYPE_CHECKING
 from datetime import datetime, timezone
+
+if TYPE_CHECKING:
+    from git_manager import GitManager
 
 
 class CommandService:
@@ -118,8 +121,8 @@ class CommandService:
         }
 
     def persist_proposal(
-        self, project_key: str, proposal_data: Dict[str, Any], git_manager
-    ):
+        self, project_key: str, proposal_data: Dict[str, Any], git_manager: "GitManager"
+    ) -> None:
         """Persist proposal to NDJSON file."""
         import json
         from pathlib import Path
@@ -133,7 +136,7 @@ class CommandService:
             f.write(json.dumps(proposal_data) + "\n")
 
     def load_proposals(
-        self, project_key: str, git_manager
+        self, project_key: str, git_manager: "GitManager"
     ) -> List[Dict[str, Any]]:
         """Load all proposals for a project from NDJSON file."""
         import json
@@ -155,8 +158,8 @@ class CommandService:
         return proposals
 
     def load_proposal(
-        self, project_key: str, proposal_id: str, git_manager
-    ) -> Dict[str, Any]:
+        self, project_key: str, proposal_id: str, git_manager: "GitManager"
+    ) -> Optional[Dict[str, Any]]:
         """Load a specific proposal by ID."""
         proposals = self.load_proposals(project_key, git_manager)
         for proposal in proposals:
@@ -165,8 +168,8 @@ class CommandService:
         return None
 
     def update_proposal(
-        self, project_key: str, proposal_id: str, updated_data: Dict[str, Any], git_manager
-    ):
+        self, project_key: str, proposal_id: str, updated_data: Dict[str, Any], git_manager: "GitManager"
+    ) -> None:
         """Update a proposal in NDJSON file."""
         import json
         from pathlib import Path
@@ -197,8 +200,8 @@ class CommandService:
                 f.write(json.dumps(proposal) + "\n")
 
     def log_command(
-        self, command_data: Dict[str, Any], git_manager
-    ):
+        self, command_data: Dict[str, Any], git_manager: "GitManager"
+    ) -> None:
         """Log a command execution to NDJSON file."""
         import json
         from pathlib import Path
@@ -213,7 +216,7 @@ class CommandService:
             f.write(json.dumps(command_data) + "\n")
 
     def load_commands(
-        self, project_key: str, git_manager
+        self, project_key: str, git_manager: "GitManager"
     ) -> List[Dict[str, Any]]:
         """Load all commands for a project from NDJSON file."""
         import json
@@ -235,7 +238,7 @@ class CommandService:
         return commands
 
     def load_all_commands(
-        self, git_manager, project_key_filter: str = None
+        self, git_manager: "GitManager", project_key_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Load all commands across all projects, optionally filtered by project key."""
         import json
@@ -263,8 +266,8 @@ class CommandService:
         return all_commands
 
     def load_command(
-        self, command_id: str, git_manager
-    ) -> Dict[str, Any]:
+        self, command_id: str, git_manager: "GitManager"
+    ) -> Optional[Dict[str, Any]]:
         """Load a specific command by ID across all projects."""
         all_commands = self.load_all_commands(git_manager)
         for command in all_commands:
@@ -273,8 +276,8 @@ class CommandService:
         return None
 
     def update_command(
-        self, command_id: str, updated_data: Dict[str, Any], git_manager
-    ):
+        self, command_id: str, updated_data: Dict[str, Any], git_manager: "GitManager"
+    ) -> None:
         """Update a command in NDJSON file."""
         import json
         from pathlib import Path
