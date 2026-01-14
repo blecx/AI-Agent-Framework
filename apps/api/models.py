@@ -24,6 +24,13 @@ class ProjectInfo(BaseModel):
     updated_at: str
 
 
+class ProjectUpdate(BaseModel):
+    """Request model for updating a project."""
+
+    name: Optional[str] = Field(None, description="Project name", min_length=1)
+    methodology: Optional[str] = Field(None, description="Project methodology")
+
+
 class FileChange(BaseModel):
     """Represents a file change with unified diff."""
 
@@ -64,6 +71,100 @@ class CommandApplyResult(BaseModel):
     commit_hash: str
     changed_files: List[str]
     message: str
+
+
+# ============================================================================
+# Proposal API Models (Compatibility Layer)
+# ============================================================================
+
+
+class ProposalStatus(str, Enum):
+    """Proposal status."""
+
+    PENDING = "pending"
+    APPLIED = "applied"
+    REJECTED = "rejected"
+
+
+class Proposal(BaseModel):
+    """Proposal for client compatibility."""
+
+    id: str = Field(..., description="Proposal ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: ProposalStatus = Field(default=ProposalStatus.PENDING, description="Proposal status")
+    assistant_message: str = Field(..., description="AI assistant message")
+    file_changes: List[FileChange] = Field(..., description="Proposed file changes")
+    draft_commit_message: str = Field(..., description="Draft commit message")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    updated_at: str = Field(..., description="Last update timestamp (ISO format)")
+    applied_at: Optional[str] = Field(None, description="Applied timestamp (ISO format)")
+    rejected_at: Optional[str] = Field(None, description="Rejected timestamp (ISO format)")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+
+
+class ProposalCreate(BaseModel):
+    """Request model for creating a proposal."""
+
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class ProposalList(BaseModel):
+    """Response model for proposal list."""
+
+    proposals: List[Proposal]
+    total: int
+
+
+# ============================================================================
+# Command History Models (Global Command Execution)
+# ============================================================================
+
+
+class CommandStatus(str, Enum):
+    """Command execution status."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class CommandHistory(BaseModel):
+    """Command execution history entry."""
+
+    id: str = Field(..., description="Unique command ID")
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    status: CommandStatus = Field(..., description="Command status")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    started_at: Optional[str] = Field(None, description="Start timestamp (ISO format)")
+    completed_at: Optional[str] = Field(None, description="Completion timestamp (ISO format)")
+    proposal_id: Optional[str] = Field(None, description="Associated proposal ID")
+    commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+
+
+class CommandExecute(BaseModel):
+    """Request model for executing a command."""
+
+    project_key: str = Field(..., description="Project key")
+    command: str = Field(..., description="Command name")
+    params: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+
+
+class CommandHistoryList(BaseModel):
+    """Response model for command history list."""
+
+    commands: List[CommandHistory]
+    total: int
 
 
 class ProjectState(BaseModel):
