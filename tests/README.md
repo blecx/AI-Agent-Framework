@@ -13,12 +13,18 @@ tests/
 │   ├── test_governance_service.py
 │   ├── test_llm_service.py
 │   ├── test_raid_service.py
-│   └── test_workflow_service.py
+│   ├── test_workflow_service.py
+│   ├── test_skill_registry.py
+│   ├── test_memory_skill.py
+│   ├── test_planning_skill.py
+│   └── test_learning_skill.py
 ├── integration/        # Integration tests for API endpoints
 │   ├── test_core_api.py
 │   ├── test_governance_api.py
 │   ├── test_raid_api.py
-│   └── test_workflow_api.py
+│   ├── test_workflow_api.py
+│   ├── test_versioned_api.py
+│   └── test_skills_api.py
 ├── e2e/                # End-to-end tests
 │   ├── backend_e2e_runner.py  # E2E test harness
 │   └── test_governance_raid_workflow.py
@@ -55,6 +61,9 @@ pytest tests/integration
 
 # E2E tests only (requires terminal emulation)
 TERM=xterm-256color pytest tests/e2e
+
+# Skills tests only
+pytest tests/unit/test_*skill*.py tests/integration/test_skills_api.py
 ```
 
 ### Specific Test Files
