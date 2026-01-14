@@ -398,3 +398,99 @@ class AuditEventList(BaseModel):
     limit: int
     offset: int
     filtered_by: Optional[Dict[str, Any]] = None
+
+
+# ============================================================================
+# Skills API Models (Cognitive Skills)
+# ============================================================================
+
+
+class MemoryState(BaseModel):
+    """Agent memory state for short-term and long-term memory."""
+
+    agent_id: str = Field(..., description="Agent identifier")
+    short_term: Dict[str, Any] = Field(
+        default_factory=dict, description="Short-term memory (working memory)"
+    )
+    long_term: Dict[str, Any] = Field(
+        default_factory=dict, description="Long-term memory (persistent facts)"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Memory metadata (timestamps, etc.)"
+    )
+
+
+class MemoryStateUpdate(BaseModel):
+    """Request model for updating agent memory."""
+
+    short_term: Optional[Dict[str, Any]] = Field(
+        default=None, description="Short-term memory updates (merges with existing)"
+    )
+    long_term: Optional[Dict[str, Any]] = Field(
+        default=None, description="Long-term memory updates (merges with existing)"
+    )
+
+
+class PlanStep(BaseModel):
+    """A single step in a multi-step plan."""
+
+    step_number: int = Field(..., description="Step sequence number (1-indexed)")
+    title: str = Field(..., description="Step title")
+    description: str = Field(..., description="Step description")
+    estimated_duration: Optional[str] = Field(
+        default=None, description="Estimated duration (e.g., '2h', '30m')"
+    )
+    dependencies: List[int] = Field(
+        default_factory=list, description="Step numbers this step depends on"
+    )
+    status: str = Field(default="pending", description="Step status (pending/in_progress/completed)")
+
+
+class PlanRequest(BaseModel):
+    """Request model for creating a plan."""
+
+    goal: str = Field(..., description="Goal to achieve", min_length=1)
+    constraints: Optional[List[str]] = Field(
+        default_factory=list, description="Constraints to consider"
+    )
+    context: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Additional context for planning"
+    )
+
+
+class PlanResponse(BaseModel):
+    """Response model for a generated plan."""
+
+    agent_id: str = Field(..., description="Agent identifier")
+    goal: str = Field(..., description="Goal being planned for")
+    steps: List[PlanStep] = Field(..., description="Ordered plan steps")
+    estimated_total_duration: Optional[str] = Field(
+        default=None, description="Total estimated duration"
+    )
+    created_at: str = Field(..., description="Plan creation timestamp")
+
+
+class ExperienceEntry(BaseModel):
+    """A learning experience entry."""
+
+    input: Dict[str, Any] = Field(..., description="Input that led to this experience")
+    outcome: Dict[str, Any] = Field(..., description="Observed outcome")
+    feedback: Optional[str] = Field(default=None, description="Feedback on the outcome")
+    context: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Context in which experience occurred"
+    )
+
+
+class LearningRequest(BaseModel):
+    """Request model for recording a learning experience."""
+
+    experience: ExperienceEntry = Field(..., description="Experience to learn from")
+
+
+class LearningResponse(BaseModel):
+    """Response model for learning operation."""
+
+    agent_id: str = Field(..., description="Agent identifier")
+    experience_id: str = Field(..., description="Unique experience identifier")
+    recorded_at: str = Field(..., description="Recording timestamp")
+    message: str = Field(default="Experience recorded", description="Status message")
