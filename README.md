@@ -102,6 +102,18 @@ All containers communicate via Docker network. The web UI and client (with TUI/C
 - Command orchestration with propose/apply workflow
 - Audit logging with NDJSON format
 - Template-driven artifact generation
+- **AI Agent Cognitive Skills**: Extensible skill system with Memory, Planning, and Learning capabilities
+
+### Cognitive Skills System
+
+The framework includes a powerful extensible skills system that provides cognitive capabilities to AI agents:
+
+- **Memory Skill**: Short-term and long-term memory management for agents
+- **Planning Skill**: Multi-step plan generation from goals and constraints
+- **Learning Skill**: Experience capture and learning from outcomes
+- **Extensible Architecture**: Easy to add custom skills via plugin system
+
+**Documentation:** [docs/skills/README.md](docs/skills/README.md) | **API:** [docs/api/skills-api.md](docs/api/skills-api.md)
 
 ### Frontend (React/Vite)
 - Project creation and selection
