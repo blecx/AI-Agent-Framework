@@ -889,6 +889,27 @@ We follow a **Plan → Issues → PRs** workflow for all contributions. Please r
 5. **Submit PR**: Use [PR template](.github/prompts/drafting-pr.md) with copy-pasteable validation commands
 6. **Review & Merge**: Squash merge preferred
 
+### PR Process & Validation (Required)
+
+CI enforces that your PR description follows the required checklist/sections and includes evidence that validation was actually run.
+
+Minimum local validation for backend changes:
+
+```bash
+./setup.sh
+source .venv/bin/activate
+
+# Format + lint (recommended)
+./scripts/format_and_lint_backend.sh
+
+# Or individually (CI equivalent)
+python -m black apps/api --check
+python -m flake8 apps/api
+
+# Tests
+python -m pytest -q
+```
+
 **Key Guidelines:**
 
 - **Never commit** `projectDocs/` or `configs/llm.json` (auto-ignored)
