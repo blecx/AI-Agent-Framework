@@ -44,12 +44,13 @@ jobs:
       client_lint_command: npm run lint
       client_build_command: npm run build
       # Use whatever your repo provides (e.g. npm run test:api)
-      client_test_command: npm test
+      client_test_command: npm run test:api
 ```
 
 Notes:
 
 - The API is started from `docker-compose.yml` in the server repo and exposed on `http://localhost:8000`.
+- The server repo’s `docker-compose.yml` bind-mounts `./projectDocs`; CI must ensure the directory exists before starting the API container.
 - If your client tests use versioned endpoints, set `API_BASE_URL` to `http://localhost:8000/api/v1` in your test setup.
 
 ## API Overview

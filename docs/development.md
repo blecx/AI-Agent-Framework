@@ -21,7 +21,7 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
 
 ### Prerequisites
 
-- **Python 3.10+** (Python 3.12 recommended)
+- **Python 3.12** (required)
 - **Git**
 - **Node.js 18+** (for web UI development)
 - **Docker & Docker Compose** (optional, for containerized development)
@@ -30,82 +30,66 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
 ### Initial Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/blecx/AI-Agent-Framework.git
    cd AI-Agent-Framework
    ```
 
-2. **Create Python virtual environment using the intelligent setup script:**
+2. **Create Python virtual environment using the setup script:**
 
    **Using the setup script (recommended):**
-   
-   The intelligent setup script detects all available Python versions on your system and helps you choose the best one.
-   
+
+   The setup script requires Python 3.12 and will fail fast if it is not available.
+
    **Linux/macOS:**
+
    ```bash
    ./setup.sh
    ```
-   
+
    **Windows (PowerShell - Recommended):**
+
    ```powershell
    .\setup.ps1
    ```
-   
+
    **Windows (Command Prompt):**
+
    ```cmd
    setup.bat
    ```
-   
-   **How the setup script works:**
-   
-   1. **Detection Phase:**
-      - Scans your system for all Python 3.x installations
-      - Checks versions using `python3.X`, `python3`, `python`, and `py -X.Y` commands
-      - Filters out versions below Python 3.10 (minimum requirement)
-   
-   2. **Selection Phase:**
-      - Displays a numbered list of compatible Python versions with full paths
-      - If multiple versions found: prompts you to select one
-      - If only one version found: asks for confirmation to use it
-      - If no compatible version found: displays download links and exits
-   
-   3. **Validation Phase:**
-      - Validates selected version meets minimum requirements (Python 3.10+)
-      - Checks if `.venv/` already exists and prompts to recreate if needed
-   
-   4. **Setup Phase:**
-      - Creates virtual environment: `python-X.Y -m venv .venv`
-      - Activates the environment
-      - Upgrades pip: `pip install --upgrade pip`
-      - Installs all dependencies: `pip install -r requirements.txt`
-      - Shows success message with next steps
-   
+
+   **What the setup script does:**
+   - Creates a `.venv/` using Python 3.12
+   - Upgrades pip and installs dependencies from `requirements.txt`
+   - Prints next-step commands
+
    **Manual setup (alternative):**
-   
+
    If you prefer to set up manually or the script doesn't work for your system:
-   
+
    ```bash
-   # Check your Python version (must be 3.10+)
-   python3 --version
-   
-   # Create virtual environment with specific version
-   python3 -m venv .venv          # Uses default python3
-   # OR
-   python3.12 -m venv .venv       # Uses specific version
-   
+   # Check your Python version (must be 3.12)
+   python3.12 --version
+
+   # Create virtual environment with Python 3.12
+   python3.12 -m venv .venv
+
    # Activate the environment
    source .venv/bin/activate      # Linux/macOS
    # OR
    .venv\Scripts\activate.bat     # Windows (Command Prompt)
    # OR
    .\.venv\Scripts\Activate.ps1   # Windows (PowerShell)
-   
+
    # Upgrade pip and install dependencies
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
 3. **Create project documents directory:**
+
    ```bash
    mkdir -p projectDocs
    ```
@@ -189,6 +173,7 @@ AI-Agent-Framework/
 ### Backend (FastAPI API)
 
 1. **Activate virtual environment:**
+
    ```bash
    source .venv/bin/activate  # Linux/macOS
    # or
@@ -196,6 +181,7 @@ AI-Agent-Framework/
    ```
 
 2. **Run the API server:**
+
    ```bash
    cd apps/api
    PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
@@ -209,12 +195,14 @@ AI-Agent-Framework/
 ### Frontend (React Web UI)
 
 1. **Install dependencies:**
+
    ```bash
    cd apps/web
    npm install
    ```
 
 2. **Run the development server:**
+
    ```bash
    npm run dev
    ```
@@ -231,6 +219,7 @@ docker compose up --build
 ```
 
 Access points:
+
 - Web UI: http://localhost:8080
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
@@ -246,33 +235,43 @@ Access points:
 See **[../.github/copilot-instructions.md](../.github/copilot-instructions.md)** for complete guidance and **[../.github/prompts/](../.github/prompts/)** for templates.
 
 #### 1. Planning Phase
+
 - Start with a clear specification (goal, scope, acceptance criteria, constraints)
 - Consider impact on [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client)
 - Use [planning template](../.github/prompts/planning-feature.md) to structure your plan
 - Break work into small issues (< 200 lines changed per PR)
 
 #### 2. Issue Creation
+
 - Create focused issues using [issue template](../.github/prompts/drafting-issue.md)
 - Include specific acceptance criteria and validation steps
 - Link related issues across repositories for cross-repo work
 - One issue = one PR
 
 #### 3. Implementation
+
 - Create feature branch from `main`
 - Make minimal, focused changes
 - Follow existing code patterns and conventions
 - Never commit `projectDocs/` or `configs/llm.json`
 
 #### 4. Validation (Before PR)
+
 Run these validation steps locally:
 
 ```bash
 # Activate environment
 source .venv/bin/activate
 
-# Lint code (optional but recommended)
-python -m black apps/api/
-python -m flake8 apps/api/
+# Format + lint (recommended)
+./scripts/format_and_lint_backend.sh
+
+# Or CI-equivalent checks
+python -m black apps/api --check
+python -m flake8 apps/api
+
+# Tests
+python -m pytest -q
 
 # Test API
 cd apps/api
@@ -290,13 +289,20 @@ git status  # Ensure no unwanted files staged
 ```
 
 #### 5. Pull Request
+
 - Use [PR template](../.github/prompts/drafting-pr.md) for description
 - Include copy-pasteable validation steps for reviewers
 - Reference issue with "Fixes #123" or "Closes #123"
 - Keep PR size small (prefer < 200 lines)
 - Add screenshots for UI changes
 
+#### PR Review Gate (CI)
+
+Backend CI enforces a PR description contract (required sections + checked acceptance criteria + checked validation evidence + hygiene checklist).
+If backend code changes under `apps/api/` and tests are not modified, CI requires explicit evidence that `pytest` was run (checked checkbox in the PR).
+
 #### 6. Review & Merge
+
 - Address review feedback
 - Squash merge preferred (keeps history clean)
 - Delete branch after merge
@@ -304,6 +310,7 @@ git status  # Ensure no unwanted files staged
 ### Cross-Repository Coordination
 
 When changes span backend and frontend:
+
 - Use [cross-repo coordination template](../.github/prompts/cross-repo-coordination.md)
 - Document API contract explicitly
 - Create issues in both repos with cross-references
@@ -313,6 +320,7 @@ When changes span backend and frontend:
 ### Making Code Changes
 
 1. **Activate virtual environment:**
+
    ```bash
    source .venv/bin/activate
    ```
@@ -320,6 +328,7 @@ When changes span backend and frontend:
 2. **Make your changes** in the appropriate files
 
 3. **Test locally:**
+
    ```bash
    cd apps/api
    PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
@@ -330,6 +339,7 @@ When changes span backend and frontend:
 ### Hot Reload
 
 The development servers support hot reload:
+
 - **Backend**: `uvicorn` with `--reload` flag automatically reloads on code changes
 - **Frontend**: Vite dev server automatically reloads on file changes
 
@@ -348,11 +358,13 @@ The development servers support hot reload:
 ### Python Dependencies
 
 1. **Add to `requirements.txt`** with a pinned version:
+
    ```
    new-package==1.2.3
    ```
 
 2. **Install in virtual environment:**
+
    ```bash
    source .venv/bin/activate
    pip install -r requirements.txt
@@ -368,6 +380,7 @@ The development servers support hot reload:
 ### JavaScript Dependencies
 
 1. **Add to frontend:**
+
    ```bash
    cd apps/web
    npm install package-name
@@ -383,16 +396,19 @@ The project maintains two Python requirements files:
 - **`apps/api/requirements.txt`**: For Docker builds - includes only runtime dependencies
 
 **Key Differences:**
+
 - Root `requirements.txt` includes: pytest, pytest-asyncio, black, flake8 (for local development)
 - Docker `apps/api/requirements.txt` includes: only runtime dependencies (smaller image size)
 
 **Best Practice:** When adding a new runtime dependency:
+
 1. Add it to both `requirements.txt` and `apps/api/requirements.txt`
 2. When adding a dev-only dependency (like a linter), add it only to root `requirements.txt`
 
 ### Understanding the Setup Script vs Docker
 
 **Setup Script (`.venv`):**
+
 - Used for **local development**
 - Detects and uses Python versions installed on your system
 - Creates virtual environment in project root
@@ -400,6 +416,7 @@ The project maintains two Python requirements files:
 - Direct access to code and dependencies
 
 **Docker:**
+
 - Used for **production deployment** and team consistency
 - Uses Python version specified in Dockerfile (currently 3.12)
 - Self-contained environment with its own Python installation
@@ -408,13 +425,13 @@ The project maintains two Python requirements files:
 
 **Key Differences:**
 
-| Aspect | Setup Script (.venv) | Docker |
-|--------|---------------------|--------|
-| Python Version | Detected from system | Fixed in Dockerfile |
-| Dependencies File | `requirements.txt` | `apps/api/requirements.txt` |
-| Setup Time | Fast (uses system Python) | Slower (builds image) |
-| Isolation | Process-level | Container-level |
-| Best For | Development, debugging | Production, testing |
+| Aspect            | Setup Script (.venv)      | Docker                      |
+| ----------------- | ------------------------- | --------------------------- |
+| Python Version    | Detected from system      | Fixed in Dockerfile         |
+| Dependencies File | `requirements.txt`        | `apps/api/requirements.txt` |
+| Setup Time        | Fast (uses system Python) | Slower (builds image)       |
+| Isolation         | Process-level             | Container-level             |
+| Best For          | Development, debugging    | Production, testing         |
 
 **Workflow Integration:**
 
@@ -441,11 +458,13 @@ Both setups use the same codebase and can access the same `projectDocs/` directo
 **Automated tests are allowed and encouraged when requested by issues or feature requirements.**
 
 The project supports multiple test types:
+
 - **Unit tests:** Test individual components in isolation (`tests/unit/`)
 - **Integration tests:** Test component interactions (`tests/integration/`)
 - **E2E tests:** Test complete workflows via TUI (`tests/e2e/`)
 
 All tests must be:
+
 - **Deterministic:** Produce consistent, reproducible results
 - **CI-friendly:** Run non-interactively in GitHub Actions
 - **No flaky tests:** Tests must reliably pass or fail
@@ -474,6 +493,7 @@ pytest --cov=apps/api tests/
 #### CI Integration
 
 Tests run automatically in CI via `.github/workflows/ci.yml`:
+
 - Push to `main` branch
 - Pull requests
 
@@ -482,6 +502,7 @@ See `tests/README.md` for detailed testing documentation.
 ### Manual Testing
 
 1. **Start the API:**
+
    ```bash
    cd apps/api
    PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
@@ -501,6 +522,7 @@ See `tests/README.md` for detailed testing documentation.
 **Test scenarios to verify:**
 
 1. **Single Python version installed:**
+
    ```bash
    # Script should auto-detect and ask for confirmation
    ./setup.sh
@@ -508,6 +530,7 @@ See `tests/README.md` for detailed testing documentation.
    ```
 
 2. **Multiple Python versions installed:**
+
    ```bash
    # Script should list all versions and prompt for selection
    ./setup.sh
@@ -515,6 +538,7 @@ See `tests/README.md` for detailed testing documentation.
    ```
 
 3. **Existing .venv directory:**
+
    ```bash
    # Script should detect and ask to recreate
    ./setup.sh
@@ -601,6 +625,7 @@ docker compose down
 ### Switching Between Local and Docker
 
 **To Local Development:**
+
 ```bash
 docker compose down
 source .venv/bin/activate
@@ -609,6 +634,7 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 ```
 
 **To Docker:**
+
 ```bash
 deactivate  # Exit virtual environment
 docker compose up --build
@@ -621,6 +647,7 @@ docker compose up --build
 ### Setup Script Issues
 
 **Problem:** Script says "No compatible Python version found"
+
 - **Solution:** Install Python 3.10 or higher:
   - Ubuntu/Debian: `sudo apt install python3.12`
   - macOS (Homebrew): `brew install python@3.12`
@@ -628,6 +655,7 @@ docker compose up --build
   - Ensure "Add Python to PATH" is checked during Windows installation
 
 **Problem:** Setup script doesn't detect my Python installation
+
 - **Solution:** Check your Python is accessible:
   ```bash
   python3 --version     # Should show Python 3.x
@@ -636,16 +664,19 @@ docker compose up --build
   If not found, add Python to your PATH or use manual setup
 
 **Problem:** Script fails with "python3 -m venv .venv" error
+
 - **Solution:** Install python3-venv package:
+
   ```bash
   # Ubuntu/Debian
   sudo apt install python3.12-venv
-  
+
   # Fedora/RHEL
   sudo dnf install python3-virtualenv
   ```
 
 **Problem:** "Permission denied" when running setup script
+
 - **Solution:** Make the script executable:
   ```bash
   chmod +x setup.sh
@@ -653,6 +684,7 @@ docker compose up --build
   ```
 
 **Problem:** PowerShell script execution is disabled (Windows)
+
 - **Solution:** Enable script execution:
   ```powershell
   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -660,7 +692,8 @@ docker compose up --build
   ```
 
 **Problem:** Script creates .venv but pip install fails
-- **Solution:** 
+
+- **Solution:**
   1. Delete .venv: `rm -rf .venv` (or `rmdir /s .venv` on Windows)
   2. Ensure you have internet connection
   3. Try manual setup with `pip install --no-cache-dir -r requirements.txt`
@@ -668,12 +701,15 @@ docker compose up --build
 ### Virtual Environment Issues
 
 **Problem:** `python3: command not found`
+
 - **Solution:** Install Python 3.10+ and ensure it's in PATH
 
 **Problem:** `pip install` fails
+
 - **Solution:** Upgrade pip: `pip install --upgrade pip`
 
 **Problem:** Dependencies conflict
+
 - **Solution:** Remove `.venv/` and recreate:
   ```bash
   rm -rf .venv
@@ -683,6 +719,7 @@ docker compose up --build
 ### API Issues
 
 **Problem:** `PROJECT_DOCS_PATH not set` error
+
 - **Solution:** Set the environment variable:
   ```bash
   export PROJECT_DOCS_PATH=/path/to/projectDocs  # Linux/macOS
@@ -690,6 +727,7 @@ docker compose up --build
   ```
 
 **Problem:** Git operations fail
+
 - **Solution:** Ensure git is installed and configured:
   ```bash
   git config --global user.email "you@example.com"
@@ -697,7 +735,8 @@ docker compose up --build
   ```
 
 **Problem:** LLM connection fails
-- **Solution:** 
+
+- **Solution:**
   - Check LLM server is running
   - Verify `configs/llm.json` configuration
   - System will fall back to templates if LLM is unavailable
@@ -705,15 +744,18 @@ docker compose up --build
 ### Docker Issues
 
 **Problem:** Port already in use
+
 - **Solution:** Stop conflicting services or change ports in `docker-compose.yml`
 
 **Problem:** Volume mount fails
+
 - **Solution:** Ensure `projectDocs/` directory exists:
   ```bash
   mkdir -p projectDocs
   ```
 
 **Problem:** Build fails with SSL errors
+
 - **Solution:** The Dockerfile includes trusted host flags. Try building with no cache:
   ```bash
   docker compose build --no-cache
@@ -722,6 +764,7 @@ docker compose up --build
 ### Frontend Issues
 
 **Problem:** `npm install` fails
+
 - **Solution:** Clear npm cache and retry:
   ```bash
   npm cache clean --force
@@ -730,6 +773,7 @@ docker compose up --build
   ```
 
 **Problem:** API connection fails
+
 - **Solution:** Check the API base URL in frontend code (should point to `http://localhost:8000`)
 
 ---
@@ -739,12 +783,14 @@ docker compose up --build
 ### VS Code
 
 Recommended extensions:
+
 - Python
 - Pylance
 - Docker
 - ES7+ React/Redux/React-Native snippets
 
 **Settings for Python:**
+
 ```json
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
