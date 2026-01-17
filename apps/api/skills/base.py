@@ -13,7 +13,9 @@ class SkillResult(BaseModel):
     success: bool
     data: Optional[Any] = None
     message: str = ""
-    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

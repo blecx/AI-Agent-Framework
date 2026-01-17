@@ -35,9 +35,7 @@ class PlanningSkill:
         """
         docs_path = kwargs.get("docs_path")
         if not docs_path:
-            return SkillResult(
-                success=False, message="docs_path required in kwargs"
-            )
+            return SkillResult(success=False, message="docs_path required in kwargs")
 
         goal = params.get("goal")
         if not goal:
@@ -102,85 +100,103 @@ class PlanningSkill:
         steps = []
 
         # Step 1: Always start with analysis
-        steps.append({
-            "step": 1,
-            "action": "analyze",
-            "description": f"Analyze requirements for: {goal}",
-            "status": "pending",
-            "dependencies": [],
-        })
+        steps.append(
+            {
+                "step": 1,
+                "action": "analyze",
+                "description": f"Analyze requirements for: {goal}",
+                "status": "pending",
+                "dependencies": [],
+            }
+        )
 
         # Step 2: Identify resources/constraints
         if constraints:
-            steps.append({
-                "step": 2,
-                "action": "assess_constraints",
-                "description": f"Assess constraints: {', '.join(constraints)}",
-                "status": "pending",
-                "dependencies": [1],
-            })
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "assess_constraints",
+                    "description": f"Assess constraints: {', '.join(constraints)}",
+                    "status": "pending",
+                    "dependencies": [1],
+                }
+            )
             next_step = 3
         else:
             next_step = 2
 
         # Step 3: Break down into subtasks based on goal complexity
         goal_lower = goal.lower()
-        if any(word in goal_lower for word in ["create", "build", "develop", "implement"]):
-            steps.append({
-                "step": next_step,
-                "action": "design",
-                "description": "Design solution architecture",
-                "status": "pending",
-                "dependencies": [next_step - 1],
-            })
+        if any(
+            word in goal_lower for word in ["create", "build", "develop", "implement"]
+        ):
+            steps.append(
+                {
+                    "step": next_step,
+                    "action": "design",
+                    "description": "Design solution architecture",
+                    "status": "pending",
+                    "dependencies": [next_step - 1],
+                }
+            )
             next_step += 1
 
-            steps.append({
-                "step": next_step,
-                "action": "implement",
-                "description": "Implement solution",
-                "status": "pending",
-                "dependencies": [next_step - 1],
-            })
+            steps.append(
+                {
+                    "step": next_step,
+                    "action": "implement",
+                    "description": "Implement solution",
+                    "status": "pending",
+                    "dependencies": [next_step - 1],
+                }
+            )
             next_step += 1
 
         elif any(word in goal_lower for word in ["fix", "resolve", "debug"]):
-            steps.append({
-                "step": next_step,
-                "action": "diagnose",
-                "description": "Diagnose the issue",
-                "status": "pending",
-                "dependencies": [next_step - 1],
-            })
+            steps.append(
+                {
+                    "step": next_step,
+                    "action": "diagnose",
+                    "description": "Diagnose the issue",
+                    "status": "pending",
+                    "dependencies": [next_step - 1],
+                }
+            )
             next_step += 1
 
-            steps.append({
-                "step": next_step,
-                "action": "resolve",
-                "description": "Implement fix",
-                "status": "pending",
-                "dependencies": [next_step - 1],
-            })
+            steps.append(
+                {
+                    "step": next_step,
+                    "action": "resolve",
+                    "description": "Implement fix",
+                    "status": "pending",
+                    "dependencies": [next_step - 1],
+                }
+            )
             next_step += 1
 
         else:
             # Generic execution step
-            steps.append({
-                "step": next_step,
-                "action": "execute",
-                "description": f"Execute: {goal}",
-                "status": "pending",
-                "dependencies": [next_step - 1],
-            })
+            steps.append(
+                {
+                    "step": next_step,
+                    "action": "execute",
+                    "description": f"Execute: {goal}",
+                    "status": "pending",
+                    "dependencies": [next_step - 1],
+                }
+            )
             next_step += 1
 
         # Final step: Verify/validate
-        steps.append({
-            "step": next_step,
-            "action": "verify",
-            "description": "Verify goal achievement",
-            "status": "pending",
-            "dependencies": [next_step - 1],
-        })
+        steps.append(
+            {
+                "step": next_step,
+                "action": "verify",
+                "description": "Verify goal achievement",
+                "status": "pending",
+                "dependencies": [next_step - 1],
+            }
+        )
 
         return steps

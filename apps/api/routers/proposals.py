@@ -57,7 +57,9 @@ async def create_proposal(
         )
 
         # Persist proposal to NDJSON
-        command_service.persist_proposal(project_key, proposal.model_dump(), git_manager)
+        command_service.persist_proposal(
+            project_key, proposal.model_dump(), git_manager
+        )
 
         return proposal
     except ValueError as e:

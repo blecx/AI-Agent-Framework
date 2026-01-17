@@ -2,7 +2,6 @@
 Git repository manager for project documents.
 """
 
-import os
 import json
 import git
 import subprocess
@@ -288,7 +287,7 @@ class GitManager:
                     "author": str(commit.author),
                     "date": commit.committed_datetime.isoformat(),
                 }
-        except:
+        except Exception:
             pass
         return None
 

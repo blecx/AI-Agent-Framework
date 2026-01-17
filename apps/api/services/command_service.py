@@ -164,11 +164,15 @@ class CommandService:
         return None
 
     def update_proposal(
-        self, project_key: str, proposal_id: str, updated_data: Dict[str, Any], git_manager: "GitManager"
+        self,
+        project_key: str,
+        proposal_id: str,
+        updated_data: Dict[str, Any],
+        git_manager: "GitManager",
     ) -> None:
         """Update a proposal in NDJSON file."""
         import fcntl
-        
+
         proposals_file = (
             Path(git_manager.base_path) / project_key / "proposals" / "proposals.ndjson"
         )
@@ -273,7 +277,7 @@ class CommandService:
     ) -> None:
         """Update a command in NDJSON file."""
         import fcntl
-        
+
         project_key = updated_data.get("project_key")
         commands_file = (
             Path(git_manager.base_path) / project_key / "commands" / "commands.ndjson"
@@ -429,7 +433,7 @@ class CommandService:
                     .replace("+00:00", "Z"),
                 },
             )
-        except:
+        except Exception:
             # Fallback if template doesn't exist
             artifact_content = f"""# {artifact_name}
 

@@ -8,7 +8,6 @@ import uuid
 import hashlib
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 class AuditService:

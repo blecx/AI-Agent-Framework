@@ -33,7 +33,7 @@ async def list_skills(agent_id: str):
     List all available skills for an agent.
 
     Args:
-        agent_id: Unique identifier for the agent (currently unused, 
+        agent_id: Unique identifier for the agent (currently unused,
                   but maintains consistent API pattern for future per-agent filtering)
 
     Returns:

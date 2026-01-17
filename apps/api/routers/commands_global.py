@@ -110,9 +110,7 @@ async def get_command(command_id: str, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load command: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to load command: {str(e)}")
 
 
 @router.get("", response_model=CommandHistoryList)

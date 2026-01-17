@@ -37,9 +37,7 @@ class LearningSkill:
         """
         docs_path = kwargs.get("docs_path")
         if not docs_path:
-            return SkillResult(
-                success=False, message="docs_path required in kwargs"
-            )
+            return SkillResult(success=False, message="docs_path required in kwargs")
 
         operation = params.get("operation", "log")
 
@@ -48,9 +46,7 @@ class LearningSkill:
         elif operation == "summary":
             return self._get_summary(agent_id, docs_path)
         else:
-            return SkillResult(
-                success=False, message=f"Invalid operation: {operation}"
-            )
+            return SkillResult(success=False, message=f"Invalid operation: {operation}")
 
     def _log_experience(
         self, agent_id: str, params: Dict[str, Any], docs_path: str

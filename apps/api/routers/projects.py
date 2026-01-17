@@ -123,13 +123,13 @@ async def update_project(project_key: str, update: ProjectUpdate, request: Reque
     project_info["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     # Write updated project.json
-    git_manager.write_file(project_key, "project.json", json.dumps(project_info, indent=2))
+    git_manager.write_file(
+        project_key, "project.json", json.dumps(project_info, indent=2)
+    )
 
     # Commit the change
     git_manager.commit_changes(
-        project_key,
-        f"[{project_key}] Update project metadata",
-        ["project.json"]
+        project_key, f"[{project_key}] Update project metadata", ["project.json"]
     )
 
     # Log event
@@ -168,13 +168,13 @@ async def delete_project(project_key: str, request: Request):
     # Soft-delete: Mark project as deleted in metadata
     project_info["deleted"] = True
     project_info["deleted_at"] = datetime.now(timezone.utc).isoformat()
-    git_manager.write_file(project_key, "project.json", json.dumps(project_info, indent=2))
+    git_manager.write_file(
+        project_key, "project.json", json.dumps(project_info, indent=2)
+    )
 
     # Commit the change
     git_manager.commit_changes(
-        project_key,
-        f"[{project_key}] Mark project as deleted",
-        ["project.json"]
+        project_key, f"[{project_key}] Mark project as deleted", ["project.json"]
     )
 
     # Return 204 No Content

@@ -34,17 +34,13 @@ class MemorySkill:
         """
         docs_path = kwargs.get("docs_path")
         if not docs_path:
-            return SkillResult(
-                success=False, message="docs_path required in kwargs"
-            )
+            return SkillResult(success=False, message="docs_path required in kwargs")
 
         operation = params.get("operation")
         memory_type = params.get("memory_type")
 
         if operation not in ["get", "set"]:
-            return SkillResult(
-                success=False, message=f"Invalid operation: {operation}"
-            )
+            return SkillResult(success=False, message=f"Invalid operation: {operation}")
 
         if memory_type not in ["short_term", "long_term"]:
             return SkillResult(
@@ -82,9 +78,7 @@ class MemorySkill:
                 message=f"{memory_type} memory retrieved",
             )
         except Exception as e:
-            return SkillResult(
-                success=False, message=f"Error reading memory: {str(e)}"
-            )
+            return SkillResult(success=False, message=f"Error reading memory: {str(e)}")
 
     def _set_memory(
         self, memory_file: str, memory_type: str, data: dict, memory_dir: str
@@ -109,6 +103,4 @@ class MemorySkill:
                 message=f"{memory_type} memory updated",
             )
         except Exception as e:
-            return SkillResult(
-                success=False, message=f"Error writing memory: {str(e)}"
-            )
+            return SkillResult(success=False, message=f"Error writing memory: {str(e)}")

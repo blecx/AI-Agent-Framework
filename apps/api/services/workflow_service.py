@@ -4,7 +4,6 @@ Aligned with ISO 21500 standards.
 """
 
 import json
-import uuid
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
@@ -13,7 +12,10 @@ VALID_TRANSITIONS = {
     "initiating": ["planning"],
     "planning": ["executing", "initiating"],  # Can go back to refine
     "executing": ["monitoring", "planning"],  # Can iterate back to planning
-    "monitoring": ["executing", "closing"],  # Can go back to executing or move to closing
+    "monitoring": [
+        "executing",
+        "closing",
+    ],  # Can go back to executing or move to closing
     "closing": ["closed"],
     "closed": [],  # Terminal state
 }
@@ -167,9 +169,7 @@ class WorkflowService:
 
         return new_state
 
-    def get_allowed_transitions(
-        self, project_key: str, git_manager
-    ) -> List[str]:
+    def get_allowed_transitions(self, project_key: str, git_manager) -> List[str]:
         """Get list of allowed transitions from current state."""
         current = self.get_workflow_state(project_key, git_manager)
         current_state = current["current_state"]

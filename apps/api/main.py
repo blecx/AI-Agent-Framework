@@ -1,19 +1,41 @@
-"""
-Main FastAPI application for ISO 21500 Project Management AI Agent System.
-"""
+import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import os
-import sys
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(__file__))
+"""Main FastAPI application for ISO 21500 Project Management AI Agent System."""
 
-from routers import projects, commands, artifacts, governance, raid, workflow, skills, proposals, commands_global
-from services.git_manager import GitManager
-from services.llm_service import LLMService
+try:
+    # Package execution (e.g. `uvicorn apps.api.main:app`)
+    from .routers import (
+        projects,
+        commands,
+        artifacts,
+        governance,
+        raid,
+        workflow,
+        skills,
+        proposals,
+        commands_global,
+    )
+    from .services.git_manager import GitManager
+    from .services.llm_service import LLMService
+except ImportError:
+    # Local execution from apps/api (e.g. `uvicorn main:app`)
+    from routers import (
+        projects,
+        commands,
+        artifacts,
+        governance,
+        raid,
+        workflow,
+        skills,
+        proposals,
+        commands_global,
+    )
+    from services.git_manager import GitManager
+    from services.llm_service import LLMService
 
 
 @asynccontextmanager
@@ -53,20 +75,32 @@ app.add_middleware(
 
 # Include versioned routers under /api/v1
 app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects-v1"])
-app.include_router(commands_global.router, prefix="/api/v1/commands", tags=["commands-global-v1"])
 app.include_router(
-    commands.router, prefix="/api/v1/projects/{project_key}/commands", tags=["commands-v1"]
+    commands_global.router, prefix="/api/v1/commands", tags=["commands-global-v1"]
 )
 app.include_router(
-    proposals.router, prefix="/api/v1/projects/{project_key}/proposals", tags=["proposals-v1"]
+    commands.router,
+    prefix="/api/v1/projects/{project_key}/commands",
+    tags=["commands-v1"],
 )
 app.include_router(
-    artifacts.router, prefix="/api/v1/projects/{project_key}/artifacts", tags=["artifacts-v1"]
+    proposals.router,
+    prefix="/api/v1/projects/{project_key}/proposals",
+    tags=["proposals-v1"],
 )
 app.include_router(
-    governance.router, prefix="/api/v1/projects/{project_key}/governance", tags=["governance-v1"]
+    artifacts.router,
+    prefix="/api/v1/projects/{project_key}/artifacts",
+    tags=["artifacts-v1"],
 )
-app.include_router(raid.router, prefix="/api/v1/projects/{project_key}/raid", tags=["raid-v1"])
+app.include_router(
+    governance.router,
+    prefix="/api/v1/projects/{project_key}/governance",
+    tags=["governance-v1"],
+)
+app.include_router(
+    raid.router, prefix="/api/v1/projects/{project_key}/raid", tags=["raid-v1"]
+)
 app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow-v1"])
 app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills-v1"])
 
@@ -77,20 +111,32 @@ app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills-v1"])
 # Legacy unversioned routes for backward compatibility
 # These will be removed in a future major version
 app.include_router(projects.router, prefix="/projects", tags=["projects (deprecated)"])
-app.include_router(commands_global.router, prefix="/commands", tags=["commands-global (deprecated)"])
 app.include_router(
-    commands.router, prefix="/projects/{project_key}/commands", tags=["commands (deprecated)"]
+    commands_global.router, prefix="/commands", tags=["commands-global (deprecated)"]
 )
 app.include_router(
-    proposals.router, prefix="/projects/{project_key}/proposals", tags=["proposals (deprecated)"]
+    commands.router,
+    prefix="/projects/{project_key}/commands",
+    tags=["commands (deprecated)"],
 )
 app.include_router(
-    artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts (deprecated)"]
+    proposals.router,
+    prefix="/projects/{project_key}/proposals",
+    tags=["proposals (deprecated)"],
 )
 app.include_router(
-    governance.router, prefix="/projects/{project_key}/governance", tags=["governance (deprecated)"]
+    artifacts.router,
+    prefix="/projects/{project_key}/artifacts",
+    tags=["artifacts (deprecated)"],
 )
-app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid (deprecated)"])
+app.include_router(
+    governance.router,
+    prefix="/projects/{project_key}/governance",
+    tags=["governance (deprecated)"],
+)
+app.include_router(
+    raid.router, prefix="/projects/{project_key}/raid", tags=["raid (deprecated)"]
+)
 app.include_router(workflow.router, prefix="/projects", tags=["workflow (deprecated)"])
 app.include_router(skills.router, prefix="/agents", tags=["skills (deprecated)"])
 

@@ -92,15 +92,23 @@ class Proposal(BaseModel):
     id: str = Field(..., description="Proposal ID")
     project_key: str = Field(..., description="Project key")
     command: str = Field(..., description="Command name")
-    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
-    status: ProposalStatus = Field(default=ProposalStatus.PENDING, description="Proposal status")
+    params: Dict[str, Any] = Field(
+        default_factory=dict, description="Command parameters"
+    )
+    status: ProposalStatus = Field(
+        default=ProposalStatus.PENDING, description="Proposal status"
+    )
     assistant_message: str = Field(..., description="AI assistant message")
     file_changes: List[FileChange] = Field(..., description="Proposed file changes")
     draft_commit_message: str = Field(..., description="Draft commit message")
     created_at: str = Field(..., description="Creation timestamp (ISO format)")
     updated_at: str = Field(..., description="Last update timestamp (ISO format)")
-    applied_at: Optional[str] = Field(None, description="Applied timestamp (ISO format)")
-    rejected_at: Optional[str] = Field(None, description="Rejected timestamp (ISO format)")
+    applied_at: Optional[str] = Field(
+        None, description="Applied timestamp (ISO format)"
+    )
+    rejected_at: Optional[str] = Field(
+        None, description="Rejected timestamp (ISO format)"
+    )
     commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
 
 
@@ -140,11 +148,15 @@ class CommandHistory(BaseModel):
     id: str = Field(..., description="Unique command ID")
     project_key: str = Field(..., description="Project key")
     command: str = Field(..., description="Command name")
-    params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
+    params: Dict[str, Any] = Field(
+        default_factory=dict, description="Command parameters"
+    )
     status: CommandStatus = Field(..., description="Command status")
     created_at: str = Field(..., description="Creation timestamp (ISO format)")
     started_at: Optional[str] = Field(None, description="Start timestamp (ISO format)")
-    completed_at: Optional[str] = Field(None, description="Completion timestamp (ISO format)")
+    completed_at: Optional[str] = Field(
+        None, description="Completion timestamp (ISO format)"
+    )
     proposal_id: Optional[str] = Field(None, description="Associated proposal ID")
     commit_hash: Optional[str] = Field(None, description="Commit hash if applied")
     error_message: Optional[str] = Field(None, description="Error message if failed")
@@ -435,9 +447,15 @@ class WorkflowTransition(BaseModel):
 class WorkflowStateUpdate(BaseModel):
     """Request model for updating workflow state."""
 
-    to_state: WorkflowStateEnum = Field(..., description="Target state to transition to")
-    actor: Optional[str] = Field(default="system", description="User/actor performing transition")
-    reason: Optional[str] = Field(default=None, description="Reason for state transition")
+    to_state: WorkflowStateEnum = Field(
+        ..., description="Target state to transition to"
+    )
+    actor: Optional[str] = Field(
+        default="system", description="User/actor performing transition"
+    )
+    reason: Optional[str] = Field(
+        default=None, description="Reason for state transition"
+    )
 
 
 class WorkflowStateInfo(BaseModel):

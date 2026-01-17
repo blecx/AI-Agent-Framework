@@ -1,0 +1,15 @@
+[flake8]
+# Black defaults to 88 chars; flake8 line-length checks often fight Black.
+# We ignore E501 to avoid churn on long strings/URLs and let Black own formatting.
+extend-ignore =
+    E203,
+    W503,
+    E501
+
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    build,
+    dist
+
