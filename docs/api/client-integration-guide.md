@@ -8,6 +8,50 @@
 
 This guide is for developers who want to build custom clients that integrate with the AI-Agent-Framework API. Whether you're building a mobile app, desktop application, or automated workflow, this guide provides everything you need to consume the API effectively.
 
+## CI Setup for AI-Agent-Framework-Client (API Integration Tests)
+
+If your client repository (e.g. `AI-Agent-Framework-Client`) runs REST/API contract tests, CI needs a running API.
+
+### Recommended approach (GitHub Actions)
+
+Use the reusable workflow in this repo to:
+
+1. Checkout the client repo (caller)
+2. Checkout `blecx/AI-Agent-Framework` into `server/`
+3. Start the API via `docker compose`
+4. Wait for `/health`
+5. Run the client test command with `API_BASE_URL=http://localhost:8000`
+
+Example workflow in the client repo:
+
+```yaml
+name: Client CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api-integration:
+    uses: blecx/AI-Agent-Framework/.github/workflows/reusable-client-api-integration.yml@main
+    with:
+      # React/TypeScript/Vite client (Node toolchain)
+      client_runtime: node
+      node_version: '20'
+      client_workdir: .
+      client_install_command: npm ci
+      client_lint_command: npm run lint
+      client_build_command: npm run build
+      # Use whatever your repo provides (e.g. npm run test:api)
+      client_test_command: npm test
+```
+
+Notes:
+
+- The API is started from `docker-compose.yml` in the server repo and exposed on `http://localhost:8000`.
+- If your client tests use versioned endpoints, set `API_BASE_URL` to `http://localhost:8000/api/v1` in your test setup.
+
 ## API Overview
 
 **Base URL:** `http://localhost:8000` (development)  
@@ -51,6 +95,7 @@ curl http://localhost:8000/health
 ```
 
 **Migration Path:**
+
 - New clients should use `/api/v1/` prefix from the start
 - Existing clients should migrate to versioned endpoints
 - Unversioned endpoints will be removed in a future major version (v2.0.0)
@@ -105,14 +150,16 @@ This section maps common client workflows to their required API endpoints, ensur
 ### Core Client Workflows
 
 #### 1. Application Initialization
+
 **Goal:** Verify API is available and ready
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| Check API health | `/api/v1/health` | GET | ✅ |
-| Verify git repository | `/api/v1/health` | GET | ✅ |
+| Workflow Step         | Endpoint         | Method | Required |
+| --------------------- | ---------------- | ------ | -------- |
+| Check API health      | `/api/v1/health` | GET    | ✅       |
+| Verify git repository | `/api/v1/health` | GET    | ✅       |
 
 **Expected Flow:**
+
 ```
 1. GET /api/v1/health
    → Verify status = "healthy" and docs_is_git = true
@@ -121,17 +168,19 @@ This section maps common client workflows to their required API endpoints, ensur
 ---
 
 #### 2. Project Management
+
 **Goal:** Create and manage projects
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| List all projects | `/api/v1/projects` | GET | ✅ |
-| Create new project | `/api/v1/projects` | POST | ✅ |
-| Get project state | `/api/v1/projects/{key}/state` | GET | ✅ |
-| Get workflow state | `/api/v1/projects/{key}/workflow/state` | GET | ✅ |
-| Transition workflow | `/api/v1/projects/{key}/workflow/state` | PATCH | ✅ |
+| Workflow Step       | Endpoint                                | Method | Required |
+| ------------------- | --------------------------------------- | ------ | -------- |
+| List all projects   | `/api/v1/projects`                      | GET    | ✅       |
+| Create new project  | `/api/v1/projects`                      | POST   | ✅       |
+| Get project state   | `/api/v1/projects/{key}/state`          | GET    | ✅       |
+| Get workflow state  | `/api/v1/projects/{key}/workflow/state` | GET    | ✅       |
+| Transition workflow | `/api/v1/projects/{key}/workflow/state` | PATCH  | ✅       |
 
 **Expected Flow:**
+
 ```
 1. GET /api/v1/projects
    → Display project list
@@ -146,18 +195,20 @@ This section maps common client workflows to their required API endpoints, ensur
 ---
 
 #### 3. RAID Register Management
+
 **Goal:** Manage risks, assumptions, issues, and dependencies
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| List RAID items | `/api/v1/projects/{key}/raid` | GET | ✅ |
-| Filter RAID items | `/api/v1/projects/{key}/raid?type={type}&status={status}` | GET | ✅ |
-| Get RAID item detail | `/api/v1/projects/{key}/raid/{id}` | GET | ✅ |
-| Create RAID item | `/api/v1/projects/{key}/raid` | POST | ✅ |
-| Update RAID item | `/api/v1/projects/{key}/raid/{id}` | PUT | ✅ |
-| Delete RAID item | `/api/v1/projects/{key}/raid/{id}` | DELETE | ✅ |
+| Workflow Step        | Endpoint                                                  | Method | Required |
+| -------------------- | --------------------------------------------------------- | ------ | -------- |
+| List RAID items      | `/api/v1/projects/{key}/raid`                             | GET    | ✅       |
+| Filter RAID items    | `/api/v1/projects/{key}/raid?type={type}&status={status}` | GET    | ✅       |
+| Get RAID item detail | `/api/v1/projects/{key}/raid/{id}`                        | GET    | ✅       |
+| Create RAID item     | `/api/v1/projects/{key}/raid`                             | POST   | ✅       |
+| Update RAID item     | `/api/v1/projects/{key}/raid/{id}`                        | PUT    | ✅       |
+| Delete RAID item     | `/api/v1/projects/{key}/raid/{id}`                        | DELETE | ✅       |
 
 **Expected Flow:**
+
 ```
 1. GET /api/v1/projects/{key}/raid
    → Display RAID register
@@ -172,14 +223,16 @@ This section maps common client workflows to their required API endpoints, ensur
 ---
 
 #### 4. Command Execution (Propose/Apply)
+
 **Goal:** Execute AI-assisted commands with preview
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| Propose command | `/api/v1/projects/{key}/commands/propose` | POST | ✅ |
-| Apply proposal | `/api/v1/projects/{key}/commands/apply` | POST | ✅ |
+| Workflow Step   | Endpoint                                  | Method | Required |
+| --------------- | ----------------------------------------- | ------ | -------- |
+| Propose command | `/api/v1/projects/{key}/commands/propose` | POST   | ✅       |
+| Apply proposal  | `/api/v1/projects/{key}/commands/apply`   | POST   | ✅       |
 
 **Expected Flow:**
+
 ```
 1. POST /api/v1/projects/{key}/commands/propose
    with {command, params}
@@ -193,14 +246,16 @@ This section maps common client workflows to their required API endpoints, ensur
 ---
 
 #### 5. Artifact Management
+
 **Goal:** View and manage project artifacts
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| List artifacts | `/api/v1/projects/{key}/artifacts` | GET | ✅ |
-| Get artifact content | `/api/v1/projects/{key}/artifacts/{path}` | GET | ✅ |
+| Workflow Step        | Endpoint                                  | Method | Required |
+| -------------------- | ----------------------------------------- | ------ | -------- |
+| List artifacts       | `/api/v1/projects/{key}/artifacts`        | GET    | ✅       |
+| Get artifact content | `/api/v1/projects/{key}/artifacts/{path}` | GET    | ✅       |
 
 **Expected Flow:**
+
 ```
 1. GET /api/v1/projects/{key}/artifacts
    → Display artifact list
@@ -211,16 +266,18 @@ This section maps common client workflows to their required API endpoints, ensur
 ---
 
 #### 6. Governance & Compliance
+
 **Goal:** Manage governance metadata and audit trail
 
-| Workflow Step | Endpoint | Method | Required |
-|---------------|----------|--------|----------|
-| Get governance metadata | `/api/v1/projects/{key}/governance` | GET | ✅ |
-| Update governance | `/api/v1/projects/{key}/governance` | PUT | ✅ |
-| Get audit events | `/api/v1/projects/{key}/audit-events` | GET | ✅ |
-| Filter audit events | `/api/v1/projects/{key}/audit-events?event_type={type}` | GET | ✅ |
+| Workflow Step           | Endpoint                                                | Method | Required |
+| ----------------------- | ------------------------------------------------------- | ------ | -------- |
+| Get governance metadata | `/api/v1/projects/{key}/governance`                     | GET    | ✅       |
+| Update governance       | `/api/v1/projects/{key}/governance`                     | PUT    | ✅       |
+| Get audit events        | `/api/v1/projects/{key}/audit-events`                   | GET    | ✅       |
+| Filter audit events     | `/api/v1/projects/{key}/audit-events?event_type={type}` | GET    | ✅       |
 
 **Expected Flow:**
+
 ```
 1. GET /api/v1/projects/{key}/governance
    → Display governance structure
@@ -304,11 +361,13 @@ Use this checklist to verify your client implementation:
 **Description:** Check if API is running
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -318,6 +377,7 @@ curl http://localhost:8000/
 ```
 
 **Status Codes:**
+
 - `200 OK` - Service is healthy
 
 ---
@@ -327,11 +387,13 @@ curl http://localhost:8000/
 **Description:** Get detailed health information (versioned endpoint - recommended)
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/api/v1/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -343,6 +405,7 @@ curl http://localhost:8000/api/v1/health
 ```
 
 **Status Codes:**
+
 - `200 OK` - Service is healthy
 
 **Note:** Legacy unversioned `/health` endpoint is still available but deprecated.
@@ -356,11 +419,13 @@ curl http://localhost:8000/api/v1/health
 **Description:** Get a list of all projects
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/api/v1/projects
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -381,6 +446,7 @@ curl http://localhost:8000/api/v1/projects
 ```
 
 **Status Codes:**
+
 - `200 OK` - Projects retrieved successfully
 - `500 Internal Server Error` - Server error
 
@@ -391,6 +457,7 @@ curl http://localhost:8000/api/v1/projects
 **Description:** Create a new project
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/projects \
   -H "Content-Type: application/json" \
@@ -401,14 +468,16 @@ curl -X POST http://localhost:8000/api/v1/projects \
 ```
 
 **Request Body:**
+
 ```json
 {
-  "key": "PROJECT001",        // Required: Alphanumeric, underscore, hyphen only
-  "name": "My Project"        // Required: Human-readable name
+  "key": "PROJECT001", // Required: Alphanumeric, underscore, hyphen only
+  "name": "My Project" // Required: Human-readable name
 }
 ```
 
 **Response:**
+
 ```json
 {
   "key": "PROJECT001",
@@ -420,12 +489,14 @@ curl -X POST http://localhost:8000/api/v1/projects \
 ```
 
 **Status Codes:**
+
 - `201 Created` - Project created successfully
 - `400 Bad Request` - Invalid request body
 - `409 Conflict` - Project already exists
 - `500 Internal Server Error` - Server error
 
 **Validation:**
+
 - `key` must match pattern: `^[a-zA-Z0-9_-]+$`
 - `key` must be unique
 - `name` is required
@@ -437,11 +508,13 @@ curl -X POST http://localhost:8000/api/v1/projects \
 **Description:** Get complete project state including artifacts and last commit
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/api/v1/projects/PROJECT001/state
 ```
 
 **Response:**
+
 ```json
 {
   "project_info": {
@@ -474,6 +547,7 @@ curl http://localhost:8000/api/v1/projects/PROJECT001/state
 ```
 
 **Status Codes:**
+
 - `200 OK` - State retrieved successfully
 - `404 Not Found` - Project not found
 - `500 Internal Server Error` - Server error
@@ -487,6 +561,7 @@ curl http://localhost:8000/api/v1/projects/PROJECT001/state
 **Description:** Generate a proposal for command execution with preview of changes
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/propose \
   -H "Content-Type: application/json" \
@@ -499,21 +574,25 @@ curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/propose \
 ```
 
 **Request Body:**
+
 ```json
 {
-  "command": "assess_gaps",         // Required: Command name
-  "params": {                       // Optional: Command parameters
+  "command": "assess_gaps", // Required: Command name
+  "params": {
+    // Optional: Command parameters
     "artifact_type": "project_charter"
   }
 }
 ```
 
 **Available Commands:**
+
 - `assess_gaps` - Analyze missing ISO 21500 artifacts
 - `generate_artifact` - Create or update project document
 - `generate_plan` - Generate project schedule with Mermaid gantt chart
 
 **Response:**
+
 ```json
 {
   "proposal_id": "prop_abc123",
@@ -530,17 +609,20 @@ curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/propose \
 ```
 
 **Response Fields:**
+
 - `proposal_id` - Unique identifier for this proposal (required for apply)
 - `assistant_message` - Human-readable explanation of changes
 - `file_changes` - Array of file modifications with unified diffs
 - `draft_commit_message` - Suggested git commit message
 
 **File Change Operations:**
+
 - `create` - New file
 - `modify` - Update existing file
 - `delete` - Remove file
 
 **Status Codes:**
+
 - `200 OK` - Proposal generated successfully
 - `400 Bad Request` - Invalid command or parameters
 - `404 Not Found` - Project not found
@@ -553,6 +635,7 @@ curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/propose \
 **Description:** Apply a previously generated proposal and commit changes to git
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/apply \
   -H "Content-Type: application/json" \
@@ -562,30 +645,32 @@ curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/apply \
 ```
 
 **Request Body:**
+
 ```json
 {
-  "proposal_id": "prop_abc123"    // Required: ID from propose response
+  "proposal_id": "prop_abc123" // Required: ID from propose response
 }
 ```
 
 **Response:**
+
 ```json
 {
   "commit_hash": "a1b2c3d4e5f6",
-  "changed_files": [
-    "artifacts/project_charter.md"
-  ],
+  "changed_files": ["artifacts/project_charter.md"],
   "message": "Changes applied and committed successfully"
 }
 ```
 
 **Status Codes:**
+
 - `200 OK` - Proposal applied successfully
 - `400 Bad Request` - Invalid proposal ID
 - `404 Not Found` - Project or proposal not found
 - `500 Internal Server Error` - Server error
 
 **Important Notes:**
+
 - Proposals are cached in memory (lost on API restart)
 - Apply within reasonable time after propose
 - Each proposal can only be applied once
@@ -600,11 +685,13 @@ curl -X POST http://localhost:8000/api/v1/projects/PROJECT001/commands/apply \
 **Description:** Get list of all artifacts in project's artifacts folder
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -633,6 +720,7 @@ curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts
 ```
 
 **Status Codes:**
+
 - `200 OK` - Artifacts retrieved successfully
 - `404 Not Found` - Project not found
 - `500 Internal Server Error` - Server error
@@ -644,26 +732,32 @@ curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts
 **Description:** Retrieve content of a specific artifact
 
 **Request:**
+
 ```bash
 curl http://localhost:8000/api/v1/projects/PROJECT001/artifacts/project_charter.md
 ```
 
 **Response:**
+
 ```markdown
 # Project Charter
 
 ## Project Name
+
 My Project
 
 ## Project Purpose
+
 ...
 ```
 
 **Content Types:**
+
 - `text/markdown` - For .md files
 - `text/plain` - For other files
 
 **Status Codes:**
+
 - `200 OK` - Artifact content retrieved
 - `404 Not Found` - Project or artifact not found
 - `500 Internal Server Error` - Server error
@@ -684,14 +778,14 @@ All errors return a consistent JSON structure:
 
 ### HTTP Status Codes
 
-| Code | Meaning | Action |
-|------|---------|--------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 400 | Bad Request | Fix request parameters |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Resource already exists |
-| 500 | Internal Server Error | Retry or contact support |
+| Code | Meaning               | Action                        |
+| ---- | --------------------- | ----------------------------- |
+| 200  | OK                    | Request successful            |
+| 201  | Created               | Resource created successfully |
+| 400  | Bad Request           | Fix request parameters        |
+| 404  | Not Found             | Resource doesn't exist        |
+| 409  | Conflict              | Resource already exists       |
+| 500  | Internal Server Error | Retry or contact support      |
 
 ### Error Handling Best Practices
 
@@ -756,6 +850,7 @@ curl -X POST http://localhost:8000/api/v1/projects \
 ```
 
 Response:
+
 ```json
 {
   "key": "DEMO001",
@@ -777,6 +872,7 @@ curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/propose \
 ```
 
 Response:
+
 ```json
 {
   "proposal_id": "prop_xyz789",
@@ -803,6 +899,7 @@ curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/apply \
 ```
 
 Response:
+
 ```json
 {
   "commit_hash": "abc123def456",
@@ -825,6 +922,7 @@ curl -X POST http://localhost:8000/api/v1/projects/DEMO001/commands/propose \
 ```
 
 Response:
+
 ```json
 {
   "proposal_id": "prop_charter123",
@@ -859,13 +957,14 @@ curl http://localhost:8000/api/v1/projects/DEMO001/artifacts
 ```
 
 Response:
+
 ```json
 [
   {
     "path": "artifacts/project_charter.md",
     "name": "project_charter.md",
     "type": "markdown",
-    "versions": [{"version": "current", "date": "2026-01-10T14:05:00Z"}]
+    "versions": [{ "version": "current", "date": "2026-01-10T14:05:00Z" }]
   }
 ]
 ```
@@ -893,11 +992,11 @@ class AIAgentClient:
         self.base_url = base_url.rstrip("/")
         self.api_version = api_version
         self.session = requests.Session()
-    
+
     def _get_api_url(self, path: str) -> str:
         """Construct versioned API URL."""
         return f"{self.base_url}/api/{self.api_version}{path}"
-    
+
     def create_project(self, key: str, name: str) -> Dict:
         """Create a new project."""
         response = self.session.post(
@@ -906,14 +1005,14 @@ class AIAgentClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def list_projects(self) -> List[Dict]:
         """List all projects."""
         response = self.session.get(self._get_api_url("/projects"))
         response.raise_for_status()
         return response.json()
-    
-    def propose_command(self, project_key: str, command: str, 
+
+    def propose_command(self, project_key: str, command: str,
                        params: Optional[Dict] = None) -> Dict:
         """Propose a command execution."""
         response = self.session.post(
@@ -922,7 +1021,7 @@ class AIAgentClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def apply_proposal(self, project_key: str, proposal_id: str) -> Dict:
         """Apply a proposal."""
         response = self.session.post(
@@ -931,7 +1030,7 @@ class AIAgentClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def list_artifacts(self, project_key: str) -> List[Dict]:
         """List project artifacts."""
         response = self.session.get(
@@ -976,8 +1075,8 @@ class AIAgentClient {
   async createProject(key, name) {
     const response = await fetch(this._getApiUrl('/projects'), {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({key, name})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, name }),
     });
     if (!response.ok) throw new Error(await response.text());
     return response.json();
@@ -994,9 +1093,9 @@ class AIAgentClient {
       this._getApiUrl(`/projects/${projectKey}/commands/propose`),
       {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({command, params})
-      }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command, params }),
+      },
     );
     if (!response.ok) throw new Error(await response.text());
     return response.json();
@@ -1007,9 +1106,9 @@ class AIAgentClient {
       this._getApiUrl(`/projects/${projectKey}/commands/apply`),
       {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({proposal_id: proposalId})
-      }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposal_id: proposalId }),
+      },
     );
     if (!response.ok) throw new Error(await response.text());
     return response.json();
@@ -1017,7 +1116,7 @@ class AIAgentClient {
 
   async listArtifacts(projectKey) {
     const response = await fetch(
-      this._getApiUrl(`/projects/${projectKey}/artifacts`)
+      this._getApiUrl(`/projects/${projectKey}/artifacts`),
     );
     if (!response.ok) throw new Error(await response.text());
     return response.json();
@@ -1074,7 +1173,7 @@ func NewClient(baseURL string) *AIAgentClient {
 func (c *AIAgentClient) CreateProject(key, name string) (map[string]interface{}, error) {
     data := map[string]string{"key": key, "name": name}
     jsonData, _ := json.Marshal(data)
-    
+
     resp, err := c.Client.Post(
         c.BaseURL+"/projects",
         "application/json",
@@ -1084,7 +1183,7 @@ func (c *AIAgentClient) CreateProject(key, name string) (map[string]interface{},
         return nil, err
     }
     defer resp.Body.Close()
-    
+
     var result map[string]interface{}
     json.NewDecoder(resp.Body).Decode(&result)
     return result, nil
@@ -1092,12 +1191,12 @@ func (c *AIAgentClient) CreateProject(key, name string) (map[string]interface{},
 
 func main() {
     client := NewClient("http://localhost:8000")
-    
+
     project, err := client.CreateProject("DEMO001", "Demo Project")
     if err != nil {
         panic(err)
     }
-    
+
     fmt.Printf("Created: %s\n", project["key"])
 }
 ```
@@ -1109,6 +1208,7 @@ func main() {
 Always use the two-step propose/apply pattern:
 
 **✅ Correct:**
+
 ```python
 # Step 1: Propose
 proposal = client.propose_command("PROJECT001", "generate_artifact")
@@ -1121,6 +1221,7 @@ result = client.apply_proposal("PROJECT001", proposal['proposal_id'])
 ```
 
 **❌ Incorrect:**
+
 ```python
 # Skipping propose step (not possible with this API)
 ```
@@ -1186,7 +1287,7 @@ class CachedClient(AIAgentClient):
         super().__init__(*args, **kwargs)
         self._cache = {}
         self._cache_ttl = timedelta(minutes=5)
-    
+
     def get_project_state(self, project_key: str) -> Dict:
         """Get project state with caching."""
         cache_key = f"state:{project_key}"
@@ -1194,14 +1295,14 @@ class CachedClient(AIAgentClient):
             cached_at, data = self._cache[cache_key]
             if datetime.now() - cached_at < self._cache_ttl:
                 return data
-        
+
         # Fetch fresh data
         response = self.session.get(
             f"{self.base_url}/projects/{project_key}/state"
         )
         response.raise_for_status()
         data = response.json()
-        
+
         # Update cache
         self._cache[cache_key] = (datetime.now(), data)
         return data
@@ -1217,7 +1318,7 @@ def get_artifact_stream(client, project_key, artifact_path):
     url = f"{client.base_url}/projects/{project_key}/artifacts/{artifact_path}"
     response = client.session.get(url, stream=True)
     response.raise_for_status()
-    
+
     with open(f"downloaded_{artifact_path}", 'wb') as f:
         for chunk in response.iter_content(chunk_size=8192):
             f.write(chunk)
@@ -1228,11 +1329,13 @@ def get_artifact_stream(client, project_key, artifact_path):
 When rate limiting is implemented:
 
 **Headers:**
+
 - `X-RateLimit-Limit` - Max requests per window
 - `X-RateLimit-Remaining` - Remaining requests
 - `X-RateLimit-Reset` - Window reset time (Unix timestamp)
 
 **Response when rate limited:**
+
 ```json
 {
   "detail": "Rate limit exceeded. Retry after 60 seconds."
@@ -1248,6 +1351,7 @@ When rate limiting is implemented:
 **Problem:** Cannot connect to API
 
 **Solutions:**
+
 1. Check API is running: `curl http://localhost:8000/health`
 2. Verify port in docker-compose.yml
 3. Check firewall rules
@@ -1258,6 +1362,7 @@ When rate limiting is implemented:
 **Problem:** Browser shows CORS error
 
 **Solution:** API already configured for CORS. Check:
+
 1. API is running
 2. Web UI is served from correct origin
 3. Browser developer console for specific error
@@ -1267,6 +1372,7 @@ When rate limiting is implemented:
 **Problem:** Apply fails with "proposal not found"
 
 **Solutions:**
+
 1. Proposals are cached in memory (lost on restart)
 2. Apply immediately after propose
 3. Check proposal_id is correct
@@ -1276,6 +1382,7 @@ When rate limiting is implemented:
 **Problem:** Request times out
 
 **Solutions:**
+
 1. Increase client timeout (default: 30s)
 2. Check LLM service is responding
 3. Use templates-only mode if LLM unavailable

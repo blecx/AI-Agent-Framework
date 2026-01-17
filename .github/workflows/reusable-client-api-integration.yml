@@ -1,0 +1,166 @@
+name: Reusable - Client API Integration
+
+on:
+  workflow_call:
+    inputs:
+      client_runtime:
+        description: 'Client toolchain to use: node or python'
+        required: false
+        type: string
+        default: node
+      server_repository:
+        description: 'Repo containing docker-compose.yml for the API'
+        required: false
+        type: string
+        default: blecx/AI-Agent-Framework
+      server_ref:
+        description: 'Git ref (branch/tag/sha) of the server repository'
+        required: false
+        type: string
+        default: main
+      api_health_url:
+        description: 'Health endpoint to wait for'
+        required: false
+        type: string
+        default: http://localhost:8000/health
+      api_base_url:
+        description: 'Base URL exposed to client tests'
+        required: false
+        type: string
+        default: http://localhost:8000
+      client_workdir:
+        description: 'Working directory in the client repo (e.g. apps/web)'
+        required: false
+        type: string
+        default: .
+      node_version:
+        description: 'Node version for client checks'
+        required: false
+        type: string
+        default: '20'
+      client_install_command:
+        description: 'Install command for the client repo (Node)'
+        required: false
+        type: string
+        default: npm ci
+      client_lint_command:
+        description: 'Lint command for the client repo (Node). Empty = skip'
+        required: false
+        type: string
+        default: ''
+      client_build_command:
+        description: 'Build command for the client repo (Node). Empty = skip'
+        required: false
+        type: string
+        default: ''
+      python_version:
+        description: 'Python version for client tests'
+        required: false
+        type: string
+        default: '3.12'
+      client_test_command:
+        description: 'Command to execute client repo tests (runs in client_workdir)'
+        required: true
+        type: string
+
+jobs:
+  client-api-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Caller repo (e.g., AI-Agent-Framework-Client)
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      # Server repo (this backend)
+      - name: Checkout server repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.server_repository }}
+          ref: ${{ inputs.server_ref }}
+          path: server
+
+      - name: Start API via docker compose
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f server/docker-compose.yml up -d --build api
+
+      - name: Wait for API health
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ inputs.api_health_url }}"
+          echo "Waiting for API: $url"
+          for i in {1..60}; do
+            if curl -fsS "$url" >/dev/null; then
+              echo "API is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become healthy in time."
+          docker compose -f server/docker-compose.yml ps
+          docker compose -f server/docker-compose.yml logs --no-color --tail=200 api
+          exit 1
+
+      - name: Set up Node
+        if: ${{ inputs.client_runtime == 'node' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.client_workdir }}/package-lock.json
+
+      - name: Install client dependencies (Node)
+        if: ${{ inputs.client_runtime == 'node' }}
+        working-directory: ${{ inputs.client_workdir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ${{ inputs.client_install_command }}
+
+      - name: Lint client (Node)
+        if: ${{ inputs.client_runtime == 'node' && inputs.client_lint_command != '' }}
+        working-directory: ${{ inputs.client_workdir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ${{ inputs.client_lint_command }}
+
+      - name: Build client (Node)
+        if: ${{ inputs.client_runtime == 'node' && inputs.client_build_command != '' }}
+        working-directory: ${{ inputs.client_workdir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ${{ inputs.client_build_command }}
+
+      - name: Set up Python
+        if: ${{ inputs.client_runtime == 'python' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install client dependencies (Python)
+        if: ${{ inputs.client_runtime == 'python' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run client tests against API
+        shell: bash
+        working-directory: ${{ inputs.client_workdir }}
+        env:
+          API_BASE_URL: ${{ inputs.api_base_url }}
+        run: |
+          set -euo pipefail
+          ${{ inputs.client_test_command }}
+
+      - name: Teardown
+        if: always()
+        shell: bash
+        run: |
+          docker compose -f server/docker-compose.yml down -v

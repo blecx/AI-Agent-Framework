@@ -2,76 +2,176 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main ]
-  pull_request: 
+    branches: [main]
+  pull_request:
 
 jobs:
   backend-ci:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
-    
-    - name: Install dependencies
-      run: |
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        if [ -f pyproject.toml ]; then pip install -e .; fi
-        pip install pytest pytest-cov
-    
-    - name: Configure git for tests
-      run: |
-        git config --global user.email "ci-test@example.com"
-        git config --global user.name "CI Test Runner"
-    
-    - name: Run unit tests with coverage
-      if: hashFiles('tests/unit/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-report=xml --cov-report=term-missing tests/unit
-    
-    - name: Run integration tests with coverage
-      if: hashFiles('tests/integration/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-append --cov-report=xml --cov-report=term-missing tests/integration
-    
-    - name: Check coverage threshold
-      if: always()
-      run: |
-        python -m coverage report --fail-under=80 || echo "Coverage check failed but continuing..."
-    
-    - name: Run e2e tests
-      if: hashFiles('tests/e2e/**') != ''
-      run: PYTHONPATH=$GITHUB_WORKSPACE TERM=xterm-256color pytest -v tests/e2e
-    
-    - name: Upload coverage reports to Codecov
-      if: always()
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: backend
-        name: backend-coverage
-        fail_ci_if_error: false
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    
-    - name: Generate coverage summary
-      if: always()
-      run: |
-        echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
-        python -m coverage report >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Coverage report generation skipped" >> $GITHUB_STEP_SUMMARY
-    
-    - name: Archive coverage report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: |
-          coverage.xml
-          htmlcov/
-        retention-days: 30
+      - uses: actions/checkout@v4
+
+      - name: PR review gate (goal + acceptance criteria + validation)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull_request payload found; skipping.');
+              return;
+            }
+
+            const body = pr.body || '';
+            const requiredHeadings = [
+              '## Goal / Context',
+              '## Acceptance Criteria',
+              '## Validation Evidence',
+              '## Repo Hygiene / Safety',
+            ];
+
+            const missingHeadings = requiredHeadings.filter(h => !body.includes(h));
+            if (missingHeadings.length) {
+              core.setFailed(`PR description is missing required sections: ${missingHeadings.join(', ')}`);
+              return;
+            }
+
+            function sectionText(md, headingPrefix) {
+              const start = md.indexOf(headingPrefix);
+              if (start === -1) return '';
+              const rest = md.slice(start + headingPrefix.length);
+              const next = rest.search(/\n##\s+/);
+              return (next === -1 ? rest : rest.slice(0, next)).trim();
+            }
+
+            function checkboxes(mdSection) {
+              const lines = mdSection.split(/\r?\n/);
+              return lines
+                .map(l => l.trim())
+                .filter(l => /^- \[[ xX]\]/.test(l));
+            }
+
+            function allChecked(items) {
+              return items.every(l => /^- \[[xX]\]/.test(l));
+            }
+
+            const ac = sectionText(body, '## Acceptance Criteria');
+            const validation = sectionText(body, '## Validation Evidence');
+            const hygiene = sectionText(body, '## Repo Hygiene / Safety');
+
+            const acBoxes = checkboxes(ac);
+            const validationBoxes = checkboxes(validation);
+            const hygieneBoxes = checkboxes(hygiene);
+
+            const problems = [];
+            if (acBoxes.length === 0) problems.push('Acceptance Criteria section must include at least one checkbox item.');
+            if (validationBoxes.length === 0) problems.push('Validation Evidence section must include at least one checkbox item.');
+            if (hygieneBoxes.length === 0) problems.push('Repo Hygiene / Safety section must include at least one checkbox item.');
+
+            if (acBoxes.length && !allChecked(acBoxes)) problems.push('All Acceptance Criteria checkboxes must be checked.');
+            if (validationBoxes.length && !allChecked(validationBoxes)) problems.push('All Validation Evidence checkboxes must be checked.');
+            if (hygieneBoxes.length && !allChecked(hygieneBoxes)) problems.push('All Repo Hygiene / Safety checkboxes must be checked.');
+
+            // Lightweight implementation guard: require tests when backend code changes.
+            // This does not replace human review, but it stops feature changes with no test updates.
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const changed = files.map(f => f.filename);
+            const backendTouched = changed.some(p => p.startsWith('apps/api/'));
+            const testsTouched = changed.some(p => p.startsWith('tests/'));
+            if (backendTouched && !testsTouched) {
+              problems.push('Backend code changed under apps/api/ but no tests were updated/added under tests/.');
+            }
+
+            if (problems.length) {
+              core.setFailed(`PR review gate failed:\n- ${problems.join('\n- ')}`);
+              return;
+            }
+
+            core.info('PR review gate passed.');
+
+      - name: Repo hygiene guard (forbidden files)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # These must never be tracked in the code repo
+          if git ls-files | grep -E '^(projectDocs/|configs/llm\.json$)' -n; then
+            echo "Forbidden files detected in git index (projectDocs/ or configs/llm.json)."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+          pip install pytest pytest-cov
+
+      - name: Format check (black)
+        run: python -m black apps/api/ --check
+
+      - name: Lint (flake8)
+        run: python -m flake8 apps/api/
+
+      - name: Configure git for tests
+        run: |
+          git config --global user.email "ci-test@example.com"
+          git config --global user.name "CI Test Runner"
+
+      - name: Run unit tests with coverage
+        if: hashFiles('tests/unit/**') != ''
+        run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-report=xml --cov-report=term-missing tests/unit
+
+      - name: Run integration tests with coverage
+        if: hashFiles('tests/integration/**') != ''
+        run: PYTHONPATH=$GITHUB_WORKSPACE pytest -v --cov=apps/api --cov-append --cov-report=xml --cov-report=term-missing tests/integration
+
+      - name: Check coverage threshold
+        if: always()
+        run: |
+          python -m coverage report --fail-under=80 || echo "Coverage check failed but continuing..."
+
+      - name: Run e2e tests
+        if: hashFiles('tests/e2e/**') != ''
+        run: PYTHONPATH=$GITHUB_WORKSPACE TERM=xterm-256color pytest -v tests/e2e
+
+      - name: Upload coverage reports to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          python -m coverage report >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Coverage report generation skipped" >> $GITHUB_STEP_SUMMARY
+
+      - name: Archive coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
