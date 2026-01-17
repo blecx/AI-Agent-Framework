@@ -15,6 +15,7 @@ An interactive, visual terminal interface built with Textual:
 - **Real-time Updates**: See command output and results as they happen
 
 **Launch the TUI:**
+
 ```bash
 # Using Docker
 docker compose run client tui
@@ -87,7 +88,8 @@ docker compose run client create-project --key TEST001 --name "Test Project"
 ### Option 2: Local Python Environment
 
 Requirements:
-- Python 3.10+
+
+- Python 3.12
 - pip
 
 Setup:
@@ -116,10 +118,10 @@ cp .env.example .env
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `API_BASE_URL` | AI Agent API base URL | `http://localhost:8000` |
-| `API_TIMEOUT` | Request timeout in seconds | `30` |
+| Variable       | Description                | Default                 |
+| -------------- | -------------------------- | ----------------------- |
+| `API_BASE_URL` | AI Agent API base URL      | `http://localhost:8000` |
+| `API_TIMEOUT`  | Request timeout in seconds | `30`                    |
 
 ### Docker Configuration
 
@@ -134,6 +136,7 @@ When running locally, use `http://localhost:8000` (or the appropriate host).
 The TUI provides a visual, menu-driven interface:
 
 **Launch the TUI:**
+
 ```bash
 # Using Docker
 docker compose run client tui
@@ -165,6 +168,7 @@ python -m src.client tui
    - Apply changes and commit to repository
 
 **Keyboard Shortcuts:**
+
 - `q` - Quit application
 - `d` - Toggle dark/light mode
 - `Escape` - Go back/cancel
@@ -173,6 +177,7 @@ python -m src.client tui
 - `Enter` - Select/activate
 
 **Mouse Support:**
+
 - Click buttons to activate
 - Click table rows to select
 - Scroll through content
@@ -445,6 +450,7 @@ python -m src.client health
 **Problem**: `Connection refused` or timeout errors
 
 **Solutions**:
+
 1. Verify API is running: `curl http://localhost:8000/health`
 2. Check `API_BASE_URL` in `.env`
 3. For Docker: Use `http://api:8000` (not `localhost`)
@@ -455,6 +461,7 @@ python -m src.client health
 **Problem**: Project not found
 
 **Solutions**:
+
 1. Verify project exists: `python -m src.client list-projects`
 2. Check project key spelling
 3. Create project if needed: `python -m src.client create-project`
@@ -464,6 +471,7 @@ python -m src.client health
 **Problem**: Invalid request parameters
 
 **Solutions**:
+
 1. Check required parameters are provided
 2. Verify parameter format (e.g., project key pattern)
 3. For `generate_artifact`, ensure `--artifact-name` and `--artifact-type` are provided
@@ -473,6 +481,7 @@ python -m src.client health
 **Problem**: `ModuleNotFoundError`
 
 **Solutions**:
+
 1. Ensure virtual environment is activated
 2. Install dependencies: `pip install -r requirements.txt`
 3. Run from correct directory: `cd client`
@@ -523,6 +532,7 @@ This client is part of the AI-Agent-Framework repository.
 ## Support
 
 For issues or questions:
+
 - Check the main [README.md](../README.md)
 - Review API documentation at `http://localhost:8000/docs`
 - Check Docker logs: `docker compose logs client`

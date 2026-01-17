@@ -2,7 +2,7 @@
 
 [![Backend CI](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/blecx/AI-Agent-Framework/branch/main/graph/badge.svg)](https://codecov.io/gh/blecx/AI-Agent-Framework)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 An ISO 21500 Project Management AI Agent System with FastAPI backend and React/Vite frontend, deployed as Docker containers.
@@ -97,6 +97,7 @@ This architecture provides:
 All containers communicate via Docker network. The web UI and client (with TUI/CLI modes) both consume the same REST API.
 
 ### Backend (FastAPI)
+
 - LLM abstraction with OpenAI-compatible HTTP adapter
 - Git repository manager for project documents
 - Command orchestration with propose/apply workflow
@@ -116,6 +117,7 @@ The framework includes a powerful extensible skills system that provides cogniti
 **Documentation:** [docs/skills/README.md](docs/skills/README.md) | **API:** [docs/api/skills-api.md](docs/api/skills-api.md)
 
 ### Frontend (React/Vite)
+
 - Project creation and selection
 - Command panel with three core commands:
   - `assess_gaps`: Analyze missing ISO 21500 artifacts
@@ -126,6 +128,7 @@ The framework includes a powerful extensible skills system that provides cogniti
 - Real-time status updates
 
 ### Compliance Features
+
 - No secrets committed to code repository
 - Optional prompt/content logging (disabled by default)
 - Only hashes stored in audit logs by default
@@ -142,6 +145,7 @@ The AI-Agent Framework provides multiple interfaces to suit different workflows 
 A command-line interface for automation, testing, and scripting workflows.
 
 **Best for:**
+
 - CI/CD pipelines and automation
 - Quick testing and validation
 - Command-line scripting
@@ -156,6 +160,7 @@ A command-line interface for automation, testing, and scripting workflows.
 A Python-based client with both traditional CLI and an interactive terminal UI (using Textual).
 
 **Best for:**
+
 - Interactive terminal-based project management
 - SSH/remote sessions
 - Visual navigation in terminal
@@ -171,6 +176,7 @@ A Python-based client with both traditional CLI and an interactive terminal UI (
 A modern graphical web interface for interactive project management (separate repository).
 
 **Best for:**
+
 - Interactive project management with visual feedback
 - Team collaboration
 - Non-technical users
@@ -181,11 +187,11 @@ A modern graphical web interface for interactive project management (separate re
 
 ### Choosing the Right Client
 
-| Client | Use Case | Automation | Visual Interface | Setup Complexity |
-|--------|----------|------------|------------------|------------------|
-| **TUI** | CLI automation, scripts | ✅ Excellent | 📟 Command-line | 🟢 Simple |
-| **Client** | Terminal workflows | ✅ Good | 🖥️ Interactive terminal | 🟢 Simple |
-| **WebUI** | Interactive management | ⚠️ Limited | 🌐 Full graphical UI | 🟡 Moderate |
+| Client     | Use Case                | Automation   | Visual Interface        | Setup Complexity |
+| ---------- | ----------------------- | ------------ | ----------------------- | ---------------- |
+| **TUI**    | CLI automation, scripts | ✅ Excellent | 📟 Command-line         | 🟢 Simple        |
+| **Client** | Terminal workflows      | ✅ Good      | 🖥️ Interactive terminal | 🟢 Simple        |
+| **WebUI**  | Interactive management  | ⚠️ Limited   | 🌐 Full graphical UI    | 🟡 Moderate      |
 
 All clients communicate with the same REST API, ensuring feature parity and flexibility.
 
@@ -199,84 +205,94 @@ For local development without Docker, follow these steps:
 
 ### Prerequisites
 
-- **Python 3.10+** (Python 3.12 recommended)
+- **Python 3.12** (matches GitHub Actions CI)
 - **Git**
 - (Optional) LM Studio or OpenAI-compatible LLM endpoint
 
 ### Step-by-Step Setup
 
 1. **Clone the repository:**
+
 ```bash
 git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-2. **Run the intelligent setup script:**
+2. **Run the setup script:**
 
-The setup script will automatically detect all available Python versions on your system, prompt you to select one, validate that it meets the minimum requirements, and create a virtual environment.
+The setup script requires Python 3.12 and will create a virtual environment using it.
 
 **Linux/macOS:**
+
 ```bash
 ./setup.sh
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 .\setup.ps1
 ```
 
 **Windows (Command Prompt):**
+
 ```cmd
 setup.bat
 ```
 
 **What the script does:**
-- 🔍 Detects all available Python 3.x versions on your system
-- 📋 Shows you a list of compatible versions (3.10+) with their paths
-- ✅ Prompts you to select a version (or auto-selects if only one is found)
-- 🔒 Validates the selected version meets minimum requirements
-- 📦 Creates a Python virtual environment in `.venv/` using your selected version
+
+- 🔍 Detects Python 3.12 on your system
+- 🔒 Fails fast with install instructions if Python 3.12 is missing
+- 📦 Creates a Python virtual environment in `.venv/` using Python 3.12
 - ⬆️ Upgrades pip to the latest version
 - 📥 Installs all required dependencies from `requirements.txt`
 - ✨ Displays next steps for running the application
 
-If no compatible Python version is found, the script will display download links and helpful error messages.
+If Python 3.12 is not found, the script will display install instructions.
 
 3. **Activate the virtual environment:**
 
 **Linux/macOS:**
+
 ```bash
 source .venv/bin/activate
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
 **Windows (Command Prompt):**
+
 ```cmd
 .venv\Scripts\activate.bat
 ```
 
 4. **Create project documents directory:**
+
 ```bash
 mkdir projectDocs
 ```
 
 5. **Configure LLM settings (optional):**
+
 ```bash
 cp configs/llm.default.json configs/llm.json
 # Edit configs/llm.json with your LLM endpoint details
 ```
 
 6. **Run the API server:**
+
 ```bash
 cd apps/api
 PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 ```
 
 7. **Access the application:**
+
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
@@ -287,20 +303,23 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 If you prefer not to use the setup script, you can set up manually:
 
 1. **Check Python version:**
+
    ```bash
    python3 --version  # Should be 3.10 or higher
    ```
 
 2. **Create virtual environment:**
+
    ```bash
    python3 -m venv .venv
    ```
 
 3. **Activate and install dependencies:**
+
    ```bash
    source .venv/bin/activate  # Linux/macOS
    # or .venv\Scripts\activate.bat on Windows
-   
+
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
@@ -329,17 +348,20 @@ For production or simplified deployment using Docker:
 ### Setup
 
 1. Clone this repository:
+
 ```bash
 git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
 2. Create project documents directory:
+
 ```bash
 mkdir projectDocs
 ```
 
 3. (Optional) Configure LLM settings:
+
 ```bash
 # Copy and edit the LLM config
 cp configs/llm.default.json configs/llm.json
@@ -349,16 +371,19 @@ cp configs/llm.default.json configs/llm.json
 The default configuration uses LM Studio on `http://host.docker.internal:1234/v1`.
 
 4. Start the services:
+
 ```bash
 docker compose up --build
 ```
 
 This will start all three services:
+
 - API server (backend)
 - Web UI (frontend)
 - Client (CLI tool - optional)
 
 5. Access the application:
+
 - Web UI: http://localhost:8080
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
@@ -381,6 +406,7 @@ docker compose run client tui
 ```
 
 **TUI Features:**
+
 - 📁 **Visual Project Management**: Browse and create projects with menus
 - ⚙️ **Interactive Commands**: Run commands with real-time feedback
 - 📊 **Artifact Browser**: View generated artifacts
@@ -505,6 +531,7 @@ The system uses a JSON configuration file for LLM settings. Create `configs/llm.
 ### Supported LLM Providers
 
 Any OpenAI-compatible endpoint works:
+
 - LM Studio (default)
 - OpenAI API
 - Azure OpenAI
@@ -515,6 +542,7 @@ Any OpenAI-compatible endpoint works:
 ## Project Documents Storage
 
 All project documents are stored in the `projectDocs/` directory, which is:
+
 - A separate git repository (auto-initialized if missing)
 - Mounted into the API container at `/projectDocs`
 - Never committed to the code repository
@@ -541,15 +569,18 @@ projectDocs/
 ## API Endpoints
 
 ### Projects
+
 - `POST /projects` - Create new project
 - `GET /projects` - List all projects
 - `GET /projects/{key}/state` - Get project state
 
 ### Commands
+
 - `POST /projects/{key}/commands/propose` - Propose changes
 - `POST /projects/{key}/commands/apply` - Apply changes
 
 ### Artifacts
+
 - `GET /projects/{key}/artifacts` - List artifacts
 - `GET /projects/{key}/artifacts/{path}` - Get artifact content
 
@@ -562,6 +593,7 @@ For detailed local development setup, see the [Local Development Setup](#local-d
 **Quick Reference:**
 
 1. **Create virtual environment:**
+
    ```bash
    ./setup.sh  # Linux/macOS
    # or
@@ -569,6 +601,7 @@ For detailed local development setup, see the [Local Development Setup](#local-d
    ```
 
 2. **Activate virtual environment:**
+
    ```bash
    source .venv/bin/activate  # Linux/macOS
    # or
@@ -576,6 +609,7 @@ For detailed local development setup, see the [Local Development Setup](#local-d
    ```
 
 3. **Run the API:**
+
    ```bash
    cd apps/api
    PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
@@ -672,6 +706,7 @@ Current coverage: ![Coverage](https://codecov.io/gh/blecx/AI-Agent-Framework/bra
 For cross-repository E2E testing with the client, see **[E2E Testing Guide](E2E_TESTING.md)**.
 
 Quick start:
+
 ```bash
 # Terminal 1: Start backend
 python tests/e2e/backend_e2e_runner.py --mode server
@@ -684,18 +719,21 @@ npm run test:e2e
 #### Writing Tests
 
 **Unit tests** should:
+
 - Mock all external dependencies
 - Test one component at a time
 - Use fixtures for common setup
 - Be fast and deterministic
 
 **Integration tests** should:
+
 - Use FastAPI TestClient
 - Create isolated test environment per test
 - Test realistic API workflows
 - Verify both success and error responses
 
 **All tests** must:
+
 - Be independent (no shared state)
 - Use unique temp directories
 - Clean up after themselves
@@ -705,14 +743,17 @@ npm run test:e2e
 ### Adding New Templates
 
 **Prompt Template** (`templates/prompts/iso21500/my_command.j2`):
+
 ```jinja2
 You are creating {{ artifact_name }} for project {{ project_key }}.
 ...
 ```
 
 **Output Template** (`templates/output/iso21500/my_artifact.md`):
+
 ```markdown
 # {{ title }}
+
 {{ generated_content }}
 ```
 
@@ -760,6 +801,7 @@ Comprehensive management of:
 - **Dependencies**: Reliance on external factors, teams, or deliverables
 
 Features include:
+
 - CRUD operations with full lifecycle tracking
 - Filtering by type, status, owner, and priority
 - Impact and likelihood assessment for risks
@@ -770,12 +812,14 @@ Features include:
 ### API Endpoints
 
 **Governance:**
+
 - `GET/POST/PUT /projects/{key}/governance/metadata` - Governance metadata management
 - `GET/POST /projects/{key}/governance/decisions` - Decision log management
 - `GET /projects/{key}/governance/decisions/{id}` - Single decision retrieval
 - `POST /projects/{key}/governance/decisions/{id}/link-raid/{raid_id}` - Link decision to RAID
 
 **RAID Register:**
+
 - `GET /projects/{key}/raid` - List/filter RAID items
 - `GET /projects/{key}/raid/{id}` - Get RAID item
 - `POST /projects/{key}/raid` - Create RAID item
@@ -787,12 +831,14 @@ Features include:
 ### Documentation
 
 For detailed information, see:
+
 - [Governance Documentation](docs/governance.md) - Complete governance backbone guide
 - [RAID Register Documentation](docs/raid_register.md) - Comprehensive RAID register reference
 
 ## Troubleshooting
 
 ### API Container Issues
+
 ```bash
 # Check API logs
 docker compose logs api
@@ -802,6 +848,7 @@ docker compose exec api ls -la /projectDocs
 ```
 
 ### LLM Connection Issues
+
 ```bash
 # Test LLM endpoint
 curl -X POST http://localhost:1234/v1/chat/completions \
@@ -810,6 +857,7 @@ curl -X POST http://localhost:1234/v1/chat/completions \
 ```
 
 ### Frontend Not Loading
+
 ```bash
 # Check web container logs
 docker compose logs web
@@ -827,11 +875,13 @@ This project is part of the AI-Agent-Framework repository.
 We follow a **Plan → Issues → PRs** workflow for all contributions. Please review our development guidelines before starting:
 
 **📋 Essential Reading:**
+
 - **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - Complete development guide and workflow
 - **[.github/prompts/](.github/prompts/)** - Templates for planning, issues, and PRs
 - **[docs/development.md](docs/development.md)** - Detailed development documentation
 
 **Quick Contribution Steps:**
+
 1. **Plan**: Start with a clear spec (goal, scope, acceptance criteria)
 2. **Create Issue**: Use [issue template](.github/prompts/drafting-issue.md) with validation steps
 3. **Implement**: One issue per PR, keep changes small (< 200 lines preferred)
@@ -840,6 +890,7 @@ We follow a **Plan → Issues → PRs** workflow for all contributions. Please r
 6. **Review & Merge**: Squash merge preferred
 
 **Key Guidelines:**
+
 - **Never commit** `projectDocs/` or `configs/llm.json` (auto-ignored)
 - Always set `PROJECT_DOCS_PATH=../../projectDocs` when running API locally
 - Add runtime dependencies to **both** `requirements.txt` files (root and `apps/api/`)
@@ -851,4 +902,3 @@ We follow a **Plan → Issues → PRs** workflow for all contributions. Please r
 
 **Target Branch:** `main`  
 **Version:** 1.0.0 MVP
- 

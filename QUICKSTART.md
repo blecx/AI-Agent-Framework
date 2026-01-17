@@ -429,7 +429,7 @@ If you prefer to develop without Docker, you can run the application directly on
 
 ### Prerequisites
 
-- **Python 3.10+** (Python 3.12 recommended)
+- **Python 3.12** (matches GitHub Actions CI)
 - **Git**
 - **Node.js 18+** (for web UI)
 - (Optional) LM Studio or OpenAI-compatible LLM endpoint
@@ -445,7 +445,7 @@ cd AI-Agent-Framework
 
 1. **Run the intelligent setup script:**
 
-The setup script automatically detects available Python versions, lets you choose one, and sets up your environment.
+The setup script uses Python 3.12 to create the virtual environment and sets up your environment.
 
 **Linux/macOS:**
 
@@ -467,13 +467,11 @@ setup.bat
 
 **Script features:**
 
-- 🔍 Auto-detects all Python 3.x versions on your system
-- 📋 Shows compatible versions (3.10+) with their installation paths
-- ✅ Prompts you to select a version or auto-selects if only one found
-- 🔒 Validates minimum version requirements (Python 3.10+)
-- 📦 Creates `.venv/` with your selected Python version
+- 🔍 Detects Python 3.12 on your system
+- 🔒 Fails fast with install instructions if Python 3.12 is missing
+- 📦 Creates `.venv/` with Python 3.12
 - ⬆️ Upgrades pip and installs all dependencies
-- 💡 Provides helpful download links if no compatible version found
+- 💡 Provides helpful install instructions if Python 3.12 is missing
 
 This will:
 

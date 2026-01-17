@@ -9,136 +9,23 @@ echo ISO 21500 AI-Agent Framework Setup
 echo =========================================
 echo.
 
-REM Minimum required Python version
-set MIN_PYTHON_MAJOR=3
-set MIN_PYTHON_MINOR=10
+set REQUIRED_PY=3.12
 
-echo Detecting available Python versions...
+echo Detecting Python %REQUIRED_PY%...
 echo.
 
-REM Initialize arrays (using environment variables with indices)
-set PYTHON_COUNT=0
-
-REM Check for py launcher with specific versions (realistic range)
-for %%v in (3.10 3.11 3.12 3.13 3.14 3.15) do (
-    py -%%v --version >nul 2>&1
-    if !errorlevel! equ 0 (
-        for /f "tokens=2" %%i in ('py -%%v --version 2^>^&1') do (
-            set "FULL_VERSION=%%i"
-            for /f "tokens=1,2 delims=." %%a in ("%%i") do (
-                set MAJOR=%%a
-                set MINOR=%%b
-                if !MAJOR! geq %MIN_PYTHON_MAJOR% (
-                    if !MAJOR! gtr %MIN_PYTHON_MAJOR% (
-                        set "VERSIONS[!PYTHON_COUNT!]=%%v"
-                        set "FULL_VERSIONS[!PYTHON_COUNT!]=%%i"
-                        set "COMMANDS[!PYTHON_COUNT!]=py -%%v"
-                        set /a PYTHON_COUNT+=1
-                    ) else if !MINOR! geq %MIN_PYTHON_MINOR% (
-                        set "VERSIONS[!PYTHON_COUNT!]=%%v"
-                        set "FULL_VERSIONS[!PYTHON_COUNT!]=%%i"
-                        set "COMMANDS[!PYTHON_COUNT!]=py -%%v"
-                        set /a PYTHON_COUNT+=1
-                    )
-                )
-            )
-        )
-    )
-)
-
-REM Check for python command
-python --version >nul 2>&1
-if !errorlevel! equ 0 (
-    for /f "tokens=2" %%i in ('python --version 2^>^&1') do (
-        set "FULL_VERSION=%%i"
-        for /f "tokens=1,2 delims=." %%a in ("%%i") do (
-            set MAJOR=%%a
-            set MINOR=%%b
-            if !MAJOR! geq %MIN_PYTHON_MAJOR% (
-                if !MAJOR! gtr %MIN_PYTHON_MAJOR% (
-                    set "VERSIONS[!PYTHON_COUNT!]=%%a.%%b"
-                    set "FULL_VERSIONS[!PYTHON_COUNT!]=%%i"
-                    set "COMMANDS[!PYTHON_COUNT!]=python"
-                    set /a PYTHON_COUNT+=1
-                ) else if !MINOR! geq %MIN_PYTHON_MINOR% (
-                    set "VERSIONS[!PYTHON_COUNT!]=%%a.%%b"
-                    set "FULL_VERSIONS[!PYTHON_COUNT!]=%%i"
-                    set "COMMANDS[!PYTHON_COUNT!]=python"
-                    set /a PYTHON_COUNT+=1
-                )
-            )
-        )
-    )
-)
-
-REM Check if any compatible Python versions were found
-if !PYTHON_COUNT! equ 0 (
-    echo [X] Error: No compatible Python version found!
+py -%REQUIRED_PY% --version >nul 2>&1
+if not !errorlevel! equ 0 (
+    echo [X] Error: Python %REQUIRED_PY% is required but was not found via the Windows py launcher.
     echo.
-    echo This project requires Python %MIN_PYTHON_MAJOR%.%MIN_PYTHON_MINOR% or higher.
-    echo.
-    echo Download Python from:
-    echo   - https://www.python.org/downloads/
-    echo.
-    echo Make sure to check "Add Python to PATH" during installation.
+    echo Install Python %REQUIRED_PY% and ensure the 'py' launcher is available.
     echo.
     pause
     exit /b 1
 )
 
-REM Display found Python versions
-echo [OK] Found !PYTHON_COUNT! compatible Python version(s):
-echo.
-for /l %%i in (0,1,!PYTHON_COUNT!) do (
-    if defined VERSIONS[%%i] (
-        set /a DISPLAY_NUM=%%i+1
-        echo   [!DISPLAY_NUM!] Python !FULL_VERSIONS[%%i]!
-        echo       Command: !COMMANDS[%%i]!
-        echo.
-    )
-)
-
-REM Select Python version
-set SELECTED_INDEX=-1
-
-if !PYTHON_COUNT! equ 1 (
-    REM Only one version found, ask for confirmation
-    echo Only one compatible version found: Python !FULL_VERSIONS[0]!
-    set /p "confirm=Use this version? [Y/n]: "
-    if "!confirm!"=="" set confirm=Y
-    if /i "!confirm!"=="Y" (
-        set SELECTED_INDEX=0
-    ) else (
-        echo Setup cancelled.
-        pause
-        exit /b 0
-    )
-) else (
-    REM Multiple versions found, let user choose
-    :SELECT_VERSION
-    set /p "selection=Select Python version [1-!PYTHON_COUNT!]: "
-    
-    REM Validate input
-    if "!selection!"=="" goto INVALID_SELECTION
-    set /a test_num=!selection! 2>nul
-    if "!test_num!"=="0" (
-        if not "!selection!"=="0" goto INVALID_SELECTION
-    )
-    if !selection! lss 1 goto INVALID_SELECTION
-    if !selection! gtr !PYTHON_COUNT! goto INVALID_SELECTION
-    
-    set /a SELECTED_INDEX=!selection!-1
-    goto SELECTION_DONE
-    
-    :INVALID_SELECTION
-    echo Invalid selection. Please enter a number between 1 and !PYTHON_COUNT!.
-    goto SELECT_VERSION
-    
-    :SELECTION_DONE
-)
-
-set "SELECTED_PYTHON=!COMMANDS[%SELECTED_INDEX%]!"
-set "SELECTED_VERSION=!FULL_VERSIONS[%SELECTED_INDEX%]!"
+for /f "tokens=2" %%i in ('py -%REQUIRED_PY% --version 2^>^&1') do set "SELECTED_VERSION=%%i"
+set "SELECTED_PYTHON=py -%REQUIRED_PY%"
 
 echo.
 echo [OK] Selected: Python !SELECTED_VERSION!

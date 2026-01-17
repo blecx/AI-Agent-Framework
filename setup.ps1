@@ -9,182 +9,27 @@ Write-Host "ISO 21500 AI-Agent Framework Setup" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Minimum required Python version
-$MinPythonMajor = 3
-$MinPythonMinor = 10
+$RequiredPython = "3.12"
 
-# Function to compare version numbers
-function Test-PythonVersion {
-    param (
-        [string]$Version
-    )
-    
-    $parts = $Version.Split('.')
-    $major = [int]$parts[0]
-    $minor = [int]$parts[1]
-    
-    if ($major -gt $MinPythonMajor) {
-        return $true
-    }
-    elseif ($major -eq $MinPythonMajor -and $minor -ge $MinPythonMinor) {
-        return $true
-    }
-    else {
-        return $false
-    }
-}
-
-# Detect available Python versions
-Write-Host "🔍 Detecting available Python versions..." -ForegroundColor Yellow
+Write-Host "🔍 Detecting Python $RequiredPython..." -ForegroundColor Yellow
 Write-Host ""
-
-$pythonVersions = @()
-
-# Check for py launcher with specific versions (realistic range)
-$pyVersionsToCheck = @("3.10", "3.11", "3.12", "3.13", "3.14", "3.15")
-
-foreach ($ver in $pyVersionsToCheck) {
-    try {
-        $output = & py "-$ver" --version 2>&1 | Out-String
-        if ($LASTEXITCODE -eq 0) {
-            $fullVersion = ($output -replace 'Python ', '').Trim()
-            $shortVersion = ($fullVersion -split '\.')[0..1] -join '.'
-            
-            if (Test-PythonVersion $shortVersion) {
-                # Check if this version is not already in the list
-                $exists = $pythonVersions | Where-Object { $_.FullVersion -eq $fullVersion }
-                if (-not $exists) {
-                    $pythonVersions += [PSCustomObject]@{
-                        ShortVersion = $shortVersion
-                        FullVersion = $fullVersion
-                        Command = "py -$ver"
-                    }
-                }
-            }
-        }
-    }
-    catch {
-        # Version not available, continue
-    }
-}
-
-# Check for python command
 try {
-    $output = & python --version 2>&1 | Out-String
-    if ($LASTEXITCODE -eq 0) {
-        $fullVersion = ($output -replace 'Python ', '').Trim()
-        $shortVersion = ($fullVersion -split '\.')[0..1] -join '.'
-        $path = (Get-Command python).Source
-        
-        if (Test-PythonVersion $shortVersion) {
-            # Check if this version is not already in the list
-            $exists = $pythonVersions | Where-Object { $_.FullVersion -eq $fullVersion }
-            if (-not $exists) {
-                $pythonVersions += [PSCustomObject]@{
-                    ShortVersion = $shortVersion
-                    FullVersion = $fullVersion
-                    Command = "python"
-                }
-            }
-        }
-    }
-}
-catch {
-    # Python command not available
-}
-
-# Check for python3 command
-try {
-    $output = & python3 --version 2>&1 | Out-String
-    if ($LASTEXITCODE -eq 0) {
-        $fullVersion = ($output -replace 'Python ', '').Trim()
-        $shortVersion = ($fullVersion -split '\.')[0..1] -join '.'
-        
-        if (Test-PythonVersion $shortVersion) {
-            # Check if this version is not already in the list
-            $exists = $pythonVersions | Where-Object { $_.FullVersion -eq $fullVersion }
-            if (-not $exists) {
-                $pythonVersions += [PSCustomObject]@{
-                    ShortVersion = $shortVersion
-                    FullVersion = $fullVersion
-                    Command = "python3"
-                }
-            }
-        }
-    }
-}
-catch {
-    # Python3 command not available
-}
-
-# Remove duplicates based on FullVersion
-$pythonVersions = $pythonVersions | Sort-Object -Property FullVersion -Unique
-
-# Check if any compatible Python versions were found
-if ($pythonVersions.Count -eq 0) {
-    Write-Host "❌ Error: No compatible Python version found!" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "This project requires Python $MinPythonMajor.$MinPythonMinor or higher."
-    Write-Host ""
-    Write-Host "📥 Download Python from:" -ForegroundColor Yellow
-    Write-Host "  - https://www.python.org/downloads/"
-    Write-Host ""
-    Write-Host "Make sure to check 'Add Python to PATH' during installation."
-    Write-Host ""
+    $output = & py "-$RequiredPython" --version 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { throw "py launcher did not return a version" }
+} catch {
+    Write-Host "❌ Error: Python $RequiredPython is required but was not found via the Windows py launcher." -ForegroundColor Red
+    Write-Host "" 
+    Write-Host "Install Python $RequiredPython and ensure 'py' is available." -ForegroundColor Yellow
+    Write-Host "" 
     Read-Host "Press Enter to exit"
     exit 1
 }
 
-# Display found Python versions
-Write-Host "✅ Found $($pythonVersions.Count) compatible Python version(s):" -ForegroundColor Green
-Write-Host ""
-
-for ($i = 0; $i -lt $pythonVersions.Count; $i++) {
-    Write-Host "  [$($i + 1)] Python $($pythonVersions[$i].FullVersion)" -ForegroundColor White
-    Write-Host "      Command: $($pythonVersions[$i].Command)" -ForegroundColor Gray
-    Write-Host ""
+$fullVersion = ($output -replace 'Python ', '').Trim()
+$selectedPython = [PSCustomObject]@{
+    FullVersion = $fullVersion
+    Command = "py -$RequiredPython"
 }
-
-# Select Python version
-$selectedIndex = -1
-
-if ($pythonVersions.Count -eq 1) {
-    # Only one version found, ask for confirmation
-    Write-Host "Only one compatible version found: Python $($pythonVersions[0].FullVersion)"
-    $confirm = Read-Host "Use this version? [Y/n]"
-    if ([string]::IsNullOrWhiteSpace($confirm)) { $confirm = "Y" }
-    
-    if ($confirm -match '^[Yy]$') {
-        $selectedIndex = 0
-    }
-    else {
-        Write-Host "Setup cancelled." -ForegroundColor Yellow
-        exit 0
-    }
-}
-else {
-    # Multiple versions found, let user choose
-    $validSelection = $false
-    while (-not $validSelection) {
-        $selection = Read-Host "Select Python version [1-$($pythonVersions.Count)]"
-        
-        if ($selection -match '^\d+$') {
-            $selectionNum = [int]$selection
-            if ($selectionNum -ge 1 -and $selectionNum -le $pythonVersions.Count) {
-                $selectedIndex = $selectionNum - 1
-                $validSelection = $true
-            }
-            else {
-                Write-Host "Invalid selection. Please enter a number between 1 and $($pythonVersions.Count)." -ForegroundColor Red
-            }
-        }
-        else {
-            Write-Host "Invalid input. Please enter a number." -ForegroundColor Red
-        }
-    }
-}
-
-$selectedPython = $pythonVersions[$selectedIndex]
 
 Write-Host ""
 Write-Host "✅ Selected: Python $($selectedPython.FullVersion)" -ForegroundColor Green
