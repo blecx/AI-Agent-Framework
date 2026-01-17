@@ -85,8 +85,15 @@ jobs:
             const changed = files.map(f => f.filename);
             const backendTouched = changed.some(p => p.startsWith('apps/api/'));
             const testsTouched = changed.some(p => p.startsWith('tests/'));
-            if (backendTouched && !testsTouched) {
-              problems.push('Backend code changed under apps/api/ but no tests were updated/added under tests/.');
+
+            // Require test execution evidence for backend changes.
+            // We do NOT require modifying tests on every change (format-only, refactors, etc.),
+            // but we do require running tests and marking it in the PR.
+            const pytestEvidenceChecked = validationBoxes.some(l => /^- \[[xX]\].*pytest\b/i.test(l));
+            if (backendTouched && !testsTouched && !pytestEvidenceChecked) {
+              problems.push(
+                'Backend code changed under apps/api/ but no tests were changed; you must run tests and check the pytest item in Validation Evidence.'
+              );
             }
 
             if (problems.length) {
