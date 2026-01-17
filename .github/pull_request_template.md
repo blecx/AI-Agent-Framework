@@ -23,9 +23,10 @@
 Backend:
 
 - [ ] `./setup.sh && source .venv/bin/activate`
-- [ ] `python -m black apps/api/`
+- [ ] `./scripts/format_and_lint_backend.sh` (recommended)
+- [ ] `python -m black apps/api/ --check`
 - [ ] `python -m flake8 apps/api/`
-- [ ] `pytest`
+- [ ] `pytest -q`
 - [ ] `cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload`
 - [ ] `curl http://localhost:8000/health`
 

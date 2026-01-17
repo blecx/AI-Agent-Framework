@@ -84,6 +84,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The backend compose bind-mounts ./projectDocs; ensure it exists in the checked-out server repo.
+          mkdir -p server/projectDocs
           docker compose -f server/docker-compose.yml up -d --build api
 
       - name: Wait for API health
