@@ -2,7 +2,9 @@
 
 ## Overview
 
-The `./next-issue` command intelligently selects the next Step 1 issue to work on with a **two-phase workflow**:
+The `./next-issue` command implements **Phase 1-2** of the [complete issue resolution workflow](./WORK-ISSUE-WORKFLOW.md). It intelligently selects the next Step 1 issue to work on with a **two-phase workflow**:
+
+**Note:** This command focuses on **selection and setup only**. For the complete workflow including context analysis, planning, implementation, testing, review, and PR creation, see [WORK-ISSUE-WORKFLOW.md](./WORK-ISSUE-WORKFLOW.md).
 
 ### Phase 1: Reconciliation (GitHub as Source of Truth)
 
