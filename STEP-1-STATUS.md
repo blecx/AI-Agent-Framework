@@ -7,6 +7,7 @@
 
 - **[Implementation Workflow](STEP-1-IMPLEMENTATION-WORKFLOW.md)** - Strict protocol for working on issues
 - **[Implementation Tracking](STEP-1-IMPLEMENTATION-TRACKING.md)** - Live progress tracker (0/36 complete)
+- **[Next Issue Command](docs/NEXT-ISSUE-COMMAND.md)** - 🆕 Intelligent issue selector with learning
 - **[Hybrid Approach Update](STEP-1-HYBRID-APPROACH-UPDATE.md)** - Chat-first paradigm clarification
 - **[Update Summary](STEP-1-HYBRID-UPDATE-COMPLETE.md)** - Complete summary of changes
 - **[Checklist](STEP-1-HYBRID-CHECKLIST.md)** - Completion checklist
@@ -1010,20 +1011,36 @@ The issue is ONLY with the client implementation being misreported.
 **To begin Step 1 implementation:**
 
 ```bash
-# 1. Read the workflow
+# 1. Use the intelligent issue selector
+./next-issue
+
+# This will:
+# - Analyze all 36 issues
+# - Check dependency resolution
+# - Select highest priority ready issue
+# - Show full context and next steps
+# - Learn from past completions
+
+# 2. Read the workflow
 cat STEP-1-IMPLEMENTATION-WORKFLOW.md
 
-# 2. Read the tracking plan
+# 3. Read the tracking plan
 cat STEP-1-IMPLEMENTATION-TRACKING.md
 
-# 3. View first issue
-gh issue view 24 --repo blecx/AI-Agent-Framework-Client
+# 4. View selected issue on GitHub
+gh issue view <number> --repo blecx/AI-Agent-Framework-Client
 
-# 4. Start implementation
+# 5. Start implementation
 git checkout main && git pull origin main
-git checkout -b issue/24-api-service-layer
+git checkout -b issue/<number>-<description>
 
-# 5. Follow the 10-step protocol from STEP-1-IMPLEMENTATION-WORKFLOW.md
+# 6. Follow the 10-step protocol from STEP-1-IMPLEMENTATION-WORKFLOW.md
+
+# 7. After completing issue, record actual time
+./scripts/record-completion.py <number> <actual_hours> "notes"
+
+# 8. Select next issue
+./next-issue
 ```
 
 **Remember:** Follow the workflow strictly. No shortcuts. No parallel work. Copilot review mandatory.
