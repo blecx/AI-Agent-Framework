@@ -160,6 +160,8 @@ The command includes lessons learned from Issue #25 (routing infrastructure):
 - Phase commits enable clear progress tracking and easy rollback
 - Builds patterns for future estimates
 
+📖 **[Read Full Enhancement Story →](prmerge-enhancements-issue25.md)** - Detailed analysis of Issue #25 learnings and how they were built into the command
+
 ### 8. **Next Issue Suggestion**
 
 - Offers to run `./next-issue` automatically
