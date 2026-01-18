@@ -39,12 +39,18 @@ cd /home/sw/work/AI-Agent-Framework
 
 The `prmerge` command automates these steps:
 
-### 1. **Validate PR and CI Status**
+### 1. **Validate PR and CI Status** ✨ ENHANCED
 
 - Automatically finds PR associated with issue number
 - Verifies PR state (open, merged, closed)
 - Checks CI status (build, lint, tests, type check)
-- Fails fast if CI is failing
+- **NEW:** Validates PR description follows template requirements
+  - Checks for required sections (Summary, Acceptance Criteria, Validation, etc.)
+  - Verifies "Fixes: #N" line exists (where N is issue number)
+  - Ensures acceptance criteria checkboxes are checked
+  - Validates automated checks evidence is filled (inline format)
+  - Reports missing sections or warnings before merge
+- Fails fast if CI is failing or template validation fails
 - Displays PR details (number, title, branch, URL)
 
 ### 2. **Review PR**
@@ -112,6 +118,46 @@ The `prmerge` command automates these steps:
   - All data in JSON format
 - Updates `.issue-resolution-knowledge.json`
 - Tracks estimation accuracy
+
+### 8. **Verification and Summary** ✨ NEW
+
+- **Verifies PR merge status** - Confirms PR is in MERGED state
+- **Verifies issue closure** - Confirms issue is CLOSED with timestamp
+- **Verifies closing message** - Checks comprehensive message was posted
+- **Displays lessons learned** - Shows key insights from similar issues (e.g., Issue #25 pattern)
+- **Provides summary** with:
+  - Issue type and PR details
+  - Merge commit SHA
+  - Files changed statistics
+  - Complexity and CI iteration metrics
+  - Completion recording status
+- **Suggests next steps** - Offers to run `./next-issue` automatically
+
+## Lessons Learned (Built-in Knowledge)
+
+The command includes lessons learned from Issue #25 (routing infrastructure):
+
+### PR Template Lessons
+
+- **Evidence format matters**: Use inline summaries, not code blocks
+- **CI validation is strict**: All checkboxes must be checked, no placeholders allowed
+- **Fix PR description BEFORE pushing**: Avoids multiple CI re-runs
+
+### Process Improvements
+
+- Always create `docs/issues/issue-N-context.md` planning document in Phase 2
+- Never remove existing features without explicit user confirmation
+- Verify everything with actual command output (never assume success)
+- Build frequently during development, not just at the end
+- Self-review (Step 7) is MANDATORY - catches critical mistakes
+
+### What Works Well
+
+- Detailed planning documents save 1-2 hours implementation time
+- Test-first approach catches issues early
+- Self-review catches critical mistakes before user review
+- Copilot review improves UX beyond functional correctness
+- Phase commits enable clear progress tracking and easy rollback
 - Builds patterns for future estimates
 
 ### 8. **Next Issue Suggestion**

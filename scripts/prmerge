@@ -128,6 +128,79 @@ EOF
     echo "complexity=$complexity,commits=$commits,test_ratio=$test_ratio,ci_iterations=$ci_iterations"
 }
 
+# Validate PR description follows template
+validate_pr_template() {
+    local pr_body="$1"
+    local pr_number="$2"
+    
+    info "Validating PR description format..."
+    
+    local required_sections=(
+        "# Summary"
+        "## Goal / Acceptance Criteria (required)"
+        "## Issue / Tracking Link (required)"
+        "## Validation (required)"
+        "## Automated checks"
+        "## Manual test evidence (required)"
+    )
+    
+    local missing_sections=()
+    local warnings=()
+    
+    # Check for required sections
+    for section in "${required_sections[@]}"; do
+        if ! echo "$pr_body" | grep -q "$section"; then
+            missing_sections+=("$section")
+        fi
+    done
+    
+    # Check if Fixes: line exists
+    if ! echo "$pr_body" | grep -Eq "^Fixes: #[0-9]+"; then
+        warnings+=("Missing 'Fixes: #<issue>' line")
+    fi
+    
+    # Check if acceptance criteria have checkboxes
+    local ac_section=$(echo "$pr_body" | sed -n '/## Goal \/ Acceptance Criteria/,/##/p')
+    if [ -n "$ac_section" ]; then
+        if ! echo "$ac_section" | grep -q "\[x\]\|\[X\]"; then
+            warnings+=("Acceptance criteria checkboxes not checked")
+        fi
+    fi
+    
+    # Check if automated checks are filled
+    if echo "$pr_body" | grep -q "## Automated checks"; then
+        local auto_section=$(echo "$pr_body" | sed -n '/## Automated checks/,/## Manual test/p')
+        if echo "$auto_section" | grep -Eq "Evidence.*:$|Evidence.*: *$"; then
+            warnings+=("Automated checks evidence appears empty (inline format required)")
+        fi
+    fi
+    
+    # Report results
+    if [ ${#missing_sections[@]} -gt 0 ]; then
+        error "PR template validation FAILED - Missing required sections:"
+        for section in "${missing_sections[@]}"; do
+            echo "  ❌ $section"
+        done
+        return 1
+    fi
+    
+    if [ ${#warnings[@]} -gt 0 ]; then
+        warning "PR template validation WARNINGS:"
+        for warn in "${warnings[@]}"; do
+            echo "  ⚠️  $warn"
+        done
+        echo ""
+        read -p "Continue despite warnings? (y/N): " continue_despite_warnings
+        if [[ ! "$continue_despite_warnings" =~ ^[Yy]$ ]]; then
+            info "Merge cancelled. Please fix PR description and re-run prmerge."
+            return 1
+        fi
+    fi
+    
+    success "PR template validation passed"
+    return 0
+}
+
 # Generate infrastructure template
 generate_infrastructure_template() {
     local pr_number="$1"
@@ -487,6 +560,15 @@ else
         fi
     fi
     
+    # Validate PR template
+    info "Validating PR description format..."
+    PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body')
+    if ! validate_pr_template "$PR_BODY" "$PR_NUMBER"; then
+        error "PR template validation failed. Please fix the PR description."
+        warning "PR URL: $PR_URL"
+        exit 1
+    fi
+    
     section "Step 2: Review PR"
     
     info "Opening PR in browser for review..."
@@ -707,7 +789,43 @@ else
     info "To record later: ./scripts/record-completion.py $ISSUE_NUMBER <hours> '<notes>'"
 fi
 
-section "Step 7: Summary and Next Steps"
+section "Step 7: Verification and Summary"
+
+# Verify PR is merged
+info "Verifying PR merge status..."
+FINAL_PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
+if [ "$FINAL_PR_STATE" != "MERGED" ]; then
+    error "PR #$PR_NUMBER is not in MERGED state (current: $FINAL_PR_STATE)"
+    exit 1
+fi
+success "✓ PR #$PR_NUMBER is MERGED"
+
+# Verify issue is closed
+info "Verifying issue closure..."
+FINAL_ISSUE_STATE=$(gh issue view "$ISSUE_NUMBER" --json state,closedAt --jq '.state')
+ISSUE_CLOSED_AT=$(gh issue view "$ISSUE_NUMBER" --json closedAt --jq '.closedAt')
+if [ "$FINAL_ISSUE_STATE" != "CLOSED" ]; then
+    error "Issue #$ISSUE_NUMBER is not CLOSED (current: $FINAL_ISSUE_STATE)"
+    exit 1
+fi
+success "✓ Issue #$ISSUE_NUMBER is CLOSED (at $ISSUE_CLOSED_AT)"
+
+# Verify issue has closing comment
+info "Verifying issue closing message..."
+ISSUE_COMMENTS=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments | length')
+if [ "$ISSUE_COMMENTS" -eq 0 ]; then
+    warning "Issue has no comments (closing message may be missing)"
+else
+    LAST_COMMENT=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments[-1].body')
+    if echo "$LAST_COMMENT" | grep -q "COMPLETE\|PR #$PR_NUMBER"; then
+        success "✓ Comprehensive closing message posted"
+    else
+        warning "Last comment may not be the closing message"
+    fi
+fi
+
+success "All verifications passed!"
+echo ""
 
 success "PR Merge Workflow Complete!"
 echo ""
@@ -723,6 +841,32 @@ if [ -n "$ACTUAL_HOURS" ]; then
     echo "  - Completion recorded: $ACTUAL_HOURS hours with enhanced metrics"
 fi
 echo ""
+
+# Display lessons learned from Issue #25 (if applicable)
+if [ "$ISSUE_NUMBER" = "25" ] || [ "$ISSUE_TYPE" = "infrastructure" ]; then
+    section "Lessons Learned (Issue #25 Pattern)"
+    echo "Key insights from routing infrastructure implementation:"
+    echo ""
+    echo "What worked well:"
+    echo "  ✅ Detailed planning document saved 1-2 hours implementation time"
+    echo "  ✅ Test-first approach caught issues early (12 tests written alongside code)"
+    echo "  ✅ Self-review caught critical mistakes before user review (MANDATORY gate)"
+    echo "  ✅ Copilot review improved UX (layout consistency fixes)"
+    echo "  ✅ Phase commits enabled clear progress tracking and easy rollback"
+    echo ""
+    echo "PR template lessons:"
+    echo "  ⚠️  Evidence format matters: Inline summaries required, not code blocks"
+    echo "  ⚠️  CI validation strict: All checkboxes must be checked, no placeholders"
+    echo "  ⚠️  Fix PR description BEFORE push to avoid CI re-runs"
+    echo ""
+    echo "Process improvements:"
+    echo "  📝 Always create docs/issues/issue-N-context.md in Phase 2"
+    echo "  📝 Never remove existing features without user confirmation"
+    echo "  📝 Verify everything with actual command output (no assumptions)"
+    echo "  📝 Build frequently during development, not just at end"
+    echo ""
+fi
+
 echo "Next steps:"
 echo "  1. Run './next-issue' to select next issue"
 echo "  2. Review unblocked dependencies"
