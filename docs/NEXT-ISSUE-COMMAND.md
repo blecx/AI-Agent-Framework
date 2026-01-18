@@ -23,6 +23,17 @@ The `./next-issue` command implements **Phase 1-2** of the [complete issue resol
 
 **Important:** GitHub is the single source of truth. Local tracking files are updated to match GitHub, never the other way around.
 
+### Workflow Principles
+
+When working through the complete workflow (Phases 3-6), follow these critical principles:
+
+- **No hallucinations:** Verify everything with actual command output - never assume tests pass or builds succeed
+- **Get approval for decisions:** Architecture and feature decisions require explicit user approval before proceeding
+- **Complete all phases:** Work through entire 6-phase workflow - don't stop prematurely
+- **Mandatory reviews:** Self-review (Step 7) and Copilot review are MANDATORY - never skip
+- **Evidence-based verification:** All acceptance criteria must have actual evidence, not assumptions
+- **Preserve existing features:** Never remove mature functionality without explicit user confirmation
+
 ## Installation
 
 The command is already installed in the repository root. No setup needed.
@@ -99,9 +110,35 @@ NEXT ISSUE RECOMMENDATION
 🚀 Next Steps:
    1. Read the full issue on GitHub
    2. Create feature branch
-   3. Follow 10-step protocol
+   3. Follow Phase 2: Context & Planning (create detailed planning document)
+   4. Continue through Phases 3-6 (see WORK-ISSUE-WORKFLOW.md)
 ================================================================================
 ```
+
+### After Selection: Phase 2 - Context & Planning
+
+Once an issue is selected, immediately proceed to Phase 2:
+
+1. **Read Full Issue from GitHub**
+
+   ```bash
+   gh issue view <number> --repo <repo> --json body,title,labels,comments
+   ```
+
+2. **Create Planning Document** (`docs/issues/issue-<number>-context.md`)
+   - Current state analysis
+   - Required changes
+   - Technical approach (GET USER APPROVAL for architecture decisions)
+   - Step-by-step implementation plan (10+ specific steps)
+   - Estimated time breakdown
+
+3. **Key Success Factor:** The planning document saves 1-2 hours of implementation time by:
+   - Reducing decision fatigue
+   - Providing clear path from start to finish
+   - Identifying dependencies and risks early
+   - Creating checkpoints for progress tracking
+
+**From Issue #25 Learning:** Creating a detailed planning document was the highest ROI activity - 30-45 minutes of planning saved significant implementation time.
 
 ### Verbose Mode
 
@@ -154,11 +191,19 @@ The command uses a JSON knowledge base (`.issue-resolution-knowledge.json`) that
   "common_blockers": ["API integration issues", "Test setup complexity"],
   "success_factors": [
     "Clear acceptance criteria defined upfront",
-    "Thorough self-review before user review (Step 7)"
+    "Thorough self-review before user review (Step 7)",
+    "Detailed planning document (docs/issues/issue-N-context.md) reduces implementation time",
+    "Test-first approach prevents regressions and provides immediate feedback",
+    "Phase commits enable clear progress tracking and easy rollback",
+    "Copilot review catches UX issues beyond functional correctness"
   ],
   "risk_factors": [
     "Skipping Copilot self-review (Step 7)",
-    "Starting work before blockers merged"
+    "Starting work before blockers merged",
+    "Removing existing features without user confirmation (always verify first)",
+    "Assuming tests pass without actually running them",
+    "Making architecture decisions without explicit user approval",
+    "Stopping before completing all 6 phases of workflow"
   ]
 }
 ```
@@ -359,6 +404,28 @@ cd /home/sw/work/AI-Agent-Framework
 3. **Review insights** - Pay attention to historical patterns and success factors
 4. **Follow recommendations** - The adjusted estimates are based on real data
 5. **Update tracking plan** - Keep `STEP-1-IMPLEMENTATION-TRACKING.md` current
+6. **Create planning documents** - Always create `docs/issues/issue-N-context.md` in Phase 2
+7. **Never skip reviews** - Self-review and Copilot review are MANDATORY gates
+8. **Verify everything** - Run actual commands, capture output, don't assume success
+9. **Get approval for decisions** - Architecture and feature changes need user approval
+10. **Complete all phases** - Don't stop until all 6 phases are finished and PR is created
+
+### Real Example: Issue #25
+
+**What worked:**
+
+- Created detailed planning document → saved 1-2 hours implementation time
+- Test-first approach → 12 tests caught issues early
+- Self-review → caught critical chat removal issue before user review
+- Copilot review → identified layout inconsistency improving UX
+- Phase commits → clear progress, easy rollback
+
+**Lessons learned:**
+
+- Never remove existing features without confirmation (chat was mature, not demo)
+- Planning time (30-45 min) pays off significantly in implementation
+- Self-review (Step 7) is truly MANDATORY - catches critical mistakes
+- Actual: 3.5 hours vs estimated 4.0 hours (-12.5%) thanks to good planning
 
 ## Future Enhancements
 
