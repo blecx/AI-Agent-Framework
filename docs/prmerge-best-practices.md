@@ -713,18 +713,30 @@ But still maintains:
 
 ## Implementation Priority
 
-### Phase 1: High Priority (Implement Now) 🟢
+### Phase 1: High Priority (Implement Now) 🟢 ✅ COMPLETE
 
-1. **Issue Type Templates** (1-2 hours)
-   - Add template detection logic
-   - Create 4 templates (infrastructure, feature, bugfix, docs)
-   - Test with historical issues
+**Status:** ✅ **IMPLEMENTED** (2026-01-18)
+**Commit:** f1f9090
 
-2. **Enhanced Metrics** (2-3 hours)
-   - Capture PR complexity from GitHub API
-   - Add CI iteration counting
-   - Optional blocker prompts
-   - Store in knowledge JSON
+1. **Issue Type Templates** (1-2 hours) ✅ DONE
+   - ✅ Add template detection logic
+   - ✅ Create 4 templates (infrastructure, feature, bugfix, docs)
+   - ✅ Test with historical issues
+
+2. **Enhanced Metrics** (2-3 hours) ✅ DONE
+   - ✅ Capture PR complexity from GitHub API
+   - ✅ Add CI iteration counting
+   - ✅ Optional blocker prompts
+   - ✅ Store in knowledge JSON
+
+**Implementation Details:**
+
+- `detect_issue_type()` - Auto-detects based on title/files
+- `capture_pr_metrics()` - Extracts metrics from GitHub API
+- 4 template functions: infrastructure, feature, bugfix, docs
+- Enhanced Step 4: Type detection + metrics capture
+- Enhanced Step 6: Optional learning prompts + metrics storage
+- Enhanced Step 7: Summary includes type, complexity, CI iterations
 
 ### Phase 2: Medium Priority (Implement Soon) 🟡
 
@@ -783,28 +795,28 @@ But still maintains:
 
 ## Success Criteria
 
-✅ **Issue Type Templates:**
+✅ **Issue Type Templates:** ✅ IMPLEMENTED (Phase 1)
 
-- [ ] 4 templates implemented
-- [ ] Auto-detection works for 90%+ of issues
-- [ ] Fallback to generic template works
-- [ ] Closing messages are clearer and more relevant
+- [x] 4 templates implemented
+- [x] Auto-detection works for 90%+ of issues
+- [x] Fallback to generic template works
+- [x] Closing messages are clearer and more relevant
 
-✅ **Enhanced Metrics:**
+✅ **Enhanced Metrics:** ✅ IMPLEMENTED (Phase 1)
 
-- [ ] All metrics auto-captured from GitHub API
-- [ ] Optional prompts don't slow workflow
-- [ ] Knowledge JSON properly updated
-- [ ] Metrics usable for future estimates
+- [x] All metrics auto-captured from GitHub API
+- [x] Optional prompts don't slow workflow
+- [x] Knowledge JSON properly updated
+- [x] Metrics usable for future estimates
 
-✅ **API Protection Toggle:**
+⏳ **API Protection Toggle:** (Phase 2 - Not yet implemented)
 
 - [ ] Protection safely disabled/re-enabled
 - [ ] No cases of forgotten re-enable
 - [ ] Audit log tracks all changes
 - [ ] Works with trap on exit/error
 
-✅ **Documentation:**
+📖 **Documentation:** (Phase 3 - Pending)
 
 - [ ] Rollback guide is comprehensive
 - [ ] Procedures tested and verified
@@ -815,14 +827,18 @@ But still maintains:
 
 ## Conclusion
 
-**Implement:**
+**✅ IMPLEMENTED (2026-01-18):**
 
-1. ✅ Issue Type Templates - High value, low risk
-2. ✅ Enhanced Metrics - Improves learning system
+1. ✅ Issue Type Templates - High value, low risk - **DONE**
+2. ✅ Enhanced Metrics - Improves learning system - **DONE**
+
+**⏳ PENDING:**
+
 3. ⚠️ API Protection Toggle - With safeguards only
+4. 📖 Rollback Procedures - Don't automate
 
-**Document:** 4. 📖 Rollback Procedures - Don't automate
+**❌ REJECTED:**
 
-**Skip:** 5. ❌ Batch Merge - Against project principles
+5. ❌ Batch Merge - Against project principles
 
-These enhancements will make `prmerge` more intelligent, safer, and more valuable for the project's learning-driven development approach.
+Phase 1 complete! These enhancements make `prmerge` more intelligent, with better closing messages and comprehensive metrics for the learning system.
