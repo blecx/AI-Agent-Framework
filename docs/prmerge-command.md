@@ -1,0 +1,556 @@
+# PR Merge Workflow Command
+
+## Overview
+
+`prmerge` is a comprehensive command-line tool that automates the entire PR merge workflow, from validation to issue closure and learning system recording.
+
+## Location
+
+```
+scripts/prmerge
+```
+
+## Usage
+
+```bash
+prmerge <issue_number> [<actual_hours>]
+```
+
+### Arguments
+
+- `issue_number` (required): The issue number to merge and close (e.g., 24, 25, 30)
+- `actual_hours` (optional): Actual hours spent on the issue for learning system
+
+### Examples
+
+```bash
+# Basic usage - merge PR and close issue
+prmerge 24
+
+# With completion time tracking
+prmerge 24 7.5
+
+# From any directory (uses absolute paths)
+cd /home/sw/work/AI-Agent-Framework
+./scripts/prmerge 25 6.0
+```
+
+## Workflow Steps
+
+The `prmerge` command automates these steps:
+
+### 1. **Validate PR and CI Status**
+
+- Automatically finds PR associated with issue number
+- Verifies PR state (open, merged, closed)
+- Checks CI status (build, lint, tests, type check)
+- Fails fast if CI is failing
+- Displays PR details (number, title, branch, URL)
+
+### 2. **Review PR**
+
+- Opens PR in browser for visual review
+- Prompts user to confirm review completion
+- Validates acceptance criteria are met
+- Ensures code quality standards
+- Checks documentation completeness
+
+### 3. **Handle Branch Protection**
+
+- Detects branch protection blocks
+- Offers three resolution strategies:
+  - **Option A:** Manual approval via GitHub UI
+  - **Option B:** Temporarily disable branch protection
+  - **Option C:** Manual git merge (bypass PR)
+- Guides user through chosen option
+
+### 4. **Merge PR**
+
+- Attempts squash merge with branch deletion
+- Falls back to `--admin` flag if needed
+- Captures merge commit SHA
+- Verifies merge success
+- Handles merge conflicts gracefully
+
+### 5. **Generate Issue Closing Message**
+
+- Extracts PR details (files, additions, deletions)
+- Parses acceptance criteria from PR body
+- Creates comprehensive closing message with:
+  - Merge commit reference
+  - Implementation summary
+  - Acceptance criteria checklist
+  - Deliverables statistics
+  - CI validation results
+  - Next steps guidance
+
+### 6. **Close Issue**
+
+- Verifies issue exists and is open
+- Posts comprehensive closing message
+- Links to PR and commit
+- Marks issue as completed
+
+### 7. **Record Completion (Optional)**
+
+- Records actual hours in learning system
+- Updates `.issue-resolution-knowledge.json`
+- Tracks estimation accuracy
+- Builds patterns for future estimates
+
+### 8. **Next Issue Suggestion**
+
+- Offers to run `./next-issue` automatically
+- Selects next issue based on:
+  - Unblocked dependencies
+  - Priority and phase
+  - Historical patterns
+  - Learning system recommendations
+
+## Features
+
+### 🔍 **Smart PR Detection**
+
+- Searches by issue number in PR title
+- Falls back to manual PR number input if needed
+- Handles multiple search patterns
+
+### ✅ **CI Validation**
+
+- Checks all status checks
+- Identifies failing checks
+- Prevents merge if CI fails
+- Clear error messages with fix guidance
+
+### 🔒 **Branch Protection Handling**
+
+- Detects protection blocks
+- Offers multiple resolution strategies
+- Guides manual steps when needed
+- Supports admin override
+
+### 📝 **Comprehensive Documentation**
+
+- Generates detailed closing messages
+- Extracts data from PR body
+- Links commits, PRs, and issues
+- Records completion for learning
+
+### 🎯 **Error Recovery**
+
+- Graceful failure handling
+- Clear error messages
+- Suggests corrective actions
+- Preserves state on failure
+
+### 🚀 **Learning Integration**
+
+- Records completion times
+- Tracks estimation accuracy
+- Builds knowledge base
+- Improves future estimates
+
+## Output Example
+
+```
+=========================================
+Step 1: Validate PR and CI Status
+=========================================
+
+ℹ Finding PR for Issue #24...
+✅ Found PR #60
+
+ℹ Checking PR status...
+
+PR Details:
+  Number: #60
+  Title: [Issue #24] API Service Layer Infrastructure
+  State: OPEN
+  Branch: issue/24-api-service-layer
+  URL: https://github.com/blecx/AI-Agent-Framework-Client/pull/60
+
+ℹ Checking CI status...
+✅ All CI checks passing
+
+=========================================
+Step 2: Review PR
+=========================================
+
+ℹ Opening PR in browser for review...
+
+Please review the PR:
+  - Check code quality and architecture
+  - Verify tests are comprehensive
+  - Ensure documentation is complete
+  - Validate acceptance criteria are met
+
+Has the PR been reviewed and approved? (y/N): y
+
+=========================================
+Step 3: Merge PR
+=========================================
+
+ℹ Attempting to merge PR #60...
+✅ PR merged successfully!
+✅ Merge commit: 532e5a6
+
+=========================================
+Step 4: Generate Issue Closing Message
+=========================================
+
+ℹ Analyzing PR changes...
+ℹ Generated closing message
+
+=========================================
+Step 5: Close Issue
+=========================================
+
+ℹ Closing Issue #24...
+✅ Issue #24 closed with comprehensive message
+
+=========================================
+Step 6: Record Completion
+=========================================
+
+ℹ Recording completion time: 7.5 hours
+✅ Completion recorded in learning system
+
+=========================================
+Step 7: Summary and Next Steps
+=========================================
+
+✅ PR Merge Workflow Complete!
+
+Summary:
+  - PR #60 merged: https://github.com/blecx/AI-Agent-Framework-Client/pull/60
+  - Merge commit: 532e5a6
+  - Issue #24 closed
+  - Completion recorded: 7.5 hours
+
+Next steps:
+  1. Run './next-issue' to select next issue
+  2. Review unblocked dependencies
+  3. Continue Step 1 implementation
+
+Run './next-issue' now? (Y/n):
+```
+
+## Error Handling
+
+### CI Failures
+
+```
+❌ CI checks are failing! Cannot merge.
+
+Failed checks:
+  - Build: FAILURE
+  - Tests: FAILURE
+
+⚠️  Please fix CI failures before merging
+⚠️  PR URL: https://github.com/blecx/AI-Agent-Framework-Client/pull/60
+```
+
+### PR Not Found
+
+```
+❌ No PR found for Issue #24
+ℹ Attempting alternate search pattern...
+❌ Could not find PR. Please specify PR number manually:
+Enter PR number:
+```
+
+### Branch Protection Block
+
+```
+⚠️  PR is blocked by branch protection
+
+Options to unblock:
+  A) Approve via GitHub UI: https://github.com/...
+  B) Temporarily disable branch protection
+  C) Manual git merge (bypass GitHub PR)
+
+Which option? (A/B/C):
+```
+
+### Merge Failure
+
+```
+❌ Merge failed even with admin flag
+❌ Please merge manually at: https://github.com/...
+```
+
+## Prerequisites
+
+### Required Tools
+
+- **git** - Version control
+- **gh** (GitHub CLI) - PR and issue management
+- **jq** - JSON processing
+- **bash** 4.0+ - Script execution
+
+### Authentication
+
+Ensure GitHub CLI is authenticated:
+
+```bash
+gh auth login
+gh auth status
+```
+
+### Repository Structure
+
+Expected structure:
+
+```
+AI-Agent-Framework/
+├── scripts/
+│   ├── prmerge                    # This script
+│   ├── record-completion.py       # Completion tracking
+│   └── next-issue.py             # Issue selection
+├── _external/
+│   └── AI-Agent-Framework-Client/ # Client repository
+└── .issue-resolution-knowledge.json  # Learning data
+```
+
+## Integration with Other Scripts
+
+### `record-completion.py`
+
+Records completion data for learning:
+
+```bash
+./scripts/record-completion.py <issue> <hours> "<notes>"
+```
+
+Called automatically by `prmerge` if hours provided.
+
+### `next-issue.py`
+
+Selects next issue based on dependencies and learning:
+
+```bash
+./scripts/next-issue.py [--verbose] [--dry-run]
+```
+
+Offered automatically after `prmerge` completes.
+
+## Configuration
+
+### Environment Variables
+
+- `GITHUB_TOKEN` - GitHub API authentication (optional if gh authenticated)
+- `VISUAL` / `EDITOR` - Editor for manual edits (optional)
+
+### Color Output
+
+Disable colors if terminal doesn't support:
+
+```bash
+NO_COLOR=1 prmerge 24
+```
+
+## Troubleshooting
+
+### Permission Denied
+
+```bash
+chmod +x /home/sw/work/AI-Agent-Framework/scripts/prmerge
+```
+
+### GitHub CLI Not Installed
+
+```bash
+# Ubuntu/Debian
+sudo apt install gh
+
+# macOS
+brew install gh
+
+# Windows
+winget install --id GitHub.cli
+```
+
+### jq Not Installed
+
+```bash
+# Ubuntu/Debian
+sudo apt install jq
+
+# macOS
+brew install jq
+
+# Windows
+winget install jqlang.jq
+```
+
+### Branch Protection Cannot Disable
+
+If you can't disable branch protection:
+
+1. Use Option C (manual git merge)
+2. Or have another user with admin access approve
+3. Or temporarily add exception for your user
+
+### Merge Conflicts
+
+If merge has conflicts:
+
+1. Script will abort
+2. Manually resolve conflicts:
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge origin/issue/24-api-service-layer
+   # Resolve conflicts in editor
+   git add .
+   git commit
+   git push origin main
+   ```
+3. Run `prmerge` again (will detect already merged)
+
+## Best Practices
+
+### 1. Always Run CI First
+
+Ensure CI passes before running prmerge:
+
+```bash
+gh pr checks <pr_number> --watch
+```
+
+### 2. Review Before Merging
+
+Don't skip the review step. Check:
+
+- Code quality and architecture
+- Test coverage and quality
+- Documentation completeness
+- Security considerations
+- Breaking changes
+
+### 3. Track Actual Hours
+
+Always provide actual hours for learning:
+
+```bash
+prmerge 24 7.5  # Better than: prmerge 24
+```
+
+### 4. Run from Repository Root
+
+While script works from any directory, running from root is clearer:
+
+```bash
+cd /home/sw/work/AI-Agent-Framework
+./scripts/prmerge 24 7.5
+```
+
+### 5. Check Dependencies After
+
+After closing an issue, check what was unblocked:
+
+```bash
+./scripts/next-issue.py --verbose
+```
+
+## Advanced Usage
+
+### Dry Run (Feature Request)
+
+To see what would happen without merging:
+
+```bash
+# Not yet implemented - future enhancement
+prmerge 24 --dry-run
+```
+
+### Custom Closing Message (Feature Request)
+
+To use custom closing message:
+
+```bash
+# Not yet implemented - future enhancement
+prmerge 24 --message-file closing-message.md
+```
+
+### Batch Merge (Feature Request)
+
+To merge multiple PRs in sequence:
+
+```bash
+# Not yet implemented - future enhancement
+prmerge 24 25 26 --batch
+```
+
+## Related Documentation
+
+- [GitHub CLI Manual](https://cli.github.com/manual/)
+- [Issue Tracking System](../STEP-1-IMPLEMENTATION-TRACKING.md)
+- [Learning System](./record-completion.py)
+- [Issue Selection](./next-issue.py)
+- [Development Workflow](../docs/development.md)
+
+## Changelog
+
+### Version 1.0.0 (2026-01-18)
+
+Initial release with features:
+
+- Automatic PR detection
+- CI validation
+- Branch protection handling
+- Comprehensive closing messages
+- Learning system integration
+- Next issue suggestion
+
+## Contributing
+
+To improve this script:
+
+1. Test your changes thoroughly
+2. Update this documentation
+3. Add error handling for new cases
+4. Maintain backward compatibility
+5. Follow bash best practices
+
+## Questions to Consider
+
+Before implementing, please confirm:
+
+1. **Issue Closing Message Template**
+   - Is the current format comprehensive enough?
+   - Should we extract more data from the PR?
+   - Need different templates for different issue types?
+
+2. **Error Handling**
+   - Are there edge cases I missed?
+   - Should we support rollback on failure?
+   - Need better recovery strategies?
+
+3. **Learning Integration**
+   - Should we capture more metrics?
+   - Need to track different data points?
+   - How to handle estimation outliers?
+
+4. **Branch Protection**
+   - Are the three options sufficient?
+   - Should we automate approval differently?
+   - Need API-based protection disable/enable?
+
+5. **CI Validation**
+   - Should we wait for pending checks?
+   - Need configurable failure tolerance?
+   - Support for required vs optional checks?
+
+6. **Multi-Repository**
+   - Should this work for both repos?
+   - Need different workflow for backend vs client?
+   - How to handle cross-repo dependencies?
+
+Please review and provide feedback on:
+
+- Missing features
+- Edge cases not handled
+- Better error messages
+- Workflow improvements
+- Documentation clarity
