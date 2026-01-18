@@ -28,6 +28,9 @@ Phase 6: CI & PR (local CI + PR creation + record)
 - All quality gates from Issue #24 apply
 - Step 7 (Copilot review) is MANDATORY - never skip
 - Iterative improvement: update this workflow with learnings
+- **No hallucinations:** Verify everything, don't make things up or assume completion
+- **Get approval for decisions:** Architecture and feature decisions require user approval
+- **Complete all phases:** Work through entire workflow, don't stop prematurely
 
 ## Phase 1: Selection & Setup
 
@@ -130,7 +133,7 @@ git checkout -b issue/<number>-<description>
    ## Technical Approach
 
    - Strategy overview
-   - Key decisions
+   - Key decisions (if architecture/feature decisions needed, GET USER APPROVAL before proceeding)
    - Potential risks
    ```
 
@@ -255,6 +258,8 @@ git checkout -b issue/<number>-<description>
 
 **Goal:** Verify code quality and acceptance criteria
 
+**Important:** Do not assume tests pass or quality checks succeed. Run all checks and verify actual output.
+
 **Quality Gates from Issue #24:**
 
 1. **Linting**
@@ -310,10 +315,12 @@ git checkout -b issue/<number>-<description>
    Must build without errors.
 
 5. **Acceptance Criteria Check**
-   Manually verify each criterion:
-   - [ ] Criterion 1: Verified how?
-   - [ ] Criterion 2: Verified how?
-   - [ ] Criterion 3: Verified how?
+   Manually verify each criterion from the issue:
+   - [ ] Criterion 1: Verified how? (provide actual evidence, not assumptions)
+   - [ ] Criterion 2: Verified how? (provide actual evidence, not assumptions)
+   - [ ] Criterion 3: Verified how? (provide actual evidence, not assumptions)
+
+   **Do not mark criteria as verified without actual testing.**
 
 6. **Fix Issues Found**
    If any quality checks fail:
@@ -346,8 +353,8 @@ git checkout -b issue/<number>-<description>
 
 **Output:**
 
-- All quality gates passed
-- All acceptance criteria verified
+- All quality gates passed (verified with actual command output, not assumed)
+- All acceptance criteria verified (with evidence)
 - Fixes committed
 - Ready for Phase 5
 
@@ -390,7 +397,7 @@ git checkout -b issue/<number>-<description>
    Please review the changes for Issue #<number>: <Title>
 
    Focus areas:
-   - Architecture and design decisions
+   - Architecture and design decisions (if any were made, verify user approval was obtained)
    - Test coverage
    - Edge cases
    - Documentation completeness
@@ -448,9 +455,9 @@ git checkout -b issue/<number>-<description>
 
 **Output:**
 
-- Self-review completed
-- Copilot review completed
-- All feedback addressed
+- Self-review completed (MANDATORY - never skipped)
+- Copilot review completed (MANDATORY - never skipped)
+- All feedback addressed (verified, not assumed)
 - Code review-ready
 - Ready for Phase 6
 
@@ -608,11 +615,18 @@ git checkout -b issue/<number>-<description>
 
 **Output:**
 
-- PR created
-- Completion recorded
+- PR created (verified, not assumed)
+- Completion recorded (verified in knowledge base)
 - Summary generated
-- Issue workflow complete
+- Issue workflow complete (all 6 phases finished)
 - Ready for next issue
+
+**IMPORTANT:** Do not stop before completing all phases. The workflow is complete only when:
+
+- All 6 phases are finished
+- PR is created
+- Completion is recorded
+- Workflow documentation is updated with learnings
 
 ## Checkpoints & Resume
 
