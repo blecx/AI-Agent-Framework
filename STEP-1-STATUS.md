@@ -455,6 +455,260 @@ See **STEP-2-PLANNING.md** for:
 
 ## ⚠️ TODO: Step 1 Items Needing Rework
 
+### 🎯 Project Goals Alignment Analysis
+
+#### Core Project Vision (from PLAN.md and README.md)
+
+**AI-Agent-Framework is designed to be:**
+
+> "An ISO 21500 Project Management AI Agent System" that provides "intelligent project management following ISO 21500 standards."
+
+**Core Principles:**
+
+1. **Artifact-first**: Work is driven by the creation and evolution of explicit project artifacts
+2. **Thin-slice delivery**: Every step delivers a minimal, end-to-end usable slice
+3. **Blueprint-driven**: Blueprints declare what artifacts exist, required fields, and relationships
+4. **AI-assisted, human-controlled**: AI drafts; humans approve and merge
+5. **Testable workflow**: Every workflow capability must be covered by functional tests
+
+**ISO 21500 Workflow Spine:**
+
+- Projects follow deterministic workflow states: Initiating → Planning → Executing → Monitoring → Closing → Closed
+- All significant actions are logged as audit events in NDJSON format
+- RAID register (Risks, Assumptions, Issues, Dependencies) is a core artifact
+
+#### Step 1 Purpose (from PLAN.md)
+
+> "**Step 1 is explicitly defined as a thin, end-to-end slice** that produces two core artifacts: **PMP (Project Management Plan)** and **RAID (Risks, Assumptions, Issues, Dependencies)**."
+
+**Intended Step 1 Outcomes:**
+
+- Creating/selecting a project
+- Generating PMP and RAID artifacts from templates/blueprints
+- Editing artifacts in a WebUI (and optionally via TUI)
+- Proposing AI-assisted changes (proposal) and applying accepted proposals
+- Running an audit that validates required fields and cross-artifact references
+
+#### ⚠️ CRITICAL MISALIGNMENT DISCOVERED
+
+**The actual step-1.yml requirements DO NOT MATCH PLAN.md's stated Step 1 goals!**
+
+| PLAN.md Goal                                                  | step-1.yml Reality                                    | Alignment   |
+| ------------------------------------------------------------- | ----------------------------------------------------- | ----------- |
+| "Generating PMP and RAID artifacts from templates/blueprints" | NOT in step-1.yml (this is Step 2)                    | ❌ MISMATCH |
+| "Editing artifacts in a WebUI"                                | NOT in step-1.yml (only RAID list/detail views)       | ❌ MISMATCH |
+| "Proposing AI-assisted changes and applying proposals"        | NOT in step-1.yml (this is Step 2)                    | ❌ MISMATCH |
+| "Running an audit that validates required fields"             | NOT in step-1.yml (only audit events, not validation) | ❌ MISMATCH |
+| "RAID register with CRUD operations"                          | ✅ In step-1.yml (backend Issue 1, client Issue 4)    | ✅ ALIGNED  |
+| "ISO 21500 workflow state machine"                            | ✅ In step-1.yml (backend Issue 2, client Issue 5)    | ✅ ALIGNED  |
+
+**Analysis:**
+
+**PLAN.md describes a MORE AMBITIOUS Step 1** that includes:
+
+- Templates/blueprints system
+- PMP artifact generation
+- Artifact editor
+- Proposal workflow
+- Cross-artifact validation audits
+
+**step-1.yml describes a MINIMAL Step 1** that includes ONLY:
+
+- RAID register (backend CRUD API + client UI)
+- ISO 21500 workflow state machine (backend + client visualization)
+- E2E tests for RAID + workflow
+
+**Conclusion:** The project has TWO DIFFERENT DEFINITIONS of Step 1, and **step-1.yml is the narrower, correct definition** that was actually planned for implementation.
+
+#### 🔍 Client Repository Alignment Check
+
+**AI-Agent-Framework-Client Claims (from README.md):**
+
+> "A modern web client that connects to the AI-Agent-Framework API, providing **project management capabilities**, document change proposals, command execution, and API testing."
+
+**What "project management capabilities" should mean for Step 1:**
+
+1. RAID register management UI (create, list, filter, edit, delete)
+2. ISO 21500 workflow state visualization (Initiating/Planning/Executing/Monitoring/Closing/Closed)
+3. Workflow transition UI with confirmation
+4. Audit trail viewer (read-only)
+
+**What the client ACTUALLY provides:**
+
+- ❌ Generic chat interface with conversation history
+- ❌ Agent workflow display (NOT ISO 21500 project workflows)
+- ❌ NO RAID management UI
+- ❌ NO project management capabilities whatsoever
+
+**Alignment:** ❌ **COMPLETE MISMATCH** - The client repository's stated purpose and actual implementation are entirely different.
+
+#### 🎯 What Step 1 SHOULD Deliver (Reconciling PLAN.md and step-1.yml)
+
+**Based on the principle "Thin-slice delivery: Every step delivers a minimal, end-to-end usable slice":**
+
+**Step 1 Minimum Viable Slice (step-1.yml is correct):**
+
+1. **Backend:** RAID CRUD API + ISO workflow state machine + audit events ✅ **DONE**
+2. **Client:** RAID management UI + workflow state indicator + audit trail viewer ❌ **NOT DONE**
+3. **E2E Tests:** End-to-end validation of RAID + workflow ⚠️ **PARTIALLY DONE** (backend only)
+
+**Step 2 Will Add (per PLAN.md):**
+
+- Templates/blueprints system
+- PMP artifact generation
+- Artifact editor
+- Proposal workflow
+- Cross-artifact validation audits
+
+**Recommendation:** Update PLAN.md to clarify that Step 1 is intentionally minimal (RAID + workflow only) and explicitly defer templates/proposals/audits to Step 2.
+
+---
+
+### 🌟 Core Project Idea Analysis
+
+#### The Vision: AI-Assisted ISO 21500 Project Management
+
+**What This Project Is Meant To Be:**
+
+A **complete project management system** that:
+
+1. Follows ISO 21500/21502 international standards for project management
+2. Uses **AI to assist** (not replace) project managers in creating and maintaining project artifacts
+3. Provides a **structured workflow** through project phases (Initiating → Planning → Executing → Monitoring → Closing)
+4. Maintains **full traceability** of all project decisions and changes through audit events
+5. Ensures **quality and compliance** through automated validation and cross-artifact consistency checks
+
+**The Three Pillars:**
+
+1. **Standards Compliance (ISO 21500/21502)**
+   - Deterministic workflow state machine
+   - Required artifacts (PMP, RAID, Charter, Schedule, etc.)
+   - Governance and decision tracking
+   - Audit trails for compliance
+
+2. **AI Assistance**
+   - Generate initial artifacts from templates
+   - Propose improvements and refinements
+   - Explain audit failures
+   - Suggest fixes for consistency issues
+   - Human approval required for all changes
+
+3. **Artifact-Driven Methodology**
+   - All work captured in explicit artifacts
+   - Artifacts stored in Git for version control
+   - Cross-artifact relationships validated
+   - Template-driven structure ensures consistency
+
+#### What Step 1 Should Establish
+
+**The "Thin Slice" Principle:**
+
+Step 1 should deliver the **smallest possible end-to-end experience** that demonstrates the core value proposition:
+
+> "I can create a project, track its workflow state, and manage RAID items through a web UI backed by a compliant API."
+
+**Why RAID + Workflow is the Right Starting Point:**
+
+1. **RAID is universally needed** - Every project has risks, assumptions, issues, and dependencies
+2. **Workflow state drives everything** - Projects must progress through phases
+3. **Audit events provide traceability** - Compliance requires knowing what changed and when
+4. **Simple enough to validate** - Can test without complex template/proposal systems
+5. **Foundation for everything else** - Templates, proposals, and audits build on top of this
+
+#### ⚠️ Current State vs. Vision
+
+**Backend: ✅ ALIGNED WITH VISION**
+
+The backend correctly implements:
+
+- ✅ ISO 21500 workflow state machine (6 states, deterministic transitions)
+- ✅ RAID register with full data model (type, status, priority, impact, likelihood)
+- ✅ Audit event system (NDJSON format, full traceability)
+- ✅ RESTful API (/api/v1/projects/{key}/raid, /api/v1/projects/{key}/workflow)
+- ✅ Git-based persistence (all data version-controlled)
+- ✅ Comprehensive tests (177 tests, 90.25% coverage)
+
+**The backend is production-ready and demonstrates the vision perfectly.**
+
+**Client: ❌ COMPLETELY MISALIGNED WITH VISION**
+
+The client is:
+
+- ❌ A **generic chat interface** (ChatArea, ChatInput, Message, Sidebar)
+- ❌ Has **agent workflow display** (for chat agents, not project management)
+- ❌ Has **ZERO project management features**
+- ❌ Does NOT implement any Step 1 requirements
+- ❌ Cannot demonstrate the core value proposition
+
+**Critical Gap:**
+
+The backend provides a complete ISO 21500 project management API, but **there is no way for users to interact with it** because the client is a chat application, not a project management application.
+
+**Analogy:** It's like building a complete banking system API but delivering an ATM that only displays jokes.
+
+#### 🎯 What "Catching the Idea" Reveals
+
+**The Project Idea Is Sound:**
+
+1. ✅ ISO 21500 compliance is valuable (governments, enterprises need this)
+2. ✅ AI assistance for artifact generation is innovative
+3. ✅ Thin-slice delivery (Step 1 → Step 2 → Step 3) is pragmatic
+4. ✅ Test-driven development ensures quality
+5. ✅ Git-based storage provides version control and auditability
+
+**The Backend Execution Is Excellent:**
+
+- Architecture is clean and well-structured
+- Code quality is high (90.25% test coverage)
+- API design follows REST best practices
+- Data models are comprehensive and well-designed
+- Documentation is thorough
+
+**The Client Execution Is Wrong:**
+
+- Client was built for a different purpose (chat interface)
+- WorkflowPanel was built for agent workflows (not ISO 21500)
+- No project management UI exists at all
+- README.md claims "project management capabilities" that don't exist
+- Implementation does not match the project vision
+
+#### 🔧 How to Realign With the Vision
+
+**Immediate Actions:**
+
+1. **Acknowledge the misalignment**
+   - Client README.md should accurately describe what exists (chat interface)
+   - Or, better: Pivot client to match the project vision (project management UI)
+
+2. **Implement Step 1 Client Features**
+   - Build RAID management UI (the data exists in backend, needs visualization)
+   - Build ISO 21500 workflow UI (state machine exists, needs user controls)
+   - Build audit trail viewer (events exist, needs display)
+
+3. **Update Documentation**
+   - Clarify PLAN.md: Step 1 = RAID + Workflow only
+   - Remove references to templates/proposals/audits from Step 1
+   - Add STEP-1-COMPLETION-PLAN.md implementation roadmap
+
+4. **Test the Full Stack**
+   - Write client E2E tests that exercise the backend APIs
+   - Validate the full user journey: create project → add RAID → transition workflow
+   - Ensure the "thin slice" is actually usable
+
+**Long-Term Vision Validation:**
+
+Once Step 1 is complete, the system should demonstrate:
+
+- ✅ A project manager can create a project and see its workflow state
+- ✅ A project manager can add/edit/delete RAID items
+- ✅ A project manager can transition the project through workflow phases
+- ✅ All actions are audited and traceable
+- ✅ The foundation exists for Step 2 (templates, proposals, validation)
+
+**This is what "catching the idea of the project" reveals:** The vision is excellent, the backend is correct, but the client is a complete mismatch that must be rebuilt to align with the project's ISO 21500 project management purpose.
+
+---
+
 ### Critical Misalignment Between Goals and Implementation
 
 **Status:** ❌ **INCOMPLETE** - Client implementation does NOT meet Step 1 requirements
