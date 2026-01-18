@@ -1,0 +1,9 @@
+#!/bin/bash
+# Next Issue Command - Quick access to issue selection
+#
+# Usage:
+#   ./next-issue          # Select and display next issue
+#   ./next-issue --help   # Show help
+
+cd "$(dirname "$0")"
+exec ./scripts/next-issue.py "$@"

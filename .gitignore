@@ -64,3 +64,6 @@ coverage.xml
 htmlcov/
 .tox/
 
+# Issue Resolution Learning (should be committed to track progress)
+# .issue-resolution-knowledge.json
+

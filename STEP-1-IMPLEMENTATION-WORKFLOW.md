@@ -10,6 +10,16 @@
 
 This document defines the **STRICT PROTOCOL** for implementing all 36 Step 1 issues in the correct order with mandatory review cycles and CI validation.
 
+**Quick Start:**
+
+```bash
+# Select next issue to work on (intelligent selection with learning)
+./next-issue
+
+# After completing an issue, record actual time spent
+./scripts/record-completion.py <issue_number> <actual_hours> [notes]
+```
+
 **Critical Rules:**
 
 1. ✅ **ONLY ONE ISSUE AT A TIME** - No parallel work on issues
