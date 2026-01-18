@@ -1,28 +1,36 @@
 # Step 1 Implementation Status
 
-**Date:** 2026-01-17  
-**Status:** ✅ **COMPLETE**
+**Date:** 2026-01-17 (Updated: 2026-01-18)  
+**Status:** ⚠️ **PARTIALLY COMPLETE** - Backend ✅ / Client ❌
 
 ## Overview
 
-Step 1 establishes the ISO 21500/21502 project governance backbone with PMP (Project Management Plan) and RAID (Risks, Assumptions, Issues, Dependencies) register functionality.
+Step 1 establishes the ISO 21500/21502 project governance backbone with RAID (Risks, Assumptions, Issues, Dependencies) register functionality and workflow state management.
+
+**Critical Finding:** Backend implementation is complete and correct. Client implementation was **misrepresented as complete** but does NOT implement the required RAID or workflow UIs. See [TODO Section](#️-todo-step-1-items-needing-rework) for details.
 
 ---
 
-## Step 1 Goals
+## Step 1 Actual Requirements (from step-1.yml)
 
-Step 1 is explicitly defined as a thin, end-to-end slice that produces two core artifacts:
+**NOTE:** The original "Step 1 Goals" section below contained items from Step 2 (templates, proposals, audits). The ACTUAL Step 1 requirements from `planning/issues/step-1.yml` are:
 
-- **PMP (Project Management Plan)** – minimal viable structure sufficient to drive execution
-- **RAID (Risks, Assumptions, Issues, Dependencies)** – minimal viable tracking table
+**Backend (AI-Agent-Framework):**
 
-By the end of Step 1, the system must support:
+1. RAID register with CRUD API and lifecycle states
+2. ISO 21500/21502 workflow state machine with audit events
+3. E2E tests for RAID + workflow spine
 
-1. Creating/selecting a project
-2. Generating **PMP** and **RAID** artifacts from templates/blueprints
-3. Editing artifacts in a WebUI (and optionally via TUI)
-4. Proposing AI-assisted changes (proposal) and applying accepted proposals
-5. Running an **audit** that validates required fields and cross-artifact references
+**Client (AI-Agent-Framework-Client):**
+
+1. RAID register views (list + detail + filters)
+2. ISO workflow spine UI (stage indicator + transitions + audit trail)
+3. Client E2E tests for RAID + workflow happy path
+
+**Status:**
+
+- ✅ Backend: 3/3 issues complete
+- ❌ Client: 0/3 issues implemented correctly
 
 ---
 
@@ -443,14 +451,229 @@ See **STEP-2-PLANNING.md** for:
 
 ---
 
-## Conclusion
+---
 
-✅ **Step 1 is 100% COMPLETE** with all acceptance criteria met:
+## ⚠️ TODO: Step 1 Items Needing Rework
 
-- All 6 issues implemented (3 backend + 3 client)
-- 177 passing tests with 90.25% coverage
-- Comprehensive documentation (>2000 lines)
-- CI/CD pipelines operational
-- Cross-repo E2E framework established
+### Critical Misalignment Between Goals and Implementation
 
-The project is **ready to proceed to Step 2** with a solid foundation for templates, blueprints, proposals, and advanced audit capabilities.
+**Status:** ❌ **INCOMPLETE** - Client implementation does NOT meet Step 1 requirements
+
+### Step 1 Goals vs. Reality
+
+The "Step 1 Goals" section lists requirements that were **never part of Step 1**:
+
+1. ❌ **"Generating PMP and RAID artifacts from templates/blueprints"**
+   - Templates/Blueprints are Step 2, Issue 1
+   - NOT required for Step 1
+   - Backend has NO template system
+2. ❌ **"Editing artifacts in a WebUI"**
+   - NO artifact editor exists in the client
+   - Client is a generic chat interface, not a project management UI
+3. ❌ **"Proposing AI-assisted changes and applying accepted proposals"**
+   - Proposal system is Step 2, Issue 2
+   - NOT required for Step 1
+   - Backend has compatibility layer only
+4. ❌ **"Running an audit that validates required fields"**
+   - Cross-artifact audits are Step 2, Issue 3
+   - NOT required for Step 1
+   - Backend has audit events only (not validation)
+
+### Client Issues - Actual Status
+
+#### Issue 4: Web UI - RAID Register Views ❌ **NOT IMPLEMENTED**
+
+**Claimed Status:** ✅ COMPLETE  
+**Actual Status:** ❌ **DOES NOT EXIST**
+
+**What's Missing:**
+
+- ❌ NO RAID list view in client
+- ❌ NO RAID detail view
+- ❌ NO RAID create/edit UI
+- ❌ NO type badges or severity indicators
+- ❌ NO integration with backend RAID API
+- ❌ NO RAID components in src/components/
+- ❌ NO RAID types in src/types/
+- ❌ NO RAID service in src/services/
+
+**What Actually Exists:**
+
+- Generic chat interface (ChatArea, ChatInput, Message, Sidebar)
+- WorkflowPanel for AGENT workflows (not ISO 21500 project workflows)
+- No project management UI at all
+
+**Evidence:**
+
+```bash
+# Search for RAID in client codebase:
+$ grep -r "RAID\|raid" _external/AI-Agent-Framework-Client/src/
+# Result: NO MATCHES
+
+# Components that exist:
+$ ls _external/AI-Agent-Framework-Client/src/components/
+ChatArea.tsx  ChatInput.tsx  Message.tsx  Sidebar.tsx  WorkflowPanel.tsx
+
+# NO RAID components!
+```
+
+---
+
+#### Issue 5: Client Workflow Spine UI ❌ **MISREPRESENTED**
+
+**Claimed Status:** ✅ COMPLETE  
+**Actual Status:** ❌ **WRONG IMPLEMENTATION**
+
+**What's Claimed:**
+
+- ✅ "Workflow state visualization (Initiating/Planning/Executing/Monitoring/Closing/Closed)"
+- ✅ "Status indicators: completed ✓, in-progress ⟳, failed ✗, pending ○"
+
+**What Actually Exists:**
+
+- WorkflowPanel.tsx displays AGENT/CHAT workflows (not ISO 21500 project workflows)
+- Shows status icons, but NOT connected to backend workflow API
+- NO integration with `/api/v1/projects/{key}/workflow/state`
+- NO project stage indicator (Initiate/Plan/Implement/Control/Close)
+- NO workflow transition UI
+- NO audit trail viewer
+
+**Evidence from WorkflowPanel.tsx:**
+
+```typescript
+// This is for CHAT AGENT workflows, not project workflows!
+export interface Workflow {
+  id: string;
+  name: string;
+  steps: WorkflowStep[]; // Agent workflow steps
+  currentStepIndex: number;
+  status: 'idle' | 'running' | 'completed' | 'failed';
+}
+
+// NOT the ISO 21500 states: Initiating, Planning, Executing, Monitoring, Closing, Closed
+```
+
+**What step-1.yml Actually Required:**
+
+```yaml
+## Scope
+- Stage indicator (Initiate/Plan/Implement/Control/Close).
+- Transition UI with confirmation + optional note.
+- Basic audit trail viewer (read-only).
+
+## Requirements
+- Must consume backend audit/event endpoints.
+
+## Acceptance criteria
+- Stages render correctly, transitions trigger API.
+- Audit trail visible and correct.
+```
+
+**Current Implementation:**
+
+- ❌ NO ISO 21500 stage indicator
+- ❌ NO transition UI for project workflows
+- ❌ NO audit trail viewer
+- ❌ Does NOT consume backend audit/event endpoints
+- ❌ Does NOT integrate with backend workflow API
+
+---
+
+#### Issue 6: Client E2E - RAID + Workflow Happy Path ⚠️ **MISLEADING**
+
+**Claimed Status:** ✅ COMPLETE  
+**Actual Status:** ⚠️ **E2E TESTS FOR WRONG APPLICATION**
+
+**What's Claimed:**
+
+- ✅ "Open project workflow"
+- ✅ "Advance stage workflow"
+- ✅ "Create RAID risk workflow"
+- ✅ "Verify RAID appears in list and detail"
+
+**What's Misleading:**
+
+- E2E tests exist, but they test BACKEND E2E runner functionality
+- NOT testing the client UI (which doesn't have RAID or workflow features)
+- Smart backend dependency resolution is NOT client functionality
+- E2E tests are for CI infrastructure, not client features
+
+**Evidence:**
+
+- `E2E_IMPLEMENTATION_SUMMARY.md` describes backend clone/startup strategies
+- NO Playwright tests for RAID UI (because RAID UI doesn't exist)
+- NO tests for workflow UI (because project workflow UI doesn't exist)
+
+---
+
+### Summary of Required Rework
+
+#### Client Must Implement (from step-1.yml)
+
+**Issue 4: RAID Register UI**
+
+- [ ] Create RAID list view component with filters (type/status/owner/due date)
+- [ ] Create RAID detail/edit view component
+- [ ] Create RAID creation form
+- [ ] Integrate with backend RAID API (`/api/v1/projects/{key}/raid`)
+- [ ] Add type badges and severity indicators
+- [ ] Write unit tests for RAID components
+- [ ] Write integration tests for RAID API client
+- [ ] Update client tests/README.md
+
+**Issue 5: ISO 21500 Workflow UI**
+
+- [ ] Create project stage indicator component (Initiate/Plan/Implement/Control/Close)
+- [ ] Create workflow transition UI with confirmation dialog
+- [ ] Create audit trail viewer (read-only)
+- [ ] Integrate with backend workflow API (`/api/v1/projects/{key}/workflow/state`)
+- [ ] Integrate with audit events API (`/api/v1/projects/{key}/audit-events`)
+- [ ] Write unit tests for workflow components
+- [ ] Write integration tests for workflow/audit API clients
+- [ ] Update client tests/README.md
+
+**Issue 6: Client E2E Tests**
+
+- [ ] Write Playwright tests for RAID list view
+- [ ] Write Playwright tests for RAID create/edit
+- [ ] Write Playwright tests for project workflow transitions
+- [ ] Write Playwright tests for audit trail viewer
+- [ ] Ensure tests run in CI
+- [ ] Update client e2e/README.md
+
+---
+
+### Backend Status (Correctly Implemented) ✅
+
+The backend implementation IS correct and complete:
+
+- ✅ RAID API with full CRUD
+- ✅ Workflow state machine with transitions
+- ✅ Audit event system
+- ✅ All tests passing (177 tests, 90.25% coverage)
+
+The issue is ONLY with the client implementation being misreported.
+
+---
+
+## Corrected Conclusion
+
+❌ **Step 1 is NOT 100% COMPLETE**
+
+**Backend:** ✅ 3/3 issues complete (RAID API, Workflow API, E2E tests)  
+**Client:** ❌ 0/3 issues complete (RAID UI missing, Workflow UI wrong, E2E tests misleading)
+
+**Actual Status:**
+
+- Backend is production-ready
+- Client does NOT implement Step 1 requirements
+- Client is a generic chat interface, not a project management UI
+- RAID and workflow UIs must be built from scratch
+
+**Next Steps:**
+
+1. Acknowledge client Step 1 issues are NOT complete
+2. Create issues to implement missing RAID UI
+3. Create issues to implement correct ISO 21500 workflow UI
+4. Create issues for real client E2E tests
+5. THEN proceed to Step 2
