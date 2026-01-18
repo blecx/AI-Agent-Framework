@@ -740,6 +740,77 @@ npm run test:e2e
 - Work in any order
 - Be parallel-safe
 
+### Development Workflow Scripts
+
+The project includes automation scripts for common development workflows:
+
+#### PR Merge Workflow (`scripts/prmerge`)
+
+Comprehensive command for handling the entire PR merge workflow from validation to issue closure:
+
+```bash
+# Basic usage - merge PR and close issue
+./scripts/prmerge <issue_number>
+
+# With completion time tracking
+./scripts/prmerge <issue_number> <actual_hours>
+
+# Example
+./scripts/prmerge 24 7.5
+```
+
+**Features:**
+
+- ✅ Automatic PR detection by issue number
+- ✅ CI validation (fails fast if CI failing)
+- ✅ Branch protection handling (3 resolution strategies)
+- ✅ Comprehensive issue closing messages
+- ✅ Learning system integration (completion time tracking)
+- ✅ Next issue suggestion
+
+**What it does:**
+
+1. Validates PR exists and CI passes
+2. Guides manual review if needed
+3. Handles branch protection issues
+4. Merges PR with squash commit
+5. Gets merge commit SHA
+6. Generates comprehensive issue closing message
+7. Closes issue with detailed documentation
+8. Records completion for learning system
+9. Suggests next issue to work on
+
+**📖 See [PR Merge Command Documentation](docs/prmerge-command.md) for complete guide.**
+
+#### Issue Selection (`scripts/next-issue.py`)
+
+Intelligent issue selector that considers dependencies, priority, and historical patterns:
+
+```bash
+# Select next issue
+./scripts/next-issue.py
+
+# With detailed analysis
+./scripts/next-issue.py --verbose
+
+# Preview without selection
+./scripts/next-issue.py --dry-run
+```
+
+#### Completion Tracking (`scripts/record-completion.py`)
+
+Records completion data for learning system to improve future estimates:
+
+```bash
+# Record completion
+./scripts/record-completion.py <issue_number> <actual_hours> "<notes>"
+
+# Example
+./scripts/record-completion.py 24 7.5 "Tests took longer than expected"
+```
+
+**📖 See [Development Guide](docs/development.md) for more workflow automation.**
+
 ### Adding New Templates
 
 **Prompt Template** (`templates/prompts/iso21500/my_command.j2`):
