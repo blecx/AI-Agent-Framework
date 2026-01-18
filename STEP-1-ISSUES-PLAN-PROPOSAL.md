@@ -1,14 +1,25 @@
 # Step 1 Issues Plan - EXPANDED PROPOSAL
 
-**Date:** 2026-01-18  
-**Status:** 🔍 **AWAITING APPROVAL**  
-**Current:** 23 issues → **Proposed:** 35 issues
+**Date:** 2026-01-18 (Updated: 2026-01-18)  
+**Status:** ✅ **APPROVED - HYBRID APPROACH**  
+**Current:** 23 issues → **Approved:** 35 issues
+
+---
+
+## 🎯 Project Vision Clarification
+
+**This is a CHAT-FIRST AI tool for creating and maintaining ISO 21500 project artifacts:**
+
+- **Primary Interface:** AI chat that guides users through artifact creation using templates and workflows
+- **AI Role:** Utilizes ISO 21500 steps to create compliant artifacts through conversation
+- **UI Role:** Browse/view created artifacts + optional quick forms for simple operations
+- **Hybrid Approach:** Complex artifacts via chat, simple quick-adds via UI forms (optional)
 
 ---
 
 ## 📋 Executive Summary
 
-I've analyzed the original 23-issue plan and identified gaps that would prevent a truly "production-ready" solution. This proposal expands to **35 issues** (still under your 40 limit) to deliver a **complete, polished, production-grade** Step 1 implementation.
+This proposal delivers **35 issues** for a **chat-first, AI-guided artifact creation system** with a complementary viewing/quick-add UI. The hybrid approach supports both AI-assisted creation (primary) and traditional forms (optional quick actions).
 
 ---
 
