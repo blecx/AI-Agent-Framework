@@ -784,18 +784,38 @@ Comprehensive command for handling the entire PR merge workflow from validation 
 
 #### Issue Selection (`scripts/next-issue.py`)
 
-Intelligent issue selector that considers dependencies, priority, and historical patterns:
+Intelligent issue selector with **two-phase workflow**:
+
+**Phase 1: Reconciliation** - Syncs local tracking with GitHub (source of truth)
+**Phase 2: Selection** - Finds next available issue based on dependencies and priority
 
 ```bash
-# Select next issue
+# Normal usage (includes reconciliation)
 ./scripts/next-issue.py
 
-# With detailed analysis
+# With detailed GitHub API debugging
 ./scripts/next-issue.py --verbose
 
-# Preview without selection
+# Custom timeout (default: 180s)
+./scripts/next-issue.py --timeout 120
+
+# Skip reconciliation (faster, but not recommended)
+./scripts/next-issue.py --skip-reconcile
+
+# Preview without updating knowledge base
 ./scripts/next-issue.py --dry-run
 ```
+
+**Features:**
+
+- GitHub as source of truth (not local files)
+- Automatic PR/issue reconciliation
+- Sequential order from tracking file (issues 24-58)
+- Built-in timeout handling (no external `timeout` needed)
+- API response caching for performance
+- Progress indicators for long operations
+
+**📖 See [Next Issue Command Documentation](docs/NEXT-ISSUE-COMMAND.md) for complete guide.**
 
 #### Completion Tracking (`scripts/record-completion.py`)
 

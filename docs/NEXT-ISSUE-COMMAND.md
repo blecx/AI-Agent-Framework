@@ -2,12 +2,24 @@
 
 ## Overview
 
-The `/next-issue` command intelligently selects the next Step 1 issue to work on based on:
+The `./next-issue` command intelligently selects the next Step 1 issue to work on with a **two-phase workflow**:
 
-- **Dependency resolution** - Blockers must be merged before starting
-- **Priority** - CRITICAL issues take precedence
-- **Phase sequencing** - Follows the 8-phase implementation plan
-- **Historical learning** - Adjusts time estimates based on past completions
+### Phase 1: Reconciliation (GitHub as Source of Truth)
+
+- Checks GitHub for merged PRs and closes associated issues
+- Verifies closed PRs have closed issues
+- Updates local tracking documentation to match GitHub state
+- Commits and syncs changes automatically
+- Loops until everything is reconciled
+
+### Phase 2: Selection
+
+- Uses **sequential order from tracking file** (issues 24-58)
+- Checks which blockers are resolved via GitHub API
+- Selects the highest priority unblocked issue
+- Adjusts time estimates based on historical learning
+
+**Important:** GitHub is the single source of truth. Local tracking files are updated to match GitHub, never the other way around.
 
 ## Installation
 
@@ -24,65 +36,74 @@ The command is already installed in the repository root. No setup needed.
 
 This will:
 
-1. Analyze all 36 Step 1 issues
-2. Check which blockers are resolved
-3. Select the highest priority issue that's ready to start
-4. Display full issue details and next steps
-5. Update the knowledge base with the selection
+1. **Reconcile** - Sync local docs with GitHub state
+2. **Select** - Find next available issue
+3. Display full issue details and next steps
+4. Update the knowledge base with the selection
 
-### Advanced Options
+### Command Options
 
 ```bash
-# Dry run (don't update knowledge base)
+# Dry run (don't update knowledge base or commit changes)
 ./next-issue --dry-run
 
-# Verbose output (show detailed analysis)
+# Verbose output (show detailed GitHub API calls)
 ./next-issue --verbose
+
+# Skip reconciliation (not recommended)
+./next-issue --skip-reconcile
+
+# Custom timeout (default: 180 seconds)
+./next-issue --timeout 120
 ```
+
+### Internal Timeout Handling
+
+The script has **built-in timeout protection**:
+
+- Default: 180 seconds for entire operation
+- Configurable via `--timeout` flag
+- Individual operations have sub-timeouts (10-15s)
+- Graceful error handling on timeout
+- No need for external `timeout` command
 
 ## Output Format
 
-The command provides a comprehensive recommendation:
+### Non-Verbose Mode (Default)
 
 ```
+Phase 1: Reconciliation
+🔄 Reconciling with GitHub...
+✅ Everything in sync
+
+Phase 2: Issue Selection
 ================================================================================
 NEXT ISSUE RECOMMENDATION
 ================================================================================
 
-🎯 Selected Issue: #24
+🎯 Selected Issue: #25
+📋 Title: Add project management routing
 📋 Phase: Phase 1: Infrastructure
-⚡ Priority: CRITICAL
-⏱️  Estimated Time: 8.0 hours
-📊 Adjusted Estimate: 8.0 hours (based on 0 completed issues)
+⚡ Priority: High
+⏱️  Estimated Time: 4.0 hours
+📊 Adjusted Estimate: 4.0 hours (based on 0 completed issues)
+✅ GitHub State: OPEN (verified via GitHub API)
+
+✅ No Blockers
 
 📝 Issue Details:
---------------------------------------------------------------------------------
-**Issue #24:** API Service Layer Infrastructure
-Status: Not Started
-...
---------------------------------------------------------------------------------
-
-💡 Insights from Previous Issues:
-   • Average time multiplier: 1.15x
-   • Completed issues: 5
-   • Success factors:
-     - Clear acceptance criteria defined upfront
-     - Thorough self-review before user review (Step 7)
-     - Comprehensive test coverage from start
+[Full issue details from tracking file]
 
 🚀 Next Steps:
-   1. Read the full issue on GitHub:
-      gh issue view 24 --repo blecx/AI-Agent-Framework-Client
-
-   2. Create feature branch:
-      git checkout main && git pull origin main
-      git checkout -b issue/24-<description>
-
-   3. Follow STEP-1-IMPLEMENTATION-WORKFLOW.md (10-step protocol)
-      • Step 7 (Copilot review) is MANDATORY - never skip!
-
+   1. Read the full issue on GitHub
+   2. Create feature branch
+   3. Follow 10-step protocol
 ================================================================================
 ```
+
+### Verbose Mode
+
+Shows detailed GitHub API calls, caching hits, and reconciliation steps for debugging.
 
 ## Recording Completions
 
@@ -152,32 +173,95 @@ This helps set realistic expectations as the project progresses.
 
 ## Selection Algorithm
 
-1. **Parse Tracking File**
-   - Extract all 36 issues with metadata
-   - Identify status, blockers, estimates, phase, priority
+### Step 1: Reconciliation Phase
 
-2. **Filter Available Issues**
-   - Status must be "Not Started" or "In Progress"
-   - All blockers must have status "✅ Complete"
-   - Double-check merged status via GitHub API
+1. **Check Merged PRs**
+   - Query GitHub for recently merged PRs (last 20)
+   - Extract issue numbers from PR titles
+   - Close issues if PRs are merged but issues still open
 
-3. **Priority Sorting**
-   - CRITICAL issues first (e.g., #24, #59)
-   - Then High priority (infrastructure)
-   - Then Medium priority (features)
-   - Within same priority, use issue number (dependency order)
+2. **Update Tracking File**
+   - Query GitHub for all Step 1 issues (24-58)
+   - Compare GitHub state with local tracking file
+   - Update local file to match GitHub (source of truth)
+   - Don't overwrite "In Progress" or "Complete" statuses
 
-4. **Context Enrichment**
-   - Extract full issue details from tracking file
+3. **Commit and Sync**
+   - Commit tracking file changes to git
+   - Push to remote repository
+   - Loop until no changes detected
+
+### Step 2: Issue Selection
+
+1. **Parse Issues from GitHub**
+   - Query issues 24-58 individually (no label assumptions)
+   - Sequential order defined by tracking file
+   - Uses caching to avoid repeated API calls
+
+2. **Parse Tracking Metadata**
+   - Extract estimated hours, blockers, phase from tracking file
+   - Use fast, optimized regex patterns
+   - Individual section parsing (not complex multi-line regex)
+
+3. **Filter Available Issues**
+   - Status must be "Open" on GitHub
+   - All blockers must be resolved (verified via GitHub)
+   - Blockers checked using merged PR verification
+
+4. **Priority Sorting**
+   - High/CRITICAL priority first
+   - Then sequential order (24, 25, 26...)
+   - Respects dependency chain
+
+5. **Context Enrichment**
+   - Extract full issue section from tracking file
    - Add historical insights from knowledge base
    - Calculate adjusted time estimates
 
-5. **Display Recommendation**
+6. **Display Recommendation**
    - Show selected issue with full context
-   - Provide next steps
+   - Provide GitHub-verified next steps
    - Include learning insights
 
-## Integration with Workflow
+## Key Features
+
+### 1. Reconciliation-First Approach
+
+The command always reconciles before selection:
+
+- **Why?** Ensures local docs match GitHub reality
+- **How?** Queries GitHub for PR/issue states
+- **Result:** No stale data, no manual sync needed
+
+### 2. GitHub as Source of Truth
+
+Never assumes local files are correct:
+
+- Issue state comes from GitHub API
+- Blocker resolution verified via merged PRs
+- Tracking file updated to match GitHub
+
+### 3. No Label Assumptions
+
+Uses **sequential order** from tracking file (24-58):
+
+- No reliance on GitHub labels
+- Follows documented plan order exactly
+- Resilient to label changes
+
+### 4. Performance Optimizations
+
+- **API caching**: Avoids repeated queries
+- **Optimized regex**: Fast tracking file parsing
+- **Progress indicators**: Shows status during long operations
+- **Individual queries**: More reliable than bulk queries
+
+### 5. Production-Ready Error Handling
+
+- Internal timeout protection (default 180s)
+- Graceful degradation on network errors
+- Clear error messages
+- Proper exit codes (124=timeout, 130=interrupt)
 
 The command is designed to work with the 10-step protocol:
 
