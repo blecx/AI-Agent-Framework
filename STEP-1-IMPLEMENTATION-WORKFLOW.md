@@ -14,10 +14,59 @@ This document defines the **STRICT PROTOCOL** for implementing all 36 Step 1 iss
 
 1. ✅ **ONLY ONE ISSUE AT A TIME** - No parallel work on issues
 2. ✅ **DEPENDENCIES MUST BE MERGED** - Cannot start issue until blockers are merged
-3. ✅ **REVIEW CYCLE IS MANDATORY** - No PR without passing all review gates
-4. ✅ **CI MUST PASS** - Make 3 attempts to fix CI before asking user
-5. ✅ **NO GOAL REDUCTION** - Cannot reduce issue scope to pass CI
-6. ✅ **PLAN MUST BE UPDATED** - Every PR updates the tracking plan
+3. ✅ **COPILOT REVIEW IS ABSOLUTELY MANDATORY** - Step 7 CANNOT be skipped under any circumstances
+4. ✅ **REVIEW CYCLE IS MANDATORY** - No PR without passing all review gates
+5. ✅ **CI MUST PASS** - Make 3 attempts to fix CI before asking user
+6. ✅ **NO GOAL REDUCTION** - Cannot reduce issue scope to pass CI
+7. ✅ **PLAN MUST BE UPDATED** - Every PR updates the tracking plan
+
+---
+
+## 🚨 CRITICAL: Step 7 (Copilot Review) Is NEVER Optional
+
+**⚠️ WARNING: This step has been skipped in the past and caused issues. It is now PERMANENTLY MANDATORY.**
+
+**Step 7 (Copilot Self-Review) MUST be completed BEFORE asking the user for review or creating a PR for user inspection.**
+
+**Consequences of skipping Step 7:**
+
+- Implementation may be incomplete
+- Code quality issues may slip through
+- User wastes time reviewing flawed code
+- Delays overall project progress
+
+**Step 7 completion checklist:**
+
+- [ ] Copilot performed comprehensive code review
+- [ ] All acceptance criteria verified as implemented
+- [ ] Code quality assessed (no code smells, proper patterns)
+- [ ] Test coverage validated (unit, integration, edge cases)
+- [ ] Documentation completeness verified
+- [ ] TypeScript types verified (no `any` abuse)
+- [ ] Error handling verified
+- [ ] Loading states verified
+- [ ] Copilot explicitly stated "APPROVED" or "Ready for user review"
+
+**IF you are about to ask the user for review and have NOT completed Step 7, STOP and do Step 7 first.**
+
+---
+
+## 📋 The 10-Step Protocol
+
+**Every issue MUST follow these 10 steps in exact order:**
+
+1. **Pre-work Validation** - Check blockers merged
+2. **Create Feature Branch** - Clean branch from main
+3. **Implementation** - Build the feature
+4. **Self-Review** - Lint, type, build, test
+5. **Update Tracking Plan** - Document progress
+6. **Commit Code** - Push to feature branch
+7. **🔴 COPILOT SELF-REVIEW** ← **CRITICAL - NEVER SKIP**
+8. **User Review** - Wait for user approval
+9. **CI Validation** - 3 fix attempts
+10. **Merge & Validate** - Squash merge + verify
+
+**Step 7 is where quality is ensured. Skipping it means incomplete work reaches the user.**
 
 ---
 
@@ -441,51 +490,129 @@ gh pr create --repo blecx/AI-Agent-Framework-Client \
 
 ---
 
-### **Step 7: Copilot Review Cycle** ✅
+### **Step 7: Copilot Self-Review** 🔴 **ABSOLUTELY MANDATORY - NEVER SKIP THIS STEP**
 
-**MANDATORY REVIEW PROCESS:**
+**⚠️ THIS STEP IS MATURE AND CRITICAL - IT HAS SAVED ISSUES FROM BEING INCOMPLETE**
 
-```bash
-# 1. Request Copilot to review PR
-# Ask: "Review this PR for completeness, code quality, and alignment with issue requirements"
+**WHEN TO PERFORM THIS STEP:**
 
-# 2. Copilot checks:
-# - All acceptance criteria implemented?
-# - Code quality acceptable? (no code smells)
-# - Tests comprehensive? (edge cases covered)
-# - Documentation complete? (README, JSDoc, tracking)
-# - Error handling present?
-# - Loading states present?
-# - TypeScript types correct? (no any)
-# - Follows project conventions?
+- AFTER Step 6 (code committed to branch)
+- BEFORE asking user for review
+- BEFORE creating PR for user inspection
+- BEFORE proceeding to Step 8 (CI validation)
 
-# 3. If Copilot finds issues:
-#    a. Create checklist of required changes
-#    b. Implement ALL changes
-#    c. Push changes to same branch
-#    d. REPEAT Step 7 (review cycle)
+**🚨 SELF-CHECK BEFORE PROCEEDING: Have you completed this step?**
 
-# 4. If Copilot approves:
-#    a. Proceed to Step 8 (CI validation)
+```
+[ ] Have I performed a comprehensive Copilot self-review?
+[ ] Have I verified ALL acceptance criteria are implemented?
+[ ] Have I checked code quality, tests, documentation?
+[ ] Have I explicitly stated "APPROVED" or "Ready for user review"?
+
+IF ANY BOX IS UNCHECKED, STOP AND COMPLETE STEP 7 NOW.
 ```
 
-**Review Cycle Iteration:**
+---
+
+**MANDATORY SELF-REVIEW PROCESS:**
+
+**1. Perform Comprehensive Code Review:**
 
 ```bash
-# If changes needed:
+# As Copilot, review your own implementation:
+# "I will now perform a comprehensive self-review of Issue #<number>."
+```
+
+**2. Verify All Acceptance Criteria:**
+
+For EACH acceptance criterion from the issue:
+
+- [ ] Read the criterion
+- [ ] Locate the code that implements it
+- [ ] Verify it works correctly
+- [ ] Check for edge cases
+- [ ] Document verification in review
+
+**3. Check Code Quality:**
+
+- [ ] **Architecture:** Modular? Clean separation of concerns?
+- [ ] **TypeScript:** All types defined? No `any` abuse?
+- [ ] **Error Handling:** Comprehensive? User-friendly messages?
+- [ ] **Loading States:** Present for all async operations?
+- [ ] **Code Smells:** Any duplicated code? Complex functions?
+- [ ] **Conventions:** Follows project patterns?
+
+**4. Validate Test Coverage:**
+
+- [ ] **Unit Tests:** All functions tested? Edge cases covered?
+- [ ] **Integration Tests:** API integration tested?
+- [ ] **Test Quality:** Tests are deterministic? No flaky tests?
+- [ ] **Coverage:** Meets or exceeds project standards?
+
+**5. Verify Documentation:**
+
+- [ ] **JSDoc Comments:** All public functions documented?
+- [ ] **README Updates:** If applicable, updated?
+- [ ] **Tracking Plan:** Updated with progress?
+- [ ] **PR Description:** Complete and accurate?
+
+**6. Build & Runtime Validation:**
+
+- [ ] **Lint:** No errors (warnings OK if documented)
+- [ ] **Type Check:** No errors
+- [ ] **Build:** Completes successfully
+- [ ] **Tests:** All passing (100%)
+- [ ] **Dev Server:** Runs without errors
+
+**7. Review Cycle Iteration:**
+
+```bash
+# If you find issues during self-review:
+
+# a. Create checklist of required changes
+# b. Implement ALL changes
 git add <files>
-git commit -m "Review feedback: <summary of changes>"
+git commit -m "Self-review: <summary of changes>"
 git push origin issue/<number>-description
 
-# Wait for Copilot to review again
-# Repeat until Copilot approves
+# c. REPEAT Step 7 (perform self-review again)
+# d. Continue until no issues found
 ```
 
-**❌ DO NOT proceed to Step 8 until:**
+**8. Explicit Approval Required:**
 
-- Copilot explicitly approves PR
-- All review feedback addressed
-- No outstanding concerns
+Once all checks pass, you MUST state explicitly:
+
+```
+✅ COPILOT SELF-REVIEW: APPROVED
+
+Issue #<number> implementation is complete and meets all requirements:
+- All acceptance criteria implemented and verified
+- Code quality is high (no smells, proper patterns)
+- Test coverage is comprehensive (X/X tests passing)
+- Documentation is complete
+- Build and runtime validation passed
+
+RECOMMENDATION: Ready for user review (Step 8).
+```
+
+---
+
+**❌ ABSOLUTELY DO NOT PROCEED TO USER REVIEW UNTIL:**
+
+- ✅ You have performed comprehensive self-review
+- ✅ All acceptance criteria verified as implemented
+- ✅ All code quality checks passed
+- ✅ All tests passing (100%)
+- ✅ Documentation complete
+- ✅ You have explicitly stated "APPROVED"
+- ✅ You have written "Ready for user review"
+
+**IF YOU ARE ABOUT TO ASK USER "Ready for review?" BUT HAVE NOT COMPLETED THIS STEP:**
+
+🚨 **STOP IMMEDIATELY** 🚨
+
+**Go back and perform Step 7 now. This step is NEVER optional.**
 
 ---
 
