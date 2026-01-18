@@ -107,7 +107,7 @@
 **Estimated:** 4-6 hours  
 **Actual:** -
 
-**Blockers:** ~~#24~~ ✅ **RESOLVED**  
+**Blockers:** None (was #24, now resolved)  
 **Blocks:** #26, #27, #28, #29
 
 **PR:** -  
