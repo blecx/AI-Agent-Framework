@@ -1,22 +1,33 @@
 #!/usr/bin/env python3
 """
-Next Issue Selector - Intelligent issue selection with learning
+Next Issue Selector - Intelligent issue selection with reconciliation
 
-This script analyzes the current state of Step 1 implementation and selects
-the next issue to work on based on:
-- Dependency resolution (blockers must be merged)
-- Priority and phase
-- Historical completion data
-- Learned patterns from previous issues
+WORKFLOW (in order):
+1. RECONCILIATION PHASE (repeat until clean):
+   - Check GitHub for merged PRs → close associated issues if not closed
+   - Check closed PRs → verify issues are also closed on GitHub
+   - Update local tracking documentation to match GitHub state
+   - Commit and sync all changes
+   - Repeat until everything is reconciled
+
+2. SELECTION PHASE (only after reconciliation):
+   - Query GitHub for open issues (source of truth)
+   - Use tracking file ONLY for metadata (estimated hours, phase, blockers)
+   - Select next issue based on priority, dependencies, and order
+   - Never hardcode "next issue" in docs (GitHub is source of truth)
+
+IMPORTANT: GitHub is the source of truth. Local markdown files are updated
+to match GitHub state, never the other way around.
 
 Usage:
-    ./scripts/next-issue.py [--verbose] [--dry-run]
+    ./scripts/next-issue.py [--verbose] [--dry-run] [--skip-reconcile]
 """
 
 import json
 import re
 import subprocess
 import sys
+import signal
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -26,6 +37,433 @@ REPO_ROOT = Path(__file__).parent.parent
 TRACKING_FILE = REPO_ROOT / "STEP-1-IMPLEMENTATION-TRACKING.md"
 KNOWLEDGE_FILE = REPO_ROOT / ".issue-resolution-knowledge.json"
 STATUS_FILE = REPO_ROOT / "STEP-1-STATUS.md"
+
+# GitHub repository
+GITHUB_REPO = "blecx/AI-Agent-Framework-Client"
+
+# Configuration
+DEFAULT_TIMEOUT = 15  # seconds for individual operations
+MAX_RECONCILE_ITERATIONS = 3
+STEP1_ISSUE_RANGE = (24, 59)  # Issues 24-58
+
+
+class TimeoutError(Exception):
+    """Raised when an operation times out"""
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for timeout"""
+    raise TimeoutError("Operation timed out")
+
+
+class ProgressIndicator:
+    """Simple progress indicator for long operations"""
+    
+    def __init__(self, verbose: bool = False):
+        self.verbose = verbose
+        self.current = 0
+        self.total = 0
+    
+    def start(self, total: int, message: str):
+        """Start progress tracking"""
+        self.current = 0
+        self.total = total
+        if not self.verbose:
+            print(f"{message} (0/{total})", end="", flush=True)
+    
+    def update(self, increment: int = 1):
+        """Update progress"""
+        self.current += increment
+        if not self.verbose and self.total > 0:
+            print(f"\r{self.current}/{self.total}", end="", flush=True)
+    
+    def finish(self, message: str = ""):
+        """Finish progress"""
+        if not self.verbose:
+            print(f"\r✓ {message}          ")
+
+
+class Reconciler:
+    """Reconciles GitHub state with local tracking documentation"""
+    
+    def __init__(self, github: 'GitHubClient', tracking_file: Path, verbose: bool = False):
+        self.github = github
+        self.tracking_file = tracking_file
+        self.verbose = verbose
+        self.changes_made = []
+        self.progress = ProgressIndicator(verbose)
+    
+    def reconcile(self) -> bool:
+        """
+        Run full reconciliation cycle with timeout protection.
+        Returns True if changes were made, False if everything is already in sync.
+        """
+        if self.verbose:
+            print("\n" + "=" * 80, file=sys.stderr)
+            print("RECONCILIATION PHASE", file=sys.stderr)
+            print("=" * 80, file=sys.stderr)
+        else:
+            print("🔄 Reconciling with GitHub...", flush=True)
+        
+        self.changes_made = []
+        
+        try:
+            # Step 1: Check for merged PRs and close associated issues
+            self._reconcile_merged_prs()
+            
+            # Step 2: Update local tracking to match GitHub (most important)
+            self._update_tracking_file()
+            
+            # Step 3: Commit and sync if changes were made
+            if self.changes_made:
+                self._commit_and_sync()
+                return True
+            
+            if self.verbose:
+                print("\n✅ All reconciled - no changes needed", file=sys.stderr)
+            else:
+                print("✅ Everything in sync")
+            
+            return False
+            
+        except TimeoutError:
+            print("\n⚠️  Reconciliation timed out. Partial results may be available.", file=sys.stderr)
+            return False
+        except Exception as e:
+            print(f"\n❌ Reconciliation error: {e}", file=sys.stderr)
+            return False
+    
+    def _reconcile_merged_prs(self):
+        """Check for merged PRs and ensure issues are closed"""
+        if self.verbose:
+            print("\n📋 Checking merged PRs...", file=sys.stderr)
+        
+        # Get all merged PRs (limited to recent ones)
+        merged_prs = self.github._run_gh_command([
+            "pr", "list",
+            "--state", "merged",
+            "--limit", "20",
+            "--json", "number,title,mergedAt,closedAt"
+        ], timeout=20)
+        
+        if not merged_prs:
+            return
+        
+        for pr in merged_prs:
+            # Extract issue number from PR title
+            title = pr.get("title", "")
+            issue_match = re.search(r'\[(?:issue )?#?(\d+)\]|#(\d+)', title, re.IGNORECASE)
+            
+            if issue_match:
+                issue_num = int(issue_match.group(1) or issue_match.group(2))
+                
+                # Check if issue is closed
+                if not self.github.is_issue_closed(issue_num):
+                    if self.verbose:
+                        print(f"  ⚠️  PR #{pr['number']} is merged but Issue #{issue_num} is still open", 
+                              file=sys.stderr)
+                    
+                    # Close the issue
+                    self._close_issue(issue_num, pr['number'])
+    
+    def _reconcile_closed_prs(self):
+        """Check closed PRs have closed issues - only check recent ones"""
+        if self.verbose:
+            print("\n📋 Verifying recently closed issues...", file=sys.stderr)
+        
+        # Check only Step 1 issues (24-58 as defined in tracking)
+        # Only check ones that might be recently closed
+        for issue_num in range(24, 35):  # Check first 11 issues for now
+            if self.github.is_issue_closed(issue_num):
+                # Check if there's a merged PR
+                pr = self.github.get_merged_pr_for_issue(issue_num)
+                
+                if pr and self.verbose:
+                    print(f"  ✅ Issue #{issue_num} closed with PR #{pr['number']}", 
+                          file=sys.stderr)
+    
+    def _close_issue(self, issue_num: int, pr_number: int):
+        """Close an issue on GitHub"""
+        try:
+            comment = f"Closing issue as PR #{pr_number} has been merged."
+            
+            result = subprocess.run(
+                ["gh", "issue", "close", str(issue_num),
+                 "--repo", self.github.repo,
+                 "--comment", comment],
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+            
+            if result.returncode == 0:
+                self.changes_made.append(f"Closed Issue #{issue_num} (PR #{pr_number} was merged)")
+                print(f"  ✅ Closed Issue #{issue_num}", file=sys.stderr)
+            else:
+                print(f"  ❌ Failed to close Issue #{issue_num}: {result.stderr}", 
+                      file=sys.stderr)
+                
+        except Exception as e:
+            print(f"  ❌ Error closing Issue #{issue_num}: {e}", file=sys.stderr)
+    
+    def _update_tracking_file(self):
+        """Update local tracking file to match GitHub state"""
+        if self.verbose:
+            print("\n📝 Updating local tracking file...", file=sys.stderr)
+        
+        # Get Step 1 issue numbers from tracking file (24-58, defined order)
+        issue_numbers = list(range(24, 59))
+        
+        # Get their states from GitHub (query individually with timeout)
+        github_states = {}
+        for issue_num in issue_numbers:
+            data = self.github._run_gh_command([
+                "issue", "view", str(issue_num),
+                "--json", "number,state"
+            ], timeout=10)
+            
+            if data:
+                github_states[issue_num] = data["state"]
+        
+        # Read current tracking file
+        content = self.tracking_file.read_text()
+        updated_content = content
+        
+        # Update each issue's status in tracking file
+        for issue_num, github_state in github_states.items():
+            # Find issue in tracking file with simpler, faster regex
+            issue_pattern = rf'(### Issue #{issue_num}:.*?\n\*\*Status:\*\*\s+)([^\n]+)'
+            match = re.search(issue_pattern, updated_content)
+            
+            if match:
+                current_status = match.group(2).strip()
+                
+                # Determine correct status based on GitHub
+                if github_state == "CLOSED":
+                    # Check if we have a merged PR
+                    pr = self.github.get_merged_pr_for_issue(issue_num)
+                    if pr:
+                        new_status = "✅ Complete (Merged)"
+                    else:
+                        new_status = "✅ Complete"
+                else:
+                    # Issue is open
+                    if "In Progress" in current_status or "🔵" in current_status:
+                        new_status = current_status  # Keep in progress
+                    else:
+                        new_status = "⚪ Not Started"
+                
+                # Update if different
+                if new_status != current_status and "Complete" not in current_status:
+                    updated_content = updated_content.replace(
+                        match.group(0),
+                        match.group(1) + new_status
+                    )
+                    self.changes_made.append(f"Updated Issue #{issue_num} status: {current_status} → {new_status}")
+                    
+                    if self.verbose:
+                        print(f"  ✏️  Issue #{issue_num}: {current_status} → {new_status}", 
+                              file=sys.stderr)
+        
+        # Write back if changes were made
+        if updated_content != content:
+            self.tracking_file.write_text(updated_content)
+            if self.verbose:
+                print(f"  ✅ Updated {self.tracking_file.name}", file=sys.stderr)
+    
+    def _commit_and_sync(self):
+        """Commit changes and sync with remote"""
+        if self.verbose:
+            print("\n💾 Committing and syncing changes...", file=sys.stderr)
+        
+        try:
+            # Add tracking file
+            subprocess.run(
+                ["git", "add", str(self.tracking_file)],
+                cwd=REPO_ROOT,
+                check=True,
+                capture_output=True
+            )
+            
+            # Create commit message
+            commit_msg = "chore: Reconcile tracking file with GitHub state\n\n"
+            for change in self.changes_made:
+                commit_msg += f"- {change}\n"
+            
+            # Commit
+            result = subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                if self.verbose:
+                    print(f"  ✅ Committed changes", file=sys.stderr)
+                
+                # Push to remote
+                push_result = subprocess.run(
+                    ["git", "push"],
+                    cwd=REPO_ROOT,
+                    capture_output=True,
+                    text=True
+                )
+                
+                if push_result.returncode == 0:
+                    if self.verbose:
+                        print(f"  ✅ Pushed to remote", file=sys.stderr)
+                else:
+                    print(f"  ⚠️  Push failed: {push_result.stderr}", file=sys.stderr)
+            else:
+                if "nothing to commit" in result.stdout:
+                    if self.verbose:
+                        print(f"  ℹ️  No changes to commit", file=sys.stderr)
+                else:
+                    print(f"  ❌ Commit failed: {result.stderr}", file=sys.stderr)
+                    
+        except Exception as e:
+            print(f"  ❌ Error during commit/sync: {e}", file=sys.stderr)
+
+
+class GitHubClient:
+    """Handles all GitHub API queries via gh CLI with proper timeout and error handling"""
+    
+    def __init__(self, repo: str, verbose: bool = False):
+        self.repo = repo
+        self.verbose = verbose
+        self._cache = {}  # Simple cache to avoid repeated queries
+    
+    def _run_gh_command(self, args: List[str], timeout: int = DEFAULT_TIMEOUT, cache_key: str = None) -> Optional[Dict]:
+        """
+        Run a gh CLI command and return JSON output with timeout
+        
+        Args:
+            args: Command arguments for gh CLI
+            timeout: Timeout in seconds
+            cache_key: Optional cache key to avoid repeated queries
+        
+        Returns:
+            Parsed JSON response or None on error
+        """
+        # Check cache first
+        if cache_key and cache_key in self._cache:
+            if self.verbose:
+                print(f"[DEBUG] Using cached result for: {cache_key}", file=sys.stderr)
+            return self._cache[cache_key]
+        
+        try:
+            cmd = ["gh"] + args + ["--repo", self.repo]
+            if self.verbose:
+                print(f"[DEBUG] Running: {' '.join(cmd[:5])}...", file=sys.stderr)
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            
+            if result.returncode == 0 and result.stdout.strip():
+                data = json.loads(result.stdout)
+                # Cache successful result
+                if cache_key:
+                    self._cache[cache_key] = data
+                return data
+            elif self.verbose and result.returncode != 0:
+                print(f"[DEBUG] Command failed (exit {result.returncode})", file=sys.stderr)
+            
+        except subprocess.TimeoutExpired:
+            print(f"⚠️  GitHub API timeout after {timeout}s", file=sys.stderr)
+        except json.JSONDecodeError as e:
+            print(f"⚠️  Failed to parse GitHub response: {e}", file=sys.stderr)
+        except FileNotFoundError:
+            print(f"❌ 'gh' CLI not found. Install: https://cli.github.com/", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"⚠️  Unexpected error: {e}", file=sys.stderr)
+        
+        return None
+    
+    def get_issues_by_numbers(self, issue_numbers: List[int], progress: Optional[ProgressIndicator] = None) -> List[Dict]:
+        """
+        Get specific issues by number (efficient batch query)
+        
+        Args:
+            issue_numbers: List of issue numbers to query
+            progress: Optional progress indicator
+        
+        Returns:
+            List of issue data dictionaries
+        """
+        issues = []
+        
+        if progress:
+            progress.start(len(issue_numbers), "Querying GitHub issues")
+        
+        for issue_num in issue_numbers:
+            cache_key = f"issue_{issue_num}"
+            data = self._run_gh_command([
+                "issue", "view", str(issue_num),
+                "--json", "number,title,state,labels,closedAt"
+            ], timeout=10, cache_key=cache_key)
+            
+            if data:
+                issues.append(data)
+            
+            if progress:
+                progress.update()
+        
+        if progress:
+            progress.finish(f"Queried {len(issues)}/{len(issue_numbers)} issues")
+        
+        return issues
+    
+    def is_issue_closed(self, issue_number: int) -> bool:
+        """Check if an issue is closed on GitHub (with caching)"""
+        cache_key = f"issue_state_{issue_number}"
+        data = self._run_gh_command([
+            "issue", "view", str(issue_number),
+            "--json", "state,closedAt"
+        ], timeout=10, cache_key=cache_key)
+        
+        return data.get("state") == "CLOSED" if data else False
+    
+    def get_merged_pr_for_issue(self, issue_number: int) -> Optional[Dict]:
+        """Get merged PR associated with an issue"""
+        data = self._run_gh_command([
+            "pr", "list",
+            "--state", "merged",
+            "--search", f"#{issue_number}",
+            "--limit", "3",
+            "--json", "number,title,mergedAt,closedAt"
+        ], timeout=15)
+        
+        if data and len(data) > 0:
+            # Find PR that references this issue number
+            for pr in data:
+                title = pr.get("title", "").lower()
+                # Look for #number or [issue #number] or (issue #number)
+                if (f"#{issue_number}" in title or 
+                    f"issue #{issue_number}" in title or
+                    f"[{issue_number}]" in title):
+                    return pr
+        
+        return None
+    
+    def is_issue_resolved(self, issue_number: int) -> bool:
+        """
+        Check if an issue is truly resolved (closed AND has merged PR)
+        This is the source of truth for blocker resolution
+        """
+        # First check if issue is closed
+        if not self.is_issue_closed(issue_number):
+            return False
+        
+        # Then verify there's a merged PR
+        pr = self.get_merged_pr_for_issue(issue_number)
+        return pr is not None
 
 
 class IssueKnowledge:
@@ -92,124 +530,174 @@ class IssueKnowledge:
 
 
 class IssueSelector:
-    """Selects the next issue to work on"""
+    """Selects the next issue to work on - Uses GitHub as source of truth"""
     
-    def __init__(self, tracking_file: Path, knowledge: IssueKnowledge):
+    def __init__(self, tracking_file: Path, knowledge: IssueKnowledge, github: GitHubClient):
         self.tracking_file = tracking_file
         self.knowledge = knowledge
-        self.issues = self._parse_tracking_file()
+        self.github = github
+        self.issues = self._parse_issues()
     
-    def _parse_tracking_file(self) -> List[Dict]:
-        """Parse tracking file to extract issue data"""
+    def _parse_issues(self) -> List[Dict]:
+        """
+        Parse issues from GitHub (source of truth) with metadata from tracking file
+        
+        Uses SEQUENTIAL ORDER from tracking file (issues 24-58) not labels!
+        
+        GitHub provides:
+        - Issue number, title, state (open/closed)
+        
+        Tracking file provides:
+        - Estimated hours
+        - Blockers  
+        - Phase information
+        - Sequential order (24, 25, 26... 58)
+        """
+        # Define Step 1 issue range (from tracking file order)
+        issue_numbers = list(range(24, 59))  # Issues 24-58
+        
+        # Get issues from GitHub by specific numbers (no label assumptions!)
+        github_issues = self.github.get_issues_by_numbers(issue_numbers)
+        
+        # Parse tracking file for metadata
+        tracking_metadata = self._parse_tracking_file()
+        
+        # Merge GitHub state with tracking metadata
         issues = []
-        content = self.tracking_file.read_text()
-        
-        # Pattern to match issue entries
-        pattern = r'\*\*Issue #(\d+):\*\*.*?\n.*?Status: (.*?)\n.*?Blockers: (.*?)\n.*?Estimated: ([\d.]+)(?:-[\d.]+)? hours'
-        
-        for match in re.finditer(pattern, content, re.DOTALL):
-            issue_num = int(match.group(1))
-            status = match.group(2).strip()
-            blockers_text = match.group(3).strip()
-            estimated_hours = float(match.group(4))
+        for gh_issue in github_issues:
+            issue_num = gh_issue["number"]
+            metadata = tracking_metadata.get(issue_num, {})
             
-            # Parse blockers
-            blockers = []
-            if blockers_text != "None":
-                blockers = [int(b.strip('#')) for b in re.findall(r'#(\d+)', blockers_text)]
-            
-            # Extract phase from context
-            phase = self._extract_phase(content, issue_num)
-            
-            # Extract priority
-            priority = self._extract_priority(content, issue_num)
+            # Determine if issue is truly open and available
+            is_open = gh_issue["state"] == "OPEN"
             
             issues.append({
                 "number": issue_num,
-                "status": status,
-                "blockers": blockers,
-                "estimated_hours": estimated_hours,
-                "adjusted_hours": self.knowledge.get_adjusted_estimate(estimated_hours),
-                "phase": phase,
-                "priority": priority
+                "title": gh_issue["title"],
+                "state": "Open" if is_open else "Closed",
+                "github_state": gh_issue["state"],  # Original GitHub state
+                "blockers": metadata.get("blockers", []),
+                "estimated_hours": metadata.get("estimated_hours", 4.0),
+                "adjusted_hours": self.knowledge.get_adjusted_estimate(
+                    metadata.get("estimated_hours", 4.0)
+                ),
+                "phase": metadata.get("phase", "Unknown"),
+                "priority": metadata.get("priority", "Medium")
             })
         
         return issues
     
-    def _extract_phase(self, content: str, issue_num: int) -> str:
-        """Extract phase for an issue"""
-        phases = {
-            (24, 29): "Phase 1: Infrastructure",
-            (59, 59): "Phase 2: Chat Integration",
-            (30, 36): "Phase 3: RAID Components",
-            (37, 42): "Phase 4: Workflow Components",
-            (43, 45): "Phase 5: Project Management",
-            (46, 51): "Phase 6: UX & Polish",
-            (52, 55): "Phase 7: Testing",
-            (56, 58): "Phase 8: Documentation"
-        }
+    def _parse_tracking_file(self) -> Dict[int, Dict]:
+        """Parse tracking file to extract metadata (not state!) - optimized version"""
+        metadata = {}
+        content = self.tracking_file.read_text()
         
-        for (start, end), phase_name in phases.items():
-            if start <= issue_num <= end:
-                return phase_name
+        # Parse each issue individually (much faster than complex regex)
+        for issue_num in range(24, 59):
+            # Find issue header
+            issue_match = re.search(rf'### Issue #{issue_num}:', content)
+            if not issue_match:
+                continue
+            
+            # Extract section for this issue
+            start = issue_match.start()
+            next_issue_match = re.search(r'### Issue #', content[start+10:])
+            end = start + 10 + next_issue_match.start() if next_issue_match else len(content)
+            section = content[start:end]
+            
+            # Extract estimated hours (simple, fast)
+            est_match = re.search(r'Estimated:.*?([\d.]+)', section, re.IGNORECASE)
+            estimated_hours = float(est_match.group(1)) if est_match else 4.0
+            
+            # Extract blockers (simple, fast)
+            blockers = []
+            blocker_match = re.search(r'Blockers?:\s*([^\n]+)', section, re.IGNORECASE)
+            if blocker_match:
+                blocker_text = blocker_match.group(1)
+                if not ("none" in blocker_text.lower()):
+                    blockers = [int(b.strip('#')) for b in re.findall(r'#(\d+)', blocker_text)]
+            
+            # Extract phase and priority from context
+            phase = self._extract_phase(content, issue_num)
+            priority = self._extract_priority(content, issue_num)
+            
+            metadata[issue_num] = {
+                "blockers": blockers,
+                "estimated_hours": estimated_hours,
+                "phase": phase,
+                "priority": priority
+            }
+        
+        return metadata
+    
+    def _extract_phase(self, content: str, issue_num: int) -> str:
+        """Extract phase for an issue by finding the phase header before it"""
+        # Find the issue position
+        issue_pattern = rf'(?:###|\*\*) Issue #{issue_num}:'
+        issue_match = re.search(issue_pattern, content)
+        
+        if not issue_match:
+            return "Unknown"
+        
+        issue_pos = issue_match.start()
+        
+        # Find all phase headers before this issue (both with and without emoji)
+        phase_pattern = r'##+ (?:📋 )?(Phase \d+: [^\n(]+)'
+        phase_matches = list(re.finditer(phase_pattern, content[:issue_pos]))
+        
+        if phase_matches:
+            # The last phase header before the issue is the one we want
+            last_phase = phase_matches[-1].group(1).strip()
+            return last_phase
+        
         return "Unknown"
     
     def _extract_priority(self, content: str, issue_num: int) -> str:
-        """Extract priority for an issue"""
-        # Critical issues
+        """Extract priority for an issue from tracking file or use defaults"""
+        # Try to extract from tracking file first
+        issue_pattern = rf'(?:###|\*\*) Issue #{issue_num}:.*?\n.*?Priority:.*?(CRITICAL|High|Medium|Low)'
+        match = re.search(issue_pattern, content, re.DOTALL | re.IGNORECASE)
+        
+        if match:
+            priority = match.group(1).strip()
+            # Normalize to title case
+            if priority.upper() == "CRITICAL":
+                return "CRITICAL"
+            return priority.capitalize()
+        
+        # Fallback to defaults based on issue number
         if issue_num in [24, 59]:
             return "CRITICAL"
-        # High priority infrastructure
         elif issue_num in [25, 26, 27, 28, 29]:
             return "High"
-        # Medium priority features
         else:
             return "Medium"
     
-    def _check_github_status(self, issue_num: int) -> Optional[str]:
-        """Check if issue is merged via GitHub API"""
-        try:
-            # Check if there's a merged PR for this issue
-            result = subprocess.run(
-                ["gh", "pr", "list", "--repo", "blecx/AI-Agent-Framework-Client",
-                 "--state", "merged", "--search", f"Issue #{issue_num}",
-                 "--json", "number,title"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            
-            if result.returncode == 0 and result.stdout.strip():
-                data = json.loads(result.stdout)
-                if data:
-                    return "✅ Merged"
-        except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-            pass
-        
-        return None
-    
     def select_next_issue(self) -> Optional[Dict]:
-        """Select the next issue to work on"""
-        # Filter to not-started or in-progress issues
-        available = [i for i in self.issues if i["status"] in ["Not Started", "In Progress"]]
+        """
+        Select the next issue to work on
+        Uses GitHub as source of truth for issue state
+        """
+        # Filter to open issues only (GitHub state is source of truth)
+        available = [i for i in self.issues if i["state"] == "Open"]
         
         if not available:
             return None
         
-        # Filter by blockers resolved
+        # Filter by blockers resolved (check GitHub for each blocker)
         ready = []
         for issue in available:
             blockers_resolved = True
-            for blocker_num in issue["blockers"]:
-                blocker = next((i for i in self.issues if i["number"] == blocker_num), None)
-                if blocker:
-                    # Check tracking file first
-                    if blocker["status"] not in ["✅ Complete", "Complete"]:
-                        # Double-check with GitHub
-                        gh_status = self._check_github_status(blocker_num)
-                        if gh_status != "✅ Merged":
-                            blockers_resolved = False
-                            break
+            
+            if issue["blockers"]:
+                for blocker_num in issue["blockers"]:
+                    # Use GitHub as source of truth for blocker resolution
+                    if not self.github.is_issue_resolved(blocker_num):
+                        blockers_resolved = False
+                        if self.github.verbose:
+                            print(f"[DEBUG] Issue #{issue['number']} blocked by #{blocker_num}", 
+                                  file=sys.stderr)
+                        break
             
             if blockers_resolved:
                 ready.append(issue)
@@ -227,8 +715,8 @@ class IssueSelector:
         """Get full context for an issue from tracking file"""
         content = self.tracking_file.read_text()
         
-        # Find the issue section
-        pattern = rf'\*\*Issue #{issue_num}:\*\*.*?(?=\n\*\*Issue #|\n###|\Z)'
+        # Find the issue section (handles both ### and ** formats)
+        pattern = rf'(?:###|\*\*) Issue #{issue_num}:.*?(?=\n(?:###|\*\*) Issue #|\n---\n\n###|\Z)'
         match = re.search(pattern, content, re.DOTALL)
         
         if match:
@@ -244,15 +732,21 @@ def format_issue_recommendation(issue: Dict, context: str, knowledge: IssueKnowl
     output.append("=" * 80)
     output.append("")
     output.append(f"🎯 Selected Issue: #{issue['number']}")
+    output.append(f"📋 Title: {issue['title']}")
     output.append(f"📋 Phase: {issue['phase']}")
     output.append(f"⚡ Priority: {issue['priority']}")
     output.append(f"⏱️  Estimated Time: {issue['estimated_hours']:.1f} hours")
     output.append(f"📊 Adjusted Estimate: {issue['adjusted_hours']:.1f} hours "
                  f"(based on {len(knowledge.data['completed_issues'])} completed issues)")
+    output.append(f"✅ GitHub State: {issue['github_state']} (verified via GitHub API)")
     output.append("")
     
     if issue['blockers']:
         output.append(f"✅ Blockers Resolved: #{', #'.join(map(str, issue['blockers']))}")
+        output.append("   (Verified: All blockers are closed with merged PRs)")
+        output.append("")
+    else:
+        output.append("✅ No Blockers")
         output.append("")
     
     output.append("📝 Issue Details:")
@@ -291,21 +785,106 @@ def format_issue_recommendation(issue: Dict, context: str, knowledge: IssueKnowl
 
 
 def main():
-    """Main entry point"""
+    """Main entry point with timeout protection"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Select next issue to work on")
+    parser = argparse.ArgumentParser(description="Select next issue to work on (with reconciliation)")
     parser.add_argument("--verbose", "-v", action="store_true", 
-                       help="Show detailed information")
+                       help="Show detailed information including GitHub API calls")
     parser.add_argument("--dry-run", action="store_true",
-                       help="Show what would be selected without updating state")
+                       help="Show what would be selected without updating state or committing")
+    parser.add_argument("--skip-reconcile", action="store_true",
+                       help="Skip reconciliation phase (not recommended)")
+    parser.add_argument("--timeout", type=int, default=180,
+                       help="Overall timeout in seconds (default: 180)")
     args = parser.parse_args()
+    
+    # Set up signal handler for overall timeout
+    def timeout_handler(signum, frame):
+        print(f"\n❌ Operation timed out after {args.timeout}s")
+        print("   Consider running with --skip-reconcile if reconciliation is slow")
+        sys.exit(124)  # Standard timeout exit code
+    
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(args.timeout)
+    
+    try:
+        return _main_impl(args)
+    except TimeoutError:
+        print(f"\n❌ Operation timed out")
+        return 124
+    except KeyboardInterrupt:
+        print(f"\n\n⚠️  Interrupted by user")
+        return 130
+    finally:
+        signal.alarm(0)  # Cancel alarm
+
+
+def _main_impl(args):
+    """Main implementation (separated for timeout handling)"""
+    # Check if gh CLI is available
+    try:
+        subprocess.run(["gh", "--version"], capture_output=True, check=True, timeout=5)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        print("❌ Error: 'gh' CLI not found or not authenticated.")
+        print("\nInstall: https://cli.github.com/")
+        print("Authenticate: gh auth login")
+        return 1
+    except subprocess.TimeoutExpired:
+        print("⚠️  'gh' CLI check timed out, but continuing...")
     
     # Load knowledge
     knowledge = IssueKnowledge(KNOWLEDGE_FILE)
     
+    # Create GitHub client
+    github = GitHubClient(GITHUB_REPO, verbose=args.verbose)
+    
+    # PHASE 1: RECONCILIATION (unless skipped or dry-run)
+    if not args.skip_reconcile and not args.dry_run:
+        if not args.verbose:
+            print("Phase 1: Reconciliation")
+        
+        reconciler = Reconciler(github, TRACKING_FILE, verbose=args.verbose)
+        
+        # Loop until everything is reconciled
+        iteration = 0
+        while iteration < MAX_RECONCILE_ITERATIONS:
+            iteration += 1
+            
+            if args.verbose:
+                print(f"\n--- Reconciliation Iteration {iteration} ---", file=sys.stderr)
+            
+            changes_made = reconciler.reconcile()
+            
+            if not changes_made:
+                break
+            
+            if iteration < MAX_RECONCILE_ITERATIONS:
+                print(f"   Changes made, running reconciliation again ({iteration}/{MAX_RECONCILE_ITERATIONS})...\n")
+        else:
+            print(f"⚠️  Max reconciliation iterations ({MAX_RECONCILE_ITERATIONS}) reached")
+            print("   Some issues may still need manual attention\n")
+    
+    elif args.skip_reconcile:
+        print("⚠️  Skipping reconciliation (--skip-reconcile flag)")
+    
+    print()  # Blank line for readability
+    
+    # PHASE 2: SELECTION
+    if not args.verbose:
+        print("Phase 2: Issue Selection")
+    elif args.verbose:
+        print("\n" + "=" * 80, file=sys.stderr)
+        print("SELECTION PHASE", file=sys.stderr)
+        print("=" * 80 + "\n", file=sys.stderr)
+    
     # Create selector
-    selector = IssueSelector(TRACKING_FILE, knowledge)
+    selector = IssueSelector(TRACKING_FILE, knowledge, github)
+    
+    if args.verbose:
+        print(f"[DEBUG] Found {len(selector.issues)} total Step 1 issues", file=sys.stderr)
+        open_count = len([i for i in selector.issues if i["state"] == "Open"])
+        print(f"[DEBUG] {open_count} open issues", file=sys.stderr)
     
     # Select next issue
     next_issue = selector.select_next_issue()
@@ -315,10 +894,11 @@ def main():
         print("\nPossible reasons:")
         print("   • All issues are complete")
         print("   • All remaining issues have unresolved blockers")
-        print("\nCheck STEP-1-IMPLEMENTATION-TRACKING.md for details.")
+        print("\nRun with --verbose to see details:")
+        print("   ./scripts/next-issue.py --verbose")
         return 1
     
-    # Get full context
+    # Get full context from tracking file
     context = selector.get_issue_context(next_issue["number"])
     
     # Format and display recommendation
@@ -330,7 +910,8 @@ def main():
         knowledge.data["recommendations"]["last_selected"] = {
             "issue_number": next_issue["number"],
             "selected_at": datetime.now().isoformat(),
-            "reason": f"Next in {next_issue['phase']}, all blockers resolved"
+            "reason": f"Next in {next_issue['phase']}, all blockers resolved (verified via GitHub)",
+            "github_state": next_issue["github_state"]
         }
         knowledge.save_knowledge()
     
