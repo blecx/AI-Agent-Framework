@@ -513,44 +513,36 @@ To improve this script:
 4. Maintain backward compatibility
 5. Follow bash best practices
 
-## Questions to Consider
+## Enhancement Roadmap
 
-Before implementing, please confirm:
+See **[prmerge Best Practices & Enhancement Recommendations](prmerge-best-practices.md)** for detailed analysis and implementation recommendations.
 
-1. **Issue Closing Message Template**
-   - Is the current format comprehensive enough?
-   - Should we extract more data from the PR?
-   - Need different templates for different issue types?
+### Summary of Recommendations
 
-2. **Error Handling**
-   - Are there edge cases I missed?
-   - Should we support rollback on failure?
-   - Need better recovery strategies?
+| Enhancement               | Priority  | Status      | Recommendation                                                         |
+| ------------------------- | --------- | ----------- | ---------------------------------------------------------------------- |
+| **Issue Type Templates**  | 🟢 HIGH   | Recommended | ✅ Implement - 4 templates for infrastructure/feature/bugfix/docs      |
+| **Enhanced Metrics**      | 🟢 HIGH   | Recommended | ✅ Implement - Track PR complexity, CI iterations, workflow efficiency |
+| **API Protection Toggle** | 🟡 MEDIUM | Conditional | ⚠️ Implement with safeguards - Auto-disable/enable branch protection   |
+| **Rollback Support**      | 🟡 MEDIUM | Alternative | 📖 Document procedures - Do NOT automate (too risky)                   |
+| **Batch Merge**           | 🔴 LOW    | Rejected    | ❌ Do not implement - Violates quality-first principle                 |
 
-3. **Learning Integration**
-   - Should we capture more metrics?
-   - Need to track different data points?
-   - How to handle estimation outliers?
+### Key Insights
 
-4. **Branch Protection**
-   - Are the three options sufficient?
-   - Should we automate approval differently?
-   - Need API-based protection disable/enable?
+**IMPLEMENT (High Priority):**
 
-5. **CI Validation**
-   - Should we wait for pending checks?
-   - Need configurable failure tolerance?
-   - Support for required vs optional checks?
+- Issue-specific closing message templates improve clarity and relevance
+- Enhanced metrics strengthen the learning system for better future estimates
+- API-based protection toggle streamlines workflow but requires safety features
 
-6. **Multi-Repository**
-   - Should this work for both repos?
-   - Need different workflow for backend vs client?
-   - How to handle cross-repo dependencies?
+**DOCUMENT (Not Automate):**
 
-Please review and provide feedback on:
+- Rollback procedures are critical but require human judgment
+- Comprehensive guide covers when/how to rollback safely
 
-- Missing features
-- Edge cases not handled
-- Better error messages
-- Workflow improvements
-- Documentation clarity
+**SKIP (Against Project Principles):**
+
+- Batch merge undermines individual PR review quality
+- Goes against "small diffs" and learning system philosophy
+
+📖 **[Read Full Analysis →](prmerge-best-practices.md)**
