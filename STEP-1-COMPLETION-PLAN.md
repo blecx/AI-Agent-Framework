@@ -10,6 +10,7 @@
 **Discovery (2026-01-18):** Client implementation for Step 1 was misreported as complete. The AI-Agent-Framework-Client repository contains a generic chat interface with NO project management features.
 
 **Actual Status:**
+
 - ✅ **Backend:** Complete (RAID API, Workflow, Audit, 177 tests @ 90.25%)
 - ❌ **Client:** Not started (RAID UI missing, Workflow UI wrong)
 
@@ -36,6 +37,7 @@ src/components/raid/
 ```
 
 **Features:**
+
 - [ ] List all RAID entries with type/title/status/owner/due date columns
 - [ ] Filter by type (Risk/Assumption/Issue/Dependency)
 - [ ] Filter by status (Open/In Progress/Resolved/Closed)
@@ -49,16 +51,18 @@ src/components/raid/
 - [ ] Status lifecycle display (Open → In Progress → Resolved → Closed)
 
 **API Integration:**
+
 ```typescript
 // Required API calls to implement
-GET    /api/v1/projects/{project_key}/raid          // List all
-GET    /api/v1/projects/{project_key}/raid/{id}     // Get detail
-POST   /api/v1/projects/{project_key}/raid          // Create
-PUT    /api/v1/projects/{project_key}/raid/{id}     // Update
-DELETE /api/v1/projects/{project_key}/raid/{id}     // Delete
+GET / api / v1 / projects / { project_key } / raid; // List all
+GET / api / v1 / projects / { project_key } / raid / { id }; // Get detail
+POST / api / v1 / projects / { project_key } / raid; // Create
+PUT / api / v1 / projects / { project_key } / raid / { id }; // Update
+DELETE / api / v1 / projects / { project_key } / raid / { id }; // Delete
 ```
 
 **Data Model:**
+
 ```typescript
 interface RAIDEntry {
   id: string;
@@ -97,6 +101,7 @@ src/components/workflow/
 ```
 
 **Features:**
+
 - [ ] Display current project stage (Initiating/Planning/Executing/Monitoring/Closing/Closed)
 - [ ] Show available transitions based on workflow rules
 - [ ] Execute state transition with confirmation
@@ -106,6 +111,7 @@ src/components/workflow/
 - [ ] Handle transition errors gracefully
 
 **ISO 21500 Workflow States:**
+
 ```
 Initiating → Planning → Executing ⇄ Monitoring → Closing → Closed
                  ↓                      ↓
@@ -113,18 +119,26 @@ Initiating → Planning → Executing ⇄ Monitoring → Closing → Closed
 ```
 
 **API Integration:**
+
 ```typescript
 // Required API calls
-GET    /api/v1/projects/{project_key}/workflow/state           // Current state
-GET    /api/v1/projects/{project_key}/workflow/transitions     // Available transitions
-POST   /api/v1/projects/{project_key}/workflow/transition      // Execute transition
-GET    /api/v1/projects/{project_key}/workflow/audit           // Audit trail
+GET / api / v1 / projects / { project_key } / workflow / state; // Current state
+GET / api / v1 / projects / { project_key } / workflow / transitions; // Available transitions
+POST / api / v1 / projects / { project_key } / workflow / transition; // Execute transition
+GET / api / v1 / projects / { project_key } / workflow / audit; // Audit trail
 ```
 
 **Data Model:**
+
 ```typescript
 interface WorkflowState {
-  current_state: 'initiating' | 'planning' | 'executing' | 'monitoring' | 'closing' | 'closed';
+  current_state:
+    | 'initiating'
+    | 'planning'
+    | 'executing'
+    | 'monitoring'
+    | 'closing'
+    | 'closed';
   available_transitions: string[];
   history: WorkflowAuditEvent[];
 }
@@ -161,6 +175,7 @@ _external/AI-Agent-Framework-Client/tests/e2e/
 **Test Scenarios:**
 
 **RAID Tests:**
+
 - [ ] Load RAID list view
 - [ ] Filter RAID entries by type
 - [ ] Filter RAID entries by status
@@ -171,6 +186,7 @@ _external/AI-Agent-Framework-Client/tests/e2e/
 - [ ] Validate form field requirements
 
 **Workflow Tests:**
+
 - [ ] Load project with Initiating state
 - [ ] Transition to Planning state
 - [ ] Transition to Executing state
@@ -180,6 +196,7 @@ _external/AI-Agent-Framework-Client/tests/e2e/
 - [ ] Verify state persists after page reload
 
 **Integration Tests:**
+
 - [ ] Create project → Add RAID entries → Transition through workflow
 - [ ] Verify RAID entries persist across workflow transitions
 - [ ] Ensure audit trail captures all actions
@@ -238,6 +255,7 @@ _external/AI-Agent-Framework-Client/tests/e2e/
 ### Backend API (Already Complete ✅)
 
 All required endpoints are implemented and tested:
+
 - ✅ RAID CRUD endpoints
 - ✅ Workflow state machine API
 - ✅ Audit event logging
@@ -246,6 +264,7 @@ All required endpoints are implemented and tested:
 ### Client Infrastructure Needed
 
 Before starting implementation, ensure:
+
 - [ ] API client library set up (axios or fetch wrapper)
 - [ ] Project routing configured
 - [ ] State management chosen (Context API, Zustand, Redux, etc.)
@@ -257,17 +276,20 @@ Before starting implementation, ensure:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test individual components in isolation
 - Mock API responses
 - Test form validation logic
 - Test filter/sort logic
 
 ### Integration Tests
+
 - Test API client service integration
 - Test component interactions
 - Test state management
 
 ### E2E Tests (Playwright)
+
 - Test full user workflows
 - Test API integration with real backend
 - Test error scenarios
@@ -280,12 +302,14 @@ Before starting implementation, ensure:
 Step 1 will be considered **100% COMPLETE** when:
 
 **Backend (Already Done ✅):**
+
 - ✅ RAID API with CRUD operations
 - ✅ Workflow state machine with transitions
 - ✅ Audit event logging
 - ✅ 177 tests passing @ 90.25% coverage
 
 **Client (To Be Done ❌):**
+
 - [ ] RAID list view with filters working
 - [ ] RAID create/edit/delete working
 - [ ] ISO 21500 workflow stage indicator showing correct states
@@ -300,12 +324,15 @@ Step 1 will be considered **100% COMPLETE** when:
 ## Timeline & Milestones
 
 **Week 1-2:** RAID UI Implementation
+
 - Milestone: RAID CRUD operations working in UI
 
 **Week 3-4:** Workflow UI Implementation
+
 - Milestone: Workflow transitions working in UI
 
 **Week 4 (end):** E2E Tests
+
 - Milestone: All E2E tests passing in CI
 
 **Total:** 3-4 weeks estimated for full client implementation
@@ -315,14 +342,17 @@ Step 1 will be considered **100% COMPLETE** when:
 ## Risks & Mitigations
 
 ### Risk 1: API Compatibility Issues
+
 - **Mitigation:** Backend API is already complete and tested
 - **Action:** Write integration tests early to catch issues
 
 ### Risk 2: State Management Complexity
+
 - **Mitigation:** Use simple state solution (Context API) first
 - **Action:** Refactor to more complex solution only if needed
 
 ### Risk 3: E2E Test Flakiness
+
 - **Mitigation:** Use Playwright best practices (explicit waits, test isolation)
 - **Action:** Run tests multiple times in CI to catch flaky tests
 
