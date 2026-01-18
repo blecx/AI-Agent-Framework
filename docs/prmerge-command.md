@@ -72,28 +72,44 @@ The `prmerge` command automates these steps:
 - Verifies merge success
 - Handles merge conflicts gracefully
 
-### 5. **Generate Issue Closing Message**
+### 5. **Generate Issue Closing Message** ✨ ENHANCED
 
+- **Detects issue type** automatically (infrastructure/feature/bugfix/docs)
+- **Captures enhanced metrics**:
+  - PR complexity score (low/medium/high)
+  - Commit count
+  - Test coverage ratio
+  - CI iteration count
+- **Selects appropriate template** based on issue type
 - Extracts PR details (files, additions, deletions)
 - Parses acceptance criteria from PR body
 - Creates comprehensive closing message with:
+  - Issue-specific formatting
   - Merge commit reference
   - Implementation summary
   - Acceptance criteria checklist
-  - Deliverables statistics
+  - Enhanced metrics and statistics
   - CI validation results
   - Next steps guidance
 
 ### 6. **Close Issue**
 
 - Verifies issue exists and is open
-- Posts comprehensive closing message
+- Posts comprehensive closing message with appropriate template
 - Links to PR and commit
 - Marks issue as completed
 
-### 7. **Record Completion (Optional)**
+### 7. **Record Completion (Optional)** ✨ ENHANCED
 
 - Records actual hours in learning system
+- **Captures optional learning data**:
+  - Unexpected challenges encountered
+  - Main time sinks
+  - Key learnings and insights
+- **Stores enhanced metrics**:
+  - PR complexity, commits, test ratio
+  - CI iterations, workflow efficiency
+  - All data in JSON format
 - Updates `.issue-resolution-knowledge.json`
 - Tracks estimation accuracy
 - Builds patterns for future estimates
@@ -114,6 +130,28 @@ The `prmerge` command automates these steps:
 - Searches by issue number in PR title
 - Falls back to manual PR number input if needed
 - Handles multiple search patterns
+
+### 🎯 **Issue Type Templates** ✨ NEW
+
+- Automatically detects issue type (infrastructure, feature, bugfix, docs)
+- Uses specialized closing message templates
+- Improves message clarity and relevance
+- Detection based on title keywords, file patterns, and content analysis
+- Four template types:
+  - **Infrastructure**: Setup, configuration, foundational code
+  - **Feature**: New functionality, components, integrations
+  - **Bugfix**: Bug fixes, hotfixes, patches
+  - **Documentation**: Guides, API docs, READMEs
+
+### 📊 **Enhanced Metrics Capture** ✨ NEW
+
+- **PR Complexity**: Automatic classification (low/medium/high based on file count)
+- **Commit Tracking**: Records commit count for analysis
+- **Test Coverage**: Calculates test file ratio
+- **CI Efficiency**: Tracks CI iteration count
+- **Learning Prompts**: Optional capture of challenges, time sinks, and insights
+- **Metrics Storage**: All data saved to learning system for future estimate improvements
+- **Automated Analysis**: No manual calculation needed
 
 ### ✅ **CI Validation**
 
@@ -199,17 +237,31 @@ Step 4: Generate Issue Closing Message
 =========================================
 
 ℹ Analyzing PR changes...
-ℹ Generated closing message
+ℹ Capturing PR metrics...
+ℹ Metrics: complexity=high,commits=7,test_ratio=0.45,ci_iterations=4
+ℹ Detecting issue type...
+✅ Detected type: infrastructure
+✅ Generated infrastructure closing message with enhanced metrics
 
 =========================================
 Step 5: Close Issue
 =========================================
 
 ℹ Closing Issue #24...
-✅ Issue #24 closed with comprehensive message
+✅ Issue #24 closed with infrastructure template
 
 =========================================
 Step 6: Record Completion
+=========================================
+
+ℹ Recording completion time: 7.5 hours
+
+ℹ Optional: Provide learning data for future estimates (press Enter to skip)
+Unexpected challenges encountered (optional): Vitest config path resolution
+Main time sink if any (optional): CI debugging (2 hours)
+Key learning/insight (optional): Always use absolute paths in monorepo
+
+✅ Completion recorded in learning system with enhanced metrics
 =========================================
 
 ℹ Recording completion time: 7.5 hours
@@ -222,10 +274,14 @@ Step 7: Summary and Next Steps
 ✅ PR Merge Workflow Complete!
 
 Summary:
+  - Issue Type: infrastructure
   - PR #60 merged: https://github.com/blecx/AI-Agent-Framework-Client/pull/60
   - Merge commit: 532e5a6
-  - Issue #24 closed
-  - Completion recorded: 7.5 hours
+  - Issue #24 closed with infrastructure template
+  - Files changed: 17 (+1701/-42)
+  - Complexity: high
+  - CI iterations: 4
+  - Completion recorded: 7.5 hours with enhanced metrics
 
 Next steps:
   1. Run './next-issue' to select next issue

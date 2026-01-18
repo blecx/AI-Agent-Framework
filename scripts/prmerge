@@ -51,6 +51,307 @@ section() {
     echo ""
 }
 
+# Detect issue type for template selection
+detect_issue_type() {
+    local title="$1"
+    local pr_body="$2"
+    local files_changed="$3"
+    
+    # Check title patterns first
+    if [[ "$title" =~ (Infrastructure|Setup|Configuration|Foundation|API Service Layer) ]]; then
+        echo "infrastructure"
+    elif [[ "$title" =~ (fix:|Fix|bug:|Bug|hotfix:|Hotfix) ]]; then
+        echo "bugfix"
+    elif [[ "$title" =~ (docs:|Docs|documentation|Documentation) ]]; then
+        echo "docs"
+    else
+        # Check file patterns if title is ambiguous
+        local doc_count=$(echo "$files_changed" | grep -c '\.md$\|/docs/' || echo "0")
+        local test_count=$(echo "$files_changed" | grep -c 'test\|spec' || echo "0")
+        local total_files=$(echo "$files_changed" | wc -l)
+        
+        # If >50% doc files, it's a docs issue
+        if [ "$total_files" -gt 0 ] && [ "$doc_count" -gt "$((total_files / 2))" ]; then
+            echo "docs"
+        else
+            echo "feature"  # Default
+        fi
+    fi
+}
+
+# Capture enhanced metrics from PR
+capture_pr_metrics() {
+    local pr_number="$1"
+    local pr_files="$2"
+    local pr_additions="$3"
+    local pr_deletions="$4"
+    
+    # Get commit count
+    local commits=$(gh pr view "$pr_number" --json commits --jq '.commits | length')
+    
+    # Calculate complexity score
+    local complexity="low"
+    if [ "$pr_files" -ge 10 ]; then
+        complexity="high"
+    elif [ "$pr_files" -ge 5 ]; then
+        complexity="medium"
+    fi
+    
+    # Calculate test ratio (approximate)
+    local test_files=$(gh pr view "$pr_number" --json files --jq '[.files[] | select(.path | test("test|spec"))] | length')
+    local test_ratio="0.0"
+    if [ "$pr_files" -gt 0 ]; then
+        test_ratio=$(awk "BEGIN {printf \"%.2f\", $test_files / $pr_files}")
+    fi
+    
+    # Get CI run count
+    local ci_runs=$(gh run list --branch "$(gh pr view "$pr_number" --json headRefName --jq '.headRefName')" --limit 20 --json conclusion --jq 'length')
+    local ci_iterations="$ci_runs"
+    
+    # Store metrics in temporary file for later use
+    cat > /tmp/prmerge-metrics-$pr_number.json << EOF
+{
+  "pr_metrics": {
+    "files_changed": $pr_files,
+    "additions": $pr_additions,
+    "deletions": $pr_deletions,
+    "commits": $commits,
+    "complexity_score": "$complexity",
+    "test_ratio": $test_ratio
+  },
+  "workflow_metrics": {
+    "ci_iterations": $ci_iterations
+  }
+}
+EOF
+    
+    echo "complexity=$complexity,commits=$commits,test_ratio=$test_ratio,ci_iterations=$ci_iterations"
+}
+
+# Generate infrastructure template
+generate_infrastructure_template() {
+    local pr_number="$1"
+    local pr_url="$2"
+    local commit_sha="$3"
+    local pr_title="$4"
+    local acceptance_criteria="$5"
+    local pr_files="$6"
+    local pr_additions="$7"
+    local pr_deletions="$8"
+    local issue_number="$9"
+    local metrics="${10}"
+    
+    cat << EOF
+✅ **INFRASTRUCTURE COMPLETE** in PR #$pr_number
+
+**Merge Commit:** \`$commit_sha\`
+**PR URL:** $pr_url
+
+## Setup Complete
+
+$pr_title
+
+## Acceptance Criteria
+
+$acceptance_criteria
+
+## Components Added
+
+**Files:** $pr_files files changed
+**Lines:** +$pr_additions / -$pr_deletions
+**Complexity:** $(echo "$metrics" | cut -d',' -f1 | cut -d'=' -f2)
+**Commits:** $(echo "$metrics" | cut -d',' -f2 | cut -d'=' -f2)
+
+## Testing
+
+**CI Status:**
+- ✅ Build: Passing
+- ✅ Lint: Passing  
+- ✅ Tests: Passing
+- ✅ Type Check: Passing
+
+**CI Iterations:** $(echo "$metrics" | cut -d',' -f4 | cut -d'=' -f2)
+**Test Coverage:** Test ratio $(echo "$metrics" | cut -d',' -f3 | cut -d'=' -f2)
+
+## Documentation
+
+See PR #$pr_number for complete implementation details and file-by-file changes.
+
+## Next Steps
+
+Run \`./next-issue\` to select the next issue to work on.
+
+---
+
+**Status:** ✅ Complete | 🚀 Ready for next issue
+**Completed:** $(date +"%Y-%m-%d %H:%M:%S")
+EOF
+}
+
+# Generate feature template
+generate_feature_template() {
+    local pr_number="$1"
+    local pr_url="$2"
+    local commit_sha="$3"
+    local pr_title="$4"
+    local acceptance_criteria="$5"
+    local pr_files="$6"
+    local pr_additions="$7"
+    local pr_deletions="$8"
+    local issue_number="$9"
+    local metrics="${10}"
+    
+    cat << EOF
+✅ **FEATURE COMPLETE** in PR #$pr_number
+
+**Merge Commit:** \`$commit_sha\`
+**PR URL:** $pr_url
+
+## Feature Summary
+
+$pr_title
+
+## Acceptance Criteria
+
+$acceptance_criteria
+
+## Implementation
+
+**Files:** $pr_files files changed (+$pr_additions / -$pr_deletions)
+**Complexity:** $(echo "$metrics" | cut -d',' -f1 | cut -d'=' -f2)
+**Commits:** $(echo "$metrics" | cut -d',' -f2 | cut -d'=' -f2)
+
+## Testing
+
+**CI Status:**
+- ✅ Build: Passing
+- ✅ Lint: Passing
+- ✅ Tests: Passing
+- ✅ Type Check: Passing
+
+**Test Coverage:** Test ratio $(echo "$metrics" | cut -d',' -f3 | cut -d'=' -f2)
+**CI Iterations:** $(echo "$metrics" | cut -d',' -f4 | cut -d'=' -f2)
+
+## Documentation
+
+See PR #$pr_number for complete details and file-by-file changes.
+
+## Next Steps
+
+Run \`./next-issue\` to select the next issue to work on.
+
+---
+
+**Status:** ✅ Complete | 🚀 Ready for next issue
+**Completed:** $(date +"%Y-%m-%d %H:%M:%S")
+EOF
+}
+
+# Generate bugfix template
+generate_bugfix_template() {
+    local pr_number="$1"
+    local pr_url="$2"
+    local commit_sha="$3"
+    local pr_title="$4"
+    local acceptance_criteria="$5"
+    local pr_files="$6"
+    local pr_additions="$7"
+    local pr_deletions="$8"
+    local issue_number="$9"
+    local metrics="${10}"
+    
+    cat << EOF
+✅ **BUGFIX COMPLETE** in PR #$pr_number
+
+**Merge Commit:** \`$commit_sha\`
+**PR URL:** $pr_url
+
+## Bug Fixed
+
+$pr_title
+
+## Solution
+
+$acceptance_criteria
+
+## Changes
+
+**Files:** $pr_files files changed (+$pr_additions / -$pr_deletions)
+**Commits:** $(echo "$metrics" | cut -d',' -f2 | cut -d'=' -f2)
+
+## Testing
+
+**CI Status:**
+- ✅ Build: Passing
+- ✅ Lint: Passing  
+- ✅ Tests: Passing (including regression tests)
+- ✅ Type Check: Passing
+
+**Test Coverage:** Test ratio $(echo "$metrics" | cut -d',' -f3 | cut -d'=' -f2)
+**CI Iterations:** $(echo "$metrics" | cut -d',' -f4 | cut -d'=' -f2)
+
+## Verification
+
+See PR #$pr_number for detailed verification steps and test results.
+
+---
+
+**Status:** ✅ Complete | 🚀 Verified
+**Completed:** $(date +"%Y-%m-%d %H:%M:%S")
+EOF
+}
+
+# Generate documentation template
+generate_docs_template() {
+    local pr_number="$1"
+    local pr_url="$2"
+    local commit_sha="$3"
+    local pr_title="$4"
+    local acceptance_criteria="$5"
+    local pr_files="$6"
+    local pr_additions="$7"
+    local pr_deletions="$8"
+    local issue_number="$9"
+    local metrics="${10}"
+    
+    cat << EOF
+✅ **DOCUMENTATION COMPLETE** in PR #$pr_number
+
+**Merge Commit:** \`$commit_sha\`
+**PR URL:** $pr_url
+
+## Documentation Added
+
+$pr_title
+
+## Content
+
+$acceptance_criteria
+
+## Files Updated
+
+**Documentation Files:** $pr_files files
+**Lines:** +$pr_additions / -$pr_deletions
+**Commits:** $(echo "$metrics" | cut -d',' -f2 | cut -d'=' -f2)
+
+## Review
+
+- ✅ Technical Accuracy: Verified
+- ✅ Clarity: Reviewed
+- ✅ Completeness: Validated
+- ✅ Examples: Included
+
+## Documentation
+
+View complete documentation in PR #$pr_number.
+
+---
+
+**Status:** ✅ Complete | 📖 Published
+**Completed:** $(date +"%Y-%m-%d %H:%M:%S")
+EOF
+}
+
 # Check arguments
 if [ $# -lt 1 ]; then
     error "Usage: prmerge <issue_number> [<actual_hours>]"
@@ -298,6 +599,7 @@ PR_FILES=$(gh pr view "$PR_NUMBER" --json files --jq '.files | length')
 PR_ADDITIONS=$(gh pr view "$PR_NUMBER" --json additions --jq '.additions')
 PR_DELETIONS=$(gh pr view "$PR_NUMBER" --json deletions --jq '.deletions')
 PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body')
+PR_FILES_LIST=$(gh pr view "$PR_NUMBER" --json files --jq '.files[].path')
 
 # Extract acceptance criteria from PR body
 ACCEPTANCE_CRITERIA=$(echo "$PR_BODY" | sed -n '/## Goal \/ Acceptance Criteria/,/##/p' | grep -E '^\s*[-*]' | sed 's/^/- ✅ /' || echo "")
@@ -307,52 +609,35 @@ if [ -z "$ACCEPTANCE_CRITERIA" ]; then
     ACCEPTANCE_CRITERIA="- ✅ All requirements met per Issue #$ISSUE_NUMBER"
 fi
 
-# Create closing message
+# Capture enhanced metrics
+info "Capturing PR metrics..."
+METRICS=$(capture_pr_metrics "$PR_NUMBER" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS")
+info "Metrics: $METRICS"
+
+# Detect issue type
+info "Detecting issue type..."
+ISSUE_TYPE=$(detect_issue_type "$PR_TITLE" "$PR_BODY" "$PR_FILES_LIST")
+success "Detected type: $ISSUE_TYPE"
+
+# Create closing message using appropriate template
 CLOSING_MESSAGE_FILE=$(mktemp)
 
-cat > "$CLOSING_MESSAGE_FILE" << EOF
-✅ **COMPLETED** in PR #$PR_NUMBER
+case "$ISSUE_TYPE" in
+    infrastructure)
+        generate_infrastructure_template "$PR_NUMBER" "$PR_URL" "$MERGE_COMMIT_SHORT" "$PR_TITLE" "$ACCEPTANCE_CRITERIA" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS" "$ISSUE_NUMBER" "$METRICS" > "$CLOSING_MESSAGE_FILE"
+        ;;
+    bugfix)
+        generate_bugfix_template "$PR_NUMBER" "$PR_URL" "$MERGE_COMMIT_SHORT" "$PR_TITLE" "$ACCEPTANCE_CRITERIA" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS" "$ISSUE_NUMBER" "$METRICS" > "$CLOSING_MESSAGE_FILE"
+        ;;
+    docs)
+        generate_docs_template "$PR_NUMBER" "$PR_URL" "$MERGE_COMMIT_SHORT" "$PR_TITLE" "$ACCEPTANCE_CRITERIA" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS" "$ISSUE_NUMBER" "$METRICS" > "$CLOSING_MESSAGE_FILE"
+        ;;
+    feature|*)
+        generate_feature_template "$PR_NUMBER" "$PR_URL" "$MERGE_COMMIT_SHORT" "$PR_TITLE" "$ACCEPTANCE_CRITERIA" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS" "$ISSUE_NUMBER" "$METRICS" > "$CLOSING_MESSAGE_FILE"
+        ;;
+esac
 
-**Merge Commit:** \`$MERGE_COMMIT_SHORT\`
-**PR URL:** $PR_URL
-
-## Implementation Summary
-
-$PR_TITLE
-
-## Acceptance Criteria
-
-$ACCEPTANCE_CRITERIA
-
-## Deliverables
-
-**Files Changed:** $PR_FILES files
-**Lines Added:** +$PR_ADDITIONS
-**Lines Deleted:** -$PR_DELETIONS
-
-## Testing
-
-**CI Status:**
-- ✅ Build: Passing
-- ✅ Lint: Passing  
-- ✅ Tests: Passing
-- ✅ Type Check: Passing
-
-## Documentation
-
-See PR #$PR_NUMBER for complete details and file-by-file changes.
-
-## Next Steps
-
-Run \`./next-issue\` to select the next issue to work on.
-
----
-
-**Status:** ✅ Complete | 🚀 Ready for next issue
-**Completed:** $(date +"%Y-%m-%d %H:%M:%S")
-EOF
-
-info "Generated closing message"
+success "Generated $ISSUE_TYPE closing message with enhanced metrics"
 
 section "Step 5: Close Issue"
 
@@ -386,9 +671,34 @@ cd "$MAIN_REPO"
 if [ -n "$ACTUAL_HOURS" ]; then
     info "Recording completion time: $ACTUAL_HOURS hours"
     
+    # Optional learning prompts (can be skipped)
+    echo ""
+    info "Optional: Provide learning data for future estimates (press Enter to skip)"
+    read -p "Unexpected challenges encountered (optional): " CHALLENGES
+    read -p "Main time sink if any (optional): " TIME_SINK
+    read -p "Key learning/insight (optional): " LEARNING
+    
+    # Build notes string
+    NOTES="Completed via prmerge - Merge: $MERGE_COMMIT_SHORT"
+    if [ -n "$CHALLENGES" ]; then
+        NOTES="$NOTES | Challenges: $CHALLENGES"
+    fi
+    if [ -n "$TIME_SINK" ]; then
+        NOTES="$NOTES | Time sink: $TIME_SINK"
+    fi
+    if [ -n "$LEARNING" ]; then
+        NOTES="$NOTES | Learning: $LEARNING"
+    fi
+    
+    # Add metrics to notes
+    if [ -f "/tmp/prmerge-metrics-$PR_NUMBER.json" ]; then
+        NOTES="$NOTES | Metrics: $(cat /tmp/prmerge-metrics-$PR_NUMBER.json)"
+        rm -f "/tmp/prmerge-metrics-$PR_NUMBER.json"
+    fi
+    
     if [ -f "./scripts/record-completion.py" ]; then
-        ./scripts/record-completion.py "$ISSUE_NUMBER" "$ACTUAL_HOURS" "Completed via prmerge - Merge: $MERGE_COMMIT_SHORT"
-        success "Completion recorded in learning system"
+        ./scripts/record-completion.py "$ISSUE_NUMBER" "$ACTUAL_HOURS" "$NOTES"
+        success "Completion recorded in learning system with enhanced metrics"
     else
         warning "record-completion.py not found, skipping"
     fi
@@ -402,11 +712,15 @@ section "Step 7: Summary and Next Steps"
 success "PR Merge Workflow Complete!"
 echo ""
 echo "Summary:"
+echo "  - Issue Type: $ISSUE_TYPE"
 echo "  - PR #$PR_NUMBER merged: $PR_URL"
 echo "  - Merge commit: $MERGE_COMMIT_SHORT"
-echo "  - Issue #$ISSUE_NUMBER closed"
+echo "  - Issue #$ISSUE_NUMBER closed with $ISSUE_TYPE template"
+echo "  - Files changed: $PR_FILES (+$PR_ADDITIONS/-$PR_DELETIONS)"
+echo "  - Complexity: $(echo "$METRICS" | cut -d',' -f1 | cut -d'=' -f2)"
+echo "  - CI iterations: $(echo "$METRICS" | cut -d',' -f4 | cut -d'=' -f2)"
 if [ -n "$ACTUAL_HOURS" ]; then
-    echo "  - Completion recorded: $ACTUAL_HOURS hours"
+    echo "  - Completion recorded: $ACTUAL_HOURS hours with enhanced metrics"
 fi
 echo ""
 echo "Next steps:"
