@@ -21,7 +21,8 @@ This system provides intelligent project management following ISO 21500 standard
 **New to the project?** Start here:
 
 - 🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 10 minutes
-- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
+- � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - NEW! Run autonomous agent from VS Code chat
+- �🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
 - 📖 **[Documentation Hub](docs/README.md)** - Complete documentation index
 
 **Architecture & Design:**

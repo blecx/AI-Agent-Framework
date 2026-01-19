@@ -1,0 +1,34 @@
+{
+  "name": "issueagent",
+  "displayName": "Issue Agent",
+  "description": "Autonomous AI agent for issue resolution via chat",
+  "version": "1.0.0",
+  "publisher": "ai-agent-framework",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Chat"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "issueagent.chat",
+        "name": "issueagent",
+        "description": "Autonomous AI agent that selects and works on GitHub issues",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "run",
+            "description": "Select next issue and run autonomous agent"
+          }
+        ]
+      }
+    ]
+  },
+  "dependencies": {}
+}

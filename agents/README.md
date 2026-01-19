@@ -1,103 +1,113 @@
-# Custom AI Agents
+# AI Agents
 
-This directory contains custom AI agents trained on chat exports and project knowledge.
+This directory contains two agent systems for issue resolution.
 
-## Available Agents
+---
 
-### 1. Workflow Agent
+## 🤖 Autonomous Workflow Agent (NEW - Recommended)
 
-**Purpose:** Automates the 6-phase issue resolution workflow
+**AI-powered agent using Microsoft Agent Framework + GPT-5.1-codex**
 
-**Usage:**
+### Files
+- `autonomous_workflow_agent.py` - Main AI agent implementation
+- `tools.py` - 11 tool functions (GitHub, Git, Files, Testing, KB)
+- `llm_client.py` - GitHub Models client factory
+- `knowledge/` - Knowledge base (auto-updated after each issue)
+
+### Usage
 
 ```bash
-# Run workflow for an issue
-./scripts/agents/workflow --issue 26
+# Activate environment
+source .venv/bin/activate
 
-# Dry run (preview without executing)
-./scripts/agents/workflow --issue 26 --dry-run
+# Run agent on an issue
+./scripts/work-issue.py --issue 26
+
+# Or use VS Code: Ctrl+Shift+P → Run Task → "🤖 Work on Issue (Autonomous)"
 ```
 
-**Workflow Phases:**
+### What It Does
 
-1. **Context** - Read issue and gather relevant files
-2. **Planning** - Create planning document with estimates
-3. **Implementation** - Test-first development approach
-4. **Testing** - Build and run tests
-5. **Review** - Self-review and Copilot review
-6. **PR & Merge** - Create PR and merge with validation
+- ✅ Fetches and analyzes issues with LLM reasoning
+- ✅ Creates implementation plans
+- ✅ Generates code (test-first approach)
+- ✅ Runs tests and fixes failures automatically
+- ✅ Self-reviews changes
+- ✅ Creates pull requests
+- ✅ **Learns from each issue** (guaranteed post-execution)
 
-**Trained On:** Issues #24, #25
+### Documentation
 
-## Agent Training Process
+**📖 Complete Guide:** [docs/agents/AUTONOMOUS-AGENT-GUIDE.md](../docs/agents/AUTONOMOUS-AGENT-GUIDE.md)
 
-### After Completing an Issue
+---
 
-1. **Export Chat** (with timeout protection):
+## 📋 Manual Workflow Agent (OLD - Deprecated)
 
+**Manual checklist-based workflow tracker**
+
+### Files
+- `workflow_agent.py` - Old manual workflow implementation
+- `base_agent.py` - Base class for manual agent
+
+### Status
+
+⚠️ **Deprecated** - Superseded by `autonomous_workflow_agent.py`
+
+The old agent was a manual checklist that paused at each phase requiring user input. It has been replaced by the autonomous agent which actually uses AI for reasoning and code generation.
+
+**Kept for reference only.** Use the new autonomous agent instead.
+
+---
+
+## 📚 Knowledge Base
+
+Located in `agents/knowledge/`:
+
+- **workflow_patterns.json** - Complete execution records from all issues
+- **problem_solutions.json** - Problems encountered and their solutions  
+- **time_estimates.json** - Time insights for estimation
+- **command_sequences.json** - Useful command patterns
+- **agent_metrics.json** - Success rate, total issues completed
+
+**Auto-updated** by autonomous agent after each issue.
+
+---
+
+## 🎯 Quick Comparison
+
+| Feature | Autonomous Agent | Manual Agent |
+|---------|-----------------|--------------|
+| **AI Reasoning** | ✅ GPT-5.1-codex | ❌ None |
+| **Code Generation** | ✅ Automatic | ❌ Manual |
+| **Test Execution** | ✅ Automatic | ❌ Manual |
+| **PR Creation** | ✅ Automatic | ❌ Manual |
+| **Learning** | ✅ Guaranteed after each issue | ❌ Manual export/train |
+| **Recommended** | ✅ **Use This** | ❌ Deprecated |
+
+---
+
+## 🚀 Getting Started
+
+1. **Configure GitHub PAT token:**
    ```bash
-   ./scripts/export_chat.py --issue 25 --output docs/chat/
+   cp configs/llm.github.json.example configs/llm.json
+   # Edit configs/llm.json and add your token
    ```
 
-2. **Extract Learnings**:
-
+2. **Run the agent:**
    ```bash
-   ./scripts/extract_learnings.py --export docs/chat/2026-01-19-issue25-complete-workflow.md
+   source .venv/bin/activate
+   ./scripts/work-issue.py --issue 26
    ```
 
-3. **Analyze & Update Agent**:
+3. **Read the guide:**
+   See [docs/agents/AUTONOMOUS-AGENT-GUIDE.md](../docs/agents/AUTONOMOUS-AGENT-GUIDE.md) for complete documentation.
 
-   ```bash
-   ./scripts/train_agent.py --issue 25
-   ```
+---
 
-4. **Review Recommendations**:
-   ```bash
-   ./scripts/train_agent.py --recommend
-   ```
+**The autonomous agent improves with every issue!** 🎉
 
-### Continuous Improvement
-
-The agent automatically:
-
-- **Learns from problems** - Catalogs issues and solutions
-- **Improves time estimates** - Refines predictions based on actuals
-- **Expands command library** - Adds new proven command patterns
-- **Self-analyzes** - Detects when updates are needed
-
-### When to Update Agent
-
-The agent will recommend updates when:
-
-- **2+ new problems** discovered (high priority)
-- **Time variance >10%** from predictions (medium priority)
-- **5+ new commands** could be automated (low priority)
-- **Workflow pattern changes** significantly (critical - may need new agent)
-
-## Knowledge Base Structure
-
-```
-agents/knowledge/
-├── workflow_patterns.json      # Successful workflows from all issues
-├── problem_solutions.json      # Known problems and solutions
-├── time_estimates.json         # Historical time data
-├── command_sequences.json      # Reusable command patterns
-└── agent_metrics.json          # Agent performance and recommendations
-```
-
-## Agent Maturity Levels
-
-- **Nascent** (0-2 issues): Basic functionality, low confidence
-- **Initial** (2-5 issues): Learning patterns, medium-low confidence
-- **Learning** (5-10 issues): Recognizing patterns, medium confidence
-- **Developing** (10-20 issues): Reliable for common cases, high confidence
-- **Mature** (20+ issues): Production-ready, very high confidence
-
-**Current Status:** Run `./scripts/train_agent.py --analyze-all` to see current maturity
-
-## Creating New Agents
-
-When to create a new specialized agent:
 
 1. **Different workflow** - Issue requires steps not in 6-phase workflow
 2. **Different domain** - Deployment, security, infrastructure work
