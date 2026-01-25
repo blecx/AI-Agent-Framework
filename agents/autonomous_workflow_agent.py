@@ -16,6 +16,7 @@ Based on AI Toolkit best practices and Microsoft Agent Framework.
 
 import asyncio
 import json
+import platform
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -51,6 +52,7 @@ class AutonomousWorkflowAgent:
         self.project_instructions = self._load_copilot_instructions()
         self.workflow_guide = self._load_workflow_guide()
         self.knowledge_base = self._load_knowledge_base()
+        self.client_repo_context = self._load_client_repo_context()
     
     def _load_copilot_instructions(self) -> str:
         """Load project conventions from .github/copilot-instructions.md"""
@@ -86,11 +88,72 @@ class AutonomousWorkflowAgent:
         except Exception as e:
             print(f"⚠️  Could not load knowledge base: {e}")
         return "[]"
+
+    def _load_client_repo_context(self) -> str:
+        """Load a small, token-bounded summary of the client repo for multi-repo issues."""
+        client_root = Path("_external/AI-Agent-Framework-Client")
+        if not client_root.exists():
+            return ""
+
+        parts: list[str] = []
+        parts.append(
+            "This workspace also contains the UX repo at _external/AI-Agent-Framework-Client (React/TypeScript + Vite)."
+        )
+
+        try:
+            readme = client_root / "README.md"
+            if readme.exists():
+                with open(readme) as f:
+                    lines = f.readlines()[:50]
+                parts.append("README excerpt:\n" + "".join(lines).strip())
+        except Exception as e:
+            print(f"⚠️  Could not load client README: {e}")
+
+        client_app = client_root / "client"
+        if client_app.exists():
+            parts.append(
+                "Client app directory: _external/AI-Agent-Framework-Client/client (use this for npm dev/lint/build/test)."
+            )
+
+            try:
+                pkg_path = client_app / "package.json"
+                if pkg_path.exists():
+                    data = json.loads(pkg_path.read_text())
+                    scripts = (data.get("scripts") or {}) if isinstance(data, dict) else {}
+                    if isinstance(scripts, dict) and scripts:
+                        preferred = [
+                            "dev",
+                            "lint",
+                            "build",
+                            "test",
+                            "test:api",
+                            "test:e2e",
+                        ]
+                        script_names = [name for name in preferred if name in scripts]
+                        if script_names:
+                            parts.append(
+                                "Common client scripts: " + ", ".join(script_names)
+                            )
+            except Exception as e:
+                print(f"⚠️  Could not load client package.json: {e}")
+
+        parts.append(
+            "Typical client commands:\n"
+            "- cd _external/AI-Agent-Framework-Client/client && npm install\n"
+            "- npm run dev   (Vite dev server, usually http://localhost:5173)\n"
+            "- npm run lint  (must pass if client code changed)\n"
+            "- npm run build (must succeed before PR)\n"
+            "- npm run test:api (requires backend API running at http://localhost:8000)"
+        )
+
+        summary = "\n\n".join([p for p in parts if p]).strip()
+        return summary[:2500]
     
     async def initialize(self):
         """Initialize the AI agent with GitHub Models."""
         print(f"🤖 Initializing Autonomous Workflow Agent v2.0")
         print(f"📋 Issue #{self.issue_number}")
+        print(f"🐍 Python: {sys.version.split()[0]} ({sys.executable})")
         
         if self.dry_run:
             print("ℹ️  DRY RUN MODE - No actual changes will be made")
@@ -105,6 +168,18 @@ class AutonomousWorkflowAgent:
             print(f"   Provider: {report.get('provider')}")
         if report.get("configured_base_url"):
             print(f"   Config base_url: {report.get('configured_base_url')}")
+
+        configured_base_url = (report.get("configured_base_url") or "").strip()
+        if (
+            configured_base_url
+            and "host.docker.internal" in configured_base_url
+            and platform.system().lower() == "linux"
+            and not Path("/.dockerenv").exists()
+        ):
+            print(
+                "⚠️  Note: On Linux hosts, 'host.docker.internal' often does not resolve outside Docker. "
+                "If you are running locally (not in Docker), consider setting base_url to http://localhost:1234/v1 in configs/llm.json."
+            )
         if isinstance(models, dict) and models:
             print(f"   Planning model: {models.get('planning')}")
             print(f"   Coding model: {models.get('coding')}")
@@ -195,6 +270,9 @@ Work on Issue #{self.issue_number} following the complete 6-phase workflow:
 - Primary repo: AI-Agent-Framework (this workspace, Python backend).
 - UX repo: _external/AI-Agent-Framework-Client (React/TypeScript, Node).
 - Some issues touch one repo; some touch both. Plan and execute accordingly.
+
+## UX Repo Context (If Needed)
+{self.client_repo_context if self.client_repo_context else "UX repo not present in this workspace"}
 
 ## Environment Parity
 - Backend commands must run with the repo's .venv Python.
@@ -460,6 +538,50 @@ Requirements:
                 await self._extract_and_update_learnings(execution_data)
             
             return False
+
+    async def plan_only(self) -> str:
+        """Run Phase 1-2 only and return the plan text.
+
+        This mode is intended to be read-only: no file writes, no commits, no PRs.
+        It still requires a working LLM connection.
+        """
+        if not self.planning_agent or not self.planning_thread:
+            raise RuntimeError("Agent not initialized. Call initialize() first.")
+
+        planning_prompt = f"""PLAN-ONLY MODE for Issue #{self.issue_number}.
+
+Goals:
+1) Fetch and analyze the issue.
+2) Read relevant code/docs (read-only).
+3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+Hard rules:
+- Do NOT modify files.
+- Do NOT run formatting/tools that rewrite files.
+- Do NOT commit, push, or create a PR.
+- Only use read-only investigation tools.
+
+Output requirements:
+- A concise plan with steps.
+- List of files likely to change.
+- Validation commands to run (by repo).
+
+End with a clearly marked block:
+
+PLAN_ONLY_OUTPUT:
+- Summary:
+- Steps:
+- Files:
+- Validation:
+
+Begin now."""
+
+        return await self._run_agent_stream(
+            self.planning_agent,
+            self.planning_thread,
+            planning_prompt,
+            "Plan-only: Planning (Phase 1-2)",
+        )
     
     async def continue_conversation(self, message: str) -> str:
         """Continue conversation with the agent (for follow-up questions)."""

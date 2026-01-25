@@ -11,18 +11,22 @@ Usage:
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agents.autonomous_workflow_agent import AutonomousWorkflowAgent
-
 
 async def main():
     """Main entry point."""
     import argparse
+
+    _ensure_venv_and_reexec()
+
+    # Import after venv re-exec so dependencies are available
+    from agents.autonomous_workflow_agent import AutonomousWorkflowAgent
     
     parser = argparse.ArgumentParser(
         description="Autonomous AI Agent for Issue Resolution",
@@ -41,14 +45,17 @@ Examples:
   # Fully autonomous - agent works independently
   ./scripts/work-issue.py --issue 26
   
-  # Dry run - analyze and plan without changes
+    # Dry run - initialize only (no LLM calls, no changes)
   ./scripts/work-issue.py --issue 26 --dry-run
+
+    # Plan-only - Phase 1-2 planning only (LLM required, no changes)
+    ./scripts/work-issue.py --issue 26 --plan-only
   
   # Interactive - pause for approval between phases
   ./scripts/work-issue.py --issue 26 --interactive
 
 Requirements:
-  - Python 3.10+ with agent-framework-azure-ai installed
+    - Python 3.12+ (this repo enforces .venv via ./setup.sh)
   - GitHub CLI (gh) authenticated
   - Git configured
   - GitHub PAT token in configs/llm.json
@@ -61,11 +68,18 @@ Requirements:
         required=True,
         help="GitHub issue number to work on"
     )
-    
-    parser.add_argument(
+
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
         "--dry-run",
         action="store_true",
-        help="Analyze and plan but don't make actual changes"
+        help="Initialize only (no LLM calls, no repo changes)"
+    )
+
+    mode_group.add_argument(
+        "--plan-only",
+        action="store_true",
+        help="Run Phase 1-2 planning only (LLM required, no repo changes)"
     )
     
     parser.add_argument(
@@ -91,10 +105,21 @@ Requirements:
     try:
         agent = AutonomousWorkflowAgent(
             issue_number=args.issue,
-            dry_run=args.dry_run
+            # plan-only should also behave as read-only inside the agent
+            dry_run=bool(args.dry_run or args.plan_only)
         )
         
         await agent.initialize()
+
+        if args.dry_run:
+            print("✅ Dry run complete: initialization succeeded (no LLM calls executed).")
+            sys.exit(0)
+
+        if args.plan_only:
+            _ = await agent.plan_only()
+            print("✅ Plan-only complete: planning finished (no repo changes executed).")
+            sys.exit(0)
+
         success = await agent.execute()
         
         # Interactive mode
@@ -135,10 +160,11 @@ def _check_prerequisites() -> bool:
     # Check Python version
     import sys
     version = sys.version_info
-    if version.major == 3 and version.minor >= 10:
-        checks.append((f"Python {version.major}.{version.minor}", "✅"))
+    py_exec = sys.executable
+    if version.major == 3 and version.minor >= 12:
+        checks.append((f"Python {version.major}.{version.minor} ({py_exec})", "✅"))
     else:
-        checks.append((f"Python {version.major}.{version.minor}", "❌ Need Python 3.10+"))
+        checks.append((f"Python {version.major}.{version.minor} ({py_exec})", "❌ Need Python 3.12+"))
     
     # Check LLM config
     config_path = Path("configs/llm.json")
@@ -180,7 +206,52 @@ def _check_prerequisites() -> bool:
     return all("✅" in status for _, status in checks)
 
 
-async def _interactive_mode(agent: AutonomousWorkflowAgent):
+def _ensure_venv_and_reexec() -> None:
+    """Ensure .venv exists and re-exec this script under the .venv interpreter.
+
+    This keeps agent runs reproducible and guarantees Python 3.12 for this repo.
+    """
+    project_root = Path(__file__).parent.parent
+    venv_python = project_root / ".venv" / "bin" / "python"
+    venv_dir = project_root / ".venv"
+
+    # Avoid infinite loops
+    if os.environ.get("WORK_ISSUE_REEXEC") == "1":
+        return
+
+    # If venv is missing, bootstrap it
+    if not venv_python.exists():
+        setup_script = project_root / "setup.sh"
+        if not setup_script.exists():
+            return
+
+        print("⚙️  .venv not found. Bootstrapping environment via ./setup.sh ...")
+        import subprocess
+
+        result = subprocess.run(["bash", str(setup_script)], cwd=str(project_root))
+        if result.returncode != 0:
+            print("❌ setup.sh failed; cannot continue.")
+            sys.exit(result.returncode)
+
+    # If we're not already running inside the venv, re-exec
+    in_venv = False
+    try:
+        # VIRTUAL_ENV is the most reliable indicator.
+        if os.environ.get("VIRTUAL_ENV"):
+            in_venv = Path(os.environ["VIRTUAL_ENV"]).resolve() == venv_dir.resolve()
+        else:
+            # Fallback: sys.prefix points at venv when active.
+            in_venv = Path(sys.prefix).resolve() == venv_dir.resolve()
+    except Exception:
+        in_venv = False
+
+    if not in_venv and venv_python.exists():
+        print(f"🔁 Re-executing under .venv Python: {venv_python}")
+        os.environ["WORK_ISSUE_REEXEC"] = "1"
+        os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+
+
+async def _interactive_mode(agent):
     """Run interactive mode for follow-up instructions."""
     print("\n" + "=" * 70)
     print("💬 Interactive Mode - Give additional instructions to the agent")
