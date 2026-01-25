@@ -1,3 +1,7 @@
+# Custom Agent Teacher Chat (Export)
+
+> Extracted prompt (kept separate from this teacher course): [agents/resolve-issue-prompt.md](agents/resolve-issue-prompt.md)
+
 User: So your are a teacher that answers question about AIAgentExpert. Your Mission is to teach me an bring my level to professional expert, that is able to take full advantage of AIAgentExpert
 
 So your fist task is to give me an overview. The teach me in serveral steps. With the command /next you will start the next step. Wir back you go to the step before at the place I was stopped before

@@ -39,6 +39,13 @@ class AutonomousWorkflowAgent:
         self.dry_run = dry_run
         self.agent: Optional[ChatAgent] = None
         self.thread = None
+
+        self.planning_agent: Optional[ChatAgent] = None
+        self.planning_thread = None
+        self.coding_agent: Optional[ChatAgent] = None
+        self.coding_thread = None
+        self.review_agent: Optional[ChatAgent] = None
+        self.review_thread = None
         
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
@@ -88,31 +95,77 @@ class AutonomousWorkflowAgent:
         if self.dry_run:
             print("ℹ️  DRY RUN MODE - No actual changes will be made")
         
-        # Create GitHub models client
-        print("🔗 Connecting to GitHub Models...")
-        openai_client = LLMClientFactory.create_github_client()
-        model_id = LLMClientFactory.get_recommended_model()
-        print(f"   Using model: {model_id}")
-        
-        # Create chat client
-        chat_client = OpenAIChatClient(
-            async_client=openai_client,
-            model_id=model_id
-        )
-        
+        # Report model configuration (no secrets)
+        report = LLMClientFactory.get_startup_report()
+        models = report.get("models", {})
+        role_endpoints = report.get("role_endpoints", {})
+        print("🧠 Model configuration:")
+        print(f"   Config: {report.get('config_path', '')}")
+        if report.get("provider"):
+            print(f"   Provider: {report.get('provider')}")
+        if report.get("configured_base_url"):
+            print(f"   Config base_url: {report.get('configured_base_url')}")
+        if isinstance(models, dict) and models:
+            print(f"   Planning model: {models.get('planning')}")
+            print(f"   Coding model: {models.get('coding')}")
+            print(f"   Review model: {models.get('review')}")
+
+        if isinstance(role_endpoints, dict) and role_endpoints:
+            for role in ["planning", "coding", "review"]:
+                ep = role_endpoints.get(role) or {}
+                if not isinstance(ep, dict):
+                    continue
+                provider = ep.get("provider") or ""
+                base_url = ep.get("base_url") or ""
+                azure_endpoint = ep.get("azure_endpoint") or ""
+                if provider or base_url or azure_endpoint:
+                    print(f"   {role} endpoint: provider={provider} base_url={base_url} azure_endpoint={azure_endpoint}")
+
         # Build system instructions
         system_instructions = self._build_system_instructions()
-        
-        # Create agent with tools
-        self.agent = ChatAgent(
-            chat_client=chat_client,
-            name="WorkflowAgent",
+
+        # Create role-based chat clients
+        print("🔗 Connecting LLM clients (planning/coding/review)...")
+        planning_client = LLMClientFactory.create_client_for_role("planning")
+        coding_client = LLMClientFactory.create_client_for_role("coding")
+        review_client = LLMClientFactory.create_client_for_role("review")
+
+        planning_model_id = LLMClientFactory.get_model_id_for_role("planning")
+        coding_model_id = LLMClientFactory.get_model_id_for_role("coding")
+        review_model_id = LLMClientFactory.get_model_id_for_role("review")
+
+        planning_chat = OpenAIChatClient(async_client=planning_client, model_id=planning_model_id)
+        coding_chat = OpenAIChatClient(async_client=coding_client, model_id=coding_model_id)
+        review_chat = OpenAIChatClient(async_client=review_client, model_id=review_model_id)
+
+        tools = get_all_tools()
+
+        self.planning_agent = ChatAgent(
+            chat_client=planning_chat,
+            name="PlanningAgent",
             instructions=system_instructions,
-            tools=get_all_tools(),
+            tools=tools,
         )
-        
-        # Create conversation thread
-        self.thread = self.agent.get_new_thread()
+        self.coding_agent = ChatAgent(
+            chat_client=coding_chat,
+            name="CodingAgent",
+            instructions=system_instructions,
+            tools=tools,
+        )
+        self.review_agent = ChatAgent(
+            chat_client=review_chat,
+            name="ReviewAgent",
+            instructions=system_instructions,
+            tools=tools,
+        )
+
+        self.planning_thread = self.planning_agent.get_new_thread()
+        self.coding_thread = self.coding_agent.get_new_thread()
+        self.review_thread = self.review_agent.get_new_thread()
+
+        # Back-compat: keep existing attributes pointing at coding agent
+        self.agent = self.coding_agent
+        self.thread = self.coding_thread
         
         print("✅ Agent initialized and ready\n")
     
@@ -234,9 +287,30 @@ You have access to tools for:
 Start by fetching and analyzing Issue #{self.issue_number}, then proceed through each phase systematically.
 """
     
+    async def _run_agent_stream(self, agent: ChatAgent, thread, prompt: str, label: str) -> str:
+        """Run a prompt with streaming console output and return the full text."""
+        print(f"\n{'=' * 70}")
+        print(f"🧩 {label}")
+        print(f"{'=' * 70}\n")
+
+        chunks = []
+        print("🤖 Agent: ", end="", flush=True)
+        async for chunk in agent.run_stream(prompt, thread=thread):
+            if chunk.text:
+                chunks.append(chunk.text)
+                print(chunk.text, end="", flush=True)
+        print("\n")
+        return "".join(chunks)
+
     async def execute(self) -> bool:
-        """Execute the complete workflow autonomously."""
-        if not self.agent:
+        """Execute the complete workflow autonomously.
+
+        Uses per-role agents:
+        - planning_agent: phases 1-2
+        - coding_agent: phases 3-4 (+ apply requested fixes)
+        - review_agent: phase 5 (+ PR creation when approved)
+        """
+        if not (self.planning_agent and self.coding_agent and self.review_agent):
             raise RuntimeError("Agent not initialized. Call initialize() first.")
         
         start_time = datetime.now()
@@ -248,36 +322,114 @@ Start by fetching and analyzing Issue #{self.issue_number}, then proceed through
             "commands_used": [],
         }
         
-        # Initial prompt to agent
-        prompt = f"""Begin working on Issue #{self.issue_number}.
-
-Follow the 6-phase workflow:
-1. Fetch and analyze the issue
-2. Create implementation plan
-3. Implement changes with test-first approach
-4. Run tests and ensure they pass
-5. Self-review the changes
-6. Create PR and update knowledge base
-
-Work systematically through each phase. After each major step, provide a summary of what you've done and what's next.
-
-Begin now with Phase 1: Fetch and analyze Issue #{self.issue_number}.
-"""
-        
         print("=" * 70)
-        print("🚀 Starting Autonomous Workflow Execution")
+        print("🚀 Starting Autonomous Workflow Execution (hybrid models)")
         print("=" * 70)
         print()
         
         try:
-            # Run agent with streaming output
-            print("🤖 Agent: ", end="", flush=True)
-            
-            async for chunk in self.agent.run_stream(prompt, thread=self.thread):
-                if chunk.text:
-                    print(chunk.text, end="", flush=True)
-            
-            print("\n")
+            planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
+
+You must:
+1) Fetch and analyze the issue.
+2) Read relevant code/docs.
+3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+Hard rules:
+- If dry-run is enabled, do NOT apply changes, commit, or create a PR.
+- End your response with a clearly marked handoff block:
+
+HANDOFF_TO_CODING:
+- Summary:
+- Steps:
+- Files:
+- Validation:
+
+Begin now."""
+
+            plan_text = await self._run_agent_stream(
+                self.planning_agent,
+                self.planning_thread,
+                planning_prompt,
+                "Phase 1-2: Planning (Foundry/Azure recommended)",
+            )
+
+            coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
+
+Use the plan below. Implement the changes with a test-first approach and run the validation commands.
+
+Important:
+- Do NOT create the PR yet.
+- If you need to adjust the plan, explain why briefly and proceed.
+- If dry-run is enabled, do NOT apply changes, commit, or create a PR.
+
+PLAN_FROM_PLANNING_AGENT:
+{plan_text}
+
+At the end, include:
+CODING_SUMMARY:
+- Changes made:
+- Tests/validation run:
+- Notes for review:
+"""
+
+            _ = await self._run_agent_stream(
+                self.coding_agent,
+                self.coding_thread,
+                coding_prompt,
+                "Phase 3-4: Coding (GitHub models recommended)",
+            )
+
+            decision = "CHANGES"
+            iteration_budget = 5
+            for i in range(iteration_budget):
+                review_prompt = f"""Phase 5-6 (Review + PR Creation) for Issue #{self.issue_number}.
+
+Review the current repo state and changes. Use tools to inspect diffs and validate against acceptance criteria.
+
+Output format (first line MUST be one of):
+REVIEW_DECISION: PASS
+REVIEW_DECISION: CHANGES
+
+If PASS:
+- If dry-run is enabled: do NOT create a PR; just explain what would be in it.
+- Otherwise: create the PR (include testing instructions and Fixes #{self.issue_number}).
+
+If CHANGES:
+- Provide a short, explicit task list for the coding agent to apply.
+"""
+
+                review_text = await self._run_agent_stream(
+                    self.review_agent,
+                    self.review_thread,
+                    review_prompt,
+                    f"Review loop {i + 1}/{iteration_budget}: Review (Foundry/Azure recommended)",
+                )
+
+                first_line = (review_text.strip().splitlines() or [""])[0].strip()
+                if first_line == "REVIEW_DECISION: PASS":
+                    decision = "PASS"
+                    break
+
+                fix_prompt = f"""Apply the requested review changes for Issue #{self.issue_number}.
+
+REVIEW_NOTES:
+{review_text}
+
+Requirements:
+- Make minimal changes required.
+- Re-run the relevant validation.
+- Do NOT create the PR yet.
+"""
+                _ = await self._run_agent_stream(
+                    self.coding_agent,
+                    self.coding_thread,
+                    fix_prompt,
+                    f"Review loop {i + 1}/{iteration_budget}: Apply fixes (GitHub models recommended)",
+                )
+
+            if decision != "PASS":
+                raise RuntimeError("Review did not pass within iteration budget")
             
             # Get execution summary
             duration = (datetime.now() - start_time).total_seconds()
