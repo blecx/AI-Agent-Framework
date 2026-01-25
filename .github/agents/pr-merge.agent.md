@@ -19,7 +19,7 @@ Provide (in order of preference):
 
 1. PR URL, or
 2. PR number + repo name (`AI-Agent-Framework` or `AI-Agent-Framework-Client`), or
-3. Issue number (if PR title contains `#<issue>`).
+3. Issue number (only if you explicitly want issue → PR lookup).
 
 Optional:
 
@@ -36,7 +36,7 @@ You are done only when all are true:
 - All required CI checks are **passing**.
 - Issue is **closed** (or if already closed by GitHub auto-close, a final comprehensive closing comment is posted).
 - Completion is **recorded** in the learning system when `actual_hours` is provided.
-- You provide a short final summary including: PR, merge SHA, issue number, metrics, and next suggested command (`./next-issue`).
+- You provide a short final summary including: PR, merge SHA, issue number (if applicable), metrics, and next suggested command (`./next-pr`).
 
 ## Hard Constraints / Guardrails
 
@@ -62,7 +62,9 @@ Determine the target repo from the PR URL or by querying with `gh pr view`.
 
 ### A2) Validate PR + CI + Template Gate
 
-Use `./scripts/prmerge <issue_number> [actual_hours]`.
+Prefer `./scripts/prmerge <issue_number> [actual_hours]` when you have an issue number and the PR title includes it.
+
+If you don't have an issue number, first discover a mergeable PR via `./next-pr`, then proceed using `gh pr view` / `gh pr checks` and `gh pr merge` as appropriate.
 
 This script already:
 

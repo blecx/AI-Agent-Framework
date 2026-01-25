@@ -252,7 +252,7 @@ See PR #$pr_number for complete implementation details and file-by-file changes.
 
 ## Next Steps
 
-Run \`./next-issue\` to select the next issue to work on.
+Run \`./next-pr\` to find the next mergeable PR.
 
 ---
 
@@ -311,7 +311,7 @@ See PR #$pr_number for complete details and file-by-file changes.
 
 ## Next Steps
 
-Run \`./next-issue\` to select the next issue to work on.
+Run \`./next-pr\` to find the next mergeable PR.
 
 ---
 
@@ -527,7 +527,7 @@ if [ "$PR_STATE" = "MERGED" ]; then
             warning "Completion time not recorded. Run: ./scripts/record-completion.py $ISSUE_NUMBER <hours> '<notes>'"
         fi
         
-        info "Run './next-issue' to select next issue"
+        info "Run './next-pr' to find the next mergeable PR"
         exit 0
     else
         warning "Issue #$ISSUE_NUMBER is still open. Proceeding to close..."
@@ -868,20 +868,20 @@ if [ "$ISSUE_NUMBER" = "25" ] || [ "$ISSUE_TYPE" = "infrastructure" ]; then
 fi
 
 echo "Next steps:"
-echo "  1. Run './next-issue' to select next issue"
-echo "  2. Review unblocked dependencies"
-echo "  3. Continue Step 1 implementation"
+echo "  1. Run './next-pr' to find the next mergeable PR"
+echo "  2. Review PR diffs + CI evidence"
+echo "  3. Merge (squash) when ready"
 echo ""
 
-# Offer to run next-issue
-read -p "Run './next-issue' now? (Y/n): " run_next_issue
-if [[ ! "$run_next_issue" =~ ^[Nn]$ ]]; then
+# Offer to run next-pr
+read -p "Run './next-pr' now? (Y/n): " run_next_pr
+if [[ ! "$run_next_pr" =~ ^[Nn]$ ]]; then
     echo ""
-    if [ -f "./scripts/next-issue.py" ]; then
-        ./scripts/next-issue.py
+    if [ -f "./scripts/next-pr.py" ]; then
+        ./scripts/next-pr.py
     else
-        warning "next-issue.py not found"
-        info "Please run manually: cd $MAIN_REPO && ./scripts/next-issue.py"
+        warning "next-pr.py not found"
+        info "Please run manually: cd $MAIN_REPO && ./scripts/next-pr.py"
     fi
 fi
 
