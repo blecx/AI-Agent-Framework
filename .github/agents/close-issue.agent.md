@@ -21,8 +21,8 @@ Your job is to package an already-decided outcome (completed / not planned / dup
 
 - Issue number.
 - Evidence for the outcome:
-   - Completed: merged PR number (preferred) and/or merge commit SHA.
-   - Not planned / duplicate / cannot reproduce: short justification and any links to canonical issue/PR.
+  - Completed: merged PR number (preferred) and/or merge commit SHA.
+  - Not planned / duplicate / cannot reproduce: short justification and any links to canonical issue/PR.
 
 ## Hard Rules
 
@@ -60,10 +60,12 @@ If uncertain, use generic.
 ## Close Reasons (GitHub)
 
 GitHub only supports two close reasons:
+
 - completed
 - not_planned
 
 Use them like this:
+
 - completed: the work was delivered (usually by a merged PR)
 - not_planned: duplicate, won’t fix, cannot reproduce, obsolete, or rejected
 
@@ -79,6 +81,8 @@ For duplicates/cannot reproduce, include a clear explanation and link to the can
 5. Prepare a small JSON payload with the concrete details (summary, validation, notes).
 6. Run the script with `--dry-run` first to review the rendered message.
 7. Close the issue with the final rendered message.
+
+Note: `./scripts/close-issue.sh` includes a quality guard that fails if the rendered message still contains placeholder template text. You can bypass it with `--allow-placeholders` (not recommended).
 
 ## Quality Bar for the Closing Comment
 

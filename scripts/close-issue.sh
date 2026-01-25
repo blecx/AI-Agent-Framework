@@ -16,6 +16,7 @@ Options:
   --data          Path to JSON file with additional template variables (optional)
   --reason        Close reason for GitHub (default: completed)
   --dry-run       Print the rendered message and exit without closing
+  --allow-placeholders  Allow placeholder/default template text (not recommended)
 
 Template variables:
   Templates live under scripts/templates/issue-close/*.md.j2.
@@ -44,6 +45,7 @@ merge_commit=""
 data_json=""
 reason="completed"
 dry_run=0
+allow_placeholders=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -71,6 +73,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dry-run)
       dry_run=1; shift 1
+      ;;
+    --allow-placeholders)
+      allow_placeholders=1; shift 1
       ;;
     *)
       echo "Unknown argument: $1" >&2
@@ -171,6 +176,53 @@ out = tmpl.render(**ctx)
 # Ensure trailing newline (GitHub comment readability)
 print(out.rstrip() + "\n")
 PY
+
+if [[ "$allow_placeholders" -ne 1 ]]; then
+  # Guardrail: prevent accidentally closing issues with placeholder/default template text.
+  # This mirrors the repo's general quality bar (no placeholder evidence in PRs).
+  placeholders=(
+    "- (add summary of changes)"
+    "- (add validation commands / steps)"
+    "- (add any caveats, follow-ups, or next steps)"
+    "- (describe what users can do now)"
+    "- (paste checklist / key criteria and mark done)"
+    "- (key files, main decisions, constraints)"
+    "- (commands run / expected results)"
+    "- (follow-ups, related issues, rollout notes)"
+    "- (short description of the bug as reported)"
+    "- (why it happened)"
+    "- (what changed to resolve it)"
+    "- (tests run / manual steps)"
+    "- (prevention, monitoring, related cleanup)"
+    "- (what was added/updated and where)"
+    "- (list key docs/files)"
+    "- (build/lint checks if relevant)"
+    "- (anything reviewers/users should know)"
+    "- (what infrastructure/tooling was added/changed)"
+    "- (what this unblocks / improves)"
+    "- (commands run / verification steps)"
+    "- (rollout notes, next steps, related issues)"
+  )
+
+  found=0
+  for needle in "${placeholders[@]}"; do
+    if grep -qF -- "$needle" "$msg_file"; then
+      if [[ "$found" -eq 0 ]]; then
+        echo "ERROR: rendered close message still contains placeholder template text." >&2
+        echo "Fill the template variables via --data (JSON) or override fields explicitly." >&2
+        echo "If you really want to bypass this guard, pass --allow-placeholders." >&2
+        echo >&2
+        echo "Placeholders found:" >&2
+      fi
+      echo "- $needle" >&2
+      found=1
+    fi
+  done
+
+  if [[ "$found" -eq 1 ]]; then
+    exit 2
+  fi
+fi
 
 if [[ "$dry_run" -eq 1 ]]; then
   cat "$msg_file"
