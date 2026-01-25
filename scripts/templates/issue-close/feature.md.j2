@@ -1,0 +1,21 @@
+✅ Feature delivered
+
+Issue: #{{ issue_number }}{% if issue_title %} — {{ issue_title }}{% endif %}
+{% if issue_url %}{{ issue_url }}{% endif %}
+
+Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}
+
+## Feature Summary
+{{ summary | default("- (describe what users can do now)") }}
+
+## Acceptance Criteria
+{{ acceptance | default("- (paste checklist / key criteria and mark done)") }}
+
+## Implementation Notes
+{{ implementation | default("- (key files, main decisions, constraints)") }}
+
+## Validation
+{{ how_to_validate | default("- (commands run / expected results)") }}
+
+## Notes / Follow-ups
+{{ notes | default("- (follow-ups, related issues, rollout notes)") }}

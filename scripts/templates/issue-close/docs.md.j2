@@ -1,0 +1,18 @@
+✅ Documentation update delivered
+
+Issue: #{{ issue_number }}{% if issue_title %} — {{ issue_title }}{% endif %}
+{% if issue_url %}{{ issue_url }}{% endif %}
+
+Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}
+
+## Documentation Summary
+{{ summary | default("- (what was added/updated and where)") }}
+
+## Files / Sections Updated
+{{ files | default("- (list key docs/files)") }}
+
+## Validation
+{{ how_to_validate | default("- (build/lint checks if relevant)") }}
+
+## Notes / Follow-ups
+{{ notes | default("- (anything reviewers/users should know)") }}
