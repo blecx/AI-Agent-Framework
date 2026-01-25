@@ -138,6 +138,16 @@ Work on Issue #{self.issue_number} following the complete 6-phase workflow:
 ## Knowledge from Past Issues
 {self.knowledge_base[:1000] if self.knowledge_base else "No historical patterns available"}
 
+## Multi-Repo Scope
+- Primary repo: AI-Agent-Framework (this workspace, Python backend).
+- UX repo: _external/AI-Agent-Framework-Client (React/TypeScript, Node).
+- Some issues touch one repo; some touch both. Plan and execute accordingly.
+
+## Environment Parity
+- Backend commands must run with the repo's .venv Python.
+- UX repo commands must run inside _external/AI-Agent-Framework-Client.
+- Never run commands from the wrong repo root.
+
 ## Key Principles
 - **Verify everything**: Never hallucinate file contents or states. Always use tools to read files.
 - **Test-first approach**: Write/update tests before implementation
@@ -176,10 +186,21 @@ You have access to tools for:
 3. Use `write_file_content()` for code changes
 
 ### Phase 4: Testing
-1. Use `run_command()` to execute builds: `npm run build` or `pytest`
-2. Use `run_command()` to run tests: `npx vitest run` or `pytest`
-3. If tests fail, analyze output and fix
-4. Repeat until all tests pass
+1. Run the repo-native test suites for any repo you change.
+2. Backend changes:
+    - `python -m black apps/api/`
+    - `python -m flake8 apps/api/`
+    - `pytest`
+3. apps/web changes:
+    - `npm install`
+    - `npm run lint`
+    - `npm run build`
+4. UX repo changes (_external/AI-Agent-Framework-Client):
+    - `npm install`
+    - `npm run build`
+    - `npm run test`
+5. If tests fail, analyze output and fix
+6. Repeat until all relevant suites pass
 
 ### Phase 5: Review
 1. Use `get_changed_files()` to see what changed
@@ -205,6 +226,7 @@ You have access to tools for:
 - **Be careful**: Verify file contents before modifying
 - **Be informative**: Explain your reasoning as you work
 - **Ask when unsure**: For architecture decisions or scope changes, explain options and ask
+- **Use correct working directories**: Set the repo root when running commands
 
 ## Dry Run Mode
 {"✅ DRY RUN ACTIVE - Use tools to analyze but don't make actual changes" if self.dry_run else ""}

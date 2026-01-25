@@ -149,6 +149,26 @@ def _check_prerequisites() -> bool:
         checks.append(("LLM config", "✅"))
     else:
         checks.append(("LLM config", "❌ Create configs/llm.json"))
+
+    # Check Python virtual environment
+    if Path(".venv").exists():
+        checks.append(("Python virtualenv (.venv)", "✅"))
+    else:
+        checks.append(("Python virtualenv (.venv)", "❌ Run ./setup.sh to create"))
+
+    # Check Node/npm if frontend or client repo exists
+    client_repo = Path("_external/AI-Agent-Framework-Client")
+    frontend_repo = Path("apps/web")
+    if client_repo.exists() or frontend_repo.exists():
+        if shutil.which("node"):
+            checks.append(("Node.js", "✅"))
+        else:
+            checks.append(("Node.js", "❌ Not found"))
+
+        if shutil.which("npm"):
+            checks.append(("npm", "✅"))
+        else:
+            checks.append(("npm", "❌ Not found"))
     
     # Print results
     print("Prerequisites:")

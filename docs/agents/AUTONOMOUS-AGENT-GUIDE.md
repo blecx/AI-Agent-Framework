@@ -219,6 +219,28 @@ Edit `configs/llm.json`:
 
 **Available Models (all free on GitHub):**
 
+---
+
+## Multi-Repo & Environment Parity
+
+This agent may operate across multiple repos:
+
+- **Backend repo (this workspace)**: AI-Agent-Framework (Python)
+- **UX repo**: \_external/AI-Agent-Framework-Client (React/TypeScript)
+
+Use the repo-native environment for every command:
+
+- Backend: activate `.venv` before Python commands.
+- UX repo: run npm commands inside `_external/AI-Agent-Framework-Client`.
+
+### Validation (Best-Practice Test Suites)
+
+Run the suite that matches the repo(s) you changed:
+
+- **Backend changes**: `python -m black apps/api/`, `python -m flake8 apps/api/`, `pytest`
+- **apps/web changes**: `npm install`, `npm run lint`, `npm run build`
+- **UX repo changes**: `npm install`, `npm run build`, `npm run test`
+
 | Model                  | Quality | Best For                                   |
 | ---------------------- | ------- | ------------------------------------------ |
 | `openai/gpt-5.1-codex` | 0.899   | **Advanced coding** (default, recommended) |
@@ -401,7 +423,7 @@ Agent automatically retries test failures with LLM analysis. If persistent:
 
 ### Core Agent Files
 
-```
+```text
 agents/
 ├── autonomous_workflow_agent.py    # Main agent implementation
 ├── tools.py                        # 11 tool functions
@@ -431,7 +453,7 @@ docs/agents/
 
 ### Old Agent System (Manual)
 
-```
+```text
 agents/
 ├── workflow_agent.py               # OLD: Manual checklist agent
 └── base_agent.py                   # OLD: Base class for manual agent
