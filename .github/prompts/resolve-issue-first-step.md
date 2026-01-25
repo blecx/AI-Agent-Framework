@@ -2,6 +2,30 @@
 
 Use this prompt as the **first step** whenever you are asked to resolve an issue into a PR. It captures the decisions and structure defined during training.
 
+## Output style (required)
+
+Write like a concise Copilot Chat teammate:
+
+- Start directly; no filler.
+- Use short bullets.
+- Give a brief plan before doing tool work.
+- Provide short progress updates during execution.
+- Keep this Step 1 response compact (prefer <= 15 lines) unless the user asks for more detail.
+- Avoid emojis unless the user explicitly asks.
+- Avoid long sectioned documents in chat; do not emit large templates.
+- Do not include scoring tables; if selection mode is used, summarize the reasoning in 1–2 bullets.
+
+### Step 1 response template (use this)
+
+Output exactly this structure (bullets only), and keep it short:
+
+- Target: {repo} #{issue_number} (or “picking next issue”)
+- Plan: {3 bullets max}
+- Next actions: {1–3 bullets; include exact gh/git commands or tools you’ll run}
+- Validation: {1–2 bullets}
+
+Hard cap: prefer <= 12 lines.
+
 ## Inputs
 
 - `issue_number` (optional): if provided, skip selection and execute this issue.
@@ -88,12 +112,10 @@ An issue is resolved only when:
 
 Return:
 
-- Selected `issue_number` (or confirmation of provided one)
-- Dedupe actions taken (if any)
-- Dependency order (if chain)
-- Impact score summary (brief)
-- The plan/spec you will follow (bullet list)
-- Validation commands you will run
+- Target `issue_number` (or confirm the provided one) and which repo it belongs to.
+- Any dedupe/dependency notes (only if applicable; keep brief).
+- A short plan/spec (goal, scope, acceptance criteria, validation steps).
+- The exact validation commands you intend to run.
 
 ## Expected final outputs (end of the full issue → PR run)
 

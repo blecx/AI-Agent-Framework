@@ -314,7 +314,7 @@ git pull origin main
 gh issue view <issue-number> --repo blecx/AI-Agent-Framework-Client
 
 # 4. Update tracking plan
-# (See STEP-1-IMPLEMENTATION-TRACKING.md)
+# (See ../../STEP-1-IMPLEMENTATION-TRACKING.md)
 ```
 
 **❌ STOP if:**

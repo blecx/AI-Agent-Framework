@@ -42,7 +42,7 @@ All planning, documentation, and GitHub issues are complete. Step 1 implementati
    - CI validation with 3 fix attempts
    - No goal reduction allowed
 
-2. **[STEP-1-IMPLEMENTATION-TRACKING.md](STEP-1-IMPLEMENTATION-TRACKING.md)** (1,056 lines)
+2. **[STEP-1-IMPLEMENTATION-TRACKING.md](../../STEP-1-IMPLEMENTATION-TRACKING.md)** (1,056 lines)
    - Live progress tracker (0/36 complete)
    - All 36 issues with status, blockers, PRs
    - Weekly update sections
@@ -63,7 +63,7 @@ All planning, documentation, and GitHub issues are complete. Step 1 implementati
    - Validation checklist
    - Next steps
 
-6. **[STEP-1-STATUS.md](STEP-1-STATUS.md)** (updated, 1,013 lines)
+6. **[STEP-1-STATUS.md](../../STEP-1-STATUS.md)** (updated, 1,013 lines)
    - Backend vs Client status
    - Implementation resources section
    - Getting started guide
@@ -331,7 +331,7 @@ git checkout -b issue/24-api-service-layer
 **MUST READ before starting:**
 
 1. **[STEP-1-IMPLEMENTATION-WORKFLOW.md](STEP-1-IMPLEMENTATION-WORKFLOW.md)** - Mandatory protocol
-2. **[STEP-1-IMPLEMENTATION-TRACKING.md](STEP-1-IMPLEMENTATION-TRACKING.md)** - Live tracker
+2. **[STEP-1-IMPLEMENTATION-TRACKING.md](../../STEP-1-IMPLEMENTATION-TRACKING.md)** - Live tracker
 3. **[STEP-1-HYBRID-APPROACH-UPDATE.md](STEP-1-HYBRID-APPROACH-UPDATE.md)** - Architecture
 4. **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - Project conventions
 

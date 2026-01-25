@@ -34,9 +34,26 @@ from typing import Dict, List, Optional, Tuple
 
 # Repository root
 REPO_ROOT = Path(__file__).parent.parent
-TRACKING_FILE = REPO_ROOT / "STEP-1-IMPLEMENTATION-TRACKING.md"
+
+
+def _resolve_step1_file(primary: Path, fallback: Path) -> Path:
+    """Resolve the current location of Step-1 workflow files.
+
+    The Step-1 tracking/status docs were moved under `planning/archive/`.
+    Keep backward compatibility with older paths at repo root.
+    """
+    return primary if primary.exists() else fallback
+
+
+TRACKING_FILE = _resolve_step1_file(
+    REPO_ROOT / "STEP-1-IMPLEMENTATION-TRACKING.md",
+    REPO_ROOT / "planning" / "archive" / "STEP-1-IMPLEMENTATION-TRACKING.md",
+)
+STATUS_FILE = _resolve_step1_file(
+    REPO_ROOT / "STEP-1-STATUS.md",
+    REPO_ROOT / "planning" / "archive" / "STEP-1-STATUS.md",
+)
 KNOWLEDGE_FILE = REPO_ROOT / ".issue-resolution-knowledge.json"
-STATUS_FILE = REPO_ROOT / "STEP-1-STATUS.md"
 
 # GitHub repository
 GITHUB_REPO = "blecx/AI-Agent-Framework-Client"

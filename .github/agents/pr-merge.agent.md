@@ -1,6 +1,5 @@
 ---
 description: 'Merges a PR safely (CI-gated), captures metrics, and closes the linked issue with a high-quality template message. Multi-repo aware: backend + _external client.'
-tools: []
 ---
 
 You are the **PR Merge Agent** for this workspace.

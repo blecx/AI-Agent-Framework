@@ -1,7 +1,12 @@
-"""
+"""agents.tools
+
 Tools for the workflow agent.
 
 These tools enable the agent to interact with GitHub, files, git, and testing.
+
+Note: This repository is multi-repo (backend + `_external/AI-Agent-Framework-Client`).
+Most tools therefore accept an optional `working_directory` and/or `repo` argument so
+the agent can operate on the correct repository root.
 """
 
 import json
@@ -14,19 +19,35 @@ from typing import Annotated, Optional
 # GitHub Tools
 # ============================================================================
 
-def fetch_github_issue(issue_number: Annotated[int, "GitHub issue number"]) -> str:
+def fetch_github_issue(
+    issue_number: Annotated[int, "GitHub issue number"],
+    repo: Annotated[Optional[str], "GitHub repo in owner/name form (optional)"] = None,
+    working_directory: Annotated[str, "Working directory for gh command"] = ".",
+) -> str:
     """
     Fetch GitHub issue details using gh CLI.
     
     Returns JSON string with issue title, body, labels, etc.
     """
     try:
+        cmd = [
+            "gh",
+            "issue",
+            "view",
+            str(issue_number),
+            "--json",
+            "number,title,body,labels,state,assignees",
+        ]
+        if repo:
+            cmd.extend(["--repo", repo])
+
         result = subprocess.run(
-            ["gh", "issue", "view", str(issue_number), "--json", 
-             "number,title,body,labels,state,assignees"],
+            cmd,
             capture_output=True,
             text=True,
             timeout=30
+            ,
+            cwd=working_directory,
         )
         
         if result.returncode != 0:
@@ -40,6 +61,7 @@ def fetch_github_issue(issue_number: Annotated[int, "GitHub issue number"]) -> s
 def create_github_pr(
     title: Annotated[str, "PR title"],
     body: Annotated[str, "PR description"],
+    working_directory: Annotated[str, "Working directory for gh command"] = ".",
 ) -> str:
     """
     Create GitHub pull request with gh CLI.
@@ -51,7 +73,8 @@ def create_github_pr(
             ["gh", "pr", "create", "--title", title, "--body", body],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
+            cwd=working_directory,
         )
         
         if result.returncode != 0:
@@ -62,12 +85,64 @@ def create_github_pr(
         return f"Error: {str(e)}"
 
 
+def list_github_issues(
+    repo: Annotated[str, "GitHub repo in owner/name form (required)"],
+    state: Annotated[str, "Issue state: open or closed"] = "open",
+    limit: Annotated[int, "Max issues to return"] = 50,
+    label: Annotated[Optional[str], "Optional single label filter"] = None,
+    search: Annotated[Optional[str], "Optional search query"] = None,
+    working_directory: Annotated[str, "Working directory for gh command"] = ".",
+) -> str:
+    """List GitHub issues via gh CLI.
+
+    Returns JSON array string with fields needed for selection/triage.
+    """
+    try:
+        state_norm = (state or "open").strip().lower()
+        if state_norm in {"opened"}:
+            state_norm = "open"
+        if state_norm not in {"open", "closed"}:
+            return "Error: state must be 'open' or 'closed'"
+
+        cmd = [
+            "gh",
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            state_norm,
+            "--limit",
+            str(limit),
+            "--json",
+            "number,title,labels,createdAt,updatedAt,author,assignees",
+        ]
+        if label:
+            cmd.extend(["--label", label])
+        if search:
+            cmd.extend(["--search", search])
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=working_directory,
+        )
+        if result.returncode != 0:
+            return f"Error listing issues: {result.stderr}"
+        return result.stdout
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
 # ============================================================================
 # File System Tools
 # ============================================================================
 
 def read_file_content(
-    file_path: Annotated[str, "Path to file relative to project root"],
+    file_path: Annotated[str, "Path to file relative to base directory"],
+    base_directory: Annotated[str, "Base directory to resolve file_path"] = ".",
 ) -> str:
     """
     Read contents of a file.
@@ -75,7 +150,7 @@ def read_file_content(
     Returns file content or error message.
     """
     try:
-        path = Path(file_path)
+        path = Path(base_directory) / file_path
         if not path.exists():
             return f"Error: File {file_path} does not exist"
         
@@ -89,8 +164,9 @@ def read_file_content(
 
 
 def write_file_content(
-    file_path: Annotated[str, "Path to file relative to project root"],
+    file_path: Annotated[str, "Path to file relative to base directory"],
     content: Annotated[str, "File content to write"],
+    base_directory: Annotated[str, "Base directory to resolve file_path"] = ".",
 ) -> str:
     """
     Write content to a file, creating directories if needed.
@@ -98,7 +174,7 @@ def write_file_content(
     Returns success message or error.
     """
     try:
-        path = Path(file_path)
+        path = Path(base_directory) / file_path
         path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(path, 'w', encoding='utf-8') as f:
@@ -110,7 +186,8 @@ def write_file_content(
 
 
 def list_directory_contents(
-    directory_path: Annotated[str, "Path to directory relative to project root"],
+    directory_path: Annotated[str, "Path to directory relative to base directory"],
+    base_directory: Annotated[str, "Base directory to resolve directory_path"] = ".",
 ) -> str:
     """
     List files and directories in a given path.
@@ -118,7 +195,7 @@ def list_directory_contents(
     Returns newline-separated list of entries.
     """
     try:
-        path = Path(directory_path)
+        path = Path(base_directory) / directory_path
         if not path.exists():
             return f"Error: Directory {directory_path} does not exist"
         
@@ -143,6 +220,7 @@ def list_directory_contents(
 
 def git_commit(
     message: Annotated[str, "Commit message"],
+    working_directory: Annotated[str, "Working directory for git command"] = ".",
 ) -> str:
     """
     Stage all changes and create a git commit.
@@ -151,7 +229,12 @@ def git_commit(
     """
     try:
         # Stage all changes
-        subprocess.run(["git", "add", "-A"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "add", "-A"],
+            check=True,
+            capture_output=True,
+            cwd=working_directory,
+        )
         
         # Commit
         result = subprocess.run(
@@ -159,6 +242,8 @@ def git_commit(
             capture_output=True,
             text=True,
             timeout=30
+            ,
+            cwd=working_directory,
         )
         
         if result.returncode != 0:
@@ -170,6 +255,8 @@ def git_commit(
             capture_output=True,
             text=True,
             check=True
+            ,
+            cwd=working_directory,
         )
         
         return f"Committed: {hash_result.stdout.strip()}\n{result.stdout}"
@@ -177,7 +264,9 @@ def git_commit(
         return f"Error: {str(e)}"
 
 
-def get_changed_files() -> str:
+def get_changed_files(
+    working_directory: Annotated[str, "Working directory for git command"] = ".",
+) -> str:
     """
     Get list of files changed in working directory.
     
@@ -189,6 +278,8 @@ def get_changed_files() -> str:
             capture_output=True,
             text=True,
             timeout=30
+            ,
+            cwd=working_directory,
         )
         
         if result.returncode != 0:
@@ -201,6 +292,7 @@ def get_changed_files() -> str:
 
 def create_feature_branch(
     branch_name: Annotated[str, "Branch name (e.g., issue/26-description)"],
+    working_directory: Annotated[str, "Working directory for git command"] = ".",
 ) -> str:
     """
     Create and checkout a new feature branch from main.
@@ -209,8 +301,18 @@ def create_feature_branch(
     """
     try:
         # Checkout main and pull latest
-        subprocess.run(["git", "checkout", "main"], check=True, capture_output=True)
-        subprocess.run(["git", "pull", "origin", "main"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"],
+            check=True,
+            capture_output=True,
+            cwd=working_directory,
+        )
+        subprocess.run(
+            ["git", "pull", "origin", "main"],
+            check=True,
+            capture_output=True,
+            cwd=working_directory,
+        )
         
         # Create and checkout new branch
         result = subprocess.run(
@@ -218,6 +320,8 @@ def create_feature_branch(
             capture_output=True,
             text=True,
             timeout=30
+            ,
+            cwd=working_directory,
         )
         
         if result.returncode != 0:
@@ -341,6 +445,7 @@ def get_all_tools():
         # GitHub
         fetch_github_issue,
         create_github_pr,
+        list_github_issues,
         # File System
         read_file_content,
         write_file_content,

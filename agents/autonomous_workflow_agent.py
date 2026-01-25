@@ -297,10 +297,15 @@ You have access to tools for:
 ## Workflow Execution
 
 ### Phase 1: Context & Analysis
-1. Use `fetch_github_issue()` to get issue details
+1. Use `fetch_github_issue()` to get issue details (pass `repo=` if the issue is not in the current repo)
 2. Use `read_file_content()` to understand relevant code
 3. Use `get_knowledge_base_patterns()` for similar issues
 4. Analyze requirements and constraints
+
+Repo selection rules:
+- Backend repo: `blecx/AI-Agent-Framework` (workspace root)
+- Client repo: `blecx/AI-Agent-Framework-Client` (in `_external/AI-Agent-Framework-Client/`)
+- Always pass the correct `working_directory` to git/gh/file tools when operating in the client repo.
 
 ### Phase 2: Planning
 1. Create implementation plan document
@@ -309,7 +314,7 @@ You have access to tools for:
 4. Identify risks and mitigation
 
 ### Phase 3: Implementation
-1. Use `create_feature_branch()` to start work
+1. Use `create_feature_branch()` to start work (ensure `working_directory` matches the repo you change)
 2. For each step:
    - Write test first (test-first approach)
    - Implement functionality
@@ -334,7 +339,7 @@ You have access to tools for:
 6. Repeat until all relevant suites pass
 
 ### Phase 5: Review
-1. Use `get_changed_files()` to see what changed
+1. Use `get_changed_files()` to see what changed (in the correct repo)
 2. Review against acceptance criteria
 3. Check for:
    - No removed functionality without approval
