@@ -1,0 +1,18 @@
+✅ Infrastructure / tooling delivered
+
+Issue: #{{ issue_number }}{% if issue_title %} — {{ issue_title }}{% endif %}
+{% if issue_url %}{{ issue_url }}{% endif %}
+
+Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}
+
+## Summary
+{{ summary | default("- (what infrastructure/tooling was added/changed)") }}
+
+## Impact
+{{ impact | default("- (what this unblocks / improves)") }}
+
+## Validation
+{{ how_to_validate | default("- (commands run / verification steps)") }}
+
+## Notes / Follow-ups
+{{ notes | default("- (rollout notes, next steps, related issues)") }}

@@ -1,0 +1,21 @@
+✅ Bugfix delivered
+
+Issue: #{{ issue_number }}{% if issue_title %} — {{ issue_title }}{% endif %}
+{% if issue_url %}{{ issue_url }}{% endif %}
+
+Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}
+
+## Problem
+{{ problem | default("- (short description of the bug as reported)") }}
+
+## Root Cause
+{{ root_cause | default("- (why it happened)") }}
+
+## Fix
+{{ fix | default("- (what changed to resolve it)") }}
+
+## Validation / Regression
+{{ how_to_validate | default("- (tests run / manual steps)") }}
+
+## Notes / Follow-ups
+{{ notes | default("- (prevention, monitoring, related cleanup)") }}
