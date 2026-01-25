@@ -1,0 +1,854 @@
+#!/usr/bin/env python3
+"""
+Autonomous Workflow Agent - REAL AI-Powered Issue Resolution
+
+Uses Microsoft Agent Framework with GitHub Models to autonomously:
+1. Analyze GitHub issues
+2. Create implementation plans
+3. Generate code changes
+4. Run tests and fix failures
+5. Perform self-review
+6. Create PRs
+7. Learn from each issue
+
+Based on AI Toolkit best practices and Microsoft Agent Framework.
+"""
+
+import asyncio
+import json
+import platform
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+from agent_framework import ChatAgent
+from agent_framework.openai import OpenAIChatClient
+
+# Add parent to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from agents.llm_client import LLMClientFactory
+from agents.tools import get_all_tools
+
+
+class AutonomousWorkflowAgent:
+    """AI-powered agent that autonomously resolves GitHub issues."""
+    
+    def __init__(self, issue_number: int, dry_run: bool = False):
+        self.issue_number = issue_number
+        self.dry_run = dry_run
+        self.agent: Optional[ChatAgent] = None
+        self.thread = None
+
+        self.planning_agent: Optional[ChatAgent] = None
+        self.planning_thread = None
+        self.coding_agent: Optional[ChatAgent] = None
+        self.coding_thread = None
+        self.review_agent: Optional[ChatAgent] = None
+        self.review_thread = None
+        
+        # Load project context
+        self.project_instructions = self._load_copilot_instructions()
+        self.workflow_guide = self._load_workflow_guide()
+        self.knowledge_base = self._load_knowledge_base()
+        self.client_repo_context = self._load_client_repo_context()
+    
+    def _load_copilot_instructions(self) -> str:
+        """Load project conventions from .github/copilot-instructions.md"""
+        try:
+            path = Path(".github/copilot-instructions.md")
+            if path.exists():
+                return path.read_text()
+        except Exception as e:
+            print(f"⚠️  Could not load copilot instructions: {e}")
+        return ""
+    
+    def _load_workflow_guide(self) -> str:
+        """Load 6-phase workflow guide"""
+        try:
+            path = Path("docs/WORK-ISSUE-WORKFLOW.md")
+            if path.exists():
+                # Load first 500 lines to avoid token limits
+                with open(path) as f:
+                    lines = f.readlines()[:500]
+                return "".join(lines)
+        except Exception as e:
+            print(f"⚠️  Could not load workflow guide: {e}")
+        return ""
+    
+    def _load_knowledge_base(self) -> str:
+        """Load patterns from previous issues"""
+        try:
+            kb_path = Path("agents/knowledge/workflow_patterns.json")
+            if kb_path.exists():
+                with open(kb_path) as f:
+                    data = json.load(f)
+                    return json.dumps(data, indent=2)
+        except Exception as e:
+            print(f"⚠️  Could not load knowledge base: {e}")
+        return "[]"
+
+    def _load_client_repo_context(self) -> str:
+        """Load a small, token-bounded summary of the client repo for multi-repo issues."""
+        client_root = Path("_external/AI-Agent-Framework-Client")
+        if not client_root.exists():
+            return ""
+
+        parts: list[str] = []
+        parts.append(
+            "This workspace also contains the UX repo at _external/AI-Agent-Framework-Client (React/TypeScript + Vite)."
+        )
+
+        try:
+            readme = client_root / "README.md"
+            if readme.exists():
+                with open(readme) as f:
+                    lines = f.readlines()[:50]
+                parts.append("README excerpt:\n" + "".join(lines).strip())
+        except Exception as e:
+            print(f"⚠️  Could not load client README: {e}")
+
+        client_app = client_root / "client"
+        if client_app.exists():
+            parts.append(
+                "Client app directory: _external/AI-Agent-Framework-Client/client (use this for npm dev/lint/build/test)."
+            )
+
+            try:
+                pkg_path = client_app / "package.json"
+                if pkg_path.exists():
+                    data = json.loads(pkg_path.read_text())
+                    scripts = (data.get("scripts") or {}) if isinstance(data, dict) else {}
+                    if isinstance(scripts, dict) and scripts:
+                        preferred = [
+                            "dev",
+                            "lint",
+                            "build",
+                            "test",
+                            "test:api",
+                            "test:e2e",
+                        ]
+                        script_names = [name for name in preferred if name in scripts]
+                        if script_names:
+                            parts.append(
+                                "Common client scripts: " + ", ".join(script_names)
+                            )
+            except Exception as e:
+                print(f"⚠️  Could not load client package.json: {e}")
+
+        parts.append(
+            "Typical client commands:\n"
+            "- cd _external/AI-Agent-Framework-Client/client && npm install\n"
+            "- npm run dev   (Vite dev server, usually http://localhost:5173)\n"
+            "- npm run lint  (must pass if client code changed)\n"
+            "- npm run build (must succeed before PR)\n"
+            "- npm run test:api (requires backend API running at http://localhost:8000)"
+        )
+
+        summary = "\n\n".join([p for p in parts if p]).strip()
+        return summary[:2500]
+    
+    async def initialize(self):
+        """Initialize the AI agent with GitHub Models."""
+        print(f"🤖 Initializing Autonomous Workflow Agent v2.0")
+        print(f"📋 Issue #{self.issue_number}")
+        print(f"🐍 Python: {sys.version.split()[0]} ({sys.executable})")
+        
+        if self.dry_run:
+            print("ℹ️  DRY RUN MODE - No actual changes will be made")
+        
+        # Report model configuration (no secrets)
+        report = LLMClientFactory.get_startup_report()
+        models = report.get("models", {})
+        role_endpoints = report.get("role_endpoints", {})
+        print("🧠 Model configuration:")
+        print(f"   Config: {report.get('config_path', '')}")
+        if report.get("provider"):
+            print(f"   Provider: {report.get('provider')}")
+        if report.get("configured_base_url"):
+            print(f"   Config base_url: {report.get('configured_base_url')}")
+
+        configured_base_url = (report.get("configured_base_url") or "").strip()
+        if (
+            configured_base_url
+            and "host.docker.internal" in configured_base_url
+            and platform.system().lower() == "linux"
+            and not Path("/.dockerenv").exists()
+        ):
+            print(
+                "⚠️  Note: On Linux hosts, 'host.docker.internal' often does not resolve outside Docker. "
+                "If you are running locally (not in Docker), consider setting base_url to http://localhost:1234/v1 in configs/llm.json."
+            )
+        if isinstance(models, dict) and models:
+            print(f"   Planning model: {models.get('planning')}")
+            print(f"   Coding model: {models.get('coding')}")
+            print(f"   Review model: {models.get('review')}")
+
+        if isinstance(role_endpoints, dict) and role_endpoints:
+            for role in ["planning", "coding", "review"]:
+                ep = role_endpoints.get(role) or {}
+                if not isinstance(ep, dict):
+                    continue
+                provider = ep.get("provider") or ""
+                base_url = ep.get("base_url") or ""
+                azure_endpoint = ep.get("azure_endpoint") or ""
+                if provider or base_url or azure_endpoint:
+                    print(f"   {role} endpoint: provider={provider} base_url={base_url} azure_endpoint={azure_endpoint}")
+
+        # Build system instructions
+        system_instructions = self._build_system_instructions()
+
+        # Create role-based chat clients
+        print("🔗 Connecting LLM clients (planning/coding/review)...")
+        planning_client = LLMClientFactory.create_client_for_role("planning")
+        coding_client = LLMClientFactory.create_client_for_role("coding")
+        review_client = LLMClientFactory.create_client_for_role("review")
+
+        planning_model_id = LLMClientFactory.get_model_id_for_role("planning")
+        coding_model_id = LLMClientFactory.get_model_id_for_role("coding")
+        review_model_id = LLMClientFactory.get_model_id_for_role("review")
+
+        planning_chat = OpenAIChatClient(async_client=planning_client, model_id=planning_model_id)
+        coding_chat = OpenAIChatClient(async_client=coding_client, model_id=coding_model_id)
+        review_chat = OpenAIChatClient(async_client=review_client, model_id=review_model_id)
+
+        tools = get_all_tools()
+
+        self.planning_agent = ChatAgent(
+            chat_client=planning_chat,
+            name="PlanningAgent",
+            instructions=system_instructions,
+            tools=tools,
+        )
+        self.coding_agent = ChatAgent(
+            chat_client=coding_chat,
+            name="CodingAgent",
+            instructions=system_instructions,
+            tools=tools,
+        )
+        self.review_agent = ChatAgent(
+            chat_client=review_chat,
+            name="ReviewAgent",
+            instructions=system_instructions,
+            tools=tools,
+        )
+
+        self.planning_thread = self.planning_agent.get_new_thread()
+        self.coding_thread = self.coding_agent.get_new_thread()
+        self.review_thread = self.review_agent.get_new_thread()
+
+        # Back-compat: keep existing attributes pointing at coding agent
+        self.agent = self.coding_agent
+        self.thread = self.coding_thread
+        
+        print("✅ Agent initialized and ready\n")
+    
+    def _build_system_instructions(self) -> str:
+        """Build comprehensive system instructions for the agent."""
+        return f"""You are an autonomous software development agent that resolves GitHub issues end-to-end.
+
+## Your Mission
+Work on Issue #{self.issue_number} following the complete 6-phase workflow:
+1. Context & Analysis
+2. Planning
+3. Implementation
+4. Testing
+5. Review
+6. PR Creation
+
+## Project Context
+{self.project_instructions[:2000] if self.project_instructions else "No specific project context"}
+
+## Workflow Guide
+{self.workflow_guide[:3000] if self.workflow_guide else "Follow standard development workflow"}
+
+## Knowledge from Past Issues
+{self.knowledge_base[:1000] if self.knowledge_base else "No historical patterns available"}
+
+## Multi-Repo Scope
+- Primary repo: AI-Agent-Framework (this workspace, Python backend).
+- UX repo: _external/AI-Agent-Framework-Client (React/TypeScript, Node).
+- Some issues touch one repo; some touch both. Plan and execute accordingly.
+
+## UX Repo Context (If Needed)
+{self.client_repo_context if self.client_repo_context else "UX repo not present in this workspace"}
+
+## Environment Parity
+- Backend commands must run with the repo's .venv Python.
+- UX repo commands must run inside _external/AI-Agent-Framework-Client.
+- Never run commands from the wrong repo root.
+
+## Key Principles
+- **Verify everything**: Never hallucinate file contents or states. Always use tools to read files.
+- **Test-first approach**: Write/update tests before implementation
+- **Incremental commits**: Commit after each logical change
+- **Self-review**: Check your work against acceptance criteria
+- **Learn continuously**: Update knowledge base with learnings
+
+## Available Tools
+You have access to tools for:
+- GitHub operations (fetch issue, create PR)
+- File operations (read, write, list)
+- Git operations (commit, branch, status)
+- Command execution (build, test, lint)
+- Knowledge base (read patterns, update learnings)
+
+## Workflow Execution
+
+### Phase 1: Context & Analysis
+1. Use `fetch_github_issue()` to get issue details
+2. Use `read_file_content()` to understand relevant code
+3. Use `get_knowledge_base_patterns()` for similar issues
+4. Analyze requirements and constraints
+
+### Phase 2: Planning
+1. Create implementation plan document
+2. Break down into testable steps
+3. Estimate time based on knowledge base
+4. Identify risks and mitigation
+
+### Phase 3: Implementation
+1. Use `create_feature_branch()` to start work
+2. For each step:
+   - Write test first (test-first approach)
+   - Implement functionality
+   - Use `git_commit()` to commit incrementally
+3. Use `write_file_content()` for code changes
+
+### Phase 4: Testing
+1. Run the repo-native test suites for any repo you change.
+2. Backend changes:
+    - `python -m black apps/api/`
+    - `python -m flake8 apps/api/`
+    - `pytest`
+3. apps/web changes:
+    - `npm install`
+    - `npm run lint`
+    - `npm run build`
+4. UX repo changes (_external/AI-Agent-Framework-Client):
+    - `npm install`
+    - `npm run build`
+    - `npm run test`
+5. If tests fail, analyze output and fix
+6. Repeat until all relevant suites pass
+
+### Phase 5: Review
+1. Use `get_changed_files()` to see what changed
+2. Review against acceptance criteria
+3. Check for:
+   - No removed functionality without approval
+   - Follows project conventions
+   - All tests pass
+   - No debug code left
+
+### Phase 6: PR Creation
+1. Use `create_github_pr()` with descriptive title and body
+2. Include:
+   - What was changed
+   - Why it was changed
+   - How to test
+   - Fixes #<issue_number>
+3. Use `update_knowledge_base()` to record learnings
+
+## Important Guidelines
+- **Be autonomous**: Make decisions based on issue requirements and project context
+- **Be thorough**: Complete all 6 phases, don't skip steps
+- **Be careful**: Verify file contents before modifying
+- **Be informative**: Explain your reasoning as you work
+- **Ask when unsure**: For architecture decisions or scope changes, explain options and ask
+- **Use correct working directories**: Set the repo root when running commands
+
+## Dry Run Mode
+{"✅ DRY RUN ACTIVE - Use tools to analyze but don't make actual changes" if self.dry_run else ""}
+
+Start by fetching and analyzing Issue #{self.issue_number}, then proceed through each phase systematically.
+"""
+    
+    async def _run_agent_stream(self, agent: ChatAgent, thread, prompt: str, label: str) -> str:
+        """Run a prompt with streaming console output and return the full text."""
+        print(f"\n{'=' * 70}")
+        print(f"🧩 {label}")
+        print(f"{'=' * 70}\n")
+
+        chunks = []
+        print("🤖 Agent: ", end="", flush=True)
+        async for chunk in agent.run_stream(prompt, thread=thread):
+            if chunk.text:
+                chunks.append(chunk.text)
+                print(chunk.text, end="", flush=True)
+        print("\n")
+        return "".join(chunks)
+
+    async def execute(self) -> bool:
+        """Execute the complete workflow autonomously.
+
+        Uses per-role agents:
+        - planning_agent: phases 1-2
+        - coding_agent: phases 3-4 (+ apply requested fixes)
+        - review_agent: phase 5 (+ PR creation when approved)
+        """
+        if not (self.planning_agent and self.coding_agent and self.review_agent):
+            raise RuntimeError("Agent not initialized. Call initialize() first.")
+        
+        start_time = datetime.now()
+        execution_data = {
+            "issue_number": self.issue_number,
+            "start_time": start_time.isoformat(),
+            "phases_completed": [],
+            "problems_encountered": [],
+            "commands_used": [],
+        }
+        
+        print("=" * 70)
+        print("🚀 Starting Autonomous Workflow Execution (hybrid models)")
+        print("=" * 70)
+        print()
+        
+        try:
+            planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
+
+You must:
+1) Fetch and analyze the issue.
+2) Read relevant code/docs.
+3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+Hard rules:
+- If dry-run is enabled, do NOT apply changes, commit, or create a PR.
+- End your response with a clearly marked handoff block:
+
+HANDOFF_TO_CODING:
+- Summary:
+- Steps:
+- Files:
+- Validation:
+
+Begin now."""
+
+            plan_text = await self._run_agent_stream(
+                self.planning_agent,
+                self.planning_thread,
+                planning_prompt,
+                "Phase 1-2: Planning (Foundry/Azure recommended)",
+            )
+
+            coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
+
+Use the plan below. Implement the changes with a test-first approach and run the validation commands.
+
+Important:
+- Do NOT create the PR yet.
+- If you need to adjust the plan, explain why briefly and proceed.
+- If dry-run is enabled, do NOT apply changes, commit, or create a PR.
+
+PLAN_FROM_PLANNING_AGENT:
+{plan_text}
+
+At the end, include:
+CODING_SUMMARY:
+- Changes made:
+- Tests/validation run:
+- Notes for review:
+"""
+
+            _ = await self._run_agent_stream(
+                self.coding_agent,
+                self.coding_thread,
+                coding_prompt,
+                "Phase 3-4: Coding (GitHub models recommended)",
+            )
+
+            decision = "CHANGES"
+            iteration_budget = 5
+            for i in range(iteration_budget):
+                review_prompt = f"""Phase 5-6 (Review + PR Creation) for Issue #{self.issue_number}.
+
+Review the current repo state and changes. Use tools to inspect diffs and validate against acceptance criteria.
+
+Output format (first line MUST be one of):
+REVIEW_DECISION: PASS
+REVIEW_DECISION: CHANGES
+
+If PASS:
+- If dry-run is enabled: do NOT create a PR; just explain what would be in it.
+- Otherwise: create the PR (include testing instructions and Fixes #{self.issue_number}).
+
+If CHANGES:
+- Provide a short, explicit task list for the coding agent to apply.
+"""
+
+                review_text = await self._run_agent_stream(
+                    self.review_agent,
+                    self.review_thread,
+                    review_prompt,
+                    f"Review loop {i + 1}/{iteration_budget}: Review (Foundry/Azure recommended)",
+                )
+
+                first_line = (review_text.strip().splitlines() or [""])[0].strip()
+                if first_line == "REVIEW_DECISION: PASS":
+                    decision = "PASS"
+                    break
+
+                fix_prompt = f"""Apply the requested review changes for Issue #{self.issue_number}.
+
+REVIEW_NOTES:
+{review_text}
+
+Requirements:
+- Make minimal changes required.
+- Re-run the relevant validation.
+- Do NOT create the PR yet.
+"""
+                _ = await self._run_agent_stream(
+                    self.coding_agent,
+                    self.coding_thread,
+                    fix_prompt,
+                    f"Review loop {i + 1}/{iteration_budget}: Apply fixes (GitHub models recommended)",
+                )
+
+            if decision != "PASS":
+                raise RuntimeError("Review did not pass within iteration budget")
+            
+            # Get execution summary
+            duration = (datetime.now() - start_time).total_seconds()
+            execution_data["end_time"] = datetime.now().isoformat()
+            execution_data["duration_seconds"] = duration
+            
+            print("=" * 70)
+            print(f"✅ Workflow Completed in {duration:.1f} seconds ({duration/60:.1f} minutes)")
+            print("=" * 70)
+            
+            # GUARANTEED LEARNING: Extract and update knowledge base
+            if not self.dry_run:
+                print("\n📚 Updating knowledge base with learnings...")
+                await self._extract_and_update_learnings(execution_data)
+                print("✅ Knowledge base updated\n")
+            
+            return True
+            
+        except Exception as e:
+            print(f"\n\n❌ Error during execution: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Still try to learn from failures
+            if not self.dry_run:
+                execution_data["error"] = str(e)
+                execution_data["success"] = False
+                await self._extract_and_update_learnings(execution_data)
+            
+            return False
+
+    async def plan_only(self) -> str:
+        """Run Phase 1-2 only and return the plan text.
+
+        This mode is intended to be read-only: no file writes, no commits, no PRs.
+        It still requires a working LLM connection.
+        """
+        if not self.planning_agent or not self.planning_thread:
+            raise RuntimeError("Agent not initialized. Call initialize() first.")
+
+        planning_prompt = f"""PLAN-ONLY MODE for Issue #{self.issue_number}.
+
+Goals:
+1) Fetch and analyze the issue.
+2) Read relevant code/docs (read-only).
+3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+Hard rules:
+- Do NOT modify files.
+- Do NOT run formatting/tools that rewrite files.
+- Do NOT commit, push, or create a PR.
+- Only use read-only investigation tools.
+
+Output requirements:
+- A concise plan with steps.
+- List of files likely to change.
+- Validation commands to run (by repo).
+
+End with a clearly marked block:
+
+PLAN_ONLY_OUTPUT:
+- Summary:
+- Steps:
+- Files:
+- Validation:
+
+Begin now."""
+
+        return await self._run_agent_stream(
+            self.planning_agent,
+            self.planning_thread,
+            planning_prompt,
+            "Plan-only: Planning (Phase 1-2)",
+        )
+    
+    async def continue_conversation(self, message: str) -> str:
+        """Continue conversation with the agent (for follow-up questions)."""
+        if not self.agent or not self.thread:
+            raise RuntimeError("Agent not initialized or no active thread")
+        
+        response_text = []
+        async for chunk in self.agent.run_stream(message, thread=self.thread):
+            if chunk.text:
+                response_text.append(chunk.text)
+        
+        return "".join(response_text)
+    
+    async def _extract_and_update_learnings(self, execution_data: dict):
+        """
+        Extract learnings from execution and update knowledge base.
+        
+        This runs AFTER agent completes to guarantee learning happens.
+        """
+        from agents.tools import update_knowledge_base
+        import json
+        from pathlib import Path
+        
+        try:
+            # 1. Build workflow pattern
+            workflow_pattern = {
+                "issue_number": execution_data["issue_number"],
+                "date": execution_data["start_time"],
+                "duration_seconds": execution_data.get("duration_seconds", 0),
+                "duration_minutes": execution_data.get("duration_seconds", 0) / 60,
+                "success": execution_data.get("success", True),
+                "phases": execution_data.get("phases_completed", []),
+                "dry_run": self.dry_run,
+            }
+            
+            # 2. Ask agent for structured learnings
+            learning_prompt = f"""Based on the work you just completed on Issue #{self.issue_number}, 
+provide structured learnings in JSON format:
+
+{{
+  "problems_encountered": [
+    {{"problem": "description", "solution": "how it was solved", "category": "build|test|git|other"}}
+  ],
+  "key_decisions": [
+    {{"decision": "what was decided", "rationale": "why"}}
+  ],
+  "useful_commands": [
+    {{"command": "the command", "purpose": "what it does", "context": "when to use"}}
+  ],
+  "time_insights": {{
+    "planning_minutes": 0,
+    "implementation_minutes": 0,
+    "testing_minutes": 0,
+    "total_minutes": 0
+  }},
+  "files_changed": [],
+  "patterns_learned": ["pattern 1", "pattern 2"]
+}}
+
+Provide ONLY the JSON, no additional text."""
+            
+            response = await self.continue_conversation(learning_prompt)
+            
+            # Try to parse JSON from response
+            try:
+                # Extract JSON from response (may have markdown code blocks)
+                json_start = response.find('{')
+                json_end = response.rfind('}') + 1
+                if json_start >= 0 and json_end > json_start:
+                    learnings = json.loads(response[json_start:json_end])
+                else:
+                    learnings = {}
+            except json.JSONDecodeError:
+                learnings = {}
+            
+            # 3. Update workflow_patterns.json
+            workflow_pattern.update({
+                "problems": learnings.get("problems_encountered", []),
+                "decisions": learnings.get("key_decisions", []),
+                "commands": learnings.get("useful_commands", []),
+                "files_changed": learnings.get("files_changed", []),
+                "patterns": learnings.get("patterns_learned", []),
+            })
+            
+            kb_path = Path("agents/knowledge")
+            kb_path.mkdir(parents=True, exist_ok=True)
+            
+            # Update workflow_patterns.json
+            patterns_file = kb_path / "workflow_patterns.json"
+            patterns = []
+            if patterns_file.exists():
+                try:
+                    with open(patterns_file) as f:
+                        patterns = json.load(f)
+                        if not isinstance(patterns, list):
+                            patterns = [patterns]
+                except Exception:
+                    patterns = []
+            
+            patterns.append(workflow_pattern)
+            
+            with open(patterns_file, 'w') as f:
+                json.dump(patterns, f, indent=2)
+            
+            # 4. Update problem_solutions.json
+            if learnings.get("problems_encountered"):
+                problems_file = kb_path / "problem_solutions.json"
+                problems = []
+                if problems_file.exists():
+                    try:
+                        with open(problems_file) as f:
+                            problems = json.load(f)
+                            if not isinstance(problems, list):
+                                problems = [problems]
+                    except Exception:
+                        problems = []
+                
+                for problem in learnings["problems_encountered"]:
+                    problem["issue_number"] = self.issue_number
+                    problem["date"] = execution_data["start_time"]
+                    problems.append(problem)
+                
+                with open(problems_file, 'w') as f:
+                    json.dump(problems, f, indent=2)
+            
+            # 5. Update time_estimates.json
+            if learnings.get("time_insights"):
+                time_file = kb_path / "time_estimates.json"
+                estimates = []
+                if time_file.exists():
+                    try:
+                        with open(time_file) as f:
+                            estimates = json.load(f)
+                            if not isinstance(estimates, list):
+                                estimates = [estimates]
+                    except Exception:
+                        estimates = []
+                
+                time_data = learnings["time_insights"]
+                time_data["issue_number"] = self.issue_number
+                time_data["date"] = execution_data["start_time"]
+                estimates.append(time_data)
+                
+                with open(time_file, 'w') as f:
+                    json.dump(estimates, f, indent=2)
+            
+            # 6. Update command_sequences.json
+            if learnings.get("useful_commands"):
+                commands_file = kb_path / "command_sequences.json"
+                commands = []
+                if commands_file.exists():
+                    try:
+                        with open(commands_file) as f:
+                            commands = json.load(f)
+                            if not isinstance(commands, list):
+                                commands = [commands]
+                    except Exception:
+                        commands = []
+                
+                for cmd in learnings["useful_commands"]:
+                    cmd["issue_number"] = self.issue_number
+                    cmd["date"] = execution_data["start_time"]
+                    commands.append(cmd)
+                
+                with open(commands_file, 'w') as f:
+                    json.dump(commands, f, indent=2)
+            
+            # 7. Update agent_metrics.json
+            metrics_file = kb_path / "agent_metrics.json"
+            metrics = {"total_issues": 0, "successful_issues": 0, "last_updated": ""}
+            if metrics_file.exists():
+                try:
+                    with open(metrics_file) as f:
+                        metrics = json.load(f)
+                except Exception:
+                    pass
+            
+            metrics["total_issues"] = metrics.get("total_issues", 0) + 1
+            if execution_data.get("success", True):
+                metrics["successful_issues"] = metrics.get("successful_issues", 0) + 1
+            metrics["last_updated"] = datetime.now().isoformat()
+            metrics["last_issue"] = self.issue_number
+            
+            with open(metrics_file, 'w') as f:
+                json.dump(metrics, f, indent=2)
+            
+        except Exception as e:
+            print(f"⚠️  Warning: Could not update knowledge base: {e}")
+            # Don't fail the whole execution if learning fails
+
+
+async def main():
+    """Main entry point for CLI usage."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Autonomous Workflow Agent - AI-powered issue resolution",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Work on Issue #26 autonomously
+  python agents/autonomous_workflow_agent.py --issue 26
+  
+  # Dry run (analyze but don't change anything)
+  python agents/autonomous_workflow_agent.py --issue 26 --dry-run
+  
+  # Interactive mode (step through with approvals)
+  python agents/autonomous_workflow_agent.py --issue 26 --interactive
+        """
+    )
+    
+    parser.add_argument(
+        "--issue",
+        type=int,
+        required=True,
+        help="GitHub issue number to work on"
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Analyze and plan but don't make actual changes"
+    )
+    
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Pause for approval between phases"
+    )
+    
+    args = parser.parse_args()
+    
+    # Create and initialize agent
+    agent = AutonomousWorkflowAgent(
+        issue_number=args.issue,
+        dry_run=args.dry_run
+    )
+    
+    await agent.initialize()
+    
+    # Execute workflow
+    success = await agent.execute()
+    
+    # Interactive mode: allow follow-up questions
+    if args.interactive and success:
+        print("\n💬 Interactive mode - you can now give additional instructions")
+        print("   (Type 'exit' or 'quit' to finish)\n")
+        
+        while True:
+            try:
+                user_input = input("You: ").strip()
+                
+                if user_input.lower() in ['exit', 'quit', '']:
+                    break
+                
+                print("Agent: ", end="", flush=True)
+                response = await agent.continue_conversation(user_input)
+                print(response)
+                print()
+                
+            except (KeyboardInterrupt, EOFError):
+                break
+        
+        print("\n👋 Ending session")
+    
+    sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

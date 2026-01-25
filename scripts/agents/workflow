@@ -1,0 +1,6 @@
+#!/bin/bash
+# Wrapper script to run workflow agent
+
+cd "$(dirname "$0")/../.." || exit 1
+
+python3 agents/workflow_agent.py "$@"
