@@ -1,20 +1,14 @@
-"""
-LLM Client for GitHub Models
+"""LLM Client for GitHub Models.
 
-Provides GitHub models connection for AI agents.
-Configuration loaded from configs/llm.json or configs/llm.default.json
+This project standardizes on GitHub Models (Copilot) for all agent roles.
+Configuration is loaded from the active config (see LLMClientFactory.get_config_path).
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Optional, Dict
 from openai import AsyncOpenAI
-
-try:
-    # Optional: available when using Azure OpenAI / Foundry endpoints
-    from openai import AsyncAzureOpenAI  # type: ignore
-except Exception:  # pragma: no cover
-    AsyncAzureOpenAI = None
 
 
 class LLMClientFactory:
@@ -22,15 +16,37 @@ class LLMClientFactory:
 
     @staticmethod
     def get_config_path() -> Path:
-        """Return the active LLM config path (prefers configs/llm.json)."""
+        """Return the active LLM config path.
+
+        Resolution order:
+        1) LLM_CONFIG_PATH env var (recommended; keeps secrets out of git)
+        2) /config/llm.json (Docker convention)
+        3) configs/llm.json (local override; should remain gitignored)
+        4) configs/llm.default.json (repo default)
+        """
+        env_path = (Path(str(p)).expanduser() if (p := (os.environ.get("LLM_CONFIG_PATH") or "").strip()) else None)
+        if env_path is not None:
+            resolved = env_path if env_path.is_absolute() else Path.cwd() / env_path
+            if resolved.exists():
+                return resolved
+            raise FileNotFoundError(
+                f"LLM_CONFIG_PATH was set but file does not exist: {resolved}"
+            )
+
+        docker_path = Path("/config/llm.json")
+        if docker_path.exists():
+            return docker_path
+
         config_path = Path("configs/llm.json")
         if config_path.exists():
             return config_path
+
         config_path = Path("configs/llm.default.json")
         if config_path.exists():
             return config_path
+
         raise FileNotFoundError(
-            "No LLM configuration found. Create configs/llm.json or use configs/llm.default.json"
+            "No LLM configuration found. Set LLM_CONFIG_PATH, create configs/llm.json, or use configs/llm.default.json"
         )
     
     @staticmethod
@@ -135,56 +151,48 @@ class LLMClientFactory:
     def create_client_for_role(role: str) -> AsyncOpenAI:
         """Create an OpenAI-compatible async client for a given role.
 
+        Supported:
         - GitHub Models: provider=github OR base_url contains models.github.ai
-        - Foundry/Azure: provider in {foundry, azure, azure_openai} and either:
-          - azure_endpoint + api_version (preferred, uses AsyncAzureOpenAI when available)
-          - base_url (OpenAI-compatible)
-        - Generic OpenAI-compatible: base_url + api_key
         """
         role_config = LLMClientFactory.get_role_config(role)
         provider = (role_config.get("provider") or "").lower()
         base_url = role_config.get("base_url") or ""
         api_key = role_config.get("api_key") or ""
 
+        def _looks_like_placeholder(key: str) -> bool:
+            if not key:
+                return True
+            lowered = key.lower().strip()
+            return (
+                lowered in {"your-api-key-here", "your-token-here", "changeme"}
+                or "your_token_here" in lowered
+                or "your token here" in lowered
+            )
+
+        # Allow secrets via environment variables (preferred; avoids writing configs/llm.json).
+        # Only override when config is missing/placeholder.
+        if _looks_like_placeholder(api_key) and (
+            provider == "github" or "models.github.ai" in base_url
+        ):
+            api_key = (
+                os.environ.get("GITHUB_TOKEN")
+                or os.environ.get("GITHUB_PAT")
+                or os.environ.get("GH_TOKEN")
+                or api_key
+            )
+
         # GitHub Models
         if provider == "github" or "models.github.ai" in base_url:
             if not api_key or api_key == "your-api-key-here":
                 raise ValueError(
-                    "GitHub PAT token required for GitHub Models. Set api_key in configs/llm.json."
+                    "GitHub PAT token required for GitHub Models. Set api_key in the active config, or export GITHUB_TOKEN/GH_TOKEN."
                 )
             return AsyncOpenAI(base_url="https://models.github.ai/inference", api_key=api_key)
 
-        # Foundry / Azure OpenAI
-        if provider in {"foundry", "azure", "azure_openai"}:
-            azure_endpoint = role_config.get("azure_endpoint") or ""
-            api_version = role_config.get("api_version") or ""
-
-            if AsyncAzureOpenAI is not None and azure_endpoint and api_version:
-                if not api_key:
-                    raise ValueError("Azure OpenAI api_key required for Foundry/Azure provider")
-                return AsyncAzureOpenAI(
-                    azure_endpoint=azure_endpoint,
-                    api_key=api_key,
-                    api_version=api_version,
-                )
-
-            if base_url:
-                if not api_key:
-                    raise ValueError("api_key required for OpenAI-compatible base_url")
-                return AsyncOpenAI(base_url=base_url, api_key=api_key)
-
-            raise ValueError(
-                "Foundry/Azure provider requires either azure_endpoint+api_version or base_url"
-            )
-
-        # Generic OpenAI-compatible
-        if base_url:
-            if not api_key:
-                raise ValueError("api_key required for configured base_url")
-            return AsyncOpenAI(base_url=base_url, api_key=api_key)
-
-        # Back-compat fallback: GitHub client with existing config values
-        return LLMClientFactory.create_github_client(api_key=api_key or None)
+        # Everything else is intentionally unsupported in this repo.
+        raise ValueError(
+            "Unsupported LLM provider/config. This project only supports GitHub Models (provider=github)."
+        )
     
     @staticmethod
     def create_github_client(api_key: Optional[str] = None) -> AsyncOpenAI:
@@ -200,6 +208,14 @@ class LLMClientFactory:
         if api_key is None:
             config = LLMClientFactory.load_config()
             api_key = config.get("api_key", "")
+
+            if (not api_key) or api_key == "your-api-key-here":
+                api_key = (
+                    os.environ.get("GITHUB_TOKEN")
+                    or os.environ.get("GITHUB_PAT")
+                    or os.environ.get("GH_TOKEN")
+                    or api_key
+                )
             
             if not api_key or api_key == "your-api-key-here":
                 raise ValueError(

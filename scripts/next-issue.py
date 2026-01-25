@@ -744,6 +744,15 @@ class IssueSelector:
 def format_issue_recommendation(issue: Dict, context: str, knowledge: IssueKnowledge) -> str:
     """Format the recommendation output"""
     output = []
+
+    # The tracking file is useful metadata, but GitHub is the source of truth.
+    # Guard against confusion when the local tracking title diverges from GitHub.
+    tracking_title: Optional[str] = None
+    first_line = context.strip().splitlines()[0] if context.strip() else ""
+    title_match = re.search(r"Issue\s+#\d+:\s*(.+)$", first_line)
+    if title_match:
+        tracking_title = title_match.group(1).strip()
+
     output.append("=" * 80)
     output.append("NEXT ISSUE RECOMMENDATION")
     output.append("=" * 80)
@@ -765,8 +774,15 @@ def format_issue_recommendation(issue: Dict, context: str, knowledge: IssueKnowl
     else:
         output.append("✅ No Blockers")
         output.append("")
+
+    if tracking_title and tracking_title != issue["title"]:
+        output.append("⚠️  Tracking title mismatch detected")
+        output.append(f"   • Local tracking: {tracking_title}")
+        output.append(f"   • GitHub (source of truth): {issue['title']}")
+        output.append("   • Use GitHub issue content for implementation decisions")
+        output.append("")
     
-    output.append("📝 Issue Details:")
+    output.append("📝 Local Tracking Details (may be stale):")
     output.append("-" * 80)
     output.append(context)
     output.append("-" * 80)
