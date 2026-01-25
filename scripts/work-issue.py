@@ -50,6 +50,12 @@ Examples:
 
     # Plan-only - Phase 1-2 planning only (LLM required, no changes)
     ./scripts/work-issue.py --issue 26 --plan-only
+
+    # Use a specific LLM config (recommended for per-role Copilot models)
+    LLM_CONFIG_PATH=configs/llm.hybrid.json.example \
+        ./scripts/work-issue.py --issue 26 --plan-only
+    # Or via flag:
+    ./scripts/work-issue.py --issue 26 --plan-only --llm-config configs/llm.hybrid.json.example
   
   # Interactive - pause for approval between phases
   ./scripts/work-issue.py --issue 26 --interactive
@@ -58,7 +64,7 @@ Requirements:
     - Python 3.12+ (this repo enforces .venv via ./setup.sh)
   - GitHub CLI (gh) authenticated
   - Git configured
-  - GitHub PAT token in configs/llm.json
+    - GitHub Models token provided via config or env vars (e.g. GITHUB_TOKEN or GH_TOKEN)
         """
     )
     
@@ -67,6 +73,16 @@ Requirements:
         type=int,
         required=True,
         help="GitHub issue number to work on"
+    )
+
+    parser.add_argument(
+        "--llm-config",
+        type=str,
+        default=None,
+        help=(
+            "Path to an LLM config JSON file. Sets LLM_CONFIG_PATH for this run. "
+            "Useful for selecting hybrid configs without editing configs/llm.json."
+        ),
     )
 
     mode_group = parser.add_mutually_exclusive_group()
@@ -89,6 +105,9 @@ Requirements:
     )
     
     args = parser.parse_args()
+
+    if args.llm_config:
+        os.environ["LLM_CONFIG_PATH"] = args.llm_config
     
     print("""
 ╔══════════════════════════════════════════════════════════════════╗
@@ -167,14 +186,27 @@ def _check_prerequisites() -> bool:
         checks.append((f"Python {version.major}.{version.minor} ({py_exec})", "❌ Need Python 3.12+"))
     
     # Check LLM config
-    config_path = Path("configs/llm.json")
-    if not config_path.exists():
-        config_path = Path("configs/llm.default.json")
-    
-    if config_path.exists():
-        checks.append(("LLM config", "✅"))
+    config_path: Path
+    env_path = (os.environ.get("LLM_CONFIG_PATH") or "").strip()
+    if env_path:
+        p = Path(env_path).expanduser()
+        config_path = p if p.is_absolute() else Path.cwd() / p
+    elif Path("/config/llm.json").exists():
+        config_path = Path("/config/llm.json")
     else:
-        checks.append(("LLM config", "❌ Create configs/llm.json"))
+        config_path = Path("configs/llm.json")
+        if not config_path.exists():
+            config_path = Path("configs/llm.default.json")
+
+    if config_path.exists():
+        checks.append((f"LLM config ({config_path})", "✅"))
+    else:
+        checks.append(
+            (
+                "LLM config",
+                "❌ Set LLM_CONFIG_PATH or create configs/llm.json",
+            )
+        )
 
     # Check Python virtual environment
     if Path(".venv").exists():

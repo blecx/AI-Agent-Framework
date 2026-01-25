@@ -32,6 +32,20 @@ Phase 6: CI & PR (local CI + PR creation + record)
 - **Get approval for decisions:** Architecture and feature decisions require user approval
 - **Complete all phases:** Work through entire workflow, don't stop prematurely
 
+## LLM Configuration (Hybrid Strategy)
+
+The autonomous workflow supports **per-role models**:
+
+- **Planning + review**: Copilot (GitHub Models) planning-capable model
+- **Coding/execution**: Copilot (GitHub Models) coding-capable model
+
+Select the active LLM config via `LLM_CONFIG_PATH` (preferred) or `configs/llm.json` (gitignored). Example configs:
+
+- configs/llm.github.json.example (single model)
+- configs/llm.hybrid.json.example (per-role models; all via GitHub Models)
+
+Secrets should be provided via env vars when possible (e.g. `GITHUB_TOKEN` or `GH_TOKEN`) to avoid writing credentials into files.
+
 ## Phase 1: Selection & Setup
 
 **Goal:** Select next issue and prepare workspace

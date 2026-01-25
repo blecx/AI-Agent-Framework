@@ -16,7 +16,6 @@ Based on AI Toolkit best practices and Microsoft Agent Framework.
 
 import asyncio
 import json
-import platform
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -169,17 +168,7 @@ class AutonomousWorkflowAgent:
         if report.get("configured_base_url"):
             print(f"   Config base_url: {report.get('configured_base_url')}")
 
-        configured_base_url = (report.get("configured_base_url") or "").strip()
-        if (
-            configured_base_url
-            and "host.docker.internal" in configured_base_url
-            and platform.system().lower() == "linux"
-            and not Path("/.dockerenv").exists()
-        ):
-            print(
-                "⚠️  Note: On Linux hosts, 'host.docker.internal' often does not resolve outside Docker. "
-                "If you are running locally (not in Docker), consider setting base_url to http://localhost:1234/v1 in configs/llm.json."
-            )
+        # Note: default config uses GitHub Models; no host-specific base_url warnings needed.
         if isinstance(models, dict) and models:
             print(f"   Planning model: {models.get('planning')}")
             print(f"   Coding model: {models.get('coding')}")
@@ -434,7 +423,7 @@ Begin now."""
                 self.planning_agent,
                 self.planning_thread,
                 planning_prompt,
-                "Phase 1-2: Planning (Foundry/Azure recommended)",
+                "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
 
             coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
@@ -486,7 +475,7 @@ If CHANGES:
                     self.review_agent,
                     self.review_thread,
                     review_prompt,
-                    f"Review loop {i + 1}/{iteration_budget}: Review (Foundry/Azure recommended)",
+                    f"Review loop {i + 1}/{iteration_budget}: Review (Copilot/GitHub Models)",
                 )
 
                 first_line = (review_text.strip().splitlines() or [""])[0].strip()

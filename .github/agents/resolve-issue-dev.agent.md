@@ -50,8 +50,8 @@ For review, use `.github/prompts/pr-review-rubric.md` as the default rubric when
 
 ## Model roles (hybrid)
 
-- Planning + review: Foundry model (recommended)
-- Coding/execution: GitHub free-tier model (recommended)
+- Planning + review: Copilot (GitHub Models) planning-capable model (recommended)
+- Coding/execution: Copilot (GitHub Models) coding-capable model (recommended)
 
 Do **not** print model IDs/config on startup unless the user asks.
 

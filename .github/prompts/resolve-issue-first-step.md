@@ -90,9 +90,9 @@ If dependencies or blockers exist:
 
 ## Implementation loop (hybrid model structure)
 
-- **Foundry stage (analysis/planning/review):** do selection (if needed), dependency ordering, risk decisions, and produce the plan/spec.
-- **GitHub free-tier stage (coding/execution):** implement small, well-scoped coding tasks exactly as described by the Foundry plan/spec.
-- **Foundry review loop:** re-check acceptance criteria + repo review checklist; if changes are needed, produce a new scoped task and repeat, up to iteration budget.
+- **Copilot planning stage (analysis/planning/review):** do selection (if needed), dependency ordering, risk decisions, and produce the plan/spec.
+- **Copilot coding stage (coding/execution):** implement small, well-scoped coding tasks exactly as described by the plan/spec.
+- **Copilot review loop:** re-check acceptance criteria + repo review checklist; if changes are needed, produce a new scoped task and repeat, up to iteration budget.
 
 ## Review checklist
 
