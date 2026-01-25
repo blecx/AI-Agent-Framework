@@ -3,7 +3,7 @@
 Issue: #{{ issue_number }}{% if issue_title %} — {{ issue_title }}{% endif %}
 {% if issue_url %}{{ issue_url }}{% endif %}
 
-Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}
+{% if pr_number and pr_url %}Delivered in PR #{{ pr_number }}: {{ pr_url }}{% if merge_commit %} (merge commit `{{ merge_commit }}`){% endif %}{% endif %}
 
 ## Feature Summary
 {{ summary | default("- (describe what users can do now)") }}
