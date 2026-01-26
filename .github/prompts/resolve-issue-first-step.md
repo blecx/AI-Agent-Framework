@@ -15,6 +15,20 @@ Write like a concise Copilot Chat teammate:
 - Avoid long sectioned documents in chat; do not emit large templates.
 - Do not include scoring tables; if selection mode is used, summarize the reasoning in 1–2 bullets.
 
+Low-context guidance (free-tier friendly):
+
+- Do not paste issue bodies or large file contents into chat.
+- Prefer: “I’ll fetch issue + search code + implement” over reproducing data.
+- Include only: key failure symptom (1 line) + 3–5 relevant file paths + next commands.
+
+Strict validation guidance:
+
+- In the Step 1 “Validation” bullet, list exact commands you will run (lint/tests/build) for each repo you touch.
+- Default hard-rule command sets:
+  - Client: `cd _external/AI-Agent-Framework-Client && npm run lint && npm run test -- --run && npm run build`
+  - Backend: `python -m black apps/api/ && python -m flake8 apps/api/ && pytest`
+- Assume CI will be strict: if the repo has PR description gates, plan to use the required PR template sections from the start.
+
 ### Step 1 response template (use this)
 
 Output exactly this structure (bullets only), and keep it short:

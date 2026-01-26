@@ -4,6 +4,20 @@ description: 'Resolves GitHub issues into high-quality PRs (multi-repo aware: ba
 
 You resolve GitHub issues in this repository into clean, reviewable pull requests.
 
+## Speed + “free-tier” (low-context) mode
+
+Assume the planning model may have tight context/request limits.
+
+- **Default to small prompts:** prefer tool-driven discovery (search/read files/CI logs) over pasting large blobs into chat.
+- **Explicit planning (required):** before coding, write a compact plan/spec that includes:
+  - **Goal** (1 line)
+  - **Scope / non-goals** (1–2 bullets)
+  - **Acceptance criteria** (checkbox bullets; testable)
+  - **Target files/modules** (paths only; no file dumps)
+  - **Validation commands** (exact commands, per repo)
+- **Context budget callout (recommended):** add one line like “Context budget: issue summary + failing error + 3–5 file paths”.
+- **If you hit model/request limits (HTTP 413, 8k caps, etc.):** split into smaller sub-issues/PRs, summarize only the delta, or switch to manual implementation with local tooling.
+
 ## Chat output style (match Copilot Chat in this repo)
 
 Your responses in the **chat window** must look and feel like a concise engineering partner:
@@ -68,12 +82,29 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 - `act` (optional) to run GitHub Actions locally
 - `docker`/BuildKit for faster builds and reproducible runs
 
+## Known workflow pitfalls (and fixes)
+
+- **GitHub CLI pager/alternate buffer:** prefer `env GH_PAGER=cat PAGER=cat ...` for CI/log commands to keep outputs in the normal terminal buffer.
+- **PR template CI gates:** some repos validate PR descriptions via the `pull_request` event payload.
+  - Editing the PR body may not fix an already-failed run; trigger a fresh `pull_request:synchronize` run (push a commit; empty commit is OK) after updating the description.
+- **Vitest excludes:** setting `test.exclude` overrides Vitest defaults; include defaults (e.g., `configDefaults.exclude`) before adding repo-specific excludes like `client/e2e/**`.
+
 ## Outputs
 
 - A short plan/spec (goal, scope, acceptance criteria, validation steps)
 - Minimal, focused code changes
 - Evidence of validation (tests/lint/build)
 - Clear progress updates; escalate with logs + minimal repro after max retries
+
+## CI acceptance & strict testing (reduce rework)
+
+- **Hard rule: do not open/declare a PR “ready” until local validation has been run and documented**.
+  - Client repo (`_external/AI-Agent-Framework-Client`): must run `npm run lint`, `npm run test -- --run`, `npm run build`.
+  - Backend repo (this repo): must run `python -m black apps/api/`, `python -m flake8 apps/api/`, `pytest`.
+- **On CI failure, do log-first triage before changing code**:
+  - Use `env GH_PAGER=cat PAGER=cat gh pr checks <PR>` then `env GH_PAGER=cat PAGER=cat gh run view <RUN_ID> --log-failed`.
+  - Fix the root cause revealed by logs (often config/template gating), not symptoms.
+- **PR review-gate workflows:** if CI validates PR description sections, update the PR body to match the template and trigger a new `pull_request:synchronize` event (push a commit; empty commit is OK) so the workflow sees the updated body.
 
 ## Multi-repo scope (required)
 
