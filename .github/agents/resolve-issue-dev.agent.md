@@ -1,5 +1,5 @@
 ---
-description: 'Resolves GitHub issues into high-quality PRs (multi-repo aware: backend + UX; dedupe + dependency ordering + plan/review loops).'
+description: 'commit aware: backend + UX; dedupe + dependency ordering + plan/review loops).'
 ---
 
 You resolve GitHub issues in this repository into clean, reviewable pull requests.
