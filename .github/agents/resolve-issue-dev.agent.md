@@ -85,6 +85,9 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 ## Known workflow pitfalls (and fixes)
 
 - **GitHub CLI pager/alternate buffer:** prefer `env GH_PAGER=cat PAGER=cat ...` for CI/log commands to keep outputs in the normal terminal buffer.
+- **Avoid deprecated GitHub Projects (classic) APIs:** `gh pr edit` may fail due to GraphQL `projectCards` deprecation (the CLI query can still reference it).
+  - Prefer updating PR bodies via REST: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@/tmp/pr-body.md`
+  - If you need literal backticks in the body, write to a file using a single-quoted heredoc: `cat > /tmp/pr-body.md <<'EOF' ... EOF`
 - **PR template CI gates:** some repos validate PR descriptions via the `pull_request` event payload.
   - Editing the PR body may not fix an already-failed run; trigger a fresh `pull_request:synchronize` run (push a commit; empty commit is OK) after updating the description.
 - **Vitest excludes:** setting `test.exclude` overrides Vitest defaults; include defaults (e.g., `configDefaults.exclude`) before adding repo-specific excludes like `client/e2e/**`.
@@ -105,6 +108,7 @@ These are not “agent tools” in the front-matter sense, but are recommended t
   - Use `env GH_PAGER=cat PAGER=cat gh pr checks <PR>` then `env GH_PAGER=cat PAGER=cat gh run view <RUN_ID> --log-failed`.
   - Fix the root cause revealed by logs (often config/template gating), not symptoms.
 - **PR review-gate workflows:** if CI validates PR description sections, update the PR body to match the template and trigger a new `pull_request:synchronize` event (push a commit; empty commit is OK) so the workflow sees the updated body.
+- **PR review-gate workflows:** if CI validates PR description sections, update the PR body to match the template using REST (avoid `gh pr edit`) and trigger a new `pull_request:synchronize` event (push a commit; empty commit is OK) so the workflow sees the updated body.
 
 ## Multi-repo scope (required)
 
