@@ -111,7 +111,64 @@ If dependencies or blockers exist:
 ## Review checklist
 
 - Use the repo’s existing review checklist if present.
-- If none exists, use `.github/prompts/pr-review-rubric.md` as the default checklist. Optionally promote it to the repo docs if needed.
+- If none exists, use `.github/prompts/pr-review-rubric.md` as the default checklist. Optionally promote it to the repo docs if needed.## Best Practices from Recent Issues (Knowledge Base)
+
+Reference `/home/sw/work/AI-Agent-Framework/agents/knowledge/issue_resolution_best_practices.json` for learnings from Issues #59 and #38.
+
+**Critical pre-PR validation checklist** (prevents most CI failures):
+
+1. **PR Template Compliance**:
+   - Use inline evidence format, never code blocks: `Build ✓ 188 modules. Tests: 258/258. Lint: Clean`
+   - All required sections must be present with exact field names
+   - Include cross-repo impact line: `- Related repos/services impacted:`
+   - Update PR body via REST API if needed: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR> --field body=@.tmp/pr-body.md`
+   - Trigger CI rerun after body update: push empty commit
+
+2. **TypeScript Strict Mode** (for client changes):
+   - RefObject types must allow null: `React.RefObject<HTMLDivElement | null>`
+   - Use type-only imports: `import type { ... }`
+   - Remove unused imports proactively
+   - Avoid `any` types - use proper interfaces
+   - Use `React.createRef()` instead of manual `{current: null}`
+
+3. **Test Mocking Patterns**:
+   - Use `vi.spyOn(apiClient['client'], 'get/patch/post')` for API client tests
+   - Mock return types must match actual function signatures
+   - Review existing test files for pattern consistency
+
+4. **API Client Patterns**:
+   - All methods return `ApiResponse<T>` wrapper
+   - Use `URLSearchParams` for query string building
+   - Check existing types before creating new ones
+   - Import types from `../types` consistently
+
+5. **Pre-PR Validation Commands** (run in correct working directory):
+   - Client: `cd _external/AI-Agent-Framework-Client && npm run lint && npm test -- --run && npm run build`
+   - Backend: `source .venv/bin/activate && python -m black apps/api/ && python -m flake8 apps/api/ && pytest`
+
+6. **Infrastructure Checking**:
+   - Check for existing infrastructure before implementing (types, services, patterns)
+   - Review similar implementations (e.g., RAID methods, existing test files)
+   - Verify dependencies between issues (types, API client, state management)
+
+**On CI failure**:
+
+- Get logs: `env GH_PAGER=cat PAGER=cat gh pr checks <PR>` then `env GH_PAGER=cat PAGER=cat gh run view <RUN_ID> --log-failed`
+- For PR template issues: update body via REST, trigger rerun with empty commit
+- For type errors: check `strictNullChecks`, `verbatimModuleSyntax`, unused imports
+- For test failures: verify mock return types match actual signatures
+
+**Anti-patterns to avoid**:
+
+- Creating mock axios instances instead of using `vi.spyOn` on existing apiClient
+- Using code blocks (```) for evidence in PR descriptions
+- Manual `{current: null}` objects instead of `React.createRef()`
+- Implementing before checking existing types/services
+- Pushing without running local validation (test/build/lint)
+- Using `any` types to bypass TypeScript errors
+- Modifying PR body with `gh pr edit` (use REST API instead)
+
+**Efficiency metric**: Issue #38 had zero CI failures and corrections due to applying learnings from Issue #59 (which had multiple template/type fixes across 4 PRs).
 
 ## Definition of “resolved”
 
