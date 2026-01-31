@@ -84,6 +84,13 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 
 ## Known workflow pitfalls (and fixes)
 
+- **Modern Git commands (avoid deprecated patterns)**:
+  - ✅ Use `git switch -c <branch>` instead of `git checkout -b <branch>` (Git 2.23+)
+  - ✅ Use `git switch main` instead of `git checkout main`
+  - ✅ Use `git restore <file>` instead of `git checkout -- <file>`
+  - ✅ Use `gh pr merge --delete-branch` instead of manual `git branch -D`
+  - ✅ Use `git push -u origin <branch>` for first push (sets upstream tracking)
+  - ❌ Avoid `git checkout` for branch operations (ambiguous - works on files AND branches)
 - **GitHub CLI pager/alternate buffer:** prefer `env GH_PAGER=cat PAGER=cat ...` for CI/log commands to keep outputs in the normal terminal buffer.
 - **Avoid deprecated GitHub Projects (classic) APIs:** `gh pr edit` may fail due to GraphQL `projectCards` deprecation (the CLI query can still reference it).
   - Prefer updating PR bodies via REST: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@.tmp/pr-body.md`
@@ -92,6 +99,43 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 - **PR template CI gates:** some repos validate PR descriptions via the `pull_request` event payload.
   - Editing the PR body may not fix an already-failed run; trigger a fresh `pull_request:synchronize` run (push a commit; empty commit is OK) after updating the description.
 - **Vitest excludes:** setting `test.exclude` overrides Vitest defaults; include defaults (e.g., `configDefaults.exclude`) before adding repo-specific excludes like `client/e2e/**`.
+- **Test selector specificity (React Testing Library)**:
+  - **Never use `getByText` when multiple elements might match** - it expects exactly one match
+  - When testing UI with repeated text/buttons (e.g., "Add Item" in multiple sections):
+    - Use `getAllByText('text')` and check array length or index: `expect(getAllByText('Add')[0]).toBeInTheDocument()`
+    - Or scope queries with `within()`: `within(section).getByText('text')`
+    - Or use `getByRole('button', { name: 'Add' })` with more context
+    - Or add `data-testid` attributes for unique identification
+  - **Common failure pattern**: "Found multiple elements with text: X" - means `getByText` found 2+ matches
+  - **Quick fix**: Change `screen.getByText('X')` to `screen.getAllByText('X')` and assert on the array
+
+## Pre-PR creation checklist (mandatory)
+
+Before running `gh pr create`, verify ALL of these:
+
+1. **Local validation complete** (all must pass):
+   - Client: `npm run lint && npm test -- --run && npm run build`
+   - Backend: `python -m black apps/api/ && python -m flake8 apps/api/ && pytest`
+   - Document exact commands and output in PR body
+
+2. **PR template research** (prevents CI failures):
+   - Run: `env GH_PAGER=cat PAGER=cat gh pr view <recent-successful-pr> --json body --jq .body | head -60`
+   - Copy exact section headers (including "(required)" suffixes if present)
+   - Client repo needs: `# Summary`, `## Goal / Acceptance Criteria (required)`, `## Issue / Tracking Link (required)`, `## Validation (required)`, `### Automated checks`, `### Manual test evidence (required)`, `## How to review`, `## Cross-repo / Downstream impact (always include)`
+
+3. **PR body content checklist**:
+   - [ ] All acceptance criteria from issue present as checkboxes
+   - [ ] All checkboxes checked (only create PR when work is complete)
+   - [ ] `Fixes: #<issue-number>` present (exact format, not "Closes #X")
+   - [ ] Validation section has exact test/build commands run
+   - [ ] Evidence includes actual output (test count, build time)
+   - [ ] "How to review" has 4+ meaningful steps (not just "review code")
+   - [ ] Cross-repo impact assessed (even if "None")
+
+4. **Git hygiene**:
+   - Commit message includes issue reference: `feat: description\n\nFixes #X`
+   - No unintended files committed (check `git status` before push)
+   - Branch pushed to origin before creating PR
 
 ## Outputs
 
@@ -108,8 +152,21 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 - **On CI failure, do log-first triage before changing code**:
   - Use `env GH_PAGER=cat PAGER=cat gh pr checks <PR>` then `env GH_PAGER=cat PAGER=cat gh run view <RUN_ID> --log-failed`.
   - Fix the root cause revealed by logs (often config/template gating), not symptoms.
-- **PR review-gate workflows:** if CI validates PR description sections, update the PR body to match the template and trigger a new `pull_request:synchronize` event (push a commit; empty commit is OK) so the workflow sees the updated body.
-- **PR review-gate workflows:** if CI validates PR description sections, update the PR body to match the template using REST (avoid `gh pr edit`) and trigger a new `pull_request:synchronize` event (push a commit; empty commit is OK) so the workflow sees the updated body.
+- **PR description template compliance (critical)**:
+  - **Before creating ANY PR**, check recent successful PR to learn exact template format: `env GH_PAGER=cat PAGER=cat gh pr view <recent-pr> --json body --jq .body | head -60`
+  - Repos often validate specific section headers (exact text match, including "(required)" suffixes)
+  - Client repo expects: `# Summary`, `## Goal / Acceptance Criteria (required)`, `## Issue / Tracking Link (required)`, `## Validation (required)`, `### Automated checks`, `### Manual test evidence (required)`, `## How to review`, `## Cross-repo / Downstream impact (always include)`
+  - **DO NOT guess or improvise section names** - copy exact format from recent successful PRs
+- **PR body update workflow (if CI fails on description)**:
+  1. Write corrected body to file: `cat > .tmp/pr-body.md <<'EOF' ... EOF`
+  2. Verify file content: `cat .tmp/pr-body.md` (check all required sections present)
+  3. Update via REST API: `env GH_PAGER=cat PAGER=cat gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@.tmp/pr-body.md`
+  4. **MUST trigger new CI run**: Push empty commit to trigger `pull_request:synchronize` event: `git commit --allow-empty -m "chore: trigger CI re-run with updated PR description" && git push`
+  5. Wait and verify: `sleep 30 && env GH_PAGER=cat PAGER=cat gh pr checks <PR>`
+- **Deprecated commands to avoid**:
+  - `gh pr edit` - May fail due to GraphQL `projectCards` deprecation; use REST API instead
+  - Never use `git checkout -b` without verifying branch doesn't exist - use `git switch -c` (modern Git 2.23+)
+  - Avoid `git branch -D` in scripts - use `gh pr merge --delete-branch` which is safer
 
 ## Multi-repo scope (required)
 
