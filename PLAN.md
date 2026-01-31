@@ -132,58 +132,105 @@ Events are stored in `{project}/events/audit.ndjson` as append-only NDJSON (newl
 
 ---
 
-## Step 1 (Thin Slice): PMP + RAID
+## Step 1 (Thin Slice): RAID + Workflow States
 
-**Step 1 is explicitly defined as a thin, end-to-end slice that produces two core artifacts:**
+**Step 1 is explicitly defined as a thin, end-to-end slice focused on:**
 
-- **PMP (Project Management Plan)** – minimal viable structure sufficient to drive execution.
-- **RAID (Risks, Assumptions, Issues, Dependencies)** – minimal viable tracking table.
+- **RAID Register** (Risks, Assumptions, Issues, Dependencies) – complete CRUD operations with filtering and tracking.
+- **Workflow State Management** – deterministic ISO 21500-aligned state transitions (Initiating → Planning → Executing → Monitoring → Closing → Closed).
+- **Audit Event System** – comprehensive event logging for all significant project actions.
 
 ### Step 1 Outcomes
 
 By the end of Step 1, the system must support:
 
 - Creating/selecting a project.
-- Generating **PMP** and **RAID** artifacts from templates/blueprints.
-- Editing artifacts in a WebUI (and optionally via TUI).
-- Proposing AI-assisted changes (proposal) and applying accepted proposals.
-- Running an **audit** that validates required fields and cross-artifact references.
+- Managing **RAID items** with full CRUD operations via WebUI and API.
+- Transitioning projects through **workflow states** with validation.
+- Capturing all significant actions in the **audit event log**.
+- Testing all functionality (unit, integration, E2E tests).
 
-### Required Step 1 Artifact Definitions (Minimum)
+### What's NOT in Step 1
 
-- **PMP (minimum sections)**
-  - Purpose/overview
-  - Scope statement
-  - Deliverables list
-  - Milestones (coarse)
-  - Roles & responsibilities
-  - Communications plan (minimal)
-  - Change control approach (proposal-based)
+The following features are explicitly moved to **Step 2** or later:
 
-- **RAID (minimum columns)**
-  - Type (Risk/Assumption/Issue/Dependency)
-  - Description
-  - Owner
-  - Status
-  - Impact (low/med/high)
-  - Due date / review date
+- **PMP (Project Management Plan)** artifacts
+- **Templates** for artifact generation
+- **Blueprints** for process definition
+- **Proposals** workflow (AI-assisted changes)
+- **Cross-artifact audits** and validation
+- **AI-assisted content generation**
+
+Step 1 establishes the foundational infrastructure (RAID tracking, workflow states, audit events) that later steps will build upon.
+
+### Required Step 1 Capabilities
+
+**RAID Register (minimum columns)**:
+
+- Type (Risk/Assumption/Issue/Dependency)
+- Title
+- Description
+- Owner
+- Status (open, in-progress, mitigated, closed)
+- Priority (low/medium/high)
+- Impact assessment
+- Due date / review date
+- Mitigation strategy (for risks)
+
+**Workflow State Management**:
+
+- States: Initiating, Planning, Executing, Monitoring, Closing, Closed
+- Valid transitions enforced (see "Workflow State Machine" section above)
+- State history tracked in audit events
+
+**Audit Event System**:
+
+- All RAID operations logged (create, update, delete)
+- All workflow transitions logged
+- All project updates logged
+- Events queryable with filtering and pagination
 
 ---
 
 ## WebUI Requirements (Step 1)
 
 - Project selector / project creation page
-- Artifact navigation (PMP, RAID)
-- Artifact editor (structured fields + markdown where appropriate)
-- Proposal creation (AI-assisted suggestion + human edit)
-- Proposal review/apply flow
-- Audit page showing results + links back to fix
+- **RAID register management**:
+  - List view with filtering (by type, status, priority)
+  - Detail view for individual RAID items
+  - Create/edit/delete RAID items
+  - Sorting and pagination
+- **Workflow state management**:
+  - Display current project state
+  - Workflow transition controls
+  - Visual workflow diagram
+- **Audit event log**:
+  - Chronological event list
+  - Filtering by event type, actor, date range
+  - Event details and traceability
 
-## AI + Blueprint Behavior (Step 1)
+## Step 2 and Beyond
 
-- Blueprint defines which artifacts are required (PMP + RAID) and the schema/required fields.
+The following capabilities are planned for Step 2 or later phases:
+
+- **PMP (Project Management Plan)** artifact generation
+- **Templates** and **Blueprints** for artifact generation
+- **AI-assisted content generation** and suggestions
+- **Proposals workflow** (review and apply changes)
+- **Cross-artifact audits** and validation
+- **Advanced artifact relationships** and dependencies
+- **Artifact editor** with structured fields + markdown
+- **Blueprint-driven UI** navigation
+
+These features build upon the Step 1 foundation (RAID + Workflow + Audit) to provide comprehensive project management capabilities.
+
+## AI + Blueprint Behavior (Future Steps)
+
+In future phases, AI and blueprints will enable:
+
+- Blueprint defines which artifacts are required and the schema/required fields.
 - AI can:
-  - Draft initial PMP/RAID from minimal project metadata.
+  - Draft initial artifacts from minimal project metadata.
   - Suggest improvements as proposals.
   - Explain audit failures and propose fixes.
 
