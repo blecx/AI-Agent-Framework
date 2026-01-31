@@ -67,3 +67,6 @@ htmlcov/
 # Issue Resolution Learning (should be committed to track progress)
 # .issue-resolution-knowledge.json
 
+# AI Agent temporary files (workspace-scoped for better tool access)
+.tmp/
+
