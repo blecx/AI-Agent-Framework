@@ -86,8 +86,9 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 
 - **GitHub CLI pager/alternate buffer:** prefer `env GH_PAGER=cat PAGER=cat ...` for CI/log commands to keep outputs in the normal terminal buffer.
 - **Avoid deprecated GitHub Projects (classic) APIs:** `gh pr edit` may fail due to GraphQL `projectCards` deprecation (the CLI query can still reference it).
-  - Prefer updating PR bodies via REST: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@/tmp/pr-body.md`
-  - If you need literal backticks in the body, write to a file using a single-quoted heredoc: `cat > /tmp/pr-body.md <<'EOF' ... EOF`
+  - Prefer updating PR bodies via REST: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@.tmp/pr-body.md`
+  - If you need literal backticks in the body, write to a file using a single-quoted heredoc: `cat > .tmp/pr-body.md <<'EOF' ... EOF`
+  - **Workspace tmp directory:** Use `.tmp/` (in project root, gitignored) instead of `/tmp` for better workspace tool access and multi-repo context
 - **PR template CI gates:** some repos validate PR descriptions via the `pull_request` event payload.
   - Editing the PR body may not fix an already-failed run; trigger a fresh `pull_request:synchronize` run (push a commit; empty commit is OK) after updating the description.
 - **Vitest excludes:** setting `test.exclude` overrides Vitest defaults; include defaults (e.g., `configDefaults.exclude`) before adding repo-specific excludes like `client/e2e/**`.
