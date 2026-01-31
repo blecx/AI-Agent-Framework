@@ -108,8 +108,9 @@ capture_pr_metrics() {
     local ci_runs=$(gh run list --branch "$(gh pr view "$pr_number" --json headRefName --jq '.headRefName')" --limit 20 --json conclusion --jq 'length')
     local ci_iterations="$ci_runs"
     
-    # Store metrics in temporary file for later use
-    cat > /tmp/prmerge-metrics-$pr_number.json << EOF
+    # Store metrics in temporary file for later use (workspace-scoped)
+    mkdir -p .tmp
+    cat > .tmp/prmerge-metrics-$pr_number.json << EOF
 {
   "pr_metrics": {
     "files_changed": $pr_files,
@@ -773,9 +774,9 @@ if [ -n "$ACTUAL_HOURS" ]; then
     fi
     
     # Add metrics to notes
-    if [ -f "/tmp/prmerge-metrics-$PR_NUMBER.json" ]; then
-        NOTES="$NOTES | Metrics: $(cat /tmp/prmerge-metrics-$PR_NUMBER.json)"
-        rm -f "/tmp/prmerge-metrics-$PR_NUMBER.json"
+    if [ -f ".tmp/prmerge-metrics-$PR_NUMBER.json" ]; then
+        NOTES="$NOTES | Metrics: $(cat .tmp/prmerge-metrics-$PR_NUMBER.json)"
+        rm -f ".tmp/prmerge-metrics-$PR_NUMBER.json"
     fi
     
     if [ -f "./scripts/record-completion.py" ]; then
