@@ -26,8 +26,9 @@ tests/
 │   ├── test_versioned_api.py
 │   └── test_workflow_api.py
 ├── e2e/                # End-to-end tests
-│   ├── backend_e2e_runner.py  # E2E test harness
-│   └── test_governance_raid_workflow.py
+│   ├── backend_e2e_runner.py           # E2E test harness
+│   ├── test_governance_raid_workflow.py # Step 1 workflow tests
+│   └── test_step2_workflow.py          # Step 2 workflow tests (NEW)
 └── README.md           # This file
 ```
 
@@ -175,6 +176,50 @@ python tests/e2e/backend_e2e_runner.py --mode wait-and-validate --url http://loc
 ```
 
 See `E2E_TESTING.md` for detailed cross-repo E2E documentation.
+
+### Step 2 E2E Tests
+
+**File**: `tests/e2e/test_step2_workflow.py`
+
+**Purpose**: Validate complete Step 2 workflow (Templates, Blueprints, Artifacts, Proposals, Audit)
+
+**Test Scenarios**:
+1. **Template CRUD Workflow**: Create → List → Get → Update → Delete
+2. **Blueprint Creation**: Create blueprint referencing valid templates
+3. **Artifact Generation from Template**: Generate PMP artifact with valid content
+4. **Artifact Generation from Blueprint**: Generate 5+ artifacts from blueprint
+5. **Proposal Workflow** *(disabled - router not yet enabled)*: Create → Apply → Verify
+6. **Audit Events Validation**: Verify audit events logged for all operations
+7. **Error Handling**: Invalid template ID, non-existent blueprint, etc.
+
+**Running Step 2 E2E Tests**:
+```bash
+# Run all Step 2 E2E tests
+pytest tests/e2e/test_step2_workflow.py -v
+
+# Run specific scenario
+pytest tests/e2e/test_step2_workflow.py::test_template_crud_workflow -v
+
+# Run with output (useful for debugging)
+pytest tests/e2e/test_step2_workflow.py -v -s
+
+# Skip proposal tests (currently disabled)
+pytest tests/e2e/test_step2_workflow.py -v -k "not proposal"
+```
+
+**Acceptance Criteria**:
+- ✅ All 7 test scenarios pass
+- ✅ Test execution time < 60 seconds (individual tests < 5 seconds)
+- ✅ Tests are deterministic (no flakiness, no sleep-based waits)
+- ✅ Tests use isolated temporary directories (no state leakage)
+
+**Troubleshooting**:
+- **Issue**: Template not found after creation
+  - **Fix**: Ensure git operations complete; check git_manager service
+- **Issue**: Artifact generation fails
+  - **Fix**: Verify template schema matches context data
+- **Issue**: Audit events not logged
+  - **Fix**: Check audit_service initialization in test client
 
 ## Writing Tests
 
