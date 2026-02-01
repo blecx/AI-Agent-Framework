@@ -179,6 +179,24 @@ When adding JavaScript dependencies:
 
 **Code:** Backend=no strict style (black/flake8 available), Frontend=modern React hooks. Minimal comments (prefer self-documenting). RESTful API with propose/apply pattern. CORS enabled (configure for prod).
 
+**Architecture (Domain-Driven Design):**
+- **Backend follows DDD layering:**
+  - Domain layer: Core business logic and entities
+  - Service layer: Application services in `services/` (command_service.py, git_manager.py, llm_service.py)
+  - Infrastructure layer: API routes in `routers/`, external integrations
+  - Models: Pydantic for API contracts (models.py)
+- **Frontend follows domain separation:**
+  - Domain-specific API clients (ProjectApiClient, RAIDApiClient, WorkflowApiClient)
+  - Test helpers organized by domain (RAIDTestHelper, PerformanceTestHelper)
+  - Components grouped by feature
+  - Reference: PR #101 for SRP-compliant structure
+- **Key principles:**
+  - Single Responsibility: Each class/module has ONE clear purpose
+  - Domain boundaries: Clear separation (Project, RAID, Workflow domains)
+  - Type safety: Explicit interfaces, no `any` types
+  - File size target: < 100 lines per class/module when practical
+  - Dependency injection for testability
+
 **Env:** PROJECT_DOCS_PATH (required for API), LLM_CONFIG_PATH (defaults /config/llm.json in Docker).
 
 ## Cross-Repository Coordination
@@ -267,11 +285,37 @@ curl http://localhost:8000/health
 
 # View project docs git log
 cd projectDocs && git log --oneline
+
+# Clean up temporary files after PR merge
+rm -f .tmp/pr-body-*.md .tmp/issue-*-*.md
 ```
+
+## Workspace Cleanup
+
+After successfully merging a PR:
+
+1. **Delete PR-specific temporary files**:
+   ```bash
+   rm -f .tmp/pr-body-<issue-number>.md
+   rm -f .tmp/issue-<issue-number>-*.md
+   ```
+
+2. **Keep concurrent work intact**:
+   - Only delete files for the merged PR/issue
+   - Use specific patterns to avoid deleting unrelated work
+   - `.tmp/` directory is gitignored but should be kept clean
+
+3. **Example cleanup workflow**:
+   ```bash
+   # After PR #99 merged
+   gh pr merge 99 --squash --delete-branch
+   rm -f .tmp/pr-body-refactor.md .tmp/issue-99-*.md
+   git switch main && git pull
+   ```
 
 ## Trust These Instructions
 
-These instructions have been validated by running all commands in a clean environment. Build times, file locations, and workarounds are accurate as of 2026-01-09. Only search for additional information if:
+These instructions have been validated by running all commands in a clean environment. Build times, file locations, and workarounds are accurate as of 2026-02-01. Only search for additional information if:
 1. A command fails with an unexpected error not covered above
 2. You need to understand implementation details not in this guide
 3. Requirements or specifications are unclear from this document
