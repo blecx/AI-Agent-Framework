@@ -931,6 +931,143 @@ async def create_template(
 - Privacy by design: Local LLM option
 - Transparency: Clear data flow documentation
 
+## Testing Architecture
+
+### Test Infrastructure (Step 3)
+
+The system employs comprehensive testing at multiple levels following DDD principles:
+
+#### Test Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│              E2E Tests (TUI + Web UI)               │
+│  - Full workflow scenarios                          │
+│  - Cross-component integration                      │
+│  - User journey validation                          │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│              Integration Tests                      │
+│  - API endpoint tests                               │
+│  - Service layer integration                        │
+│  - Database + Git operations                        │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│              Unit Tests                             │
+│  - Domain models                                    │
+│  - Service logic                                    │
+│  - Validation rules                                 │
+└─────────────────────────────────────────────────────┘
+```
+
+#### Backend Testing Strategy
+
+**TUI-Driven E2E Tests** (`tests/e2e/tui/`):
+
+- Deterministic, non-interactive scenarios
+- Full workflow coverage (project creation → artifacts → proposals → audit)
+- CI-integrated (headless execution)
+- Performance target: < 5 minutes
+
+**Integration Tests** (`tests/integration/`):
+
+- API endpoint validation
+- Service layer integration
+- Git operations
+- Audit event generation
+
+**Unit Tests** (`tests/unit/`):
+
+- Domain model validation
+- Service logic
+- Audit rules (isolated testing)
+- Diff generation algorithms
+
+**Test Infrastructure** (`tests/helpers/`, `tests/fixtures/`):
+
+- Test data factories (projects, artifacts, proposals)
+- TUI automation service
+- Assertion helpers
+- Reusable fixtures
+
+#### Client Testing Strategy
+
+**Web UI E2E Tests** (`tests/e2e/`):
+
+- Playwright or Cypress framework
+- Page object model
+- Full user workflows
+- Visual regression testing
+- Performance target: < 10 minutes
+
+**Integration Tests** (`tests/integration/`):
+
+- API client integration
+- Error handling scenarios
+- Network failure simulation
+
+**Unit Tests** (`tests/unit/`):
+
+- Component logic
+- Validation utilities
+- Error handling utilities
+
+**Visual Regression** (`tests/visual/`):
+
+- Baseline screenshots
+- Pixel-diff comparison
+- Approval workflow
+
+#### CI Quality Gates (Step 3)
+
+**Backend Gates** (`.github/workflows/ci-backend.yml`):
+
+- ✅ All tests pass (unit + integration + E2E)
+- ✅ Coverage threshold (80%+ for new code)
+- ✅ No missing tests for new features
+- ✅ Documentation sync validation
+- ✅ API documentation complete (OpenAPI)
+- ✅ Linting (black, flake8)
+- ✅ Security scanning (bandit, safety)
+- ✅ Test execution time monitoring
+- ✅ Flaky test detection
+
+**Client Gates** (`.github/workflows/ci-client.yml`):
+
+- ✅ All tests pass (unit + integration + E2E)
+- ✅ Coverage threshold (80%+ for components)
+- ✅ No missing tests for new components
+- ✅ Build succeeds without warnings
+- ✅ Bundle size limits (< 500KB gzipped)
+- ✅ Linting (ESLint, Prettier)
+- ✅ Lighthouse scores (performance ≥ 80, accessibility ≥ 90)
+- ✅ No console errors in production build
+- ✅ Visual regression approval
+
+#### DDD Principles in Testing
+
+**Test Domain Layer** (`tests/helpers/`):
+
+- Test data builders (fluent API for creating test data)
+- Domain-specific test utilities
+- Reusable fixtures following domain patterns
+
+**Test Service Layer** (`tests/e2e/`):
+
+- TUI automation service (command execution, output parsing)
+- Web automation service (Playwright page objects)
+- API test client (HTTP request wrappers)
+
+**Key Testing Principles**:
+
+- **SRP:** Each test helper does ONE thing
+- **DRY:** Shared logic in fixtures/helpers, not copy-paste
+- **Type Safety:** Test data factories return typed objects
+- **Determinism:** No random data (use seeds), no sleep-based waits
+- **Fast Feedback:** Optimize execution time (parallelization, fixture reuse)
+
 ## Related Documentation
 
 - [ADR-0001: Separate Project Documents Repository](../adr/0001-docs-repo-mounted-git.md)
@@ -941,12 +1078,14 @@ async def create_template(
 - [Client Integration Guide](../api/client-integration-guide.md)
 - [Development Guide](../development.md)
 - [MVP Specification](../spec/mvp-iso21500-agent.md)
+- [Testing Documentation](../../tests/README.md)
 
 ## Revision History
 
-| Version | Date       | Changes                            | Author         |
-| ------- | ---------- | ---------------------------------- | -------------- |
-| 1.0.0   | 2026-01-10 | Initial architecture documentation | GitHub Copilot |
+| Version | Date       | Changes                                     | Author         |
+| ------- | ---------- | ------------------------------------------- | -------------- |
+| 1.1.0   | 2026-02-01 | Added Testing Architecture section (Step 3) | GitHub Copilot |
+| 1.0.0   | 2026-01-10 | Initial architecture documentation          | GitHub Copilot |
 
 ---
 
