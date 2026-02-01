@@ -147,3 +147,151 @@ async def get_audit_events(
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve audit events: {str(e)}"
         )
+
+
+@router.post("/{project_key}/audit")
+async def run_audit_rules(
+    project_key: str,
+    request: Request,
+    rule_set: Optional[list[str]] = None,
+):
+    """
+    Run enhanced audit rules on a project.
+
+    Validates cross-artifact relationships, date consistency, owner validation,
+    dependency cycles, completeness scoring, and more.
+    """
+    git_manager = request.app.state.git_manager
+
+    # Verify project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    try:
+        result = audit_service.run_audit_rules(
+            project_key=project_key,
+            git_manager=git_manager,
+            rule_set=rule_set,
+        )
+
+        # Save to audit history
+        audit_service.save_audit_history(project_key, result, git_manager)
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to run audit rules: {str(e)}"
+        )
+
+
+@router.post("/audit/bulk")
+async def run_bulk_audit(
+    request: Request,
+    project_keys: Optional[list[str]] = None,
+):
+    """
+    Run audit rules across multiple projects (bulk audit).
+
+    If project_keys is not provided, audits all projects.
+    """
+    git_manager = request.app.state.git_manager
+
+    try:
+        # Get all project keys if not specified
+        if project_keys is None:
+            all_projects = git_manager.list_all_projects()
+            project_keys = [p["key"] for p in all_projects]
+
+        results = []
+        for project_key in project_keys:
+            try:
+                # Verify project exists
+                project_info = git_manager.read_project_json(project_key)
+                if not project_info:
+                    results.append(
+                        {
+                            "project_key": project_key,
+                            "status": "error",
+                            "message": "Project not found",
+                        }
+                    )
+                    continue
+
+                # Run audit
+                audit_result = audit_service.run_audit_rules(
+                    project_key=project_key,
+                    git_manager=git_manager,
+                )
+
+                # Save to history
+                audit_service.save_audit_history(project_key, audit_result, git_manager)
+
+                results.append(
+                    {
+                        "project_key": project_key,
+                        "status": "success",
+                        "total_issues": audit_result["total_issues"],
+                        "completeness_score": audit_result["completeness_score"],
+                        "rule_violations": audit_result["rule_violations"],
+                    }
+                )
+
+            except Exception as e:
+                results.append(
+                    {
+                        "project_key": project_key,
+                        "status": "error",
+                        "message": str(e),
+                    }
+                )
+
+        return {
+            "results": results,
+            "total_projects": len(results),
+            "successful": len([r for r in results if r["status"] == "success"]),
+            "failed": len([r for r in results if r["status"] == "error"]),
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to run bulk audit: {str(e)}"
+        )
+
+
+@router.get("/{project_key}/audit/history")
+async def get_audit_history(
+    project_key: str,
+    request: Request,
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of entries"),
+):
+    """
+    Retrieve audit history for a project.
+
+    Returns historical audit results (newest first).
+    """
+    git_manager = request.app.state.git_manager
+
+    # Verify project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    try:
+        history = audit_service.get_audit_history(
+            project_key=project_key,
+            git_manager=git_manager,
+            limit=limit,
+        )
+
+        return {
+            "project_key": project_key,
+            "audits": history,
+            "count": len(history),
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve audit history: {str(e)}"
+        )
