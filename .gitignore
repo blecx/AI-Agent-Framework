@@ -23,8 +23,10 @@ apps/tui/.env
 apps/tui/__pycache__/
 apps/tui/commands/__pycache__/
 
-# VS Code
-.vscode/
+# VS Code (ignore all except settings.json and tasks.json)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
 
 # Betriebssystemdateien
 .DS_Store
