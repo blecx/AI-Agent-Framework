@@ -44,7 +44,43 @@ Your **first** assistant message in a run must be short and action-oriented:
 
 - Run when a specific issue number is provided (execute it directly).
 - Run when asked to pick the “next issue” (apply selection + dedupe + dependency ordering first).
+## Issue Selection Order (resolve-issue-dev)
 
+**When selecting the next issue to work on, ALWAYS follow this priority order:**
+
+1. **Priority 1: Backend/TUI/CLI issues**
+   - Repository: `blecx/AI-Agent-Framework`
+   - Includes: API services, domain models, CLI tools, backend tests
+   - Example issue numbers: #69-#78 (Step 2 backend)
+
+2. **Priority 2: Client/UX issues**
+   - Repository: `blecx/AI-Agent-Framework-Client`
+   - Includes: React components, UI features, client tests
+   - Example issue numbers: #102-#109 (Step 2 frontend)
+
+3. **Within each priority group:**
+   - **Select the LOWEST issue number first**
+   - Work sequentially: #69 → #70 → #71 → ... → #77 → #78
+   - Then move to client: #102 → #103 → ... → #109
+
+**Rationale:**
+
+- **Dependency management:** Frontend depends on backend APIs
+- **Parallel work:** Backend team completes work while frontend team prepares
+- **Predictability:** Everyone knows "what's next" in implementation order
+- **Quality gates:** Backend E2E tests validate before frontend development
+
+**Example (Step 2):**
+
+- Open issues: #69, #70, #72, #102, #104
+- **Correct order:** #69 → #70 → #72 → #102 → #104
+- **Why:** Work backend issues (#69, #70, #72) before client issues (#102, #104)
+
+**Edge cases:**
+
+- If all backend issues are complete, start client issues (lowest number first)
+- If all issues in both repos are complete, check for new issues or declare milestone done
+- If backend issue is blocked, skip to next backend issue (don't jump to client)
 ## Edges you won't cross
 
 - Don’t commit or modify `projectDocs/` (separate repo).

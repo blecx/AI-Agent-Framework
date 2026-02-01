@@ -8,6 +8,7 @@ uvicorn[standard]==0.27.0
 # Data Validation
 pydantic==2.5.3
 pydantic-settings==2.1.0
+jsonschema==4.21.1
 
 # HTTP Client
 httpx==0.26.0
