@@ -199,3 +199,9 @@ Before declaring the issue “resolved”, ensure the run produces:
 - Any documentation updates required by the change (and where)
 - Dedupe/dependency notes (if selection mode was used)
 - Confirmation that constraints were respected (no `projectDocs/`, no `configs/llm.json` committed)
+- **MANDATORY: Cleanup verification** - All temporary files removed:
+
+  ```bash
+  rm -f .tmp/pr-body-<issue-number>.md .tmp/issue-<issue-number>-*.md
+  ls -la .tmp/*<issue-number>* 2>/dev/null || echo "✓ Cleanup verified"
+  ```

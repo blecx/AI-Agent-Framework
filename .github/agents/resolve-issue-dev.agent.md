@@ -351,31 +351,35 @@ If both repos are involved, plan and validate per-repo in the correct working di
 
 ## Workspace cleanup (mandatory)
 
-After successfully merging a PR, clean up related temporary files:
+**CRITICAL: This step is MANDATORY and must be executed AUTOMATICALLY after every PR merge.**
 
-1. **Delete PR-related files in `.tmp/`**:
-   - `rm -f .tmp/pr-body-<issue-number>.md`
-   - `rm -f .tmp/pr-body-refactor.md` (or similar)
-   - `rm -f .tmp/issue-<issue-number>-*.md`
-2. **Keep concurrent/unrelated files**:
-   - Only delete files for the CURRENT issue/PR
-   - Don't delete files from other concurrent work
-   - Pattern match carefully: `.tmp/*<issue-number>*` or `.tmp/pr-body.md` if single-issue workflow
+After successfully merging a PR, the agent MUST clean up related temporary files:
 
-3. **Cleanup timing**:
-   - Run AFTER PR merge succeeds
-   - Run BEFORE switching back to main branch
-   - Example: `gh pr merge <PR> && rm -f .tmp/pr-body-*.md && git switch main`
+1. **Automatic cleanup command** (run immediately after merge):
+   ```bash
+   # Delete ALL files related to the resolved issue/PR
+   rm -f .tmp/pr-body-<issue-number>.md .tmp/pr-body-*.md .tmp/issue-<issue-number>-*.md
+   ```
 
-**Example cleanup workflow:**
+2. **Keep concurrent work intact**:
+   - Only delete files for the CURRENT merged PR/issue
+   - Use specific patterns to avoid deleting unrelated work
+   - `.tmp/` directory is gitignored but should be kept clean
 
-```bash
-# After PR #99 merged successfully
-rm -f .tmp/pr-body-refactor.md
-rm -f .tmp/issue-99-*.md
-git switch main
-git pull
-```
+3. **Complete cleanup workflow** (mandatory sequence):
+   ```bash
+   # After PR merged successfully
+   gh pr merge <PR> --squash --delete-branch
+   rm -f .tmp/pr-body-<issue-number>.md .tmp/issue-<issue-number>-*.md
+   git switch main && git pull
+   ```
+
+4. **Verification** (always run after cleanup):
+   ```bash
+   ls -la .tmp/*<issue-number>* 2>/dev/null || echo "✓ Cleanup verified"
+   ```
+
+**The agent must NOT consider an issue "resolved" until temporary files are cleaned up.**
 
 ## Recent improvements & best practices (keep these)
 
