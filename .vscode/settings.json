@@ -121,5 +121,11 @@
   },
   "chat.allowAnonymousAccess": true,
   "chat.checkpoints.showFileChanges": true,
-  "chat.customAgentInSubagent.enabled": true
+  "chat.customAgentInSubagent.enabled": true,
+  "chat.tools.subagent.autoApprove": {
+    "resolve-issue-dev": true,
+    "close-issue": true,
+    "pr-merge": true,
+    "Plan": true
+  }
 }
