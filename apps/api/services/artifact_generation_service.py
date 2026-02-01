@@ -150,9 +150,7 @@ class ArtifactGenerationService:
         results = []
         for template_id in blueprint.required_templates:
             try:
-                result = self.generate_from_template(
-                    template_id, project_key, context
-                )
+                result = self.generate_from_template(template_id, project_key, context)
                 results.append(result)
             except ArtifactGenerationError as e:
                 # Log error but continue with other artifacts
