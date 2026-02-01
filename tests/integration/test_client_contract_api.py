@@ -74,11 +74,13 @@ def client(temp_project_dir):
     # Initialize services
     from services.git_manager import GitManager
     from services.llm_service import LLMService
+    from services.audit_service import AuditService
 
     git_manager = GitManager(temp_project_dir)
     git_manager.ensure_repository()
     test_app.state.git_manager = git_manager
     test_app.state.llm_service = LLMService()
+    test_app.state.audit_service = AuditService()
 
     with TestClient(test_app) as test_client:
         yield test_client
