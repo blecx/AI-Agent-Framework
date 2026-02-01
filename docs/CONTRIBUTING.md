@@ -757,6 +757,91 @@ pytest --cov=apps/api --cov-report=html tests/
 - [ ] Update client examples (Python, JavaScript)
 - [ ] Note breaking changes in CHANGELOG.md
 
+## CI Requirements
+
+**All PRs must pass 9 quality gates before merging.** See [docs/ci-cd.md](ci-cd.md) for complete documentation.
+
+### The 9 Quality Gates
+
+1. **All Tests Pass** - Unit, integration, and E2E tests
+2. **Coverage Threshold** - 80%+ coverage for changed files
+3. **Missing Tests Detection** - New code must have test files
+4. **Documentation Sync** - `tests/README.md` must be current
+5. **OpenAPI Spec Validation** - All endpoints documented
+6. **Linting** - `black` and `flake8` pass
+7. **Security Scanning** - No high-severity issues (bandit + safety)
+8. **Test Execution Time** - Full suite < 10 minutes
+9. **Flaky Test Detection** - Deterministic test behavior
+
+### Local CI Simulation
+
+**Before pushing**, run the full CI pipeline locally:
+
+```bash
+./scripts/ci_backend.sh
+```
+
+This runs gates 1-8 locally (Gate 9 skipped for speed) and provides a summary.
+
+### Individual Gate Checks
+
+```bash
+# Gate 1: All tests
+pytest tests/
+
+# Gate 2: Coverage
+pytest tests/ --cov=apps/api --cov-report=term-missing
+python scripts/coverage_diff.py origin/main HEAD
+
+# Gate 3: Missing tests (automatic check)
+
+# Gate 4: Documentation sync
+python scripts/check_test_docs.py
+
+# Gate 5: OpenAPI spec
+cd apps/api && python -c "from main import app; print(app.openapi())"
+
+# Gate 6: Linting
+python -m black apps/api/ apps/tui/ tests/
+python -m flake8 apps/api/ apps/tui/ tests/
+
+# Gate 7: Security
+pip install bandit safety
+bandit -r apps/api/ apps/tui/ -ll
+safety check
+
+# Gate 8: Test time (automatic - just run fast tests)
+```
+
+### Common CI Failures
+
+**Tests failing?**
+```bash
+pytest tests/ -v
+# Fix failing tests, then re-run
+```
+
+**Coverage too low?**
+```bash
+pytest tests/ --cov=apps/api --cov-report=term-missing
+# Add tests for uncovered lines
+```
+
+**Linting errors?**
+```bash
+python -m black apps/api/ apps/tui/ tests/  # Auto-format
+python -m flake8 apps/api/  # Check remaining issues
+```
+
+**Missing test files?**
+- For each new `.py` file in `apps/`, create `tests/unit/test_*.py`
+
+**Documentation out of sync?**
+- Update `tests/README.md` to document all test directories
+- Remove references to deleted directories
+
+See [CI/CD Documentation](ci-cd.md) for detailed remediation steps.
+
 ## Submitting Pull Requests
 
 ### PR Checklist
