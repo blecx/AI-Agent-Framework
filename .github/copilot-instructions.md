@@ -17,8 +17,17 @@ ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10
 
 2. **Break Work into Small Issues**
    - Each issue should be sized for a single PR
+   - **Size Guidelines:**
+     - **S (Small):** < 50 lines changed, < 1 day (prefer for new domains)
+     - **M (Medium):** 50-200 lines changed, 1-2 days (typical feature)
+     - **L (Large):** > 200 lines changed (consider splitting)
    - Issues must include acceptance criteria and validation steps
+   - **Use issue templates:** Backend features use `.github/ISSUE_TEMPLATE/feature_request.yml`
+   - **Comprehensive descriptions:** Include goal, scope (in/out), acceptance criteria, API contract, technical approach, testing requirements, documentation updates
    - Link related issues across repositories when coordinating changes
+   - **Repository placement:**
+     - **Backend issues** (API, services, domain models) → `blecx/AI-Agent-Framework`
+     - **UX issues** (React components, client API clients) → `blecx/AI-Agent-Framework-Client`
 
 3. **Implement One Issue Per PR**
    - Keep diffs small and reviewable (prefer < 200 lines changed)
@@ -35,6 +44,105 @@ ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10
    - Prefer squash merges to keep history clean
    - Ensure PR title is clear (becomes squash commit message)
    - Delete branch after merge
+
+### Domain-Driven Design (DDD) Architecture (REQUIRED)
+
+**All code changes must follow DDD architecture patterns:**
+
+#### Core Principles
+
+1. **Single Responsibility Principle (SRP):** Each class/module has ONE clear purpose
+2. **Domain Separation:** Clear boundaries between domains (Templates, Blueprints, Proposals, Artifacts, RAID, Workflow, etc.)
+3. **Type Safety:** Explicit interfaces and Pydantic models for all domain objects
+4. **Dependency Direction:** Infrastructure depends on domain, not vice versa
+5. **Testability:** Services are mockable and unit-testable
+
+#### Backend Structure (AI-Agent-Framework)
+
+```
+apps/api/
+├── domain/              # Domain Layer (Pure Business Logic)
+│   ├── templates/       # Example: Template domain
+│   │   ├── models.py    # Entity + value objects (NO infrastructure deps)
+│   │   └── validators.py # Domain validation logic
+│   └── proposals/       # Example: Proposal domain
+│       └── models.py
+│
+├── services/            # Service Layer (Orchestration + Business Logic)
+│   ├── template_service.py    # Uses GitManager (repository pattern)
+│   └── proposal_service.py
+│
+└── routers/             # API Layer (HTTP Protocol Concerns ONLY)
+    ├── templates.py     # Thin controllers, delegate to services
+    └── proposals.py
+```
+
+#### Frontend Structure (AI-Agent-Framework-Client)
+
+```
+client/src/
+├── domain/                  # Domain-Specific API Clients
+│   ├── TemplateApiClient.ts # One client per domain (SRP)
+│   └── ProposalApiClient.ts
+│
+├── components/              # UI Components by Feature
+│   ├── artifacts/
+│   │   └── ArtifactEditor.tsx  # < 100 lines target
+│   └── proposals/
+│       ├── ProposalList.tsx
+│       └── DiffViewer.tsx
+│
+└── tests/
+    └── helpers/             # Domain-Specific Test Helpers
+        └── RAIDTestHelper.ts
+```
+
+#### File Size Targets (from Issue #99 Learnings)
+
+- Domain models: < 50 lines per file
+- Service classes: < 200 lines per file (split if larger)
+- Router files: < 100 lines per file
+- Components (UX): < 100 lines per file
+
+**When to split:**
+
+- File exceeds 200 lines → extract helper classes or split by subdomain
+- Class has multiple responsibilities → refactor to SRP
+- Service orchestrates > 3 domains → consider facade pattern
+
+### Issue Breakdown Best Practices (Step 2 Pattern)
+
+**For complex features (e.g., Step 2: Templates, Blueprints, Proposals, Audit):**
+
+1. **Domain-First Decomposition:**
+   - Issue 1: Domain models + validation (foundational, S size)
+   - Issue 2: Service layer with CRUD (M size)
+   - Issue 3: API endpoints (S size)
+   - Keep domains separate (Templates ≠ Blueprints ≠ Proposals)
+
+2. **Concurrency-Friendly:**
+   - Identify dependencies explicitly in issue description
+   - Mark issues that can be worked on in parallel
+   - Example: Templates domain and Proposals domain can be concurrent
+
+3. **Logical Encapsulation:**
+   - Each issue delivers one complete vertical slice (domain → service → API)
+   - OR one complete horizontal capability (all models for Step 2)
+   - Avoid partial implementations that block other work
+
+4. **Template Compliance:**
+   - Use `.github/ISSUE_TEMPLATE/feature_request.yml` format
+   - Fill ALL sections: Goal, Scope (In/Out), Acceptance Criteria, API Contract, Technical Approach, Testing Requirements, Documentation Updates
+   - For cross-repo coordination, document backend issue number and implementation order
+
+**Example (Step 2 Templates Domain):**
+
+```yaml
+- Issue BE-01: Template domain models (S, <1 day, no dependencies)
+- Issue BE-02: Template service CRUD (M, 1 day, depends on BE-01)
+- Issue BE-03: Template REST API (S, <1 day, depends on BE-02)
+- Issue UX-01: Artifact editor component (M, 2 days, depends on BE-03)
+```
 
 ### Traceability
 
