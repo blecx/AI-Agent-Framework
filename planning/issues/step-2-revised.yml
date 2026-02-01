@@ -1,0 +1,1967 @@
+# Step 2 — Complete ISO Workflow Spine (Revised for DDD Architecture & Concurrent Implementation)
+#
+# This revision breaks Step 2 into logically encapsulated, small issues following:
+# - Domain-Driven Design (DDD) architecture principles
+# - Single Responsibility Principle (SRP)
+# - Clear domain boundaries
+# - Size: Small (S: <50 lines, <1 day) to Medium (M: 50-200 lines, 1-2 days)
+# - Concurrent implementation friendly (minimal dependencies)
+# - Comprehensive issue template compliance
+#
+# Backend issues → AI-Agent-Framework repository
+# UX issues → AI-Agent-Framework-Client repository
+#
+# Total: 9 backend issues + 7 UX issues = 16 issues (vs original 6)
+# Estimated: 12-16 days total (with concurrency: ~8-10 days wall time)
+
+###############################################################################
+# BACKEND ISSUES (AI-Agent-Framework Repository)
+###############################################################################
+
+AI-Agent-Framework:
+  #---------------------------------------------------------------------------
+  # Domain: Templates (Foundation for other Step 2 work)
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-01
+    title: 'Step 2.1 — Template domain: data models and validation schema (backend)'
+    labels: ['step:2', 'backend/api', 'domain:templates', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    body: |
+      ## Goal / Problem Statement
+      Establish the **Template domain** with data models and JSON Schema validation to support artifact generation.
+      This is foundational infrastructure that other Step 2 issues depend on.
+
+      **Value:** Enables template-driven artifact creation with structural validation, ensuring artifacts meet ISO 21500 requirements.
+
+      ## Scope
+
+      ### In Scope
+      - Create `Template` Pydantic model in `apps/api/domain/templates/models.py`
+        - Fields: `id`, `name`, `description`, `schema` (JSON Schema), `markdown_template`, `artifact_type`, `version`
+      - Create `TemplateSchema` validator using JSON Schema
+      - Add validation logic for required fields, field types, constraints
+      - Add template storage format (JSON) in projectDocs structure
+      - Unit tests for model validation
+
+      ### Out of Scope
+      - Template CRUD API endpoints (next issue)
+      - Template rendering/generation (separate issue)
+      - Blueprint integration (later issue)
+      - Template versioning workflow (future)
+
+      ### Dependencies
+      - None (foundational)
+
+      ## Acceptance Criteria
+      - [ ] `Template` Pydantic model created with all required fields
+      - [ ] JSON Schema validation works for PMP template (minimum fields: purpose, scope, deliverables, milestones, roles, communications, change control)
+      - [ ] JSON Schema validation works for RAID template (minimum fields: type, description, owner, status, impact, due_date)
+      - [ ] Unit tests pass (100% coverage for models)
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes (`black`, `flake8`)
+
+      ## API Contract
+      N/A - This issue creates domain models only, no API endpoints.
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] Dependencies added to BOTH `requirements.txt` (root) and `apps/api/requirements.txt`
+        - `jsonschema>=4.20.0` (if not already present)
+      - [ ] All dependencies have pinned versions
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+      - [ ] API health check passes
+      - [ ] Linting passes (optional but recommended)
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Domain Layer
+      This issue creates the **Templates domain** core models:
+      ```
+      apps/api/domain/templates/
+      ├── __init__.py
+      ├── models.py          # Template Pydantic model (NEW)
+      └── validators.py      # JSON Schema validation logic (NEW)
+      ```
+
+      ### Design Patterns
+      - **Value Objects:** Template schema as immutable value object
+      - **Entity:** Template as domain entity with identity (template ID)
+      - **Validation:** Explicit validation layer separates concerns
+
+      ### Single Responsibility
+      - `models.py`: Data structure definition ONLY
+      - `validators.py`: Validation logic ONLY
+      - No mixing of persistence, API, or business logic
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/domain/templates/__init__.py`
+      - `apps/api/domain/templates/models.py` (~30 lines)
+      - `apps/api/domain/templates/validators.py` (~40 lines)
+      - `tests/unit/domain/templates/test_models.py` (~60 lines)
+      - `tests/unit/domain/templates/test_validators.py` (~80 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/domain/templates/models.py
+      from pydantic import BaseModel, Field
+      from typing import Dict, Any, List
+
+      class Template(BaseModel):
+          id: str = Field(..., description="Unique template identifier")
+          name: str = Field(..., description="Human-readable template name")
+          description: str = Field(..., description="Template purpose")
+          schema: Dict[str, Any] = Field(..., description="JSON Schema for validation")
+          markdown_template: str = Field(..., description="Jinja2 template content")
+          artifact_type: str = Field(..., description="Artifact type (pmp, raid, etc.)")
+          version: str = Field(default="1.0.0", description="Template version")
+      ```
+
+      ### Edge Cases / Considerations
+      - Invalid JSON Schema → validation error with clear message
+      - Missing required fields → Pydantic validation error
+      - Schema version compatibility (start with draft-07)
+      - Large markdown templates → consider size limits
+
+      ### References
+      - JSON Schema specification: https://json-schema.org/
+      - Existing patterns: `apps/api/models.py` for Pydantic examples
+
+      ## Testing Requirements
+      - **Unit tests:** `tests/unit/domain/templates/`
+        - `test_models.py`: Template model validation (required fields, field types)
+        - `test_validators.py`: JSON Schema validation (valid/invalid schemas, edge cases)
+      - **Coverage:** 100% for domain models
+      - **Commands:**
+        ```bash
+        pytest tests/unit/domain/templates/ -v
+        python -m black apps/api/domain/templates/
+        python -m flake8 apps/api/domain/templates/
+        ```
+
+      ## Documentation Updates
+      - [ ] Create `apps/api/domain/templates/README.md` with domain overview
+      - [ ] Update `tests/README.md` with template domain test instructions
+      - [ ] Update `docs/architecture/modules.md` with Templates domain section
+
+      ## Additional Context
+      This is the first issue in Step 2 and should be completed before other Template-related issues.
+      It establishes the domain foundation following DDD principles learned from Issue #25.
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-02
+    title: 'Step 2.2 — Template domain: CRUD service and storage (backend)'
+    labels: ['step:2', 'backend/api', 'domain:templates', 'size:M']
+    size_estimate: 'M (50-100 lines, 1 day)'
+    depends_on: ['TBD-BE-01']
+    body: |
+      ## Goal / Problem Statement
+      Implement **Template service layer** for CRUD operations and persistence following DDD architecture.
+
+      **Value:** Enables storage and retrieval of templates from projectDocs, separating business logic from infrastructure.
+
+      ## Scope
+
+      ### In Scope
+      - Create `TemplateService` in `apps/api/services/template_service.py`
+        - Methods: `create_template()`, `get_template()`, `list_templates()`, `update_template()`, `delete_template()`
+      - Integrate with `GitManager` for persistence in `projectDocs/.templates/`
+      - Template storage format: JSON files in `.templates/{template_id}.json`
+      - Service-level validation (business rules)
+      - Integration tests for service methods
+
+      ### Out of Scope
+      - API endpoints (next issue)
+      - Template generation/rendering (separate issue)
+      - Template versioning (future)
+
+      ### Dependencies
+      - **TBD-BE-01:** Template domain models must exist
+
+      ## Acceptance Criteria
+      - [ ] `TemplateService` created with all CRUD methods
+      - [ ] Templates persisted to `projectDocs/.templates/` as JSON
+      - [ ] Service methods use `GitManager` for all file operations
+      - [ ] Business validation (no duplicate IDs, valid artifact types)
+      - [ ] Integration tests pass (100% coverage for service)
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+      N/A - This issue creates service layer only, no API endpoints.
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+      - [ ] API health check passes
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Service Layer
+      ```
+      apps/api/services/
+      └── template_service.py        # TemplateService (NEW, ~120 lines)
+      ```
+
+      ### Design Patterns
+      - **Service Layer:** Encapsulates business logic for templates
+      - **Repository Pattern:** `GitManager` acts as repository (no direct file I/O in service)
+      - **Dependency Injection:** Service receives `GitManager` instance
+
+      ### Single Responsibility
+      - Service handles ONLY business logic (validation, orchestration)
+      - Storage delegated to `GitManager`
+      - No HTTP concerns (handled by router layer)
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/services/template_service.py` (~120 lines)
+      - `tests/integration/services/test_template_service.py` (~150 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/services/template_service.py
+      from domain.templates.models import Template
+      from services.git_manager import GitManager
+      import json
+
+      class TemplateService:
+          def __init__(self, git_manager: GitManager):
+              self.git_manager = git_manager
+              self.template_dir = ".templates"
+          
+          def create_template(self, template: Template) -> Template:
+              # Validate template doesn't exist
+              # Validate artifact_type is allowed
+              # Persist to projectDocs/.templates/{id}.json
+              # Return created template
+              pass
+          
+          def get_template(self, template_id: str) -> Template:
+              # Load from projectDocs/.templates/{id}.json
+              # Parse JSON to Template model
+              # Return template or raise NotFound
+              pass
+      ```
+
+      ### References
+      - Existing service patterns: `apps/api/services/raid_service.py` (263 lines)
+      - Repository pattern: `apps/api/services/git_manager.py`
+
+      ## Testing Requirements
+      - **Integration tests:** `tests/integration/services/`
+        - `test_template_service.py`: Full CRUD workflow with real GitManager
+      - **Coverage:** 100% for service methods
+      - **Commands:**
+        ```bash
+        pytest tests/integration/services/test_template_service.py -v
+        python -m black apps/api/services/template_service.py
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `apps/api/services/README.md` (if exists) with TemplateService
+      - [ ] Update `tests/README.md` with template service integration tests
+      - [ ] Update `docs/architecture/modules.md` with TemplateService section
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-03
+    title: 'Step 2.3 — Template domain: REST API endpoints (backend)'
+    labels: ['step:2', 'backend/api', 'domain:templates', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    depends_on: ['TBD-BE-02']
+    body: |
+      ## Goal / Problem Statement
+      Expose **Template CRUD operations** via REST API endpoints for client consumption.
+
+      **Value:** Enables UX clients to manage templates through standardized API.
+
+      ## Scope
+
+      ### In Scope
+      - Create `TemplatesRouter` in `apps/api/routers/templates.py`
+      - Endpoints:
+        - `POST /api/v1/templates` - Create template
+        - `GET /api/v1/templates` - List all templates
+        - `GET /api/v1/templates/{id}` - Get template by ID
+        - `PUT /api/v1/templates/{id}` - Update template
+        - `DELETE /api/v1/templates/{id}` - Delete template
+      - Request/response Pydantic models
+      - HTTP status codes (200, 201, 404, 400, 422)
+      - Integration tests for all endpoints
+
+      ### Out of Scope
+      - Template generation/rendering (separate issue)
+      - Filtering/search (future enhancement)
+      - Template versioning (future)
+
+      ### Dependencies
+      - **TBD-BE-02:** TemplateService must exist
+
+      ## Acceptance Criteria
+      - [ ] All 5 endpoints implemented and documented (OpenAPI)
+      - [ ] Endpoints use `TemplateService` (no direct git operations)
+      - [ ] Proper HTTP status codes returned
+      - [ ] Request validation via Pydantic models
+      - [ ] Integration tests pass for all endpoints
+      - [ ] API documented in OpenAPI/Swagger
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+
+      ### POST /api/v1/templates
+      **Request:**
+      ```json
+      {
+        "id": "pmp-v1",
+        "name": "Project Management Plan Template",
+        "description": "ISO 21500 compliant PMP template",
+        "schema": { "type": "object", "properties": {...} },
+        "markdown_template": "# {{project_name}}\n...",
+        "artifact_type": "pmp",
+        "version": "1.0.0"
+      }
+      ```
+      **Response 201:**
+      ```json
+      {
+        "id": "pmp-v1",
+        "name": "Project Management Plan Template",
+        ...
+      }
+      ```
+      **Response 400:** Invalid template data  
+      **Response 422:** Validation error
+
+      ### GET /api/v1/templates
+      **Response 200:**
+      ```json
+      {
+        "templates": [
+          {"id": "pmp-v1", "name": "...", ...},
+          {"id": "raid-v1", "name": "...", ...}
+        ]
+      }
+      ```
+
+      ### GET /api/v1/templates/{id}
+      **Response 200:** Template object  
+      **Response 404:** Template not found
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+      - [ ] API health check passes
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### API Layer (Router)
+      ```
+      apps/api/routers/
+      └── templates.py        # TemplatesRouter (NEW, ~90 lines)
+      ```
+
+      ### Design Patterns
+      - **Thin Controllers:** Router delegates to service, minimal logic
+      - **Dependency Injection:** Router receives TemplateService instance
+      - **Separation of Concerns:** HTTP concerns ONLY (status codes, headers, validation)
+
+      ### Single Responsibility
+      - Router handles ONLY HTTP protocol concerns
+      - Business logic in TemplateService
+      - Validation in Pydantic models
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/routers/templates.py` (~90 lines)
+      - `tests/integration/routers/test_templates_router.py` (~120 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/routers/templates.py
+      from fastapi import APIRouter, HTTPException, Depends
+      from domain.templates.models import Template
+      from services.template_service import TemplateService
+
+      router = APIRouter(prefix="/api/v1/templates", tags=["templates"])
+
+      @router.post("/", status_code=201)
+      async def create_template(template: Template, service: TemplateService = Depends()):
+          try:
+              return service.create_template(template)
+          except ValueError as e:
+              raise HTTPException(status_code=400, detail=str(e))
+      ```
+
+      ### References
+      - Existing router patterns: `apps/api/routers/raid.py` (199 lines)
+      - FastAPI docs: https://fastapi.tiangolo.com/
+
+      ## Testing Requirements
+      - **Integration tests:** `tests/integration/routers/`
+        - `test_templates_router.py`: Test all endpoints with TestClient
+      - **Coverage:** 100% for router endpoints
+      - **Commands:**
+        ```bash
+        pytest tests/integration/routers/test_templates_router.py -v
+        curl http://localhost:8000/api/v1/templates  # Manual test
+        ```
+
+      ## Documentation Updates
+      - [ ] OpenAPI/Swagger automatically updated (FastAPI)
+      - [ ] Update `docs/api/README.md` with Templates API section
+      - [ ] Update `tests/README.md` with router integration tests
+
+  #---------------------------------------------------------------------------
+  # Domain: Blueprints (Depends on Templates)
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-04
+    title: 'Step 2.4 — Blueprint domain: models, service, and API (backend)'
+    labels: ['step:2', 'backend/api', 'domain:blueprints', 'size:M']
+    size_estimate: 'M (100-150 lines, 1-2 days)'
+    depends_on: ['TBD-BE-01']
+    concurrent_with: ['TBD-BE-02', 'TBD-BE-03']
+    body: |
+      ## Goal / Problem Statement
+      Implement **Blueprint domain** to define collections of templates and workflow requirements.
+
+      **Value:** Blueprints drive UI navigation and enforce artifact completeness for methodologies (e.g., ISO 21500 minimal set).
+
+      ## Scope
+
+      ### In Scope
+      - Create `Blueprint` domain model with:
+        - Fields: `id`, `name`, `description`, `required_templates` (list of template IDs), `optional_templates`, `workflow_requirements`
+      - Create `BlueprintService` for CRUD operations
+      - Create `BlueprintsRouter` for API endpoints
+      - Storage in `projectDocs/.blueprints/`
+      - Unit and integration tests
+
+      ### Out of Scope
+      - Blueprint-driven artifact generation (separate issue)
+      - Blueprint validation against project artifacts (audit feature)
+      - Blueprint versioning (future)
+
+      ### Dependencies
+      - **TBD-BE-01:** Template domain models (for validation)
+
+      ## Acceptance Criteria
+      - [ ] `Blueprint` Pydantic model created
+      - [ ] `BlueprintService` with CRUD methods implemented
+      - [ ] `BlueprintsRouter` with 5 REST endpoints (POST, GET, GET/{id}, PUT, DELETE)
+      - [ ] Blueprints reference templates by ID (validation: template must exist)
+      - [ ] All tests pass (unit + integration)
+      - [ ] API documented in OpenAPI
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+
+      ### POST /api/v1/blueprints
+      **Request:**
+      ```json
+      {
+        "id": "iso21500-minimal",
+        "name": "ISO 21500 Minimal Project Set",
+        "description": "Minimum artifact set for ISO 21500 compliance",
+        "required_templates": ["pmp-v1", "raid-v1"],
+        "optional_templates": ["schedule-v1"],
+        "workflow_requirements": ["initiating", "planning", "executing"]
+      }
+      ```
+      **Response 201:** Created blueprint
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Domain Structure
+      ```
+      apps/api/domain/blueprints/
+      ├── __init__.py
+      └── models.py          # Blueprint model (NEW, ~40 lines)
+
+      apps/api/services/
+      └── blueprint_service.py        # BlueprintService (NEW, ~100 lines)
+
+      apps/api/routers/
+      └── blueprints.py        # BlueprintsRouter (NEW, ~80 lines)
+      ```
+
+      ### Design Patterns
+      - **Composite Pattern:** Blueprint composes templates
+      - **Validation:** Blueprint validates referenced templates exist
+      - **Repository Pattern:** Service uses GitManager for persistence
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/domain/blueprints/__init__.py`
+      - `apps/api/domain/blueprints/models.py` (~40 lines)
+      - `apps/api/services/blueprint_service.py` (~100 lines)
+      - `apps/api/routers/blueprints.py` (~80 lines)
+      - `tests/unit/domain/blueprints/test_models.py` (~50 lines)
+      - `tests/integration/services/test_blueprint_service.py` (~100 lines)
+      - `tests/integration/routers/test_blueprints_router.py` (~100 lines)
+
+      ### Edge Cases / Considerations
+      - Blueprint references non-existent template → validation error
+      - Circular blueprint references (future concern)
+      - Large template lists → pagination (future)
+
+      ## Testing Requirements
+      - **Unit tests:** Domain models
+      - **Integration tests:** Service and router
+      - **Coverage:** 100% for domain models and service
+      - **Commands:**
+        ```bash
+        pytest tests/unit/domain/blueprints/ -v
+        pytest tests/integration/services/test_blueprint_service.py -v
+        pytest tests/integration/routers/test_blueprints_router.py -v
+        ```
+
+      ## Documentation Updates
+      - [ ] Create `apps/api/domain/blueprints/README.md`
+      - [ ] Update `tests/README.md` with blueprint tests
+      - [ ] Update `docs/architecture/modules.md` with Blueprints domain
+
+  #---------------------------------------------------------------------------
+  # Domain: Artifact Generation (Depends on Templates + Blueprints)
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-05
+    title: 'Step 2.5 — Artifact generation service (backend)'
+    labels: ['step:2', 'backend/api', 'domain:artifacts', 'size:M']
+    size_estimate: 'M (150-200 lines, 2 days)'
+    depends_on: ['TBD-BE-02', 'TBD-BE-04']
+    body: |
+      ## Goal / Problem Statement
+      Implement **artifact generation service** to create artifacts from templates with default values.
+
+      **Value:** Enables automated artifact creation following ISO 21500 structure, reducing manual work.
+
+      ## Scope
+
+      ### In Scope
+      - Create `ArtifactGenerationService` in `apps/api/services/artifact_generation_service.py`
+      - Methods:
+        - `generate_from_template(template_id, project_key, context)` - Generate single artifact
+        - `generate_from_blueprint(blueprint_id, project_key)` - Generate all required artifacts
+      - Jinja2 template rendering with context variables
+      - JSON Schema validation of generated content
+      - Persist generated artifacts to `projectDocs/{project}/artifacts/`
+      - Integration with existing `LLMService` (optional AI enhancement)
+      - Integration tests
+
+      ### Out of Scope
+      - API endpoints (separate issue)
+      - Template editing/management (previous issues)
+      - AI-assisted generation (hook exists, full impl future)
+
+      ### Dependencies
+      - **TBD-BE-02:** TemplateService must exist
+      - **TBD-BE-04:** BlueprintService must exist
+
+      ## Acceptance Criteria
+      - [ ] `ArtifactGenerationService` created with generation methods
+      - [ ] Jinja2 rendering works for markdown templates
+      - [ ] Generated artifacts validate against template JSON Schema
+      - [ ] Artifacts persisted to correct projectDocs location
+      - [ ] Service integrates with `TemplateService` and `BlueprintService`
+      - [ ] Integration tests pass (generate PMP, generate RAID, generate from blueprint)
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+      N/A - This issue creates service layer only, API endpoints in next issue.
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] Dependencies added to BOTH requirements.txt:
+        - `jinja2>=3.1.3` (already present, verify version)
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Service Layer
+      ```
+      apps/api/services/
+      └── artifact_generation_service.py        # NEW (~180 lines)
+      ```
+
+      ### Design Patterns
+      - **Factory Pattern:** Service acts as artifact factory
+      - **Template Method:** Jinja2 template rendering
+      - **Validation:** JSON Schema validation before persistence
+      - **Orchestration:** Service orchestrates TemplateService + GitManager
+
+      ### Single Responsibility
+      - Service handles ONLY artifact generation logic
+      - Template loading delegated to TemplateService
+      - Storage delegated to GitManager
+      - Rendering delegated to Jinja2
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/services/artifact_generation_service.py` (~180 lines)
+      - `tests/integration/services/test_artifact_generation_service.py` (~200 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/services/artifact_generation_service.py
+      from jinja2 import Template as Jinja2Template
+      from services.template_service import TemplateService
+      from services.blueprint_service import BlueprintService
+      from services.git_manager import GitManager
+      import jsonschema
+
+      class ArtifactGenerationService:
+          def __init__(self, template_service, blueprint_service, git_manager):
+              self.template_service = template_service
+              self.blueprint_service = blueprint_service
+              self.git_manager = git_manager
+          
+          def generate_from_template(self, template_id, project_key, context):
+              # Load template
+              template = self.template_service.get_template(template_id)
+              
+              # Render markdown with Jinja2
+              jinja_template = Jinja2Template(template.markdown_template)
+              rendered = jinja_template.render(**context)
+              
+              # Validate against schema
+              jsonschema.validate(context, template.schema)
+              
+              # Persist to projectDocs/{project}/artifacts/{artifact_name}
+              artifact_path = f"artifacts/{template.artifact_type}.md"
+              self.git_manager.write_file(project_key, artifact_path, rendered)
+              
+              return {"artifact_path": artifact_path, "content": rendered}
+      ```
+
+      ### Edge Cases / Considerations
+      - Missing context variables → Jinja2 undefined error
+      - Invalid context data → JSON Schema validation error
+      - Template rendering timeout (large templates)
+      - Default values for missing optional fields
+
+      ### References
+      - Existing service: `apps/api/services/command_service.py` (322 lines, orchestration example)
+      - Jinja2 docs: https://jinja.palletsprojects.com/
+
+      ## Testing Requirements
+      - **Integration tests:**
+        - Generate PMP from template (verify content, validate schema)
+        - Generate RAID from template
+        - Generate all artifacts from blueprint (verify completeness)
+        - Error cases (missing template, invalid context, validation failure)
+      - **Coverage:** 100% for service methods
+      - **Commands:**
+        ```bash
+        pytest tests/integration/services/test_artifact_generation_service.py -v
+        python -m black apps/api/services/artifact_generation_service.py
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `apps/api/services/README.md` with ArtifactGenerationService
+      - [ ] Update `tests/README.md` with artifact generation tests
+      - [ ] Update `docs/architecture/modules.md` with ArtifactGenerationService
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-06
+    title: 'Step 2.6 — Artifact generation API endpoints (backend)'
+    labels: ['step:2', 'backend/api', 'domain:artifacts', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    depends_on: ['TBD-BE-05']
+    body: |
+      ## Goal / Problem Statement
+      Expose **artifact generation** via REST API endpoints for client consumption.
+
+      **Value:** Enables UX clients to trigger artifact generation from templates/blueprints.
+
+      ## Scope
+
+      ### In Scope
+      - Add endpoints to existing `ArtifactsRouter` in `apps/api/routers/artifacts.py`:
+        - `POST /api/v1/projects/{key}/artifacts/generate` - Generate from template
+        - `POST /api/v1/projects/{key}/artifacts/generate-from-blueprint` - Generate from blueprint
+      - Request models for generation parameters
+      - Integration tests for endpoints
+
+      ### Out of Scope
+      - Artifact editing (future)
+      - Versioning (future)
+      - Bulk generation (future)
+
+      ### Dependencies
+      - **TBD-BE-05:** ArtifactGenerationService must exist
+
+      ## Acceptance Criteria
+      - [ ] Both endpoints implemented and documented (OpenAPI)
+      - [ ] Endpoints use `ArtifactGenerationService` (no direct rendering)
+      - [ ] Proper HTTP status codes (201, 400, 404, 422)
+      - [ ] Request validation via Pydantic models
+      - [ ] Integration tests pass
+      - [ ] API documented in OpenAPI/Swagger
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+
+      ### POST /api/v1/projects/{key}/artifacts/generate
+      **Request:**
+      ```json
+      {
+        "template_id": "pmp-v1",
+        "context": {
+          "project_name": "Example Project",
+          "sponsor": "Jane Doe",
+          "manager": "John Smith",
+          "start_date": "2026-02-01",
+          "end_date": "2026-12-31"
+        }
+      }
+      ```
+      **Response 201:**
+      ```json
+      {
+        "artifact_path": "artifacts/pmp.md",
+        "content": "# Example Project\n\n**Sponsor:** Jane Doe...",
+        "template_id": "pmp-v1",
+        "generated_at": "2026-02-01T10:00:00Z"
+      }
+      ```
+      **Response 404:** Template not found  
+      **Response 400:** Invalid context data
+
+      ### POST /api/v1/projects/{key}/artifacts/generate-from-blueprint
+      **Request:**
+      ```json
+      {
+        "blueprint_id": "iso21500-minimal"
+      }
+      ```
+      **Response 201:**
+      ```json
+      {
+        "generated_artifacts": [
+          {"path": "artifacts/pmp.md", "template": "pmp-v1"},
+          {"path": "artifacts/raid.md", "template": "raid-v1"}
+        ],
+        "blueprint_id": "iso21500-minimal"
+      }
+      ```
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### API Layer (Router Extension)
+      ```
+      apps/api/routers/
+      └── artifacts.py        # MODIFIED: Add 2 new endpoints (~50 lines added)
+      ```
+
+      ### Design Patterns
+      - **Thin Controllers:** Router delegates to service
+      - **RESTful Design:** POST for resource creation
+
+      ## Technical Approach
+
+      ### Files to Modify
+      - `apps/api/routers/artifacts.py` (add ~50 lines)
+      - `tests/integration/routers/test_artifacts_router.py` (add ~80 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/routers/artifacts.py (additions)
+      from pydantic import BaseModel
+      from services.artifact_generation_service import ArtifactGenerationService
+
+      class GenerateArtifactRequest(BaseModel):
+          template_id: str
+          context: dict
+
+      @router.post("/{key}/artifacts/generate", status_code=201)
+      async def generate_artifact(
+          key: str,
+          request: GenerateArtifactRequest,
+          service: ArtifactGenerationService = Depends()
+      ):
+          return service.generate_from_template(request.template_id, key, request.context)
+      ```
+
+      ## Testing Requirements
+      - **Integration tests:** Router endpoints
+      - **Coverage:** 100% for new endpoints
+      - **Commands:**
+        ```bash
+        pytest tests/integration/routers/test_artifacts_router.py::test_generate_artifact -v
+        curl -X POST http://localhost:8000/api/v1/projects/TEST/artifacts/generate \
+          -H "Content-Type: application/json" \
+          -d '{"template_id":"pmp-v1","context":{...}}'
+        ```
+
+      ## Documentation Updates
+      - [ ] OpenAPI/Swagger automatically updated (FastAPI)
+      - [ ] Update `docs/api/README.md` with generation endpoints
+
+  #---------------------------------------------------------------------------
+  # Domain: Proposals (Separate from Templates/Blueprints)
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-07
+    title: 'Step 2.7 — Proposal domain: models and validation (backend)'
+    labels: ['step:2', 'backend/api', 'domain:proposals', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    concurrent_with: ['TBD-BE-01', 'TBD-BE-02', 'TBD-BE-04']
+    body: |
+      ## Goal / Problem Statement
+      Establish **Proposal domain** with data models for structured, auditable artifact changes.
+
+      **Value:** Enables propose/apply workflow for artifact modifications with traceability.
+
+      ## Scope
+
+      ### In Scope
+      - Create `Proposal` Pydantic model in `apps/api/domain/proposals/models.py`
+        - Fields: `id`, `project_key`, `target_artifact`, `change_type` (create/update/delete), `diff`, `rationale`, `status` (pending/accepted/rejected), `author`, `created_at`, `applied_at`
+      - Create `ProposalStatus` enum (pending, accepted, rejected)
+      - Create `ChangeType` enum (create, update, delete)
+      - Unit tests for model validation
+
+      ### Out of Scope
+      - Proposal service and API (next issue)
+      - Diff generation (in service layer)
+      - AI integration (future)
+
+      ### Dependencies
+      - None (foundational)
+
+      ## Acceptance Criteria
+      - [ ] `Proposal` Pydantic model created with all required fields
+      - [ ] Enums defined for status and change type
+      - [ ] Validation works (required fields, enum values)
+      - [ ] Unit tests pass (100% coverage)
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+      N/A - Domain models only, no API endpoints.
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Domain Layer
+      ```
+      apps/api/domain/proposals/
+      ├── __init__.py
+      └── models.py          # Proposal model + enums (NEW, ~50 lines)
+      ```
+
+      ### Design Patterns
+      - **Value Objects:** ProposalStatus, ChangeType as enums
+      - **Entity:** Proposal as domain entity with identity
+      - **Immutability:** Proposals should be immutable after creation (enforced in service)
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/domain/proposals/__init__.py`
+      - `apps/api/domain/proposals/models.py` (~50 lines)
+      - `tests/unit/domain/proposals/test_models.py` (~60 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/domain/proposals/models.py
+      from pydantic import BaseModel, Field
+      from enum import Enum
+      from datetime import datetime
+
+      class ProposalStatus(str, Enum):
+          PENDING = "pending"
+          ACCEPTED = "accepted"
+          REJECTED = "rejected"
+
+      class ChangeType(str, Enum):
+          CREATE = "create"
+          UPDATE = "update"
+          DELETE = "delete"
+
+      class Proposal(BaseModel):
+          id: str = Field(..., description="Unique proposal ID")
+          project_key: str
+          target_artifact: str = Field(..., description="Path to target artifact")
+          change_type: ChangeType
+          diff: str = Field(..., description="Unified diff of changes")
+          rationale: str
+          status: ProposalStatus = ProposalStatus.PENDING
+          author: str = Field(default="system")
+          created_at: datetime = Field(default_factory=datetime.utcnow)
+          applied_at: datetime | None = None
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Domain models and enums
+      - **Coverage:** 100%
+      - **Commands:**
+        ```bash
+        pytest tests/unit/domain/proposals/ -v
+        python -m black apps/api/domain/proposals/
+        ```
+
+      ## Documentation Updates
+      - [ ] Create `apps/api/domain/proposals/README.md`
+      - [ ] Update `tests/README.md` with proposals domain tests
+      - [ ] Update `docs/architecture/modules.md` with Proposals domain
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-08
+    title: 'Step 2.8 — Proposal service: CRUD and apply/reject logic (backend)'
+    labels: ['step:2', 'backend/api', 'domain:proposals', 'size:M']
+    size_estimate: 'M (150-200 lines, 2 days)'
+    depends_on: ['TBD-BE-07']
+    body: |
+      ## Goal / Problem Statement
+      Implement **Proposal service** for proposal lifecycle management (CRUD, apply, reject).
+
+      **Value:** Enables structured workflow for artifact changes with audit trail.
+
+      ## Scope
+
+      ### In Scope
+      - Create `ProposalService` in `apps/api/services/proposal_service.py`
+      - Methods:
+        - `create_proposal(proposal)` - Store proposal in projectDocs
+        - `get_proposal(proposal_id)` - Retrieve proposal
+        - `list_proposals(project_key, filters)` - List proposals with status filter
+        - `apply_proposal(proposal_id)` - Apply changes to artifact, update status, create audit event
+        - `reject_proposal(proposal_id, reason)` - Reject proposal with reason
+      - Diff generation for update proposals
+      - Integration with `GitManager` for atomic commits
+      - Integration with `AuditService` for event logging
+      - Integration tests
+
+      ### Out of Scope
+      - API endpoints (next issue)
+      - AI-assisted proposal generation (future)
+      - Conflict resolution (future)
+
+      ### Dependencies
+      - **TBD-BE-07:** Proposal domain models must exist
+
+      ## Acceptance Criteria
+      - [ ] `ProposalService` created with all methods
+      - [ ] Proposals persisted to `projectDocs/{project}/proposals/{id}.json`
+      - [ ] Apply operation:
+        - Updates target artifact atomically
+        - Changes proposal status to ACCEPTED
+        - Creates audit event
+        - Commits all changes in single commit
+      - [ ] Reject operation:
+        - Changes status to REJECTED
+        - Stores rejection reason
+      - [ ] Integration tests pass
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+      N/A - Service layer only, API endpoints in next issue.
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### Service Layer
+      ```
+      apps/api/services/
+      └── proposal_service.py        # NEW (~180 lines)
+      ```
+
+      ### Design Patterns
+      - **Service Layer:** Encapsulates proposal business logic
+      - **Repository Pattern:** GitManager for persistence
+      - **Transaction:** Apply operation is atomic (all or nothing)
+      - **Event Sourcing:** AuditService logs all proposal state changes
+
+      ### Single Responsibility
+      - Service handles ONLY proposal lifecycle
+      - Diff generation delegated to helper method
+      - Storage delegated to GitManager
+      - Audit logging delegated to AuditService
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/services/proposal_service.py` (~180 lines)
+      - `tests/integration/services/test_proposal_service.py` (~200 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/services/proposal_service.py
+      from domain.proposals.models import Proposal, ProposalStatus
+      from services.git_manager import GitManager
+      from services.audit_service import AuditService
+      import difflib
+
+      class ProposalService:
+          def __init__(self, git_manager: GitManager, audit_service: AuditService):
+              self.git_manager = git_manager
+              self.audit_service = audit_service
+          
+          def create_proposal(self, proposal: Proposal) -> Proposal:
+              # Persist to projectDocs/{project}/proposals/{id}.json
+              # Return created proposal
+              pass
+          
+          def apply_proposal(self, proposal_id: str) -> dict:
+              # Load proposal
+              # Read target artifact
+              # Apply diff to artifact content
+              # Update proposal status to ACCEPTED
+              # Commit changes atomically (artifact + proposal status)
+              # Log audit event
+              # Return result
+              pass
+          
+          def _generate_diff(self, old_content: str, new_content: str) -> str:
+              diff = difflib.unified_diff(
+                  old_content.splitlines(),
+                  new_content.splitlines(),
+                  lineterm=""
+              )
+              return "\n".join(diff)
+      ```
+
+      ### Edge Cases / Considerations
+      - Proposal already applied/rejected → validation error
+      - Target artifact doesn't exist (for update) → error
+      - Diff application fails → rollback transaction
+      - Concurrent proposals to same artifact → first wins, second conflicts (future)
+
+      ### References
+      - Existing service: `apps/api/services/command_service.py` (322 lines, similar orchestration)
+      - Python difflib: https://docs.python.org/3/library/difflib.html
+
+      ## Testing Requirements
+      - **Integration tests:**
+        - Create proposal → verify persisted
+        - Apply proposal → verify artifact updated, status changed, audit event created
+        - Reject proposal → verify status changed, reason stored
+        - Error cases (proposal not found, already applied, artifact missing)
+      - **Coverage:** 100% for service methods
+      - **Commands:**
+        ```bash
+        pytest tests/integration/services/test_proposal_service.py -v
+        python -m black apps/api/services/proposal_service.py
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `apps/api/services/README.md` with ProposalService
+      - [ ] Update `tests/README.md` with proposal service tests
+      - [ ] Update `docs/architecture/modules.md` with ProposalService
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-BE-09
+    title: 'Step 2.9 — Proposal API endpoints (backend)'
+    labels: ['step:2', 'backend/api', 'domain:proposals', 'size:S']
+    size_estimate: 'S (50-80 lines, <1 day)'
+    depends_on: ['TBD-BE-08']
+    body: |
+      ## Goal / Problem Statement
+      Expose **Proposal workflow** via REST API endpoints for client consumption.
+
+      **Value:** Enables UX clients to create, review, and apply/reject proposals.
+
+      ## Scope
+
+      ### In Scope
+      - Create `ProposalsRouter` in `apps/api/routers/proposals.py`
+      - Endpoints:
+        - `POST /api/v1/projects/{key}/proposals` - Create proposal
+        - `GET /api/v1/projects/{key}/proposals` - List proposals (with status filter)
+        - `GET /api/v1/projects/{key}/proposals/{id}` - Get proposal details
+        - `POST /api/v1/projects/{key}/proposals/{id}/apply` - Apply proposal
+        - `POST /api/v1/projects/{key}/proposals/{id}/reject` - Reject proposal
+      - Request/response Pydantic models
+      - Integration tests
+
+      ### Out of Scope
+      - Proposal editing (immutable after creation)
+      - Conflict resolution UI (future)
+      - Batch apply/reject (future)
+
+      ### Dependencies
+      - **TBD-BE-08:** ProposalService must exist
+
+      ## Acceptance Criteria
+      - [ ] All 5 endpoints implemented and documented (OpenAPI)
+      - [ ] Endpoints use `ProposalService` (no direct logic)
+      - [ ] Proper HTTP status codes (200, 201, 404, 400, 409)
+      - [ ] Request validation via Pydantic models
+      - [ ] Integration tests pass for all endpoints
+      - [ ] API documented in OpenAPI/Swagger
+      - [ ] No changes to existing functionality
+      - [ ] Linting passes
+
+      ## API Contract
+
+      ### POST /api/v1/projects/{key}/proposals
+      **Request:**
+      ```json
+      {
+        "id": "proposal-001",
+        "target_artifact": "artifacts/pmp.md",
+        "change_type": "update",
+        "diff": "--- old\n+++ new\n...",
+        "rationale": "Update project scope per stakeholder feedback"
+      }
+      ```
+      **Response 201:** Created proposal
+
+      ### POST /api/v1/projects/{key}/proposals/{id}/apply
+      **Response 200:**
+      ```json
+      {
+        "proposal_id": "proposal-001",
+        "status": "accepted",
+        "artifact_updated": "artifacts/pmp.md",
+        "commit_hash": "abc123...",
+        "applied_at": "2026-02-01T10:00:00Z"
+      }
+      ```
+      **Response 404:** Proposal not found  
+      **Response 409:** Proposal already applied/rejected
+
+      ### POST /api/v1/projects/{key}/proposals/{id}/reject
+      **Request:**
+      ```json
+      {
+        "reason": "Changes not approved by stakeholders"
+      }
+      ```
+      **Response 200:** Rejected proposal
+
+      ## Repository Constraints Checklist
+      - [ ] **DO NOT commit `projectDocs/`**
+      - [ ] **DO NOT commit `configs/llm.json`**
+      - [ ] No new dependencies required
+      - [ ] Changes work with Docker deployment
+      - [ ] Changes work with local venv
+
+      ## Architecture: Domain-Driven Design (DDD)
+
+      ### API Layer (Router)
+      ```
+      apps/api/routers/
+      └── proposals.py        # NEW (~100 lines)
+      ```
+
+      ### Design Patterns
+      - **Thin Controllers:** Minimal logic, delegate to service
+      - **RESTful Actions:** POST for state changes (apply, reject)
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `apps/api/routers/proposals.py` (~100 lines)
+      - `tests/integration/routers/test_proposals_router.py` (~150 lines)
+
+      ### Key Components
+      ```python
+      # apps/api/routers/proposals.py
+      from fastapi import APIRouter, HTTPException, Depends
+      from domain.proposals.models import Proposal
+      from services.proposal_service import ProposalService
+
+      router = APIRouter(prefix="/api/v1/projects/{key}/proposals", tags=["proposals"])
+
+      @router.post("/{id}/apply", status_code=200)
+      async def apply_proposal(
+          key: str,
+          id: str,
+          service: ProposalService = Depends()
+      ):
+          try:
+              return service.apply_proposal(id)
+          except ValueError as e:
+              raise HTTPException(status_code=409, detail=str(e))
+      ```
+
+      ## Testing Requirements
+      - **Integration tests:** All endpoints
+      - **Coverage:** 100% for router
+      - **Commands:**
+        ```bash
+        pytest tests/integration/routers/test_proposals_router.py -v
+        curl -X POST http://localhost:8000/api/v1/projects/TEST/proposals/001/apply
+        ```
+
+      ## Documentation Updates
+      - [ ] OpenAPI/Swagger automatically updated (FastAPI)
+      - [ ] Update `docs/api/README.md` with Proposals API
+      - [ ] Update `tests/README.md` with router tests
+
+###############################################################################
+# UX ISSUES (AI-Agent-Framework-Client Repository)
+###############################################################################
+
+AI-Agent-Framework-Client:
+  #---------------------------------------------------------------------------
+  # UX: Artifact Editor (Depends on Backend Templates API)
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-01
+    title: 'Step 2.10 — Template-driven artifact editor component (client)'
+    labels: ['step:2', 'webui/ux', 'component:artifact-editor', 'size:M']
+    size_estimate: 'M (150-200 lines, 2 days)'
+    depends_on: ['TBD-BE-03']
+    body: |
+      ## Goal / Problem Statement
+      Create **template-driven artifact editor** component that renders forms based on template JSON schemas.
+
+      **Value:** Enables users to create and edit PMP/RAID artifacts with guided, validated forms.
+
+      ## Scope: What's Included
+      - Create `ArtifactEditor` React component in `client/src/components/ArtifactEditor.tsx`
+      - Features:
+        - Fetch template by ID from backend API (`/api/v1/templates/{id}`)
+        - Dynamically render form fields based on JSON Schema
+        - Support field types: text, textarea, date, dropdown
+        - Inline validation (required fields, types, constraints)
+        - Save/draft capabilities
+        - Markdown preview for markdown fields
+      - Styling with existing design system
+      - Unit tests for component rendering and validation
+
+      ## Scope: What's NOT Included
+      - Artifact versioning UI (future)
+      - Collaborative editing (future)
+      - Full WYSIWYG markdown editor (use simple textarea + preview)
+      - Template creation UI (admin feature, future)
+
+      ## Acceptance Criteria
+      - [ ] `ArtifactEditor` component renders form from template JSON Schema
+      - [ ] PMP template renders with all required sections (purpose, scope, deliverables, milestones, roles, communications, change control)
+      - [ ] RAID template renders with all required columns (type, description, owner, status, impact, due_date)
+      - [ ] Field validation works (required, types, constraints)
+      - [ ] Validation feedback is inline and clear
+      - [ ] Save button calls backend API to generate artifact
+      - [ ] Component unit tests pass (100% coverage)
+      - [ ] Lint and build pass
+      - [ ] No console errors
+
+      ## UX / Design Notes
+      - Use form layout similar to existing project creation UI
+      - Group related fields with headings (PMP: "Project Basics", "Scope", "Resources", etc.)
+      - Show markdown preview side-by-side for long text fields
+      - Validation errors appear below each field in red
+      - Save button disabled until all required fields filled
+      - Success message after save with link to artifact
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] Yes - Backend must have `/api/v1/templates/{id}` endpoint (TBD-BE-03)
+
+      **Backend coordination:**
+      - [ ] Backend issue created in blecx/AI-Agent-Framework: TBD-BE-03
+      - [ ] Backend PR must be merged before this UX issue starts
+      - [ ] API contract documented below
+
+      **Implementation order:**
+      1. Backend TBD-BE-03 (Templates API) → Backend merge
+      2. Client TBD-UX-01 (this issue) → Client merge
+
+      **API Contract:**
+      - Endpoint: `GET /api/v1/templates/{id}`
+      - Response: Template object with `schema` (JSON Schema), `markdown_template`, etc.
+      - Client uses `schema` to dynamically build form
+
+      ## Suggested Issue Breakdown
+      This issue is already appropriately sized (M, ~150-200 lines, 2 days).
+      No further breakdown needed.
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/ArtifactEditor.tsx` (~180 lines)
+      - `client/src/components/ArtifactEditor.css` (~50 lines)
+      - `client/src/tests/components/ArtifactEditor.test.tsx` (~150 lines)
+
+      ### Key Components
+      ```tsx
+      // client/src/components/ArtifactEditor.tsx
+      import React, { useEffect, useState } from 'react';
+      import { fetchTemplate } from '../api/templates';
+
+      interface ArtifactEditorProps {
+        templateId: string;
+        projectKey: string;
+        onSave: (artifact: any) => void;
+      }
+
+      export const ArtifactEditor: React.FC<ArtifactEditorProps> = ({ templateId, projectKey, onSave }) => {
+        const [template, setTemplate] = useState(null);
+        const [formData, setFormData] = useState({});
+        const [errors, setErrors] = useState({});
+
+        useEffect(() => {
+          fetchTemplate(templateId).then(setTemplate);
+        }, [templateId]);
+
+        const renderField = (fieldName, fieldSchema) => {
+          // Dynamically render input based on fieldSchema type
+          // textarea for long text, date picker for dates, etc.
+        };
+
+        const validate = () => {
+          // Validate formData against template.schema
+          // Set errors for invalid fields
+        };
+
+        const handleSave = async () => {
+          if (validate()) {
+            // Call backend: POST /api/v1/projects/{key}/artifacts/generate
+            // with template_id and formData as context
+            onSave(formData);
+          }
+        };
+
+        return (
+          <div className="artifact-editor">
+            {template && (
+              <form>
+                {Object.entries(template.schema.properties).map(([field, schema]) => (
+                  <div key={field}>
+                    {renderField(field, schema)}
+                    {errors[field] && <span className="error">{errors[field]}</span>}
+                  </div>
+                ))}
+                <button onClick={handleSave} disabled={!validate()}>Save</button>
+              </form>
+            )}
+          </div>
+        );
+      };
+      ```
+
+      ### Edge Cases / Considerations
+      - Template not found → show error message
+      - Network failure → retry mechanism
+      - Large forms → consider pagination/sections
+      - Unsaved changes → confirm before leaving page
+
+      ### References
+      - Existing components: Check project creation form for patterns
+      - JSON Schema form libraries: `react-jsonschema-form` (consider for future)
+
+      ## Testing Requirements
+      - **Unit tests:**
+        - Component renders correctly with template data
+        - Field validation works (required, types)
+        - Save button disabled when invalid
+        - API calls mocked
+      - **Coverage:** 100% for component logic
+      - **Commands:**
+        ```bash
+        cd client
+        npm run test -- ArtifactEditor.test.tsx
+        npm run lint
+        npm run build
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with ArtifactEditor usage
+      - [ ] Add component to storybook (if exists)
+      - [ ] Update `client/docs/components.md` with ArtifactEditor
+
+      ## Additional Context
+      This is the first UX component for Step 2 and should establish patterns for other template-driven UIs.
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-02
+    title: 'Step 2.11 — Artifact navigation and project artifact list view (client)'
+    labels: ['step:2', 'webui/ux', 'component:navigation', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    depends_on: ['TBD-UX-01']
+    body: |
+      ## Goal / Problem Statement
+      Provide **artifact list view** showing all project artifacts with navigation to artifact editor.
+
+      **Value:** Enables users to browse artifacts and access editor for creation/viewing.
+
+      ## Scope: What's Included
+      - Create `ArtifactList` component in `client/src/components/ArtifactList.tsx`
+      - Features:
+        - Fetch artifacts from backend (`/api/v1/projects/{key}/artifacts`)
+        - Display artifact names, types, last modified dates
+        - "Create New Artifact" button → opens template selector
+        - Click artifact → opens `ArtifactEditor` in view/edit mode
+        - Sort by name/date
+      - Routing: `/projects/{key}/artifacts`
+      - Unit tests
+
+      ## Scope: What's NOT Included
+      - Search/filter (future)
+      - Bulk operations (future)
+      - Artifact preview thumbnails (future)
+
+      ## Acceptance Criteria
+      - [ ] `ArtifactList` component fetches and displays artifacts
+      - [ ] "Create New Artifact" button works
+      - [ ] Clicking artifact name opens ArtifactEditor
+      - [ ] Empty state shown when no artifacts exist
+      - [ ] Sort works (name, date)
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Table layout with columns: Name, Type, Last Modified, Actions
+      - "Create New Artifact" button prominent at top
+      - Empty state: "No artifacts yet. Create your first artifact to get started."
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] No - Uses existing `/api/v1/projects/{key}/artifacts` endpoint
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/ArtifactList.tsx` (~100 lines)
+      - `client/src/components/ArtifactList.css` (~30 lines)
+      - `client/src/tests/components/ArtifactList.test.tsx` (~80 lines)
+
+      ### Key Components
+      ```tsx
+      // client/src/components/ArtifactList.tsx
+      import React, { useEffect, useState } from 'react';
+      import { fetchArtifacts } from '../api/artifacts';
+      import { Link } from 'react-router-dom';
+
+      export const ArtifactList = ({ projectKey }) => {
+        const [artifacts, setArtifacts] = useState([]);
+
+        useEffect(() => {
+          fetchArtifacts(projectKey).then(setArtifacts);
+        }, [projectKey]);
+
+        return (
+          <div>
+            <button onClick={() => /* open template selector */}>Create New Artifact</button>
+            <table>
+              <thead><tr><th>Name</th><th>Type</th><th>Last Modified</th></tr></thead>
+              <tbody>
+                {artifacts.map(artifact => (
+                  <tr key={artifact.path}>
+                    <td><Link to={`/projects/${projectKey}/artifacts/${artifact.path}`}>{artifact.name}</Link></td>
+                    <td>{artifact.type}</td>
+                    <td>{artifact.last_modified}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      };
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Component rendering, API mocking, navigation
+      - **Commands:**
+        ```bash
+        cd client
+        npm run test -- ArtifactList.test.tsx
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with navigation structure
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-03
+    title: 'Step 2.12 — Proposal creation and diff visualization UI (client)'
+    labels: ['step:2', 'webui/ux', 'component:proposals', 'size:M']
+    size_estimate: 'M (150-200 lines, 2 days)'
+    depends_on: ['TBD-BE-09']
+    body: |
+      ## Goal / Problem Statement
+      Enable users to **create and review proposals** with clear diff visualization.
+
+      **Value:** Enables structured change workflow with visual comparison before/after.
+
+      ## Scope: What's Included
+      - Create `ProposalCreator` component for manual proposal creation
+      - Create `DiffViewer` component for side-by-side or unified diff display
+      - Features:
+        - Load current artifact content
+        - Edit in form or markdown editor
+        - Generate diff on save
+        - Create proposal with diff and rationale
+        - Show diff in readable format (side-by-side preferred)
+      - Unit tests
+
+      ## Scope: What's NOT Included
+      - AI-assisted proposal generation (future)
+      - Conflict resolution UI (future)
+      - Inline diff editing (future)
+
+      ## Acceptance Criteria
+      - [ ] `ProposalCreator` component allows editing artifact
+      - [ ] Diff generated automatically when content changes
+      - [ ] `DiffViewer` shows clear before/after comparison
+      - [ ] User can add rationale before creating proposal
+      - [ ] Proposal saved to backend via API
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Side-by-side diff view with old on left, new on right
+      - Color coding: red for deletions, green for additions
+      - Rationale input: textarea below diff
+      - "Create Proposal" button creates proposal and navigates to proposal list
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] Yes - Backend must have `/api/v1/projects/{key}/proposals` endpoint (TBD-BE-09)
+
+      **Backend coordination:**
+      - [ ] Backend issue: TBD-BE-09
+      - [ ] Backend PR must merge first
+      - [ ] API contract: POST /api/v1/projects/{key}/proposals
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/ProposalCreator.tsx` (~150 lines)
+      - `client/src/components/DiffViewer.tsx` (~100 lines)
+      - `client/src/components/DiffViewer.css` (~60 lines)
+      - `client/src/tests/components/ProposalCreator.test.tsx` (~120 lines)
+      - `client/src/tests/components/DiffViewer.test.tsx` (~80 lines)
+
+      ### Key Libraries
+      - Consider `react-diff-viewer` or `diff2html` for diff rendering
+      - Dependency: Add to `package.json` if using library
+
+      ### Key Components
+      ```tsx
+      // client/src/components/DiffViewer.tsx
+      import React from 'react';
+      import ReactDiffViewer from 'react-diff-viewer';
+
+      export const DiffViewer = ({ oldContent, newContent }) => {
+        return (
+          <ReactDiffViewer
+            oldValue={oldContent}
+            newValue={newContent}
+            splitView={true}
+            showDiffOnly={false}
+          />
+        );
+      };
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Diff generation, component rendering, API calls
+      - **Commands:**
+        ```bash
+        cd client
+        npm run test -- ProposalCreator.test.tsx
+        npm run test -- DiffViewer.test.tsx
+        ```
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with proposal workflow
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-04
+    title: 'Step 2.13 — Proposal list and review interface (client)'
+    labels: ['step:2', 'webui/ux', 'component:proposals', 'size:S']
+    size_estimate: 'S (80-100 lines, 1 day)'
+    depends_on: ['TBD-UX-03']
+    body: |
+      ## Goal / Problem Statement
+      Provide **proposal list view** with filtering and navigation to proposal review.
+
+      **Value:** Enables users to browse pending/accepted/rejected proposals.
+
+      ## Scope: What's Included
+      - Create `ProposalList` component
+      - Features:
+        - Fetch proposals from backend (`/api/v1/projects/{key}/proposals`)
+        - Display proposal ID, target artifact, status, created date, author
+        - Filter by status (pending, accepted, rejected)
+        - Click proposal → navigate to `ProposalReview` component
+        - Sort by date
+      - Routing: `/projects/{key}/proposals`
+      - Unit tests
+
+      ## Scope: What's NOT Included
+      - Batch operations (future)
+      - Search (future)
+
+      ## Acceptance Criteria
+      - [ ] `ProposalList` fetches and displays proposals
+      - [ ] Status filter works (pending, accepted, rejected)
+      - [ ] Clicking proposal opens review interface
+      - [ ] Empty state shown when no proposals
+      - [ ] Sort works
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Table layout: ID, Target, Status, Created, Author, Actions
+      - Status badges: color-coded (yellow=pending, green=accepted, red=rejected)
+      - Default filter: pending proposals
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] Yes - Backend must have `/api/v1/projects/{key}/proposals` endpoint (TBD-BE-09)
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/ProposalList.tsx` (~100 lines)
+      - `client/src/components/ProposalList.css` (~40 lines)
+      - `client/src/tests/components/ProposalList.test.tsx` (~80 lines)
+
+      ## Testing Requirements
+      - **Unit tests:** Component rendering, filtering, API mocking
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with proposal navigation
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-05
+    title: 'Step 2.14 — Proposal review: apply and reject actions (client)'
+    labels: ['step:2', 'webui/ux', 'component:proposals', 'size:S']
+    size_estimate: 'S (60-80 lines, <1 day)'
+    depends_on: ['TBD-UX-04']
+    body: |
+      ## Goal / Problem Statement
+      Implement **proposal review interface** with apply and reject actions.
+
+      **Value:** Enables users to approve or reject proposals with confirmation.
+
+      ## Scope: What's Included
+      - Create `ProposalReview` component
+      - Features:
+        - Display proposal details (diff, rationale, metadata)
+        - "Apply" button → calls `/api/v1/projects/{key}/proposals/{id}/apply`
+        - "Reject" button → shows reason input, calls `/api/v1/projects/{key}/proposals/{id}/reject`
+        - Confirmation dialogs for both actions
+        - Success/error messages
+        - Redirect to proposal list after action
+      - Unit tests
+
+      ## Scope: What's NOT Included
+      - Inline diff editing (future)
+      - Comments/discussion (future)
+
+      ## Acceptance Criteria
+      - [ ] `ProposalReview` displays proposal details with diff
+      - [ ] Apply button works, confirms before action
+      - [ ] Reject button prompts for reason, calls API
+      - [ ] Success message shown, redirect to proposal list
+      - [ ] Error handling (network failure, API errors)
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Diff viewer at top (use `DiffViewer` component from TBD-UX-03)
+      - Rationale section below diff
+      - Action buttons at bottom: "Apply" (green), "Reject" (red)
+      - Confirmation dialog: "Are you sure you want to apply these changes?"
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] Yes - Backend must have apply/reject endpoints (TBD-BE-09)
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/ProposalReview.tsx` (~80 lines)
+      - `client/src/tests/components/ProposalReview.test.tsx` (~100 lines)
+
+      ### Key Components
+      ```tsx
+      // client/src/components/ProposalReview.tsx
+      import React from 'react';
+      import { DiffViewer } from './DiffViewer';
+      import { applyProposal, rejectProposal } from '../api/proposals';
+
+      export const ProposalReview = ({ proposalId, projectKey }) => {
+        const [proposal, setProposal] = useState(null);
+
+        const handleApply = async () => {
+          if (confirm("Apply these changes?")) {
+            await applyProposal(projectKey, proposalId);
+            // Show success, redirect
+          }
+        };
+
+        const handleReject = async () => {
+          const reason = prompt("Reason for rejection:");
+          if (reason) {
+            await rejectProposal(projectKey, proposalId, reason);
+            // Show success, redirect
+          }
+        };
+
+        return (
+          <div>
+            <DiffViewer oldContent={proposal.old} newContent={proposal.new} />
+            <p>{proposal.rationale}</p>
+            <button onClick={handleApply}>Apply</button>
+            <button onClick={handleReject}>Reject</button>
+          </div>
+        );
+      };
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Apply/reject actions, confirmations, API mocking
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with proposal workflow
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-06
+    title: 'Step 2.15 — Audit results viewer with severity filtering (client)'
+    labels: ['step:2', 'webui/ux', 'component:audit', 'size:M']
+    size_estimate: 'M (120-150 lines, 1-2 days)'
+    concurrent_with: ['TBD-UX-01', 'TBD-UX-03']
+    body: |
+      ## Goal / Problem Statement
+      Display **audit results** with clear severity levels and links back to artifacts.
+
+      **Value:** Enables users to identify and fix artifact issues based on audit findings.
+
+      ## Scope: What's Included
+      - Create `AuditViewer` component
+      - Features:
+        - Fetch audit results from backend (`/api/v1/projects/{key}/audit/results`)
+        - Display results grouped by severity (error, warning, info)
+        - Show artifact, field, message for each issue
+        - Link to artifact editor with field pre-focused
+        - Filter by severity
+        - "Run Audit" button to trigger audit
+        - Last audit run timestamp
+      - Unit tests
+
+      ## Scope: What's NOT Included
+      - Auto-fix suggestions (future)
+      - Audit rule configuration UI (future)
+      - Historical audit results (future)
+
+      ## Acceptance Criteria
+      - [ ] `AuditViewer` fetches and displays audit results
+      - [ ] Results grouped by severity with color coding
+      - [ ] Links to artifact editor work correctly
+      - [ ] "Run Audit" button triggers backend audit
+      - [ ] Filter by severity works
+      - [ ] Empty state when no issues
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Severity badges: red=error, yellow=warning, blue=info
+      - Group results: show count per severity at top
+      - Each issue: Artifact name → Field → Message → "Fix" link
+      - "Run Audit" button prominent at top
+      - Last run timestamp: "Last audit: 2 hours ago"
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [x] No - Uses existing audit API (from Step 1)
+
+      **Note:** Backend audit API exists from Step 1. This issue creates UX client only.
+
+      ## Technical Approach
+
+      ### Files to Create
+      - `client/src/components/AuditViewer.tsx` (~140 lines)
+      - `client/src/components/AuditViewer.css` (~50 lines)
+      - `client/src/tests/components/AuditViewer.test.tsx` (~120 lines)
+
+      ### Key Components
+      ```tsx
+      // client/src/components/AuditViewer.tsx
+      import React, { useEffect, useState } from 'react';
+      import { fetchAuditResults, runAudit } from '../api/audit';
+
+      export const AuditViewer = ({ projectKey }) => {
+        const [results, setResults] = useState([]);
+        const [filter, setFilter] = useState('all');
+
+        const handleRunAudit = async () => {
+          await runAudit(projectKey);
+          const newResults = await fetchAuditResults(projectKey);
+          setResults(newResults);
+        };
+
+        const filteredResults = results.filter(r => 
+          filter === 'all' || r.severity === filter
+        );
+
+        return (
+          <div>
+            <button onClick={handleRunAudit}>Run Audit</button>
+            <div>
+              <button onClick={() => setFilter('all')}>All</button>
+              <button onClick={() => setFilter('error')}>Errors</button>
+              <button onClick={() => setFilter('warning')}>Warnings</button>
+            </div>
+            <ul>
+              {filteredResults.map(issue => (
+                <li key={issue.id}>
+                  <span className={issue.severity}>{issue.severity}</span>
+                  {issue.artifact} → {issue.field}: {issue.message}
+                  <a href={`/projects/${projectKey}/artifacts/${issue.artifact}?field=${issue.field}`}>Fix</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      };
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Component rendering, filtering, API calls
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with audit workflow
+
+  #---------------------------------------------------------------------------
+
+  - number: TBD-UX-07
+    title: 'Step 2.16 — Project-level audit status badge and artifact completeness indicators (client)'
+    labels: ['step:2', 'webui/ux', 'component:audit', 'size:S']
+    size_estimate: 'S (<50 lines, <1 day)'
+    depends_on: ['TBD-UX-06']
+    body: |
+      ## Goal / Problem Statement
+      Add **audit status indicators** at project and artifact levels for quick visibility.
+
+      **Value:** Enables users to see audit status at a glance without opening audit viewer.
+
+      ## Scope: What's Included
+      - Add audit status badge to project header
+        - Badge shows: "✓ No Issues", "⚠ Warnings", "✗ Errors"
+        - Color-coded: green, yellow, red
+        - Clicking badge opens audit viewer
+      - Add completeness indicator to artifact list
+        - Show checkmark or warning icon next to each artifact
+      - Fetch audit summary from backend (add endpoint or use existing)
+
+      ## Scope: What's NOT Included
+      - Real-time audit status updates (future)
+      - Badge customization (future)
+
+      ## Acceptance Criteria
+      - [ ] Project header shows audit status badge
+      - [ ] Badge updates when audit runs
+      - [ ] Clicking badge navigates to audit viewer
+      - [ ] Artifact list shows completeness icons
+      - [ ] Unit tests pass
+      - [ ] Lint and build pass
+
+      ## UX / Design Notes
+      - Badge in top-right of project header
+      - Icons: ✓ (green), ⚠ (yellow), ✗ (red)
+      - Tooltip on hover: "3 errors, 2 warnings"
+
+      ## Cross-Repo Coordination
+
+      **Backend API changes required:**
+      - [ ] Maybe - Needs audit summary endpoint (lightweight)
+
+      **If new endpoint needed:**
+      - Endpoint: `GET /api/v1/projects/{key}/audit/summary`
+      - Response: `{ "error_count": 3, "warning_count": 2, "info_count": 1 }`
+
+      ## Technical Approach
+
+      ### Files to Modify
+      - `client/src/components/ProjectHeader.tsx` (add ~30 lines)
+      - `client/src/components/ArtifactList.tsx` (add ~20 lines)
+      - `client/src/tests/components/ProjectHeader.test.tsx` (add ~40 lines)
+
+      ### Key Components
+      ```tsx
+      // client/src/components/AuditBadge.tsx
+      import React from 'react';
+
+      export const AuditBadge = ({ errorCount, warningCount }) => {
+        const status = errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'success';
+        const icon = status === 'error' ? '✗' : status === 'warning' ? '⚠' : '✓';
+        const message = status === 'success' ? 'No Issues' : `${errorCount} errors, ${warningCount} warnings`;
+
+        return (
+          <div className={`audit-badge ${status}`} title={message}>
+            {icon} {message}
+          </div>
+        );
+      };
+      ```
+
+      ## Testing Requirements
+      - **Unit tests:** Badge rendering, click behavior
+
+      ## Documentation Updates
+      - [ ] Update `client/README.md` with audit indicators
+
+###############################################################################
+# END OF STEP 2 ISSUES
+###############################################################################

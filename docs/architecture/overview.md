@@ -19,7 +19,7 @@ graph TB
         TUI[TUI Client<br/>Python/Click<br/>CLI]
         Client[Advanced Client<br/>Python/Textual<br/>Interactive]
     end
-    
+
     subgraph "API Layer"
         API[API Server<br/>FastAPI<br/>Port 8000]
         Router1[Projects Router]
@@ -29,7 +29,7 @@ graph TB
         Router5[RAID Router]
         Router6[Workflow Router]
     end
-    
+
     subgraph "Service Layer"
         GitMgr[Git Manager<br/>Storage Operations]
         LLMSvc[LLM Service<br/>Content Generation]
@@ -39,31 +39,31 @@ graph TB
         WFSvc[Workflow Service<br/>State Management]
         AuditSvc[Audit Service<br/>Event Logging]
     end
-    
+
     subgraph "Storage Layer"
         Docs[(Project Docs<br/>Git Repository)]
         Templates[Jinja2 Templates<br/>Prompts & Output]
         Config[LLM Config<br/>JSON]
     end
-    
+
     WebUI --> API
     TUI --> API
     Client --> API
-    
+
     API --> Router1
     API --> Router2
     API --> Router3
     API --> Router4
     API --> Router5
     API --> Router6
-    
+
     Router1 --> GitMgr
     Router2 --> CmdSvc
     Router3 --> GitMgr
     Router4 --> GovSvc
     Router5 --> RAIDSvc
     Router6 --> WFSvc
-    
+
     CmdSvc --> LLMSvc
     CmdSvc --> GitMgr
     CmdSvc --> AuditSvc
@@ -71,12 +71,12 @@ graph TB
     RAIDSvc --> GitMgr
     WFSvc --> GitMgr
     WFSvc --> AuditSvc
-    
+
     LLMSvc --> Config
     LLMSvc --> Templates
     GitMgr --> Docs
     AuditSvc --> Docs
-    
+
     style WebUI fill:#e1f5ff
     style TUI fill:#e1f5ff
     style Client fill:#e1f5ff
@@ -119,6 +119,7 @@ graph TB
 #### 1. Client Layer
 
 **WebUI Client** (`apps/web/`)
+
 - **Technology:** React 19.2.0 + Vite (rolldown-vite@7.2.5)
 - **Purpose:** Interactive visual interface for project management
 - **Port:** 8080 (Docker), 5173 (local dev)
@@ -130,6 +131,7 @@ graph TB
   - Real-time status updates
 
 **TUI Client** (`apps/tui/`)
+
 - **Technology:** Python 3.10+ with Click framework
 - **Purpose:** Command-line interface for automation and scripting
 - **Features:**
@@ -139,6 +141,7 @@ graph TB
   - Batch operations support
 
 **Legacy Client** (`client/`)
+
 - **Technology:** Python with httpx HTTP client
 - **Purpose:** Standalone API consumer demonstrating API-first design
 - **Features:**
@@ -149,6 +152,7 @@ graph TB
 #### 2. API Layer
 
 **FastAPI Server** (`apps/api/`)
+
 - **Technology:** Python 3.10+, FastAPI 0.109.1, Uvicorn 0.27.0
 - **Port:** 8000
 - **Purpose:** Core business logic and REST API endpoints
@@ -166,6 +170,7 @@ graph TB
 #### 3. Storage Layer
 
 **Project Documents Repository** (`projectDocs/`)
+
 - **Type:** Separate Git repository
 - **Purpose:** Version-controlled document storage
 - **Structure:**
@@ -181,6 +186,7 @@ graph TB
 - **Never committed to code repository** (`.gitignore` exclusion)
 
 **LLM Adapter** (`services/llm_service.py`)
+
 - **Protocol:** OpenAI-compatible HTTP API
 - **Configuration:** JSON file (`configs/llm.default.json`)
 - **Default:** LM Studio (localhost:1234)
@@ -229,6 +235,7 @@ AI-Agent-Framework/
 **Note:** Currently, the web UI is in the main repository. A separate client repository is planned for future development with independent versioning.
 
 **Planned Structure:**
+
 ```
 AI-Agent-Framework-Client/
 ├── src/
@@ -249,29 +256,35 @@ AI-Agent-Framework-Client/
 All client communication goes through RESTful HTTP endpoints:
 
 #### Project Management
+
 - `GET /projects` - List all projects
 - `POST /projects` - Create new project
 - `GET /projects/{key}/state` - Get project state
 
 #### Command Execution (Propose/Apply Pattern)
+
 - `POST /projects/{key}/commands/propose` - Generate command proposal
 - `POST /projects/{key}/commands/apply` - Apply approved proposal
 
 #### Artifact Management
+
 - `GET /projects/{key}/artifacts` - List project artifacts
 - `GET /projects/{key}/artifacts/{path}` - Get artifact content
 
 #### Health & Status
+
 - `GET /` - Basic health check
 - `GET /health` - Detailed health status
 
 ### Authentication Flow
 
 **Current (MVP):** No authentication
+
 - Open API for local development
 - CORS enabled for all origins
 
 **Future (Production):**
+
 - API key authentication via `X-API-Key` header
 - Environment variable configuration
 - Rate limiting per API key
@@ -282,6 +295,7 @@ All client communication goes through RESTful HTTP endpoints:
 **Content Type:** `application/json`
 
 **Standard Request:**
+
 ```json
 {
   "key": "PROJECT001",
@@ -290,6 +304,7 @@ All client communication goes through RESTful HTTP endpoints:
 ```
 
 **Standard Response:**
+
 ```json
 {
   "key": "PROJECT001",
@@ -301,6 +316,7 @@ All client communication goes through RESTful HTTP endpoints:
 ```
 
 **Error Response:**
+
 ```json
 {
   "detail": "Error message description"
@@ -321,6 +337,7 @@ All client communication goes through RESTful HTTP endpoints:
 #### Error Response Structure
 
 All errors return a consistent format:
+
 ```json
 {
   "detail": "Human-readable error message"
@@ -341,19 +358,20 @@ All errors return a consistent format:
 
 ```yaml
 services:
-  api:           # FastAPI server (port 8000)
-  web:           # React/Vite frontend (port 8080)
-  client:        # Standalone CLI client (optional)
-  tui:           # TUI client (optional)
+  api: # FastAPI server (port 8000)
+  web: # React/Vite frontend (port 8080)
+  client: # Standalone CLI client (optional)
+  tui: # TUI client (optional)
 
 networks:
-  iso21500-network:  # Internal Docker network
+  iso21500-network: # Internal Docker network
 
 volumes:
-  projectDocs:       # Mounted from host
+  projectDocs: # Mounted from host
 ```
 
 **Key Features:**
+
 - All containers on same Docker network
 - Volume mount for persistent document storage
 - API accessible at `http://api:8000` (internal)
@@ -376,6 +394,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 **Configuration:**
+
 - Use production LLM endpoint in `configs/llm.json`
 - Mount projectDocs from persistent storage
 - Set environment variables for secrets
@@ -386,6 +405,7 @@ docker compose -f docker-compose.prod.yml up -d
 **Best for:** Large deployments, high availability
 
 **Components:**
+
 - API Deployment + Service
 - Web Deployment + Service + Ingress
 - PersistentVolumeClaim for projectDocs
@@ -426,6 +446,7 @@ docker compose -f docker-compose.prod.yml up -d
 **Development:** Allow all origins (`*`)
 
 **Production:** Specific origins only
+
 ```python
 allow_origins=[
     "https://your-domain.com",
@@ -483,12 +504,14 @@ Command Service → Git Manager → projectDocs/
 ### Secrets Management
 
 **Never Committed:**
+
 - API keys
 - LLM endpoints (except defaults)
 - Project documents
 - User data
 
 **Configuration:**
+
 - Environment variables for secrets
 - Mounted configuration files (read-only)
 - `.gitignore` excludes sensitive paths
@@ -500,6 +523,7 @@ Command Service → Git Manager → projectDocs/
 **Format:** NDJSON (newline-delimited JSON)
 
 **Content:**
+
 - Event type and timestamp
 - Project key
 - Command executed
@@ -507,6 +531,7 @@ Command Service → Git Manager → projectDocs/
 - Optional: Full content (if enabled)
 
 **Privacy by Design:**
+
 - Only hashes stored by default
 - Full content logging requires explicit opt-in
 - Audit logs never leave projectDocs repository
@@ -521,6 +546,7 @@ Command Service → Git Manager → projectDocs/
 ## Technology Stack
 
 ### Backend
+
 - **Language:** Python 3.10+
 - **Framework:** FastAPI 0.109.1
 - **Server:** Uvicorn 0.27.0
@@ -530,6 +556,7 @@ Command Service → Git Manager → projectDocs/
 - **LLM Client:** OpenAI SDK 1.10.0
 
 ### Frontend
+
 - **Framework:** React 19.2.0
 - **Build Tool:** Vite (rolldown-vite@7.2.5)
 - **Language:** JavaScript (ES2020+)
@@ -537,11 +564,13 @@ Command Service → Git Manager → projectDocs/
 - **Linting:** ESLint 9.39.1
 
 ### TUI Client
+
 - **Language:** Python 3.10+
 - **Framework:** Click (CLI framework)
 - **HTTP Client:** httpx
 
 ### Infrastructure
+
 - **Containers:** Docker 28+
 - **Orchestration:** Docker Compose
 - **Web Server:** nginx (for web UI)
@@ -559,17 +588,20 @@ Command Service → Git Manager → projectDocs/
 ### Production Scaling
 
 **Horizontal Scaling:**
+
 - Multiple API instances behind load balancer
 - Shared persistent storage for projectDocs
 - Redis/Memcached for proposal cache
 - Session-based authentication with sticky sessions
 
 **Vertical Scaling:**
+
 - Increase container resources
 - Optimize Git operations (shallow clones, partial checkouts)
 - LLM response caching
 
 **Database Layer (Future):**
+
 - PostgreSQL for project metadata
 - Keep Git for document version control
 - Separate concerns: metadata vs. documents
@@ -585,28 +617,272 @@ Command Service → Git Manager → projectDocs/
 ### Production Requirements
 
 **Logging:**
+
 - Structured logging (JSON format)
 - Centralized log aggregation (ELK, CloudWatch)
 - Log levels: DEBUG, INFO, WARNING, ERROR
 
 **Metrics:**
+
 - Request count and latency
 - LLM response times
 - Git operation duration
 - Error rates by endpoint
 
 **Tracing:**
+
 - Distributed tracing (OpenTelemetry)
 - Request ID propagation
 - End-to-end transaction tracking
 
 **Alerting:**
+
 - Failed API requests
 - LLM unavailability
 - Git operation failures
 - Disk space alerts
 
+## Domain-Driven Design (DDD) Architecture
+
+### Overview
+
+The AI-Agent-Framework follows **Domain-Driven Design (DDD)** principles to ensure clean separation of concerns, maintainability, and scalability.
+
+### Core Principles
+
+1. **Single Responsibility Principle (SRP):** Each class/module has ONE clear purpose
+2. **Domain Separation:** Clear boundaries between domains (Templates, Blueprints, Proposals, Artifacts, RAID, etc.)
+3. **Type Safety:** Explicit interfaces and Pydantic models for all domain objects
+4. **Dependency Direction:** Infrastructure depends on domain, not vice versa
+5. **Testability:** Services and domain logic are fully unit-testable without infrastructure dependencies
+
+### Domain Architecture Layers
+
+```
+┌─────────────────────────────────────────────┐
+│           Client Layer (UX)                 │
+│  React Components, API Clients, State Mgmt │
+└───────────────┬─────────────────────────────┘
+                │ HTTP/REST
+┌───────────────▼─────────────────────────────┐
+│         API Layer (Routers)                 │
+│  FastAPI Routers - HTTP Protocol Concerns   │
+└───────────────┬─────────────────────────────┘
+                │ Dependency Injection
+┌───────────────▼─────────────────────────────┐
+│        Service Layer                        │
+│  Business Logic, Orchestration, Validation  │
+└───────────────┬─────────────────────────────┘
+                │ Domain Models
+┌───────────────▼─────────────────────────────┐
+│        Domain Layer                         │
+│  Entities, Value Objects, Domain Logic      │
+└───────────────┬─────────────────────────────┘
+                │ Repository Interface
+┌───────────────▼─────────────────────────────┐
+│    Infrastructure Layer                     │
+│  GitManager, LLMService, External Systems   │
+└─────────────────────────────────────────────┘
+```
+
+### Backend Domain Structure
+
+```
+apps/api/
+├── domain/                      # Domain Layer (Pure Business Logic)
+│   ├── templates/
+│   │   ├── __init__.py
+│   │   ├── models.py           # Template entity, value objects
+│   │   └── validators.py       # Domain-specific validation
+│   ├── blueprints/
+│   │   ├── __init__.py
+│   │   └── models.py           # Blueprint entity
+│   ├── proposals/
+│   │   ├── __init__.py
+│   │   └── models.py           # Proposal entity, enums
+│   └── raid/
+│       ├── __init__.py
+│       └── models.py           # RAID domain models
+│
+├── services/                    # Service Layer (Application Services)
+│   ├── template_service.py     # Template business logic
+│   ├── blueprint_service.py    # Blueprint orchestration
+│   ├── proposal_service.py     # Proposal workflow
+│   ├── artifact_generation_service.py  # Artifact creation
+│   ├── git_manager.py          # Repository pattern (infrastructure)
+│   └── llm_service.py          # External service adapter
+│
+├── routers/                     # API Layer (HTTP Endpoints)
+│   ├── templates.py            # Templates REST API
+│   ├── blueprints.py           # Blueprints REST API
+│   ├── proposals.py            # Proposals REST API
+│   └── artifacts.py            # Artifacts REST API
+│
+└── models.py                    # Backward-compat facade (legacy)
+```
+
+### Frontend Domain Structure (Client)
+
+```
+client/src/
+├── domain/                      # Domain-Specific Clients
+│   ├── ProjectApiClient.ts     # Project domain API client
+│   ├── RAIDApiClient.ts        # RAID domain API client
+│   ├── TemplateApiClient.ts    # Template domain API client (Step 2)
+│   ├── ProposalApiClient.ts    # Proposal domain API client (Step 2)
+│   └── WorkflowApiClient.ts    # Workflow domain API client
+│
+├── components/                  # UI Components by Feature
+│   ├── artifacts/
+│   │   ├── ArtifactEditor.tsx  # Template-driven editor (Step 2)
+│   │   └── ArtifactList.tsx    # Artifact browser (Step 2)
+│   ├── proposals/
+│   │   ├── ProposalCreator.tsx # Proposal creation UI (Step 2)
+│   │   ├── ProposalList.tsx    # Proposal browser (Step 2)
+│   │   ├── ProposalReview.tsx  # Apply/reject UI (Step 2)
+│   │   └── DiffViewer.tsx      # Diff visualization (Step 2)
+│   └── audit/
+│       └── AuditViewer.tsx     # Audit results UI (Step 2)
+│
+└── tests/
+    ├── helpers/                 # Domain-Specific Test Helpers
+    │   ├── RAIDTestHelper.ts   # RAID test data builders
+    │   └── PerformanceTestHelper.ts
+    └── components/              # Component tests
+```
+
+### Design Patterns
+
+#### 1. Repository Pattern
+
+**Purpose:** Abstraction layer for data persistence
+
+**Example:**
+
+```python
+# Service uses repository interface (GitManager)
+class TemplateService:
+    def __init__(self, git_manager: GitManager):
+        self.git_manager = git_manager  # Repository
+
+    def create_template(self, template: Template) -> Template:
+        # Business logic here
+        self.git_manager.write_file(...)  # Delegate to repository
+```
+
+#### 2. Service Layer Pattern
+
+**Purpose:** Encapsulate business logic, orchestrate domain operations
+
+**Example:**
+
+```python
+# Service orchestrates multiple operations
+class ArtifactGenerationService:
+    def __init__(self, template_service, blueprint_service, git_manager):
+        self.template_service = template_service
+        self.blueprint_service = blueprint_service
+        self.git_manager = git_manager
+
+    def generate_from_blueprint(self, blueprint_id, project_key):
+        # Load blueprint (delegates to BlueprintService)
+        blueprint = self.blueprint_service.get_blueprint(blueprint_id)
+
+        # Generate each required artifact (orchestration)
+        for template_id in blueprint.required_templates:
+            template = self.template_service.get_template(template_id)
+            # ... render and persist
+```
+
+#### 3. Factory Pattern
+
+**Purpose:** Encapsulate object creation logic
+
+**Example:**
+
+```python
+# ArtifactGenerationService acts as artifact factory
+service.generate_from_template(template_id, context)  # Creates artifact
+```
+
+#### 4. Dependency Injection
+
+**Purpose:** Invert dependencies, enable testability
+
+**Example:**
+
+```python
+# Router receives service via dependency injection
+@router.post("/")
+async def create_template(
+    template: Template,
+    service: TemplateService = Depends(get_template_service)
+):
+    return service.create_template(template)
+```
+
+### File Size and Complexity Guidelines
+
+**Target file sizes (per Issue #99 learnings):**
+
+- Domain models: < 50 lines per file
+- Service classes: < 200 lines per file (split if larger)
+- Router files: < 100 lines per file
+- Components (UX): < 100 lines per file
+
+**When to split:**
+
+- File exceeds 200 lines → extract helper classes or split by subdomain
+- Class has multiple responsibilities → refactor to Single Responsibility
+- Service orchestrates > 3 domains → consider facade or coordinator pattern
+
+### Domain Boundaries
+
+**Clear separation between:**
+
+1. **Templates Domain:** Template definitions, schemas, validation
+2. **Blueprints Domain:** Blueprint configurations, template collections
+3. **Proposals Domain:** Change proposals, diff generation, apply/reject logic
+4. **Artifacts Domain:** Artifact generation, rendering, persistence
+5. **RAID Domain:** Risk management, traceability
+6. **Workflow Domain:** State management, transitions
+7. **Audit Domain:** Event logging, compliance trails
+
+**Cross-domain communication:**
+
+- Services may depend on other services (via dependency injection)
+- Domain models NEVER depend on other domains (pure)
+- Infrastructure (GitManager, LLMService) is shared across domains
+
 ## Extension Points
+
+### Adding New Domain (Step 2 Pattern)
+
+1. **Create Domain Layer:**
+
+   ```bash
+   mkdir -p apps/api/domain/{domain_name}
+   touch apps/api/domain/{domain_name}/__init__.py
+   touch apps/api/domain/{domain_name}/models.py
+   ```
+
+2. **Create Service Layer:**
+
+   ```bash
+   touch apps/api/services/{domain_name}_service.py
+   ```
+
+3. **Create API Layer:**
+
+   ```bash
+   touch apps/api/routers/{domain_name}.py
+   ```
+
+4. **Follow DDD Principles:**
+   - Domain models contain NO infrastructure dependencies
+   - Service orchestrates domain logic + infrastructure
+   - Router handles ONLY HTTP concerns
+   - Use dependency injection throughout
 
 ### Adding New Clients
 
@@ -614,6 +890,7 @@ Command Service → Git Manager → projectDocs/
 2. **Implement propose/apply workflow:** Required for proper audit trail
 3. **Handle errors gracefully:** Parse error responses
 4. **Use API documentation:** See [Client Integration Guide](../api/client-integration-guide.md)
+5. **Follow domain separation:** One API client per domain (ProjectApiClient, RAIDApiClient, etc.)
 
 ### Adding New Commands
 
@@ -631,21 +908,25 @@ Command Service → Git Manager → projectDocs/
 ## Compliance & Standards
 
 ### ISO 21500
+
 - Project management methodology
 - Standard artifact templates
 - Lifecycle phase tracking
 
 ### EU AI Act
+
 - Transparency: Clear separation of components
 - Documentation: Comprehensive system documentation
 - Human oversight: Propose/apply workflow
 
 ### ISO 27001
+
 - Access control: Authentication planned
 - Audit trail: Comprehensive logging
 - Separation of duties: Client/server architecture
 
 ### GDPR
+
 - Data minimization: Hash-only logging by default
 - Privacy by design: Local LLM option
 - Transparency: Clear data flow documentation
@@ -663,9 +944,9 @@ Command Service → Git Manager → projectDocs/
 
 ## Revision History
 
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0.0 | 2026-01-10 | Initial architecture documentation | GitHub Copilot |
+| Version | Date       | Changes                            | Author         |
+| ------- | ---------- | ---------------------------------- | -------------- |
+| 1.0.0   | 2026-01-10 | Initial architecture documentation | GitHub Copilot |
 
 ---
 
