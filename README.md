@@ -1,6 +1,7 @@
 # AI-Agent-Framework
 
 [![Backend CI](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml)
+[![Backend Quality Gates](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml)
 [![codecov](https://codecov.io/gh/blecx/AI-Agent-Framework/branch/main/graph/badge.svg)](https://codecov.io/gh/blecx/AI-Agent-Framework)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
