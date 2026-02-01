@@ -132,7 +132,7 @@ docker compose up --build  # Web: :8080, API: :8000
 
 ## Key Files
 
-**Backend (apps/api/):** main.py (76L, FastAPI app), models.py (69L, Pydantic), services/ (command_service.py 291L, git_manager.py 193L, llm_service.py 94L), routers/ (projects.py 78L, commands.py 71L, artifacts.py 48L). Two requirements.txt: root=dev+test deps, apps/api/=runtime only (Docker).
+**Backend (apps/api/):** main.py (76L, FastAPI app), **domain/** (18 files, DDD architecture: 7 domains averaging 82L), models.py (76L, backward-compat facade), services/ (command_service.py 291L, git_manager.py 193L, llm_service.py 94L), routers/ (projects.py 78L, commands.py 71L, artifacts.py 48L). Two requirements.txt: root=dev+test deps, apps/api/=runtime only (Docker).
 
 **Frontend (apps/web/):** package.json (uses rolldown-vite@7.2.5), vite.config.js (proxies /api), src/components/ (ProjectSelector, ProjectView, CommandPanel, ProposalModal, ArtifactsList).
 

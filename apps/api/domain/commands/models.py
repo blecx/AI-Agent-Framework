@@ -120,17 +120,35 @@ class CommandHistory(BaseModel):
     command: str = Field(..., description="Command name")
     params: Dict[str, Any] = Field(default_factory=dict)
     status: CommandStatus = Field(default=CommandStatus.PENDING)
-    started_at: str = Field(..., description="Start timestamp (ISO format)")
+    created_at: str = Field(..., description="Creation timestamp (ISO format)")
+    started_at: Optional[str] = Field(
+        default=None, description="Start timestamp (ISO format)"
+    )
     completed_at: Optional[str] = Field(
         default=None, description="Completion timestamp"
     )
-    result: Optional[Dict[str, Any]] = Field(default=None, description="Command result")
-    error: Optional[str] = Field(default=None, description="Error message if failed")
+    proposal_id: Optional[str] = Field(
+        default=None, description="Associated proposal ID"
+    )
+    commit_hash: Optional[str] = Field(
+        default=None, description="Commit hash if applied"
+    )
+    error_message: Optional[str] = Field(
+        default=None, description="Error message if failed"
+    )
+    # Deprecated fields for backward compatibility
+    result: Optional[Dict[str, Any]] = Field(
+        default=None, description="Command result (deprecated)"
+    )
+    error: Optional[str] = Field(
+        default=None, description="Error message (deprecated, use error_message)"
+    )
 
 
 class CommandExecute(BaseModel):
     """Request model for executing a command."""
 
+    project_key: str = Field(..., description="Project key")
     command: str = Field(..., description="Command name")
     params: Dict[str, Any] = Field(default_factory=dict)
 
