@@ -57,9 +57,13 @@ AI-Agent-Framework:
       - [ ] `Template` Pydantic model created with all required fields
       - [ ] JSON Schema validation works for PMP template (minimum fields: purpose, scope, deliverables, milestones, roles, communications, change control)
       - [ ] JSON Schema validation works for RAID template (minimum fields: type, description, owner, status, impact, due_date)
+      - [ ] Negative test case: Invalid JSON Schema rejected with clear error message
+      - [ ] Negative test case: Missing required fields raises Pydantic validation error
+      - [ ] Negative test case: Invalid artifact_type value rejected
       - [ ] Unit tests pass (100% coverage for models)
       - [ ] No changes to existing functionality
       - [ ] Linting passes (`black`, `flake8`)
+      - [ ] **Migration:** If legacy template system exists, document migration path in domain README
 
       ## API Contract
       N/A - This issue creates domain models only, no API endpoints.
@@ -188,6 +192,9 @@ AI-Agent-Framework:
       - [ ] Templates persisted to `projectDocs/.templates/` as JSON
       - [ ] Service methods use `GitManager` for all file operations
       - [ ] Business validation (no duplicate IDs, valid artifact types)
+      - [ ] Negative test case: Duplicate template ID raises clear error
+      - [ ] Negative test case: Get non-existent template returns None or raises not found error
+      - [ ] Negative test case: Invalid artifact type rejected
       - [ ] Integration tests pass (100% coverage for service)
       - [ ] No changes to existing functionality
       - [ ] Linting passes
@@ -312,6 +319,9 @@ AI-Agent-Framework:
       - [ ] Endpoints use `TemplateService` (no direct git operations)
       - [ ] Proper HTTP status codes returned
       - [ ] Request validation via Pydantic models
+      - [ ] Negative test case: Returns 404 when template not found (GET /templates/{id})
+      - [ ] Negative test case: Returns 400 when invalid template data provided (POST)
+      - [ ] Negative test case: Returns 409 when creating template with duplicate ID
       - [ ] Integration tests pass for all endpoints
       - [ ] API documented in OpenAPI/Swagger
       - [ ] No changes to existing functionality
@@ -465,6 +475,9 @@ AI-Agent-Framework:
       - [ ] `BlueprintService` with CRUD methods implemented
       - [ ] `BlueprintsRouter` with 5 REST endpoints (POST, GET, GET/{id}, PUT, DELETE)
       - [ ] Blueprints reference templates by ID (validation: template must exist)
+      - [ ] Negative test case: Returns 400 when blueprint references non-existent template
+      - [ ] Negative test case: Returns 404 when blueprint not found (GET)
+      - [ ] Negative test case: Returns 409 when creating blueprint with duplicate ID
       - [ ] All tests pass (unit + integration)
       - [ ] API documented in OpenAPI
       - [ ] No changes to existing functionality
@@ -588,6 +601,12 @@ AI-Agent-Framework:
       - [ ] Generated artifacts validate against template JSON Schema
       - [ ] Artifacts persisted to correct projectDocs location
       - [ ] Service integrates with `TemplateService` and `BlueprintService`
+      - [ ] **Performance:** Template rendering completes < 100ms for typical PMP/RAID artifacts
+      - [ ] **Performance:** Blueprint generation (5 artifacts) completes < 500ms
+      - [ ] **Security:** Template injection prevented (Jinja2 sandboxing enabled)
+      - [ ] **Security:** Context variables sanitized before rendering
+      - [ ] Negative test case: Invalid context variables rejected with clear error
+      - [ ] Negative test case: Non-existent template ID raises not found error
       - [ ] Integration tests pass (generate PMP, generate RAID, generate from blueprint)
       - [ ] No changes to existing functionality
       - [ ] Linting passes
