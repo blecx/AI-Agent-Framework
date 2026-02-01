@@ -28,7 +28,17 @@ tests/
 ├── e2e/                # End-to-end tests
 │   ├── backend_e2e_runner.py           # E2E test harness
 │   ├── test_governance_raid_workflow.py # Step 1 workflow tests
-│   └── test_step2_workflow.py          # Step 2 workflow tests (NEW)
+│   ├── test_step2_workflow.py          # Step 2 workflow tests (NEW)
+│   └── tui/                            # TUI E2E tests (deterministic, CI-ready)
+│       ├── conftest.py                 # TUI test fixtures
+│       ├── test_workflow_spine.py      # Core workflow scenarios
+│       ├── test_proposal_workflow.py   # Proposal lifecycle tests
+│       ├── test_audit_fix_cycle.py     # Audit and fix cycle tests
+│       └── README.md                   # TUI E2E documentation
+├── helpers/            # Test helper utilities
+│   └── tui_automation.py               # TUI command automation service
+├── fixtures/           # Test data factories
+│   └── factories.py                    # Builders for Project, Artifact, Proposal, RAID
 └── README.md           # This file
 ```
 
@@ -62,6 +72,9 @@ pytest tests/integration
 
 # E2E tests only (requires terminal emulation)
 TERM=xterm-256color pytest tests/e2e
+
+# TUI E2E tests only (deterministic, CI-ready)
+pytest tests/e2e/tui -v
 
 # Skills tests only
 pytest tests/unit/test_*skill*.py tests/integration/test_skills_api.py
@@ -154,6 +167,137 @@ The workflow executes:
 2. Integration tests: `pytest -q tests/integration`
 3. E2E tests: `TERM=xterm-256color pytest -q tests/e2e`
 4. Coverage reporting (uploaded as artifact)
+
+## TUI E2E Tests
+
+**New in Step 3**: Deterministic, non-interactive end-to-end tests using the TUI CLI.
+
+### Overview
+
+TUI E2E tests validate complete workflows through the command-line interface:
+
+- **Workflow spine**: Project → artifacts → proposal → apply → audit
+- **Proposal workflow**: Manual and AI-assisted proposals, apply/reject
+- **Audit fix cycle**: Detect issues → fix via proposals → re-audit → verify clean
+
+**Key Features**:
+- ✅ Deterministic execution (no flaky tests)
+- ✅ Non-interactive (fully automated)
+- ✅ CI-ready (runs in GitHub Actions)
+- ✅ Fast feedback (< 5 min full suite)
+- ✅ Session-scoped backend (shared across tests)
+
+### Running TUI E2E Tests
+
+```bash
+# All TUI E2E tests
+pytest tests/e2e/tui/ -v
+
+# Specific test file
+pytest tests/e2e/tui/test_workflow_spine.py -v
+
+# Specific test
+pytest tests/e2e/tui/test_workflow_spine.py::test_workflow_spine_full_cycle -v
+
+# Skip slow tests
+pytest tests/e2e/tui/ -v -m "not slow"
+
+# With detailed output
+pytest tests/e2e/tui/ -vv --tb=short
+```
+
+### Test Structure
+
+```
+tests/e2e/tui/
+├── conftest.py                 # Fixtures (backend_server, tui, factories)
+├── test_workflow_spine.py      # Core workflow scenarios (5 tests)
+├── test_proposal_workflow.py   # Proposal lifecycle (5 tests)
+├── test_audit_fix_cycle.py     # Audit and fix cycle (6 tests)
+└── README.md                   # Detailed TUI E2E documentation
+```
+
+**Supporting infrastructure**:
+- `tests/helpers/tui_automation.py` - TUI command execution service (~180 lines)
+- `tests/fixtures/factories.py` - Test data builders (~230 lines)
+
+### Key Fixtures
+
+#### `backend_server` (session scope)
+
+Starts FastAPI backend once for all tests, provides `http://localhost:8000` URL.
+
+#### `tui` (function scope)
+
+Provides `TUIAutomation` instance for executing TUI commands.
+
+**Usage:**
+```python
+def test_example(tui, unique_project_key):
+    result = tui.create_project(key=unique_project_key, name="Test")
+    assert result.success
+    assert unique_project_key in result.stdout
+```
+
+#### `unique_project_key` (function scope)
+
+Generates unique project key per test to avoid collisions.
+
+### Test Data Factories
+
+Create deterministic test data with fluent APIs:
+
+```python
+from fixtures.factories import ProjectFactory, ArtifactFactory, ProposalFactory, RAIDFactory
+
+# Deterministic project
+project = ProjectFactory().with_key("TEST-001").with_name("Test Project").build()
+
+# Seeded random data
+project = ProjectFactory().with_seed(12345).build()
+
+# Artifact with custom content
+artifact = ArtifactFactory().with_type("pmp").with_content("# PMP\n...").build()
+```
+
+### Writing New TUI E2E Tests
+
+See `tests/e2e/tui/README.md` for detailed examples and patterns.
+
+**Basic structure:**
+```python
+def test_my_workflow(tui, unique_project_key):
+    # Arrange: Create project
+    result = tui.create_project(key=unique_project_key, name="My Test")
+    assert result.success
+    
+    # Act: Execute TUI commands
+    result = tui.execute_command(["projects", "list"])
+    
+    # Assert: Verify output
+    assert result.success
+    assert tui.expect_output(result, unique_project_key)
+```
+
+### Performance Targets
+
+- Full TUI E2E suite: < 5 minutes
+- Individual test: < 30 seconds (excluding `@pytest.mark.slow`)
+- Backend startup: < 10 seconds
+
+### Troubleshooting
+
+**Backend fails to start:**
+- Check `apps/api/` directory exists
+- Verify `uvicorn` installed in venv
+- Ensure `PROJECT_DOCS_PATH` is writable
+
+**Flaky tests:**
+- Avoid `time.sleep()` - use `tui.wait_for_condition()` instead
+- Use deterministic seeds in factories
+- Increase backend startup timeout in `conftest.py`
+
+**For more help**, see `tests/e2e/tui/README.md`.
 
 ## E2E Test Harness
 
