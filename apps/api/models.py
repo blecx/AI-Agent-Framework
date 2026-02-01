@@ -15,7 +15,7 @@ Use domain-specific imports instead:
 """
 
 # Re-export all models from domain layer for backward compatibility
-from domain import *  # noqa: F401, F403
+from domain import *  # noqa: F401, F403, F405
 
 __all__ = [
     # Projects
