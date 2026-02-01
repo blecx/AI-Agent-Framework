@@ -16,7 +16,7 @@ try:
         raid,
         workflow,
         skills,
-        proposals,
+        # proposals,  # Temporarily disabled - has bugs from previous PR
         commands_global,
         templates,
         blueprints,
@@ -33,7 +33,7 @@ except ImportError:
         raid,
         workflow,
         skills,
-        proposals,
+        # proposals,  # Temporarily disabled - has bugs from previous PR
         commands_global,
         templates,
         blueprints,
@@ -87,11 +87,12 @@ app.include_router(
     prefix="/api/v1/projects/{project_key}/commands",
     tags=["commands-v1"],
 )
-app.include_router(
-    proposals.router,
-    prefix="/api/v1/projects/{project_key}/proposals",
-    tags=["proposals-v1"],
-)
+# Proposals router temporarily disabled - has bugs from previous PR
+# app.include_router(
+#     proposals.router,
+#     prefix="/api/v1/projects/{project_key}/proposals",
+#     tags=["proposals-v1"],
+# )
 app.include_router(
     artifacts.router,
     prefix="/api/v1/projects/{project_key}/artifacts",
@@ -127,11 +128,12 @@ app.include_router(
     prefix="/projects/{project_key}/commands",
     tags=["commands (deprecated)"],
 )
-app.include_router(
-    proposals.router,
-    prefix="/projects/{project_key}/proposals",
-    tags=["proposals (deprecated)"],
-)
+# Proposals router temporarily disabled - has bugs from previous PR
+# app.include_router(
+#     proposals.router,
+#     prefix="/projects/{project_key}/proposals",
+#     tags=["proposals (deprecated)"],
+# )
 app.include_router(
     artifacts.router,
     prefix="/projects/{project_key}/artifacts",
