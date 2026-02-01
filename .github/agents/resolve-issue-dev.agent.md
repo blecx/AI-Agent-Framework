@@ -50,11 +50,13 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Don’t commit or modify `projectDocs/` (separate repo).
 - Don’t commit `configs/llm.json`.
 - Don’t do unrelated refactors outside the chosen issue scope.
+
 ## Architecture requirements (mandatory)
 
 **All code changes must follow Domain-Driven Design (DDD) architecture:**
 
 ### Backend (AI-Agent-Framework)
+
 - Follow existing DDD structure in `apps/api/`:
   - **Domain layer**: Core business logic, entities, value objects
   - **Service layer**: Application services (`services/` directory)
@@ -65,6 +67,7 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Use dependency injection for testability
 
 ### Frontend (AI-Agent-Framework-Client)
+
 - Follow established component structure in `client/`:
   - **Domain-specific clients**: Separate by concern (ProjectApiClient, RAIDApiClient, WorkflowApiClient)
   - **Test helpers**: Domain-specific utilities (RAIDTestHelper, PerformanceTestHelper)
@@ -75,6 +78,7 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Each class/module has single, clear responsibility
 
 ### Key DDD Principles
+
 1. **Single Responsibility**: Each class/module does ONE thing
 2. **Domain Separation**: Clear boundaries between domains (Project, RAID, Workflow, etc.)
 3. **Type Safety**: Explicit interfaces for all domain objects
@@ -82,10 +86,12 @@ Your **first** assistant message in a run must be short and action-oriented:
 5. **Testability**: Services/clients are mockable and unit-testable
 
 **Before implementing, analyze:**
+
 - Which domain does this change belong to?
 - Does it fit existing domain structure?
 - Should it be a new domain client/service?
 - Does it maintain SRP and clear boundaries?
+
 ## Inputs
 
 - Optional: an `issue_number` to resolve. If present, skip selection.
@@ -226,7 +232,6 @@ After successfully merging a PR, clean up related temporary files:
    - `rm -f .tmp/pr-body-<issue-number>.md`
    - `rm -f .tmp/pr-body-refactor.md` (or similar)
    - `rm -f .tmp/issue-<issue-number>-*.md`
-   
 2. **Keep concurrent/unrelated files**:
    - Only delete files for the CURRENT issue/PR
    - Don't delete files from other concurrent work
@@ -238,6 +243,7 @@ After successfully merging a PR, clean up related temporary files:
    - Example: `gh pr merge <PR> && rm -f .tmp/pr-body-*.md && git switch main`
 
 **Example cleanup workflow:**
+
 ```bash
 # After PR #99 merged successfully
 rm -f .tmp/pr-body-refactor.md
@@ -251,12 +257,14 @@ git pull
 Based on recent successful work (PR #101, Issues #99-#100):
 
 ### Code Quality Standards
+
 - **SRP Compliance**: Issue #99 showed how to split 297-line monolithic class into 7 focused files (avg 82 lines)
 - **DRY Principle**: Issue #100 eliminated 75% code duplication using builders and helpers
 - **Type Safety**: Always use explicit interfaces (no `any` types)
 - **File Size Target**: Keep classes/modules < 100 lines when possible
 
 ### PR Best Practices
+
 - **Template Compliance**: Client repo CI validates exact section headers
   - Must have: "- Related repos/services impacted:" (not bold, exact text)
   - Use `env GH_PAGER=cat PAGER=cat gh pr view <recent-pr> --json body` to get template
@@ -267,18 +275,21 @@ Based on recent successful work (PR #101, Issues #99-#100):
   - `git commit --allow-empty -m "chore: trigger CI with updated PR description" && git push`
 
 ### Architecture Patterns
+
 - **API Client Factory**: Use facade pattern for domain client access
 - **Test Data Builders**: Fluent API for creating test data (`builder.withType().withPriority().build()`)
 - **Domain Helpers**: Extract repeated patterns (navigation, measurement) to focused helpers
 - **Backward Compatibility**: When refactoring, keep old patterns available during migration
 
 ### Documentation Requirements
+
 - For major refactoring: Create summary, detailed review, and architecture comparison docs
 - Include metrics tables (before/after comparisons)
 - Provide migration examples for other developers
 - Link to all new files in PR description
 
 ### Validation Workflow
+
 1. Run all validation commands BEFORE creating PR
 2. Document exact output (test counts, timing, error counts)
 3. Check CI status immediately after PR creation

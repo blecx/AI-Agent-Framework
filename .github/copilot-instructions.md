@@ -1,11 +1,13 @@
 # Copilot Instructions for AI-Agent-Framework
 
 ## Overview
+
 ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10+) + React/Vite. Docker deployment or local venv. ~190MB, 8000+ files. Git-based document storage in `projectDocs/` (separate repo, NEVER commit to code). Two containers: API + web/nginx.
 
 ## Development Workflow
 
 ### Plan → Issues → PRs
+
 **ALWAYS follow this standard workflow for all feature work, bug fixes, and cross-repo coordination:**
 
 1. **Start with a Plan/Spec**
@@ -35,7 +37,9 @@ ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10
    - Delete branch after merge
 
 ### Traceability
+
 Maintain clear links: Plan → Issue → PR → Commits
+
 - Use issue references in PRs: "Fixes #123" or "Closes #123"
 - Include context in PR descriptions
 - Link to related issues in other repos when coordinating changes
@@ -43,6 +47,7 @@ Maintain clear links: Plan → Issue → PR → Commits
 ## Build & Setup (ALWAYS follow this sequence)
 
 **Local Dev (5-10 min):**
+
 ```bash
 ./setup.sh  # Auto-detects Python, creates .venv, installs deps (60-90s)
 source .venv/bin/activate  # REQUIRED for all Python commands
@@ -51,6 +56,7 @@ cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload  # 
 ```
 
 **Frontend (optional, 2-3 min):**
+
 ```bash
 cd apps/web && npm install  # ~4s
 npm run dev  # http://localhost:5173
@@ -58,6 +64,7 @@ npm run build  # ~120ms
 ```
 
 **Docker (2-3 min build):**
+
 ```bash
 mkdir -p projectDocs  # MUST exist
 docker compose up --build  # Web: :8080, API: :8000
@@ -68,12 +75,15 @@ docker compose up --build  # Web: :8080, API: :8000
 ## Validation Steps (Backend - AI-Agent-Framework)
 
 ### Critical Environment Requirements
+
 - **NEVER commit `projectDocs/` directory** - it's a separate git repository
 - **NEVER commit `configs/llm.json`** - contains local LLM configuration
 - Always set `PROJECT_DOCS_PATH` when running the API locally
 
 ### Pre-Commit Validation Checklist
+
 1. **Setup Python Environment**
+
    ```bash
    ./setup.sh  # Creates .venv if not exists
    source .venv/bin/activate  # REQUIRED for all Python commands
@@ -81,12 +91,14 @@ docker compose up --build  # Web: :8080, API: :8000
    ```
 
 2. **Run Linters** (optional but recommended)
+
    ```bash
    python -m black apps/api/
    python -m flake8 apps/api/
    ```
 
 3. **Test API Locally**
+
    ```bash
    cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
    # In another terminal:
@@ -95,6 +107,7 @@ docker compose up --build  # Web: :8080, API: :8000
    ```
 
 4. **Test Frontend** (if changed)
+
    ```bash
    cd apps/web
    npm install
@@ -103,6 +116,7 @@ docker compose up --build  # Web: :8080, API: :8000
    ```
 
 5. **Test Docker Build** (if Dockerfile changed)
+
    ```bash
    docker compose build
    docker compose up
@@ -122,13 +136,14 @@ docker compose up --build  # Web: :8080, API: :8000
 
 **Frontend (apps/web/):** package.json (uses rolldown-vite@7.2.5), vite.config.js (proxies /api), src/components/ (ProjectSelector, ProjectView, CommandPanel, ProposalModal, ArtifactsList).
 
-**Config:** configs/llm.default.json (LM Studio default), templates/prompts/iso21500/*.j2 (Jinja2), templates/output/iso21500/*.md (Markdown), docker/ (Dockerfiles + nginx.conf).
+**Config:** configs/llm.default.json (LM Studio default), templates/prompts/iso21500/_.j2 (Jinja2), templates/output/iso21500/_.md (Markdown), docker/ (Dockerfiles + nginx.conf).
 
 **Docs:** README.md (full), QUICKSTART.md, SUMMARY.md, docs/development.md (detailed dev guide).
 
 ## Testing & Linting
 
 **Automated tests are allowed and encouraged when requested by issues or feature requirements:**
+
 - **Unit tests:** Test individual components in isolation (place in `tests/unit/`)
 - **Integration tests:** Test component interactions (place in `tests/integration/`)
 - **E2E tests:** Test complete workflows via TUI (place in `tests/e2e/`)
@@ -161,7 +176,9 @@ docker compose up --build  # Web: :8080, API: :8000
 **Security:** NEVER commit projectDocs/ or configs/llm.json (.gitignored). Use env vars for secrets. Audit logs store hashes only (default).
 
 ### Adding New Dependencies
+
 When adding Python dependencies:
+
 - **Runtime dependencies** → Add to BOTH `requirements.txt` (root) AND `apps/api/requirements.txt`
 - **Development/testing dependencies** → Add to `requirements.txt` (root) ONLY
 - Always specify versions for reproducibility
@@ -169,6 +186,7 @@ When adding Python dependencies:
 - Update Docker image if runtime deps changed
 
 When adding JavaScript dependencies:
+
 - Run from `apps/web/`: `npm install <package>`
 - Commit updated `package.json` and `package-lock.json`
 - Test build: `npm run build`
@@ -180,6 +198,7 @@ When adding JavaScript dependencies:
 **Code:** Backend=no strict style (black/flake8 available), Frontend=modern React hooks. Minimal comments (prefer self-documenting). RESTful API with propose/apply pattern. CORS enabled (configure for prod).
 
 **Architecture (Domain-Driven Design):**
+
 - **Backend follows DDD layering:**
   - Domain layer: Core business logic and entities
   - Service layer: Application services in `services/` (command_service.py, git_manager.py, llm_service.py)
@@ -202,9 +221,11 @@ When adding JavaScript dependencies:
 ## Cross-Repository Coordination
 
 ### Working with AI-Agent-Framework-Client
+
 This backend often requires coordinated changes with the React/Vite client in [`blecx/AI-Agent-Framework-Client`](https://github.com/blecx/AI-Agent-Framework-Client).
 
 **When making API changes:**
+
 1. **Document breaking changes** in PR description
 2. **Version API endpoints** if breaking compatibility
 3. **Create matching client issue** before merging backend changes
@@ -212,12 +233,14 @@ This backend often requires coordinated changes with the React/Vite client in [`
 5. **Test integration** by running both services together
 
 **Common coordination scenarios:**
+
 - **New API endpoint** → Client needs to consume it
 - **Changed response format** → Client needs to update interfaces
 - **New project command** → Client needs UI components
 - **Changed authentication** → Client needs to update requests
 
 **Coordination workflow:**
+
 1. Create backend issue with API spec
 2. Create client issue referencing backend issue
 3. Implement backend PR first (if backward compatible)
@@ -229,6 +252,7 @@ For breaking changes, coordinate timing with client maintainers.
 ## Path-Specific Guidance
 
 ### Backend Code (`apps/api/`)
+
 - Follow existing FastAPI patterns (routers, services, models)
 - Use Pydantic models for all request/response schemas
 - Add docstrings to public functions
@@ -237,12 +261,14 @@ For breaking changes, coordinate timing with client maintainers.
 - Test with `PROJECT_DOCS_PATH` set
 
 **Key files:**
+
 - `main.py` - FastAPI app initialization, middleware, CORS
 - `models.py` - Pydantic models for API contracts
 - `routers/` - HTTP endpoint definitions
 - `services/` - Business logic (command_service, git_manager, llm_service)
 
 ### Templates (`templates/`)
+
 - Prompts use Jinja2 syntax (`.j2` files)
 - Output templates are Markdown (`.md` files)
 - Organized by ISO 21500 standard
@@ -250,10 +276,12 @@ For breaking changes, coordinate timing with client maintainers.
 - Test template rendering with actual data
 
 **Structure:**
+
 - `templates/prompts/iso21500/` - LLM prompts for each command
 - `templates/output/iso21500/` - Markdown templates for artifacts
 
 ### Configuration (`configs/`)
+
 - NEVER commit `configs/llm.json` (user-specific, gitignored)
 - Use `configs/llm.default.json` as reference
 - Document new config options in README
@@ -295,6 +323,7 @@ rm -f .tmp/pr-body-*.md .tmp/issue-*-*.md
 After successfully merging a PR:
 
 1. **Delete PR-specific temporary files**:
+
    ```bash
    rm -f .tmp/pr-body-<issue-number>.md
    rm -f .tmp/issue-<issue-number>-*.md
@@ -316,6 +345,7 @@ After successfully merging a PR:
 ## Trust These Instructions
 
 These instructions have been validated by running all commands in a clean environment. Build times, file locations, and workarounds are accurate as of 2026-02-01. Only search for additional information if:
+
 1. A command fails with an unexpected error not covered above
 2. You need to understand implementation details not in this guide
 3. Requirements or specifications are unclear from this document
@@ -325,12 +355,14 @@ When in doubt, consult README.md, QUICKSTART.md, or docs/development.md for exte
 ## Additional Resources
 
 **Workflow Templates:** See `.github/prompts/` for reusable templates to help with:
+
 - Planning features and creating specs
 - Drafting implementation issues
 - Writing PR descriptions
 - Coordinating cross-repo changes
 
 **Documentation:**
+
 - `README.md` - Full project overview and architecture
 - `QUICKSTART.md` - Fast setup guide
 - `docs/development.md` - Detailed development guide
