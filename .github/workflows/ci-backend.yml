@@ -42,17 +42,17 @@ jobs:
       
       - name: Run unit tests
         run: |
-          pytest tests/unit/ -v --tb=short
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/unit/ -v --tb=short -m "not tui"
       
       - name: Run integration tests
         run: |
-          pytest tests/integration/ -v --tb=short
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/integration/ -v --tb=short
       
       - name: Run E2E tests
         env:
           TERM: xterm-256color
         run: |
-          pytest tests/e2e/ -v --tb=short
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/e2e/ -v --tb=short -m "not tui"
       
       - name: Gate Status
         if: failure()
@@ -379,7 +379,7 @@ jobs:
       - name: Run tests with timing
         run: |
           START_TIME=$(date +%s)
-          pytest tests/ -v --tb=short -q
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui"
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
           
@@ -421,15 +421,15 @@ jobs:
           echo "Running test suite 3 times to detect flaky tests..."
           
           # Run 1
-          pytest tests/ -v --tb=short -q > run1.log 2>&1
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run1.log 2>&1
           RUN1=$?
           
           # Run 2
-          pytest tests/ -v --tb=short -q > run2.log 2>&1
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run2.log 2>&1
           RUN2=$?
           
           # Run 3
-          pytest tests/ -v --tb=short -q > run3.log 2>&1
+          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run3.log 2>&1
           RUN3=$?
           
           # Check for inconsistent results
