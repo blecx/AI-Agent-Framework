@@ -45,6 +45,44 @@ ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10
    - Ensure PR title is clear (becomes squash commit message)
    - Delete branch after merge
 
+### Issue Selection Order (resolve-issue-dev)
+
+**When selecting the next issue to work on, ALWAYS follow this priority order:**
+
+1. **Priority 1: Backend/TUI/CLI issues**
+   - Repository: `blecx/AI-Agent-Framework`
+   - Includes: API services, domain models, CLI tools, backend tests
+   - Example issue numbers: #69-#78 (Step 2 backend)
+
+2. **Priority 2: Client/UX issues**
+   - Repository: `blecx/AI-Agent-Framework-Client`
+   - Includes: React components, UI features, client tests
+   - Example issue numbers: #102-#109 (Step 2 frontend)
+
+3. **Within each priority group:**
+   - **Select the LOWEST issue number first**
+   - Work sequentially: #69 → #70 → #71 → ... → #77 → #78
+   - Then move to client: #102 → #103 → ... → #109
+
+**Rationale:**
+
+- **Dependency management:** Frontend depends on backend APIs
+- **Parallel work:** Backend team completes work while frontend team prepares
+- **Predictability:** Everyone knows "what's next" in implementation order
+- **Quality gates:** Backend E2E tests validate before frontend development
+
+**Example (Step 2):**
+
+- Open issues: #69, #70, #72, #102, #104
+- **Correct order:** #69 → #70 → #72 → #102 → #104
+- **Why:** Work backend issues (#69, #70, #72) before client issues (#102, #104)
+
+**Edge cases:**
+
+- If all backend issues are complete, start client issues (lowest number first)
+- If all issues in both repos are complete, check for new issues or declare milestone done
+- If backend issue is blocked, skip to next backend issue (don't jump to client)
+
 ### Domain-Driven Design (DDD) Architecture (REQUIRED)
 
 **All code changes must follow DDD architecture patterns:**
