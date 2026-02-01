@@ -58,9 +58,250 @@
       "group": "none"
     },
     {
-      "label": "echo",
+      "label": "📦 Select Next PR",
       "type": "shell",
-      "command": "echo Hello"
+      "command": "${workspaceFolder}/next-pr",
+      "args": [],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "🔀 Merge PR",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/prmerge",
+      "args": ["${input:prNumber}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "✅ Backend: Format & Lint",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "black", "apps/api/", "&&", "${workspaceFolder}/.venv/bin/python", "-m", "flake8", "apps/api/"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "clear": false
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "🧪 Backend: Run Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/", "-v"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "clear": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "🧪 Backend: Run Tests (Quick)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/", "-q", "--tb=short"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "clear": true
+      },
+      "group": "test"
+    },
+    {
+      "label": "🚀 Backend: Start API Server",
+      "type": "shell",
+      "command": "cd apps/api && PROJECT_DOCS_PATH=../../projectDocs ${workspaceFolder}/.venv/bin/uvicorn main:app --reload",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Started reloader process",
+          "endsPattern": "Application startup complete"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "🎨 Frontend: Start Dev Server",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE.*ready in",
+          "endsPattern": "Local:.*http"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "🏗️ Frontend: Build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "clear": false
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "✅ Frontend: Lint",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "clear": false
+      },
+      "group": "build"
+    },
+    {
+      "label": "🐳 Docker: Build & Start",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "up", "--build"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Creating network",
+          "endsPattern": "Started"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "🛑 Docker: Stop",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "down"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "✅ Validate: Full Backend",
+      "dependsOn": [
+        "✅ Backend: Format & Lint",
+        "🧪 Backend: Run Tests"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "🚀 Start: Full Stack (Dev)",
+      "dependsOn": [
+        "🚀 Backend: Start API Server",
+        "🎨 Frontend: Start Dev Server"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
     }
   ],
   "inputs": [
@@ -68,7 +309,13 @@
       "id": "issueNumber",
       "type": "promptString",
       "description": "Enter GitHub issue number",
-      "default": "26"
+      "default": ""
+    },
+    {
+      "id": "prNumber",
+      "type": "promptString",
+      "description": "Enter GitHub PR number",
+      "default": ""
     }
   ]
 }
