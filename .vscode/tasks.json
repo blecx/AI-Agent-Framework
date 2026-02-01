@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🤖 Work on Issue (Autonomous)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/work-issue.py",
+      "args": ["--issue", "${input:issueNumber}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "🔍 Work on Issue (Dry Run)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/work-issue.py",
+      "args": ["--issue", "${input:issueNumber}", "--dry-run"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "💬 Work on Issue (Interactive)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/work-issue.py",
+      "args": ["--issue", "${input:issueNumber}", "--interactive"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "📋 Select Next Issue",
+      "type": "shell",
+      "command": "${workspaceFolder}/next-issue",
+      "args": [],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
+    },
+    {
+      "label": "echo",
+      "type": "shell",
+      "command": "echo Hello"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "issueNumber",
+      "type": "promptString",
+      "description": "Enter GitHub issue number",
+      "default": "26"
+    }
+  ]
+}
