@@ -74,11 +74,13 @@ def client(temp_project_dir):
     # Initialize services
     from services.git_manager import GitManager
     from services.llm_service import LLMService
+    from services.audit_service import AuditService
 
     git_manager = GitManager(temp_project_dir)
     git_manager.ensure_repository()
     test_app.state.git_manager = git_manager
     test_app.state.llm_service = LLMService()
+    test_app.state.audit_service = AuditService()
 
     with TestClient(test_app) as test_client:
         yield test_client
@@ -214,23 +216,25 @@ class TestProposalAPI:
         """Test POST /api/v1/projects/{key}/proposals."""
         response = client.post(
             "/api/v1/projects/PROP001/proposals",
-            json={"command": "assess_gaps", "params": {}},
+            json={
+                "id": "prop-test-001",
+                "target_artifact": "artifacts/test.md",
+                "change_type": "create",
+                "diff": "--- /dev/null\n+++ b/artifacts/test.md\n@@ -0,0 +1 @@\n+Test content",
+                "rationale": "Creating test artifact",
+                "author": "test@example.com",
+            },
         )
 
-        # May succeed or fail depending on LLM availability
-        # If it fails with 500, that's okay for this test
-        if response.status_code == 201:
-            data = response.json()
-            assert "id" in data
-            assert data["project_key"] == "PROP001"
-            assert data["command"] == "assess_gaps"
-            assert data["status"] == "pending"
-            assert "assistant_message" in data
-            assert "file_changes" in data
-            assert "created_at" in data
-        else:
-            # LLM not available or other error
-            assert response.status_code in [400, 500]
+        # Should succeed with valid request
+        assert response.status_code == 201
+        data = response.json()
+        assert data["id"] == "prop-test-001"
+        assert data["project_key"] == "PROP001"
+        assert data["target_artifact"] == "artifacts/test.md"
+        assert data["change_type"] == "create"
+        assert data["status"] == "pending"
+        assert "created_at" in data
 
     def test_list_proposals(self, client, test_project):
         """Test GET /api/v1/projects/{key}/proposals."""
@@ -238,9 +242,8 @@ class TestProposalAPI:
         response = client.get("/api/v1/projects/PROP001/proposals")
         assert response.status_code == 200
         data = response.json()
-        assert "proposals" in data
-        assert "total" in data
-        assert isinstance(data["proposals"], list)
+        # API returns list directly, not dict with "proposals" key
+        assert isinstance(data, list)
 
     def test_get_proposal_by_id_not_found(self, client, test_project):
         """Test GET /api/v1/projects/{key}/proposals/{id} for nonexistent ID."""
@@ -257,7 +260,8 @@ class TestProposalAPI:
     def test_reject_proposal_not_found(self, client, test_project):
         """Test POST /api/v1/projects/{key}/proposals/{id}/reject for nonexistent ID."""
         response = client.post(
-            "/api/v1/projects/PROP001/proposals/nonexistent-id/reject"
+            "/api/v1/projects/PROP001/proposals/nonexistent-id/reject",
+            json={"reason": "Not needed"},
         )
         assert response.status_code == 404
 
@@ -266,7 +270,13 @@ class TestProposalAPI:
         # POST proposal
         response = client.post(
             "/api/v1/projects/NOTFOUND/proposals",
-            json={"command": "assess_gaps"},
+            json={
+                "id": "prop-001",
+                "target_artifact": "test.md",
+                "change_type": "create",
+                "diff": "test diff",
+                "rationale": "test",
+            },
         )
         assert response.status_code == 404
 

@@ -16,13 +16,14 @@ try:
         raid,
         workflow,
         skills,
-        # proposals,  # Temporarily disabled - has bugs from previous PR
+        proposals,
         commands_global,
         templates,
         blueprints,
     )
     from .services.git_manager import GitManager
     from .services.llm_service import LLMService
+    from .services.audit_service import AuditService
 except ImportError:
     # Local execution from apps/api (e.g. `uvicorn main:app`)
     from routers import (
@@ -33,13 +34,14 @@ except ImportError:
         raid,
         workflow,
         skills,
-        # proposals,  # Temporarily disabled - has bugs from previous PR
+        proposals,
         commands_global,
         templates,
         blueprints,
     )
     from services.git_manager import GitManager
     from services.llm_service import LLMService
+    from services.audit_service import AuditService
 
 
 @asynccontextmanager
@@ -53,6 +55,7 @@ async def lifespan(app: FastAPI):
     # Store in app state
     app.state.git_manager = git_manager
     app.state.llm_service = LLMService()
+    app.state.audit_service = AuditService()
 
     yield
 
@@ -87,12 +90,11 @@ app.include_router(
     prefix="/api/v1/projects/{project_key}/commands",
     tags=["commands-v1"],
 )
-# Proposals router temporarily disabled - has bugs from previous PR
-# app.include_router(
-#     proposals.router,
-#     prefix="/api/v1/projects/{project_key}/proposals",
-#     tags=["proposals-v1"],
-# )
+app.include_router(
+    proposals.router,
+    prefix="/api/v1/projects/{project_key}/proposals",
+    tags=["proposals-v1"],
+)
 app.include_router(
     artifacts.router,
     prefix="/api/v1/projects/{project_key}/artifacts",
@@ -128,12 +130,11 @@ app.include_router(
     prefix="/projects/{project_key}/commands",
     tags=["commands (deprecated)"],
 )
-# Proposals router temporarily disabled - has bugs from previous PR
-# app.include_router(
-#     proposals.router,
-#     prefix="/projects/{project_key}/proposals",
-#     tags=["proposals (deprecated)"],
-# )
+app.include_router(
+    proposals.router,
+    prefix="/projects/{project_key}/proposals",
+    tags=["proposals (deprecated)"],
+)
 app.include_router(
     artifacts.router,
     prefix="/projects/{project_key}/artifacts",

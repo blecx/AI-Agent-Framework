@@ -1,67 +1,48 @@
 """
-Proposals router - compatibility layer for client proposal API.
-Wraps the existing propose/apply command flow.
+Proposals router - REST API for proposal lifecycle management.
+Delegates to ProposalService for all business logic.
 """
 
-from fastapi import APIRouter, HTTPException, Request
-from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Request, Query
+from typing import Optional
 
-from models import (
+from domain.proposals.models import (
     Proposal,
     ProposalCreate,
-    ProposalList,
     ProposalStatus,
+    ChangeType,
 )
-from services.command_service import CommandService
+from services.proposal_service import ProposalService
 
 router = APIRouter()
-command_service = CommandService()
 
 
 @router.post("", response_model=Proposal, status_code=201)
 async def create_proposal(
-    project_key: str, proposal_request: ProposalCreate, request: Request
+    project_key: str,
+    proposal_create: ProposalCreate,
+    request: Request,
 ):
-    """Create a new proposal (wraps propose_command)."""
+    """
+    Create a new proposal for artifact changes.
+
+    Returns: Created proposal with metadata
+    """
     git_manager = request.app.state.git_manager
-    llm_service = request.app.state.llm_service
+    audit_service = request.app.state.audit_service
 
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
         raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
 
+    # Build full Proposal from ProposalCreate + project_key
+    proposal = Proposal(project_key=project_key, **proposal_create.model_dump())
+
     try:
-        # Call existing propose_command
-        proposal_data = await command_service.propose_command(
-            project_key,
-            proposal_request.command,
-            proposal_request.params or {},
-            llm_service,
-            git_manager,
-        )
-
-        # Convert to Proposal model for client compatibility
-        now = datetime.now(timezone.utc).isoformat()
-        proposal = Proposal(
-            id=proposal_data["proposal_id"],
-            project_key=project_key,
-            command=proposal_data["command"],
-            params=proposal_data["params"],
-            status=ProposalStatus.PENDING,
-            assistant_message=proposal_data["assistant_message"],
-            file_changes=proposal_data["file_changes"],
-            draft_commit_message=proposal_data["draft_commit_message"],
-            created_at=now,
-            updated_at=now,
-        )
-
-        # Persist proposal to NDJSON
-        command_service.persist_proposal(
-            project_key, proposal.model_dump(), git_manager
-        )
-
-        return proposal
+        service = ProposalService(git_manager, audit_service)
+        created_proposal = service.create_proposal(proposal)
+        return created_proposal
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -70,10 +51,24 @@ async def create_proposal(
         )
 
 
-@router.get("", response_model=ProposalList)
-async def list_proposals(project_key: str, request: Request):
-    """List all proposals for a project."""
+@router.get("", response_model=list[Proposal])
+async def list_proposals(
+    project_key: str,
+    request: Request,
+    status_filter: Optional[ProposalStatus] = Query(
+        None, description="Filter by status", alias="status_filter"
+    ),
+    change_type: Optional[ChangeType] = Query(
+        None, description="Filter by change type"
+    ),
+):
+    """
+    List all proposals for a project with optional filters.
+
+    Returns: List of proposals matching filters
+    """
     git_manager = request.app.state.git_manager
+    audit_service = request.app.state.audit_service
 
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
@@ -81,21 +76,30 @@ async def list_proposals(project_key: str, request: Request):
         raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
 
     try:
-        # Load proposals from storage
-        proposals_data = command_service.load_proposals(project_key, git_manager)
-        proposals = [Proposal(**p) for p in proposals_data]
-
-        return ProposalList(proposals=proposals, total=len(proposals))
+        service = ProposalService(git_manager, audit_service)
+        proposals = service.list_proposals(
+            project_key, status=status_filter, change_type=change_type
+        )
+        return proposals
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Failed to load proposals: {str(e)}"
+            status_code=500, detail=f"Failed to list proposals: {str(e)}"
         )
 
 
 @router.get("/{proposal_id}", response_model=Proposal)
-async def get_proposal(project_key: str, proposal_id: str, request: Request):
-    """Get a specific proposal by ID."""
+async def get_proposal(
+    project_key: str,
+    proposal_id: str,
+    request: Request,
+):
+    """
+    Get a specific proposal by ID.
+
+    Returns: Proposal details
+    """
     git_manager = request.app.state.git_manager
+    audit_service = request.app.state.audit_service
 
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
@@ -103,118 +107,95 @@ async def get_proposal(project_key: str, proposal_id: str, request: Request):
         raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
 
     try:
-        # Load proposal from storage
-        proposal_data = command_service.load_proposal(
-            project_key, proposal_id, git_manager
-        )
-        if not proposal_data:
+        service = ProposalService(git_manager, audit_service)
+        proposal = service.get_proposal(project_key, proposal_id)
+
+        if not proposal:
             raise HTTPException(
                 status_code=404, detail=f"Proposal {proposal_id} not found"
             )
-
-        return Proposal(**proposal_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load proposal: {str(e)}"
-        )
-
-
-@router.post("/{proposal_id}/apply", response_model=Proposal)
-async def apply_proposal(project_key: str, proposal_id: str, request: Request):
-    """Apply a proposal (wraps apply_command)."""
-    git_manager = request.app.state.git_manager
-
-    # Verify project exists
-    project_info = git_manager.read_project_json(project_key)
-    if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
-
-    try:
-        # Load proposal to check it exists and is pending
-        proposal_data = command_service.load_proposal(
-            project_key, proposal_id, git_manager
-        )
-        if not proposal_data:
-            raise HTTPException(
-                status_code=404, detail=f"Proposal {proposal_id} not found"
-            )
-
-        proposal = Proposal(**proposal_data)
-        if proposal.status != ProposalStatus.PENDING:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Proposal {proposal_id} is already {proposal.status}",
-            )
-
-        # Apply the proposal
-        result = await command_service.apply_proposal(
-            proposal_id, git_manager, log_content=False
-        )
-
-        # Update proposal status
-        proposal.status = ProposalStatus.APPLIED
-        proposal.applied_at = datetime.now(timezone.utc).isoformat()
-        proposal.updated_at = proposal.applied_at
-        proposal.commit_hash = result["commit_hash"]
-
-        # Persist updated proposal
-        command_service.update_proposal(
-            project_key, proposal_id, proposal.model_dump(), git_manager
-        )
 
         return proposal
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get proposal: {str(e)}")
+
+
+@router.post("/{proposal_id}/apply", response_model=dict)
+async def apply_proposal(
+    project_key: str,
+    proposal_id: str,
+    request: Request,
+):
+    """
+    Apply a proposal to its target artifact.
+
+    Returns: Application result with details
+    """
+    git_manager = request.app.state.git_manager
+    audit_service = request.app.state.audit_service
+
+    # Verify project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+
+    try:
+        service = ProposalService(git_manager, audit_service)
+        result = service.apply_proposal(project_key, proposal_id)
+        return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # Handle already-applied, not found, etc.
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        elif "already" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e))
+        else:
+            raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to apply proposal: {str(e)}"
         )
 
 
-@router.post("/{proposal_id}/reject", response_model=Proposal)
-async def reject_proposal(project_key: str, proposal_id: str, request: Request):
-    """Reject a proposal."""
+@router.post("/{proposal_id}/reject", response_model=dict)
+async def reject_proposal(
+    project_key: str,
+    proposal_id: str,
+    request: Request,
+    reject_data: dict,
+):
+    """
+    Reject a proposal with a reason.
+
+    Returns: Rejection result
+    """
     git_manager = request.app.state.git_manager
+    audit_service = request.app.state.audit_service
 
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
         raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
 
+    # Extract reason from body
+    reason = reject_data.get("reason", "No reason provided")
+
     try:
-        # Load proposal to check it exists and is pending
-        proposal_data = command_service.load_proposal(
-            project_key, proposal_id, git_manager
-        )
-        if not proposal_data:
-            raise HTTPException(
-                status_code=404, detail=f"Proposal {proposal_id} not found"
-            )
-
-        proposal = Proposal(**proposal_data)
-        if proposal.status != ProposalStatus.PENDING:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Proposal {proposal_id} is already {proposal.status}",
-            )
-
-        # Update proposal status
-        proposal.status = ProposalStatus.REJECTED
-        proposal.rejected_at = datetime.now(timezone.utc).isoformat()
-        proposal.updated_at = proposal.rejected_at
-
-        # Persist updated proposal
-        command_service.update_proposal(
-            project_key, proposal_id, proposal.model_dump(), git_manager
-        )
-
-        return proposal
-    except HTTPException:
-        raise
+        service = ProposalService(git_manager, audit_service)
+        result = service.reject_proposal(project_key, proposal_id, reason)
+        # Add reason to result for response
+        result["reason"] = reason
+        return result
+    except ValueError as e:
+        # Handle already-rejected, not found, etc.
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        elif "already" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e))
+        else:
+            raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to reject proposal: {str(e)}"
