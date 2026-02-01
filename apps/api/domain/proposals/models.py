@@ -64,3 +64,32 @@ class Proposal(BaseModel):
             }
         }
     )
+
+
+class ProposalCreate(BaseModel):
+    """
+    Request model for creating a proposal.
+
+    Excludes project_key (from path), status (set by system),
+    created_at/applied_at (auto-generated).
+    """
+
+    id: str = Field(..., description="Unique proposal identifier")
+    target_artifact: str = Field(..., description="Path to target artifact")
+    change_type: ChangeType = Field(..., description="Type of change")
+    diff: str = Field(..., description="Unified diff of proposed changes")
+    rationale: str = Field(..., description="Justification for the change")
+    author: str = Field(default="system", description="Proposal author")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "prop-001",
+                "target_artifact": "artifacts/pmp.md",
+                "change_type": "update",
+                "diff": "--- old\n+++ new\n...",
+                "rationale": "Update project scope per stakeholder feedback",
+                "author": "user@example.com",
+            }
+        }
+    )
