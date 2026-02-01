@@ -19,6 +19,7 @@ try:
         proposals,
         commands_global,
         templates,
+        blueprints,
     )
     from .services.git_manager import GitManager
     from .services.llm_service import LLMService
@@ -35,6 +36,7 @@ except ImportError:
         proposals,
         commands_global,
         templates,
+        blueprints,
     )
     from services.git_manager import GitManager
     from services.llm_service import LLMService
@@ -106,6 +108,9 @@ app.include_router(
 app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow-v1"])
 app.include_router(skills.router, prefix="/api/v1/agents", tags=["skills-v1"])
 app.include_router(templates.router, prefix="/api/v1/templates", tags=["templates-v1"])
+app.include_router(
+    blueprints.router, prefix="/api/v1/blueprints", tags=["blueprints-v1"]
+)
 
 # ============================================================================
 # Backward Compatibility Routes (Deprecated - use /api/v1/ instead)
