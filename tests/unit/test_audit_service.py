@@ -1,6 +1,7 @@
 """
 Unit tests for AuditService.
 """
+
 import pytest
 import tempfile
 import shutil
@@ -36,7 +37,9 @@ def audit_service():
 def test_project(git_manager):
     """Create a test project."""
     project_key = "TEST001"
-    git_manager.create_project(project_key, {"key": project_key, "name": "Test Project"})
+    git_manager.create_project(
+        project_key, {"key": project_key, "name": "Test Project"}
+    )
     return project_key
 
 
@@ -249,7 +252,7 @@ class TestAuditEventFiltering:
     def test_filter_by_time_range(self, audit_service, git_manager, test_project):
         """Test filtering events by time range."""
         # Log events
-        event1 = audit_service.log_audit_event(
+        audit_service.log_audit_event(
             project_key=test_project,
             event_type="test_event",
             actor="user1",
@@ -261,7 +264,7 @@ class TestAuditEventFiltering:
             actor="user2",
             git_manager=git_manager,
         )
-        event3 = audit_service.log_audit_event(
+        audit_service.log_audit_event(
             project_key=test_project,
             event_type="test_event",
             actor="user3",
@@ -343,3 +346,168 @@ class TestResourceHashing:
         # Different content should produce different hash
         hash3 = audit_service.compute_resource_hash("different content")
         assert hash1 != hash3
+
+
+class TestEnhancedAuditRules:
+    """Test enhanced audit rules (cross-artifact validation)."""
+
+    def test_run_audit_rules_no_issues(self, audit_service, git_manager, test_project):
+        """Test running audit rules on a well-formed project."""
+        # Create minimal valid artifacts
+        project_path = git_manager.get_project_path(test_project)
+
+        # Create artifacts directory
+        artifacts_path = project_path / "artifacts"
+        artifacts_path.mkdir(parents=True, exist_ok=True)
+
+        # Create minimal valid RAID
+        raid_data = {"items": []}
+        (artifacts_path / "raid.json").write_text(json.dumps(raid_data))
+
+        # Run audit
+        result = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+        )
+
+        assert "issues" in result
+        assert "completeness_score" in result
+        assert "rule_violations" in result
+        assert isinstance(result["issues"], list)
+
+    def test_cross_reference_validation(self, audit_service, git_manager, test_project):
+        """Test cross-reference validation rule."""
+        project_path = git_manager.get_project_path(test_project)
+        artifacts_path = project_path / "artifacts"
+        artifacts_path.mkdir(parents=True, exist_ok=True)
+
+        # Create RAID with invalid cross-reference
+        raid_data = {
+            "items": [
+                {
+                    "id": "R-001",
+                    "type": "risk",
+                    "related_deliverables": ["D-001"],  # Non-existent
+                }
+            ]
+        }
+        (artifacts_path / "raid.json").write_text(json.dumps(raid_data))
+
+        # Run audit
+        result = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+            rule_set=["cross_reference"],
+        )
+
+        assert result["total_issues"] > 0
+        assert any(issue["rule"] == "cross_reference" for issue in result["issues"])
+
+    def test_date_consistency_validation(
+        self, audit_service, git_manager, test_project
+    ):
+        """Test date consistency rule."""
+        project_path = git_manager.get_project_path(test_project)
+
+        # Create metadata with project dates
+        metadata = {
+            "key": test_project,
+            "name": "Test",
+            "start_date": "2026-03-01",
+            "end_date": "2026-06-01",
+        }
+        (project_path / "metadata.json").write_text(json.dumps(metadata))
+
+        # Create artifacts with invalid milestone date
+        artifacts_path = project_path / "artifacts"
+        artifacts_path.mkdir(parents=True, exist_ok=True)
+
+        pmp_data = {
+            "milestones": [
+                {
+                    "id": "M-001",
+                    "name": "Kickoff",
+                    "due_date": "2026-02-01",  # Before project start
+                }
+            ]
+        }
+        (artifacts_path / "pmp.json").write_text(json.dumps(pmp_data))
+
+        # Run audit
+        result = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+            rule_set=["date_consistency"],
+        )
+
+        assert result["total_issues"] > 0
+        assert any(issue["rule"] == "date_consistency" for issue in result["issues"])
+
+    def test_dependency_cycle_detection(self, audit_service, git_manager, test_project):
+        """Test dependency cycle detection rule."""
+        project_path = git_manager.get_project_path(test_project)
+        artifacts_path = project_path / "artifacts"
+        artifacts_path.mkdir(parents=True, exist_ok=True)
+
+        # Create PMP with circular dependencies
+        pmp_data = {
+            "deliverables": [
+                {"id": "D-001", "name": "A", "dependencies": ["D-002"]},
+                {"id": "D-002", "name": "B", "dependencies": ["D-003"]},
+                {"id": "D-003", "name": "C", "dependencies": ["D-001"]},  # Cycle!
+            ]
+        }
+        (artifacts_path / "pmp.json").write_text(json.dumps(pmp_data))
+
+        # Run audit
+        result = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+            rule_set=["dependency_cycles"],
+        )
+
+        assert result["total_issues"] > 0
+        assert any(issue["rule"] == "dependency_cycles" for issue in result["issues"])
+
+    def test_completeness_scoring(self, audit_service, git_manager, test_project):
+        """Test completeness scoring calculation."""
+        project_path = git_manager.get_project_path(test_project)
+
+        # Create minimal metadata
+        metadata = {
+            "key": test_project,
+            "name": "Test Project",
+            "description": "A test project",
+            "start_date": "2026-03-01",
+        }
+        (project_path / "metadata.json").write_text(json.dumps(metadata))
+
+        # Calculate completeness
+        score = audit_service._calculate_completeness_score(test_project, git_manager)
+
+        assert 0 <= score <= 100
+        assert isinstance(score, float)
+
+    def test_audit_history_save_and_retrieve(
+        self, audit_service, git_manager, test_project
+    ):
+        """Test saving and retrieving audit history."""
+        # Run audit to generate result
+        result = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+        )
+
+        # Save to history
+        audit_service.save_audit_history(test_project, result, git_manager)
+
+        # Retrieve history
+        history = audit_service.get_audit_history(
+            project_key=test_project,
+            git_manager=git_manager,
+        )
+
+        assert len(history) > 0
+        assert "timestamp" in history[0]
+        assert "total_issues" in history[0]
+        assert "completeness_score" in history[0]

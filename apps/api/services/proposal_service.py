@@ -1,31 +1,45 @@
 """
 Proposal service for managing proposal lifecycle.
 Handles CRUD operations, apply, and reject logic.
+Enhanced with conflict detection for concurrent proposals.
 """
 
 import json
-import difflib
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 
 from domain.proposals.models import Proposal, ProposalStatus, ChangeType
 from services.git_manager import GitManager
 from services.audit_service import AuditService
+from services.diff_service import DiffService
+
+
+class ConflictError(Exception):
+    """Exception raised when a conflict is detected (artifact has changed)."""
+
+    pass
 
 
 class ProposalService:
-    """Service for managing proposal lifecycle with audit trail."""
+    """Service for managing proposal lifecycle with audit trail and conflict detection."""
 
-    def __init__(self, git_manager: GitManager, audit_service: AuditService):
+    def __init__(
+        self,
+        git_manager: GitManager,
+        audit_service: AuditService,
+        diff_service: Optional[DiffService] = None,
+    ):
         """
         Initialize proposal service.
 
         Args:
             git_manager: Git manager for persistence
             audit_service: Audit service for event logging
+            diff_service: Diff service for conflict detection (optional)
         """
         self.git_manager = git_manager
         self.audit_service = audit_service
+        self.diff_service = diff_service or DiffService()
 
     def create_proposal(self, proposal: Proposal) -> Proposal:
         """
@@ -143,6 +157,8 @@ class ProposalService:
         This operation is atomic - all changes (artifact update, proposal status,
         audit event) are committed in a single transaction.
 
+        Includes conflict detection for concurrent proposals.
+
         Args:
             project_key: Project key
             proposal_id: Proposal ID
@@ -152,6 +168,7 @@ class ProposalService:
 
         Raises:
             ValueError: If proposal is invalid or cannot be applied
+            ConflictError: If artifact has changed since proposal was created (409)
         """
         # Load proposal
         proposal = self.get_proposal(project_key, proposal_id)
@@ -163,8 +180,26 @@ class ProposalService:
                 f"Proposal {proposal_id} is already {proposal.status.value}"
             )
 
-        # Handle change type
+        # Conflict detection for UPDATE operations
         artifact_path = proposal.target_artifact
+        if proposal.change_type == ChangeType.UPDATE:
+            current_content = self.git_manager.read_file(project_key, artifact_path)
+            if current_content is None:
+                raise ValueError(f"Target artifact {artifact_path} not found")
+
+            # Check if artifact has changed since proposal was created
+            expected_hash = getattr(proposal, "artifact_hash", None)
+            if expected_hash:
+                current_hash = self.diff_service.compute_content_hash(current_content)
+                if current_hash != expected_hash:
+                    # Conflict detected - artifact has changed
+                    raise ConflictError(
+                        f"Artifact {artifact_path} has changed since proposal was created. "
+                        f"Expected hash: {expected_hash}, current hash: {current_hash}. "
+                        f"Please review the proposal and regenerate if necessary."
+                    )
+
+        # Handle change type
         files_to_commit = [f"proposals/{proposal_id}.json"]
 
         if proposal.change_type == ChangeType.CREATE:
@@ -311,12 +346,7 @@ class ProposalService:
         Returns:
             Unified diff string
         """
-        diff = difflib.unified_diff(
-            old_content.splitlines(keepends=True),
-            new_content.splitlines(keepends=True),
-            lineterm="",
-        )
-        return "".join(diff)
+        return self.diff_service.generate_diff(old_content, new_content)
 
     def _apply_diff(self, old_content: str, diff_str: str) -> str:
         """
@@ -332,55 +362,4 @@ class ProposalService:
         Raises:
             ValueError: If diff cannot be applied
         """
-        # For simplicity, we parse the diff and reconstruct content
-        # A production implementation might use patch libraries
-        old_lines = old_content.splitlines(keepends=True)
-        diff_lines = diff_str.splitlines()
-
-        new_lines = []
-        old_idx = 0
-        i = 0
-
-        while i < len(diff_lines):
-            line = diff_lines[i]
-
-            # Skip diff headers
-            if line.startswith("---") or line.startswith("+++"):
-                i += 1
-                continue
-
-            # Parse hunk header
-            if line.startswith("@@"):
-                # Extract old start line from @@ -start,count +start,count @@
-                parts = line.split()
-                if len(parts) >= 2:
-                    old_part = parts[1]  # -start,count
-                    old_start = (
-                        int(old_part.split(",")[0][1:]) - 1
-                    )  # Convert to 0-indexed
-
-                    # Copy unchanged lines before this hunk
-                    while old_idx < old_start:
-                        new_lines.append(old_lines[old_idx])
-                        old_idx += 1
-
-                i += 1
-                continue
-
-            # Process diff lines
-            if line.startswith(" "):  # Context line
-                new_lines.append(old_lines[old_idx])
-                old_idx += 1
-            elif line.startswith("-"):  # Removed line
-                old_idx += 1
-            elif line.startswith("+"):  # Added line
-                new_lines.append(line[1:] + "\n")
-
-            i += 1
-
-        # Append remaining unchanged lines
-        while old_idx < len(old_lines):
-            new_lines.append(old_lines[old_idx])
-            old_idx += 1
-
-        return "".join(new_lines)
+        return self.diff_service.apply_diff(old_content, diff_str)
