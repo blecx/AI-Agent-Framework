@@ -25,16 +25,16 @@ Step 2 planning is **complete and ready for implementation**. All requirements h
 
 ### Backend (blecx/AI-Agent-Framework)
 
-- [x] #69 - Step 2.01 — Template domain models
-- [x] #70 - Step 2.02 — Template service (CRUD operations)
-- [x] #71 - Step 2.03 — Template REST API endpoints
-- [x] #72 - Step 2.04 — Blueprint domain (complete: models + service + API)
-- [x] #73 - Step 2.05 — Artifact service with template rendering
-- [x] #74 - Step 2.06 — Artifact REST API endpoints
-- [x] #75 - Step 2.07 — Proposal domain models
-- [x] #76 - Step 2.08 — Proposal service (propose, apply, reject)
-- [x] #77 - Step 2.09 — Proposal REST API endpoints
-- [x] #78 - Step 2.17 — End-to-end tests for complete Step 2 workflow (backend)
+- [x] #69 - Step 2.01 — Template domain models (✅ MERGED PR #93)
+- [x] #70 - Step 2.02 — Template service (CRUD operations) (✅ MERGED PR #94)
+- [x] #71 - Step 2.03 — Template REST API endpoints (✅ MERGED PR #95)
+- [x] #72 - Step 2.04 — Blueprint domain (complete: models + service + API) (✅ MERGED PR #97)
+- [x] #73 - Step 2.05 — Artifact service with template rendering (✅ MERGED PR #98)
+- [x] #74 - Step 2.06 — Artifact REST API endpoints (✅ MERGED PR #101)
+- [x] #75 - Step 2.07 — Proposal domain models (✅ MERGED PR #99)
+- [x] #76 - Step 2.08 — Proposal service (propose, apply, reject) (✅ MERGED PR #100)
+- [ ] #77 - Step 2.09 — Proposal REST API endpoints
+- [ ] #78 - Step 2.17 — End-to-end tests for complete Step 2 workflow (backend)
 
 ### UX (blecx/AI-Agent-Framework-Client)
 
