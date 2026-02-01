@@ -6,6 +6,10 @@ extend-ignore =
     W503,
     E501
 
+# Backward compatibility facade - allow star imports
+per-file-ignores =
+    apps/api/models.py:F401,F403,F405
+
 exclude =
     .git,
     .venv,
