@@ -1,6 +1,7 @@
 """
 Utility functions for TUI client.
 """
+
 import json
 import sys
 from typing import Any, Dict
@@ -10,6 +11,7 @@ from rich.syntax import Syntax
 from rich.panel import Panel
 
 console = Console()
+error_console = Console(stderr=True)
 
 
 def print_success(message: str):
@@ -19,7 +21,7 @@ def print_success(message: str):
 
 def print_error(message: str):
     """Print error message in red."""
-    console.print(f"[red]✗[/red] {message}", file=sys.stderr)
+    error_console.print(f"[red]✗[/red] {message}")
 
 
 def print_info(message: str):
@@ -47,25 +49,25 @@ def print_table(data: list, title: str = None):
     if not data:
         print_warning("No data to display")
         return
-    
+
     # Get keys from first item
     if isinstance(data[0], dict):
         keys = list(data[0].keys())
     else:
         print_error("Cannot create table from non-dict data")
         return
-    
+
     table = Table(title=title, show_header=True, header_style="bold magenta")
-    
+
     # Add columns
     for key in keys:
         table.add_column(key.replace("_", " ").title())
-    
+
     # Add rows
     for item in data:
         row = [str(item.get(key, "")) for key in keys]
         table.add_row(*row)
-    
+
     console.print(table)
 
 
@@ -84,8 +86,8 @@ def confirm_action(message: str, default: bool = False) -> bool:
     """Prompt user for confirmation."""
     suffix = "[Y/n]" if default else "[y/N]"
     response = console.input(f"{message} {suffix}: ").strip().lower()
-    
+
     if not response:
         return default
-    
+
     return response in ["y", "yes"]
