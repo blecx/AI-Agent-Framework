@@ -45,6 +45,15 @@ ISO 21500 Project Management AI Agent - Full-stack app with FastAPI (Python 3.10
    - Ensure PR title is clear (becomes squash commit message)
    - Delete branch after merge
 
+6. **Post-Merge Cleanup (MANDATORY)**
+   - **ALWAYS run after successful merge:**
+     ```bash
+     rm -f .tmp/pr-body-<issue-number>.md .tmp/issue-<issue-number>-*.md
+     ls -la .tmp/*<issue-number>* 2>/dev/null || echo "✓ Cleanup verified"
+     ```
+   - Verify no temporary files remain for the closed issue
+   - This step is REQUIRED before marking issue as complete
+
 ### Issue Selection Order (resolve-issue-dev)
 
 **When selecting the next issue to work on, ALWAYS follow this priority order:**
@@ -464,29 +473,38 @@ cd projectDocs && git log --oneline
 rm -f .tmp/pr-body-*.md .tmp/issue-*-*.md
 ```
 
-## Workspace Cleanup
+## Workspace Cleanup (MANDATORY)
 
-After successfully merging a PR:
+**CRITICAL: This step is MANDATORY and must be executed AUTOMATICALLY after every PR merge.**
 
-1. **Delete PR-specific temporary files**:
+After successfully merging a PR, the agent MUST clean up related temporary files:
+
+1. **Automatic cleanup command** (run immediately after merge):
 
    ```bash
-   rm -f .tmp/pr-body-<issue-number>.md
-   rm -f .tmp/issue-<issue-number>-*.md
+   # Delete ALL files related to the resolved issue/PR
+   rm -f .tmp/pr-body-<issue-number>.md .tmp/pr-body-*.md .tmp/issue-<issue-number>-*.md
    ```
 
 2. **Keep concurrent work intact**:
-   - Only delete files for the merged PR/issue
+   - Only delete files for the CURRENT merged PR/issue
    - Use specific patterns to avoid deleting unrelated work
    - `.tmp/` directory is gitignored but should be kept clean
 
-3. **Example cleanup workflow**:
+3. **Complete cleanup workflow** (mandatory sequence):
    ```bash
-   # After PR #99 merged
-   gh pr merge 99 --squash --delete-branch
-   rm -f .tmp/pr-body-refactor.md .tmp/issue-99-*.md
+   # After PR merged successfully
+   gh pr merge <PR> --squash --delete-branch
+   rm -f .tmp/pr-body-<issue-number>.md .tmp/issue-<issue-number>-*.md
    git switch main && git pull
    ```
+
+4. **Verification** (always run after cleanup):
+   ```bash
+   ls -la .tmp/*<issue-number>* 2>/dev/null || echo "✓ Cleanup verified"
+   ```
+
+**The agent must NOT consider an issue "resolved" until temporary files are cleaned up.**
 
 ## Trust These Instructions
 
