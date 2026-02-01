@@ -89,7 +89,16 @@
       "label": "✅ Backend: Format & Lint",
       "type": "shell",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["-m", "black", "apps/api/", "&&", "${workspaceFolder}/.venv/bin/python", "-m", "flake8", "apps/api/"],
+      "args": [
+        "-m",
+        "black",
+        "apps/api/",
+        "&&",
+        "${workspaceFolder}/.venv/bin/python",
+        "-m",
+        "flake8",
+        "apps/api/"
+      ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -283,10 +292,7 @@
     },
     {
       "label": "✅ Validate: Full Backend",
-      "dependsOn": [
-        "✅ Backend: Format & Lint",
-        "🧪 Backend: Run Tests"
-      ],
+      "dependsOn": ["✅ Backend: Format & Lint", "🧪 Backend: Run Tests"],
       "dependsOrder": "sequence",
       "problemMatcher": [],
       "group": {
