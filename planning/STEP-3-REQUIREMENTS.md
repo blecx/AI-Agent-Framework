@@ -80,7 +80,7 @@ Step 1 and Step 2 delivered **functional capability**. Step 3 delivers **product
 
 **Mapped to issue:**
 
-- BE-17: TUI-driven deterministic E2E test suite (backend) (#TBD)
+- Issue #85: TUI-driven deterministic E2E test suite (backend)
 
 **Validation:**
 
@@ -280,7 +280,7 @@ curl -X POST .../proposals/{A}/apply # Should fail with 409 Conflict
 
 **Mapped to issue:**
 
-- UX-17: TUI-driven client E2E test suite (client) (#TBD in AI-Agent-Framework-Client)
+- Issue #110: Client E2E test suite (Web UI) - AI-Agent-Framework-Client
 
 **Validation:**
 
@@ -354,7 +354,7 @@ for i in {1..5}; do npm run test:e2e || exit 1; done
 
 **Mapped to issue:**
 
-- UX-18: Client-side validation and error handling hardening (client) (#TBD in AI-Agent-Framework-Client)
+- Issue #111: Client-side validation and error handling hardening - AI-Agent-Framework-Client
 
 **Validation:**
 
@@ -441,8 +441,8 @@ npm run lighthouse:a11y
 
 **Mapped to issues:**
 
-- BE-19: CI quality gates + documentation enforcement (backend) (#TBD)
-- UX-19: Client CI quality gates + documentation (client) (#TBD in AI-Agent-Framework-Client)
+- Issue #93: CI quality gates + documentation enforcement (backend)
+- Issue #112: Client CI quality gates + documentation - AI-Agent-Framework-Client
 
 **Validation:**
 
