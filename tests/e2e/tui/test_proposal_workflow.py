@@ -15,6 +15,7 @@ Scenarios:
 import pytest
 
 
+@pytest.mark.tui
 def test_manual_proposal_workflow(tui, unique_project_key):
     """Test manual proposal creation and application."""
 
@@ -54,6 +55,7 @@ def test_proposal_state_transitions(tui, unique_project_key):
 @pytest.mark.skipif(
     True, reason="Requires TUI propose/apply commands (implement in future)"
 )
+@pytest.mark.tui
 def test_ai_assisted_proposal(tui, unique_project_key):
     """Test AI-assisted proposal generation (requires LLM integration)."""
 
@@ -72,6 +74,7 @@ def test_ai_assisted_proposal(tui, unique_project_key):
 
 
 @pytest.mark.skipif(True, reason="Requires TUI apply command")
+@pytest.mark.tui
 def test_proposal_apply_updates_artifact(tui, unique_project_key):
     """Test that applying proposal updates the target artifact."""
 

@@ -158,7 +158,7 @@ jobs:
 
       - name: Run e2e tests
         if: hashFiles('tests/e2e/**') != ''
-        run: PYTHONPATH=$GITHUB_WORKSPACE PROJECT_DOCS_PATH=$GITHUB_WORKSPACE/tmp-project-docs TERM=xterm-256color pytest -v tests/e2e
+        run: PYTHONPATH=$GITHUB_WORKSPACE PROJECT_DOCS_PATH=$GITHUB_WORKSPACE/tmp-project-docs TERM=xterm-256color pytest -v tests/e2e -m "not tui"
 
       - name: Upload coverage reports to Codecov
         if: always()

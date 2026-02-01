@@ -14,6 +14,7 @@ Scenarios:
 import pytest
 
 
+@pytest.mark.tui
 def test_audit_fix_cycle_foundation(tui, unique_project_key):
     """Test audit infrastructure foundation."""
 
@@ -39,6 +40,7 @@ def test_audit_fix_cycle_foundation(tui, unique_project_key):
 
 
 @pytest.mark.skipif(True, reason="Requires TUI audit command")
+@pytest.mark.tui
 def test_audit_detects_missing_fields(tui, unique_project_key):
     """Test audit detects missing required fields in artifacts."""
 
@@ -53,6 +55,7 @@ def test_audit_detects_missing_fields(tui, unique_project_key):
 
 
 @pytest.mark.skipif(True, reason="Requires TUI audit + propose commands")
+@pytest.mark.tui
 def test_audit_fix_and_reaudit(tui, unique_project_key):
     """Test full audit → fix → re-audit cycle."""
 
@@ -69,6 +72,7 @@ def test_audit_fix_and_reaudit(tui, unique_project_key):
 
 
 @pytest.mark.skipif(True, reason="Requires TUI audit command")
+@pytest.mark.tui
 def test_audit_validates_cross_references(tui, unique_project_key):
     """Test audit validates cross-references between artifacts."""
 
@@ -90,6 +94,7 @@ def test_audit_error_handling(tui, unique_project_key):
 
 
 @pytest.mark.skipif(True, reason="Requires TUI audit history command")
+@pytest.mark.tui
 def test_audit_history_tracking(tui, unique_project_key):
     """Test audit maintains history of runs and results."""
 

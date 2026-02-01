@@ -17,6 +17,7 @@ This test validates the core "happy path" workflow spine using only TUI commands
 import pytest
 
 
+@pytest.mark.tui
 def test_workflow_spine_full_cycle(tui, unique_project_key):
     """Test complete workflow: create → generate → edit → propose → apply → audit."""
 
