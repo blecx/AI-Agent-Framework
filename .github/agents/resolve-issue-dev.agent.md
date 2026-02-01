@@ -349,29 +349,75 @@ For every issue, you must explicitly analyze whether the fix requires:
 
 If both repos are involved, plan and validate per-repo in the correct working directory.
 
-## Workspace cleanup (mandatory)
+## Temporary file management (mandatory)
+
+**ALWAYS use `.tmp/` directory for ALL temporary files:**
+
+### Required behavior
+
+1. **Location:** ALL temporary files MUST be written to `.tmp/` in the workspace root
+   - ✅ `.tmp/pr-body-<issue-number>.md`
+   - ✅ `.tmp/issue-<issue-number>-plan.md`
+   - ✅ `.tmp/validation-output-<issue-number>.log`
+   - ✅ `.tmp/test-script-<issue-number>.sh`
+   - ❌ NEVER use `/tmp/` (not accessible to workspace tools)
+   - ❌ NEVER use random filenames without issue tracking
+
+2. **Naming convention:**
+   - Always include issue number or identifier in filename
+   - Use descriptive names: `pr-body-<issue-number>.md`, `issue-<issue-number>-plan.md`
+   - Format: `<type>-<issue-number>-<description>.<ext>`
+
+3. **File types that MUST go to `.tmp/`:**
+   - PR body content (before creating/updating PR)
+   - Issue planning documents
+   - Validation output logs
+   - Temporary test scripts
+   - Helper scripts for automation
+   - Any intermediate data files
+
+4. **Why `.tmp/` is required:**
+   - Copilot tools can access workspace files but not `/tmp/`
+   - Multi-repo context requires workspace-relative paths
+   - Debugging and review requires access to temporary artifacts
+   - `.gitignore` excludes `.tmp/` from commits
+
+### Cleanup (mandatory after PR merge)
 
 After successfully merging a PR, clean up related temporary files:
 
 1. **Delete PR-related files in `.tmp/`**:
    - `rm -f .tmp/pr-body-<issue-number>.md`
-   - `rm -f .tmp/pr-body-refactor.md` (or similar)
    - `rm -f .tmp/issue-<issue-number>-*.md`
+   - `rm -f .tmp/*<issue-number>*.log`
+   - `rm -f .tmp/*<issue-number>*.sh`
+
 2. **Keep concurrent/unrelated files**:
    - Only delete files for the CURRENT issue/PR
    - Don't delete files from other concurrent work
-   - Pattern match carefully: `.tmp/*<issue-number>*` or `.tmp/pr-body.md` if single-issue workflow
+   - Pattern match carefully: `.tmp/*<issue-number>*`
 
 3. **Cleanup timing**:
    - Run AFTER PR merge succeeds
    - Run BEFORE switching back to main branch
-   - Example: `gh pr merge <PR> && rm -f .tmp/pr-body-*.md && git switch main`
+   - Example: `gh pr merge <PR> && rm -f .tmp/*99* && git switch main`
 
-**Example cleanup workflow:**
+**Example workflow:**
 
 ```bash
+# Create temporary files during issue resolution
+cat > .tmp/pr-body-99.md <<'EOF'
+# Summary
+...
+EOF
+
+cat > .tmp/issue-99-plan.md <<'EOF'
+## Goal
+...
+EOF
+
 # After PR #99 merged successfully
-rm -f .tmp/pr-body-refactor.md
+rm -f .tmp/pr-body-99.md
 rm -f .tmp/issue-99-*.md
 git switch main
 git pull
