@@ -35,6 +35,7 @@ def test_manual_proposal_workflow(tui, unique_project_key):
     print(f"✓ Manual proposal foundation validated for {unique_project_key}")
 
 
+@pytest.mark.tui
 def test_proposal_state_transitions(tui, unique_project_key):
     """Test proposal state transitions (pending → applied/rejected)."""
 
@@ -88,6 +89,7 @@ def test_proposal_apply_updates_artifact(tui, unique_project_key):
     pass
 
 
+@pytest.mark.tui
 def test_proposal_workflow_error_handling(tui, unique_project_key):
     """Test error handling in proposal workflow."""
 

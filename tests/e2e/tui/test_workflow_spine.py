@@ -39,6 +39,7 @@ def test_workflow_spine_full_cycle(tui, unique_project_key):
     print(f"✓ Workflow spine test passed for project {unique_project_key}")
 
 
+@pytest.mark.tui
 def test_project_lifecycle_operations(tui, unique_project_key):
     """Test basic project CRUD operations via TUI."""
 
@@ -58,6 +59,7 @@ def test_project_lifecycle_operations(tui, unique_project_key):
     assert result2.stdout == result.stdout, "List output should be deterministic"
 
 
+@pytest.mark.tui
 def test_deterministic_execution(tui, project_factory):
     """Test that TUI commands execute deterministically (same input → same output)."""
 
@@ -88,6 +90,7 @@ def test_error_handling_invalid_project_key(tui):
     )
 
 
+@pytest.mark.tui
 @pytest.mark.slow
 def test_concurrent_project_creation(tui, project_factory):
     """Test creating multiple projects in sequence (deterministic concurrency)."""
