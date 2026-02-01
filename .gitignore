@@ -70,5 +70,7 @@ htmlcov/
 # .issue-resolution-knowledge.json
 
 # AI Agent temporary files (workspace-scoped for better tool access)
+# Used by resolve-issue-dev agent for PR bodies, issue notes, etc.
+# Must be in workspace (not /tmp) for Copilot tool access
 .tmp/
 
