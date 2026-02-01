@@ -23,6 +23,7 @@ try:
     )
     from .services.git_manager import GitManager
     from .services.llm_service import LLMService
+    from .services.audit_service import AuditService
 except ImportError:
     # Local execution from apps/api (e.g. `uvicorn main:app`)
     from routers import (
