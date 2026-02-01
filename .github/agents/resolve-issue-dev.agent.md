@@ -45,6 +45,44 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Run when a specific issue number is provided (execute it directly).
 - Run when asked to pick the “next issue” (apply selection + dedupe + dependency ordering first).
 
+## Issue Selection Order (resolve-issue-dev)
+
+**When selecting the next issue to work on, ALWAYS follow this priority order:**
+
+1. **Priority 1: Backend/TUI/CLI issues**
+   - Repository: `blecx/AI-Agent-Framework`
+   - Includes: API services, domain models, CLI tools, backend tests
+   - Example issue numbers: #69-#78 (Step 2 backend)
+
+2. **Priority 2: Client/UX issues**
+   - Repository: `blecx/AI-Agent-Framework-Client`
+   - Includes: React components, UI features, client tests
+   - Example issue numbers: #102-#109 (Step 2 frontend)
+
+3. **Within each priority group:**
+   - **Select the LOWEST issue number first**
+   - Work sequentially: #69 → #70 → #71 → ... → #77 → #78
+   - Then move to client: #102 → #103 → ... → #109
+
+**Rationale:**
+
+- **Dependency management:** Frontend depends on backend APIs
+- **Parallel work:** Backend team completes work while frontend team prepares
+- **Predictability:** Everyone knows "what's next" in implementation order
+- **Quality gates:** Backend E2E tests validate before frontend development
+
+**Example (Step 2):**
+
+- Open issues: #69, #70, #72, #102, #104
+- **Correct order:** #69 → #70 → #72 → #102 → #104
+- **Why:** Work backend issues (#69, #70, #72) before client issues (#102, #104)
+
+**Edge cases:**
+
+- If all backend issues are complete, start client issues (lowest number first)
+- If all issues in both repos are complete, check for new issues or declare milestone done
+- If backend issue is blocked, skip to next backend issue (don't jump to client)
+
 ## Edges you won't cross
 
 - Don’t commit or modify `projectDocs/` (separate repo).
@@ -66,6 +104,26 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Keep services focused on single domain (SRP)
 - Use dependency injection for testability
 
+**Backend Structure (AI-Agent-Framework):**
+
+```
+apps/api/
+├── domain/              # Domain Layer (Pure Business Logic)
+│   ├── templates/       # Example: Template domain
+│   │   ├── models.py    # Entity + value objects (NO infrastructure deps)
+│   │   └── validators.py # Domain validation logic
+│   └── proposals/       # Example: Proposal domain
+│       └── models.py
+│
+├── services/            # Service Layer (Orchestration + Business Logic)
+│   ├── template_service.py    # Uses GitManager (repository pattern)
+│   └── proposal_service.py
+│
+└── routers/             # API Layer (HTTP Protocol Concerns ONLY)
+    ├── templates.py     # Thin controllers, delegate to services
+    └── proposals.py
+```
+
 ### Frontend (AI-Agent-Framework-Client)
 
 - Follow established component structure in `client/`:
@@ -77,10 +135,43 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Average file size target: < 100 lines per class/module
 - Each class/module has single, clear responsibility
 
+**Frontend Structure (AI-Agent-Framework-Client):**
+
+```
+client/src/
+├── domain/                  # Domain-Specific API Clients
+│   ├── TemplateApiClient.ts # One client per domain (SRP)
+│   └── ProposalApiClient.ts
+│
+├── components/              # UI Components by Feature
+│   ├── artifacts/
+│   │   └── ArtifactEditor.tsx  # < 100 lines target
+│   └── proposals/
+│       ├── ProposalList.tsx
+│       └── DiffViewer.tsx
+│
+└── tests/
+    └── helpers/             # Domain-Specific Test Helpers
+        └── RAIDTestHelper.ts
+```
+
+**File Size Targets (from Issue #99 Learnings):**
+
+- Domain models: < 50 lines per file
+- Service classes: < 200 lines per file (split if larger)
+- Router files: < 100 lines per file
+- Components (UX): < 100 lines per file
+
+**When to split:**
+
+- File exceeds 200 lines → extract helper classes or split by subdomain
+- Class has multiple responsibilities → refactor to SRP
+- Service orchestrates > 3 domains → consider facade pattern
+
 ### Key DDD Principles
 
 1. **Single Responsibility**: Each class/module does ONE thing
-2. **Domain Separation**: Clear boundaries between domains (Project, RAID, Workflow, etc.)
+2. **Domain Separation**: Clear boundaries between domains (Templates, Blueprints, Proposals, Artifacts, RAID, Workflow, etc.)
 3. **Type Safety**: Explicit interfaces for all domain objects
 4. **Dependency Direction**: Infrastructure depends on domain, not vice versa
 5. **Testability**: Services/clients are mockable and unit-testable
@@ -91,6 +182,40 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Does it fit existing domain structure?
 - Should it be a new domain client/service?
 - Does it maintain SRP and clear boundaries?
+
+### Issue Breakdown Best Practices (Step 2 Pattern)
+
+**For complex features (e.g., Step 2: Templates, Blueprints, Proposals, Audit):**
+
+1. **Domain-First Decomposition:**
+   - Issue 1: Domain models + validation (foundational, S size)
+   - Issue 2: Service layer with CRUD (M size)
+   - Issue 3: API endpoints (S size)
+   - Keep domains separate (Templates ≠ Blueprints ≠ Proposals)
+
+2. **Concurrency-Friendly:**
+   - Identify dependencies explicitly in issue description
+   - Mark issues that can be worked on in parallel
+   - Example: Templates domain and Proposals domain can be concurrent
+
+3. **Logical Encapsulation:**
+   - Each issue delivers one complete vertical slice (domain → service → API)
+   - OR one complete horizontal capability (all models for Step 2)
+   - Avoid partial implementations that block other work
+
+4. **Template Compliance:**
+   - Use `.github/ISSUE_TEMPLATE/feature_request.yml` format
+   - Fill ALL sections: Goal, Scope (In/Out), Acceptance Criteria, API Contract, Technical Approach, Testing Requirements, Documentation Updates
+   - For cross-repo coordination, document backend issue number and implementation order
+
+**Example (Step 2 Templates Domain):**
+
+```yaml
+- Issue BE-01: Template domain models (S, <1 day, no dependencies)
+- Issue BE-02: Template service CRUD (M, 1 day, depends on BE-01)
+- Issue BE-03: Template REST API (S, <1 day, depends on BE-02)
+- Issue UX-01: Artifact editor component (M, 2 days, depends on BE-03)
+```
 
 ## Inputs
 
