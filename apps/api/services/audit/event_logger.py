@@ -8,6 +8,8 @@ import uuid
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
+from domain.audit.constants import DEFAULT_QUERY_LIMIT
+
 
 class AuditEventLogger:
     """Service for logging and retrieving audit events."""
@@ -75,7 +77,7 @@ class AuditEventLogger:
         actor: Optional[str] = None,
         since: Optional[str] = None,
         until: Optional[str] = None,
-        limit: int = 100,
+        limit: int = DEFAULT_QUERY_LIMIT,
         offset: int = 0,
     ) -> Dict[str, Any]:
         """
