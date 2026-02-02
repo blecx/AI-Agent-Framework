@@ -23,7 +23,7 @@ async def create_project(project: ProjectCreate, request: Request):
     existing = git_manager.read_project_json(project.key)
     if existing:
         raise HTTPException(
-            status_code=409, detail=f"Project {project.key} already exists"
+            status_code=409, detail=f"Project '{project.key}' already exists"
         )
 
     # Create project
@@ -55,7 +55,9 @@ async def get_project_state(project_key: str, request: Request):
     # Get project info
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        from domain.errors import not_found
+
+        raise HTTPException(status_code=404, detail=not_found("Project", project_key))
 
     # Get artifacts
     artifacts = git_manager.list_artifacts(project_key)
@@ -98,7 +100,9 @@ async def get_project(project_key: str, request: Request):
     # Get project info
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     return ProjectInfo(**project_info)
 
@@ -111,7 +115,9 @@ async def update_project(project_key: str, update: ProjectUpdate, request: Reque
     # Check if project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Update fields that are provided
     if update.name is not None:
@@ -153,7 +159,9 @@ async def delete_project(project_key: str, request: Request):
     # Check if project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Log event before deletion
     git_manager.log_event(

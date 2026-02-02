@@ -39,7 +39,7 @@ async def get_governance_metadata(project_key: str, request: Request):
     if metadata is None:
         raise HTTPException(
             status_code=404,
-            detail=f"Governance metadata not found for project {project_key}",
+            detail=f"Governance metadata not found for project '{project_key}'",
         )
 
     return GovernanceMetadata(**metadata)
@@ -55,14 +55,16 @@ async def create_governance_metadata(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Check if metadata already exists
     existing = governance_service.get_governance_metadata(project_key, git_manager)
     if existing:
         raise HTTPException(
             status_code=409,
-            detail=f"Governance metadata already exists for project {project_key}",
+            detail=f"Governance metadata already exists for project '{project_key}'",
         )
 
     try:
@@ -86,7 +88,9 @@ async def update_governance_metadata(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         updated = governance_service.update_governance_metadata(
@@ -114,7 +118,9 @@ async def get_decisions(project_key: str, request: Request):
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     decisions = governance_service.get_decisions(project_key, git_manager)
     return [DecisionLogEntry(**d) for d in decisions]
@@ -128,11 +134,15 @@ async def get_decision(project_key: str, decision_id: str, request: Request):
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     decision = governance_service.get_decision(project_key, decision_id, git_manager)
     if decision is None:
-        raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Decision '{decision_id}' not found"
+        )
 
     return DecisionLogEntry(**decision)
 
@@ -147,7 +157,9 @@ async def create_decision(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         created = governance_service.create_decision(
@@ -170,13 +182,17 @@ async def link_decision_to_raid(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     success = governance_service.link_decision_to_raid(
         project_key, decision_id, raid_id, git_manager
     )
 
     if not success:
-        raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Decision '{decision_id}' not found"
+        )
 
     return {"message": "Decision linked to RAID item successfully"}

@@ -185,7 +185,9 @@ class ProposalService:
         if proposal.change_type == ChangeType.UPDATE:
             current_content = self.git_manager.read_file(project_key, artifact_path)
             if current_content is None:
-                raise ValueError(f"Target artifact {artifact_path} not found")
+                from domain.errors import not_found
+
+                raise ValueError(not_found("Target artifact", artifact_path))
 
             # Check if artifact has changed since proposal was created
             expected_hash = getattr(proposal, "artifact_hash", None)
@@ -215,7 +217,9 @@ class ProposalService:
             # Read existing artifact
             old_content = self.git_manager.read_file(project_key, artifact_path)
             if old_content is None:
-                raise ValueError(f"Target artifact {artifact_path} not found")
+                from domain.errors import not_found
+
+                raise ValueError(not_found("Target artifact", artifact_path))
 
             # Apply diff
             new_content = self._apply_diff(old_content, proposal.diff)

@@ -48,9 +48,7 @@ class BlueprintService:
         # Check for duplicate ID
         existing = self._get_blueprint_by_id(blueprint_create.id)
         if existing:
-            raise ValueError(
-                f"Blueprint with ID '{blueprint_create.id}' already exists"
-            )
+            raise ValueError(f"Blueprint {blueprint_create.id} already exists")
 
         # Validate referenced templates exist
         self._validate_template_references(
@@ -137,7 +135,9 @@ class BlueprintService:
         # Get existing blueprint
         existing = self._get_blueprint_by_id(blueprint_id)
         if not existing:
-            raise ValueError(f"Blueprint with ID '{blueprint_id}' not found")
+            from domain.errors import not_found
+
+            raise ValueError(not_found("Blueprint", blueprint_id))
 
         # Apply updates
         update_data = blueprint_update.model_dump(exclude_none=True)
@@ -188,7 +188,9 @@ class BlueprintService:
         # Check blueprint exists
         existing = self._get_blueprint_by_id(blueprint_id)
         if not existing:
-            raise ValueError(f"Blueprint with ID '{blueprint_id}' not found")
+            from domain.errors import not_found
+
+            raise ValueError(not_found("Blueprint", blueprint_id))
 
         # Delete file
         docs_path = Path(self.git_manager.base_path)
@@ -241,4 +243,6 @@ class BlueprintService:
         for template_id in template_ids:
             template = self.template_service.get_template(template_id)
             if not template:
-                raise ValueError(f"Referenced template '{template_id}' does not exist")
+                from domain.errors import reference_not_found
+
+                raise ValueError(reference_not_found("template", template_id))

@@ -49,7 +49,7 @@ class TemplateService:
         # Check for duplicate (defensive, should not happen with UUID)
         existing = self._get_template_by_id(template_id)
         if existing:
-            raise ValueError(f"Template with ID '{template_id}' already exists")
+            raise ValueError(f"Template {template_id} already exists")
 
         # Create template entity
         template = Template(

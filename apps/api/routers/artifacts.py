@@ -36,7 +36,9 @@ async def list_artifacts(project_key: str, request: Request):
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     artifacts = git_manager.list_artifacts(project_key)
 
@@ -57,13 +59,15 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Read artifact
     content = git_manager.read_file(project_key, artifact_path)
     if content is None:
         raise HTTPException(
-            status_code=404, detail=f"Artifact {artifact_path} not found"
+            status_code=404, detail=f"Artifact '{artifact_path}' not found"
         )
 
     # Return as markdown or plain text
@@ -109,7 +113,9 @@ async def generate_artifact(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Initialize services
     template_service = TemplateService(git_manager)
@@ -166,7 +172,9 @@ async def generate_from_blueprint(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Initialize services
     template_service = TemplateService(git_manager)

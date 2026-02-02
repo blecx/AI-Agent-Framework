@@ -3,8 +3,14 @@ Unit tests for Template domain models.
 """
 
 import pytest
+import sys
+import os
 from pydantic import ValidationError
-from apps.api.domain.templates.models import Template, TemplateCreate, TemplateUpdate
+
+# Add apps/api to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../apps/api"))
+
+from domain.templates.models import Template, TemplateCreate, TemplateUpdate
 
 
 class TestTemplateModel:
@@ -56,7 +62,7 @@ class TestTemplateModel:
             )
 
         error = exc_info.value.errors()[0]
-        assert "artifact_type must be one of" in str(error["ctx"]["error"])
+        assert "Invalid artifact_type:" in str(error["ctx"]["error"])
         assert "invalid_type" in str(error["ctx"]["error"])
 
     def test_template_allowed_artifact_types(self):

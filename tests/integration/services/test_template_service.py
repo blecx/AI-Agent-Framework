@@ -117,7 +117,7 @@ class TestTemplateServiceCreate:
             artifact_type="invalid_type",
         )
 
-        with pytest.raises(ValueError, match="artifact_type must be one of"):
+        with pytest.raises(ValueError, match="Invalid artifact_type:"):
             # Expect ValueError from domain model validation
             template_service.create_template(invalid_template)
 
@@ -131,7 +131,7 @@ class TestTemplateServiceCreate:
             artifact_type="pmp",
         )
 
-        with pytest.raises(ValueError, match="schema must have 'type' field"):
+        with pytest.raises(ValueError, match="Invalid schema:"):
             template_service.create_template(invalid_template)
 
 

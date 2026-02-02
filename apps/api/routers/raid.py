@@ -81,7 +81,9 @@ async def get_raid_item(project_key: str, raid_id: str, request: Request):
 
     item = raid_service.get_raid_item(project_key, raid_id, git_manager)
     if item is None:
-        raise HTTPException(status_code=404, detail=f"RAID item {raid_id} not found")
+        from domain.errors import not_found
+
+        raise HTTPException(status_code=404, detail=not_found("RAID item", raid_id))
 
     return RAIDItem(**item)
 
