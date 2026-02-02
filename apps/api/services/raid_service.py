@@ -125,7 +125,9 @@ class RAIDService:
                 break
 
         if updated_item is None:
-            raise ValueError(f"RAID item {raid_id} not found")
+            from domain.errors import not_found
+
+            raise ValueError(not_found("RAID item", raid_id))
 
         # Write updated RAID register
         content = json.dumps({"items": items}, indent=2)

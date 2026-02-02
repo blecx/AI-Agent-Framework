@@ -46,7 +46,9 @@ class CommandService:
         # Get project info
         project_info = git_manager.read_project_json(project_key)
         if not project_info:
-            raise ValueError(f"Project {project_key} not found")
+            from domain.errors import not_found
+
+            raise ValueError(not_found("Project", project_key))
 
         # Delegate to appropriate command handler (Strategy pattern)
         if command not in self.handlers:
@@ -72,7 +74,9 @@ class CommandService:
     ) -> Dict[str, Any]:
         """Apply a previously proposed command."""
         if proposal_id not in self.proposals:
-            raise ValueError(f"Proposal {proposal_id} not found")
+            from domain.errors import not_found
+
+            raise ValueError(not_found("Proposal", proposal_id))
 
         proposal = self.proposals[proposal_id]
         project_key = proposal["project_key"]

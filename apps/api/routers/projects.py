@@ -55,7 +55,9 @@ async def get_project_state(project_key: str, request: Request):
     # Get project info
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        from domain.errors import not_found
+
+        raise HTTPException(status_code=404, detail=not_found("Project", project_key))
 
     # Get artifacts
     artifacts = git_manager.list_artifacts(project_key)

@@ -39,7 +39,13 @@ class Template(BaseModel):
         """
         allowed_types = {"pmp", "raid", "blueprint", "proposal", "report"}
         if v not in allowed_types:
-            raise ValueError(f"artifact_type must be one of {allowed_types}, got '{v}'")
+            from domain.errors import invalid_field
+
+            raise ValueError(
+                invalid_field(
+                    "artifact_type", f"must be one of {allowed_types}, got '{v}'"
+                )
+            )
         return v
 
     @field_validator("schema")
@@ -58,9 +64,13 @@ class Template(BaseModel):
             ValueError: If schema is not a dict or missing 'type' field
         """
         if not isinstance(v, dict):
-            raise ValueError("schema must be a dictionary")
+            from domain.errors import invalid_field
+
+            raise ValueError(invalid_field("schema", "must be a dictionary"))
         if "type" not in v:
-            raise ValueError("schema must have 'type' field")
+            from domain.errors import invalid_field
+
+            raise ValueError(invalid_field("schema", "missing required field 'type'"))
         return v
 
 
