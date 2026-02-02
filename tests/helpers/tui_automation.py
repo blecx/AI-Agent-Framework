@@ -9,7 +9,7 @@ import subprocess
 import sys
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Callable
 import time
 import re
 
@@ -128,7 +128,7 @@ class TUIAutomation:
 
     def wait_for_condition(
         self,
-        check_fn: callable,
+        check_fn: Callable[[], Any],
         timeout: float = 10.0,
         interval: float = 0.5,
         error_msg: str = "Condition not met",
