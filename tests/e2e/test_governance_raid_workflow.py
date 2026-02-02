@@ -219,7 +219,7 @@ class TestCompleteGovernanceWorkflow:
             f"/projects/E2E_GOV/governance/decisions/{decision1_id}/link-raid/{raid1_id}"
         )
         assert link_response1.status_code == 200
-        
+
         # Link from RAID side (for bidirectional traceability)
         link_response2 = client.post(
             f"/projects/E2E_GOV/raid/{raid1_id}/link-decision/{decision1_id}"
@@ -417,9 +417,7 @@ class TestCompleteRAIDWorkflow:
         assert critical_data["total"] >= 1
 
         # Filter by owner
-        owner_response = client.get(
-            "/projects/E2E_RAID/raid?owner=Integration%20Lead"
-        )
+        owner_response = client.get("/projects/E2E_RAID/raid?owner=Integration%20Lead")
         assert owner_response.status_code == 200
         owner_data = owner_response.json()
         assert owner_data["total"] == 2  # assumption and dependency
@@ -446,7 +444,7 @@ class TestCompleteRAIDWorkflow:
             f"/projects/E2E_RAID/raid/{risk_id}/link-decision/{decision_id}"
         )
         assert link_response1.status_code == 200
-        
+
         link_response2 = client.post(
             f"/projects/E2E_RAID/governance/decisions/{decision_id}/link-raid/{risk_id}"
         )
@@ -537,9 +535,7 @@ class TestIntegratedGovernanceRAIDWorkflow:
         client.post(
             f"/projects/E2E_INT/governance/decisions/{decision1_id}/link-raid/{risk1_id}"
         )
-        client.post(
-            f"/projects/E2E_INT/raid/{risk1_id}/link-decision/{decision1_id}"
-        )
+        client.post(f"/projects/E2E_INT/raid/{risk1_id}/link-decision/{decision1_id}")
 
         # Step 5: Track progress - risk mitigated
         risk_update = {
@@ -621,9 +617,7 @@ class TestRAIDFilteringAndQuerying:
     def test_complex_raid_filtering(self, client):
         """Test complex filtering scenarios for RAID items."""
         # Create project
-        client.post(
-            "/projects", json={"key": "E2E_FLT", "name": "E2E Filtering Test"}
-        )
+        client.post("/projects", json={"key": "E2E_FLT", "name": "E2E Filtering Test"})
 
         # Create diverse RAID items for filtering
         raid_items = [
@@ -696,9 +690,7 @@ class TestRAIDFilteringAndQuerying:
         assert critical_items["total"] == 2
 
         # Multiple filters - type=risk AND owner=Alice
-        alice_risks = client.get(
-            "/projects/E2E_FLT/raid?type=risk&owner=Alice"
-        ).json()
+        alice_risks = client.get("/projects/E2E_FLT/raid?type=risk&owner=Alice").json()
         assert alice_risks["total"] == 1
         assert alice_risks["items"][0]["title"] == "Risk A"
 

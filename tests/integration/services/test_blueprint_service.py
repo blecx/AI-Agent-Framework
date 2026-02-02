@@ -50,7 +50,7 @@ class TestBlueprintServiceCRUD:
             description="A test blueprint",
             required_templates=[],
             optional_templates=[],
-            workflow_requirements=["initiating"]
+            workflow_requirements=["initiating"],
         )
 
         blueprint = blueprint_service.create_blueprint(blueprint_create)
@@ -62,18 +62,14 @@ class TestBlueprintServiceCRUD:
     def test_create_blueprint_duplicate_id(self, blueprint_service):
         """Test creating blueprint with duplicate ID fails."""
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Test Blueprint",
-            description="First blueprint"
+            id="test-bp", name="Test Blueprint", description="First blueprint"
         )
 
         blueprint_service.create_blueprint(blueprint_create)
 
         # Try to create duplicate
         duplicate = BlueprintCreate(
-            id="test-bp",
-            name="Duplicate Blueprint",
-            description="Should fail"
+            id="test-bp", name="Duplicate Blueprint", description="Should fail"
         )
 
         with pytest.raises(ValueError) as exc_info:
@@ -89,7 +85,7 @@ class TestBlueprintServiceCRUD:
             id="test-bp",
             name="Test Blueprint",
             description="Blueprint with invalid template",
-            required_templates=["non-existent-template"]
+            required_templates=["non-existent-template"],
         )
 
         with pytest.raises(ValueError) as exc_info:
@@ -108,7 +104,7 @@ class TestBlueprintServiceCRUD:
             schema={"type": "object"},
             markdown_template="# Test",
             artifact_type="pmp",
-            version="1.0.0"
+            version="1.0.0",
         )
         template = template_service.create_template(template_create)
 
@@ -117,7 +113,7 @@ class TestBlueprintServiceCRUD:
             id="test-bp",
             name="Test Blueprint",
             description="Blueprint with valid template",
-            required_templates=[template.id]
+            required_templates=[template.id],
         )
 
         blueprint = blueprint_service.create_blueprint(blueprint_create)
@@ -126,9 +122,7 @@ class TestBlueprintServiceCRUD:
     def test_get_blueprint_success(self, blueprint_service):
         """Test retrieving a blueprint by ID."""
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Test Blueprint",
-            description="A test blueprint"
+            id="test-bp", name="Test Blueprint", description="A test blueprint"
         )
 
         blueprint_service.create_blueprint(blueprint_create)
@@ -153,9 +147,7 @@ class TestBlueprintServiceCRUD:
         # Create multiple blueprints
         for i in range(3):
             blueprint_create = BlueprintCreate(
-                id=f"bp-{i}",
-                name=f"Blueprint {i}",
-                description=f"Blueprint number {i}"
+                id=f"bp-{i}", name=f"Blueprint {i}", description=f"Blueprint number {i}"
             )
             blueprint_service.create_blueprint(blueprint_create)
 
@@ -167,16 +159,13 @@ class TestBlueprintServiceCRUD:
         """Test updating a blueprint."""
         # Create blueprint
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Original Name",
-            description="Original description"
+            id="test-bp", name="Original Name", description="Original description"
         )
         blueprint_service.create_blueprint(blueprint_create)
 
         # Update it
         blueprint_update = BlueprintUpdate(
-            name="Updated Name",
-            description="Updated description"
+            name="Updated Name", description="Updated description"
         )
         updated = blueprint_service.update_blueprint("test-bp", blueprint_update)
 
@@ -192,9 +181,7 @@ class TestBlueprintServiceCRUD:
 
         assert "not found" in str(exc_info.value)
 
-    def test_update_blueprint_templates(
-        self, blueprint_service, template_service
-    ):
+    def test_update_blueprint_templates(self, blueprint_service, template_service):
         """Test updating blueprint templates."""
         # Create template
         template_create = TemplateCreate(
@@ -203,22 +190,18 @@ class TestBlueprintServiceCRUD:
             schema={"type": "object"},
             markdown_template="# Test",
             artifact_type="pmp",
-            version="1.0.0"
+            version="1.0.0",
         )
         template = template_service.create_template(template_create)
 
         # Create blueprint
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Test Blueprint",
-            description="Test"
+            id="test-bp", name="Test Blueprint", description="Test"
         )
         blueprint_service.create_blueprint(blueprint_create)
 
         # Update with template reference
-        blueprint_update = BlueprintUpdate(
-            required_templates=[template.id]
-        )
+        blueprint_update = BlueprintUpdate(required_templates=[template.id])
         updated = blueprint_service.update_blueprint("test-bp", blueprint_update)
 
         assert template.id in updated.required_templates
@@ -227,9 +210,7 @@ class TestBlueprintServiceCRUD:
         """Test deleting a blueprint."""
         # Create blueprint
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Test Blueprint",
-            description="To be deleted"
+            id="test-bp", name="Test Blueprint", description="To be deleted"
         )
         blueprint_service.create_blueprint(blueprint_create)
 

@@ -1,6 +1,7 @@
 """
 Unit tests for WorkflowService.
 """
+
 import pytest
 import tempfile
 import shutil
@@ -35,14 +36,18 @@ def workflow_service():
 def test_project(git_manager):
     """Create a test project."""
     project_key = "TEST001"
-    git_manager.create_project(project_key, {"key": project_key, "name": "Test Project"})
+    git_manager.create_project(
+        project_key, {"key": project_key, "name": "Test Project"}
+    )
     return project_key
 
 
 class TestWorkflowStateInitialization:
     """Test workflow state initialization."""
 
-    def test_initialize_workflow_state(self, workflow_service, git_manager, test_project):
+    def test_initialize_workflow_state(
+        self, workflow_service, git_manager, test_project
+    ):
         """Test initializing workflow state for a new project."""
         state = workflow_service.initialize_workflow_state(test_project, git_manager)
 
@@ -107,7 +112,9 @@ class TestStateTransitionValidation:
 
     def test_is_valid_transition_invalid_state(self, workflow_service):
         """Test transition with invalid state."""
-        assert workflow_service.is_valid_transition("invalid_state", "planning") is False
+        assert (
+            workflow_service.is_valid_transition("invalid_state", "planning") is False
+        )
 
 
 class TestStateTransitions:
@@ -258,9 +265,7 @@ class TestAllowedTransitions:
 class TestWorkflowStatePersistence:
     """Test workflow state persistence."""
 
-    def test_state_persists_across_service_instances(
-        self, git_manager, test_project
-    ):
+    def test_state_persists_across_service_instances(self, git_manager, test_project):
         """Test that state persists when service is recreated."""
         # Create service and initialize state
         service1 = WorkflowService()

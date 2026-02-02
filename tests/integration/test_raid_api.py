@@ -1,6 +1,7 @@
 """
 Integration tests for RAID API endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -27,11 +28,11 @@ def client(temp_project_dir):
     """Create a test client with temporary project directory."""
     # Override the PROJECT_DOCS_PATH environment variable
     os.environ["PROJECT_DOCS_PATH"] = temp_project_dir
-    
+
     # Create a new app instance for this test to avoid state sharing
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    
+
     test_app = FastAPI(title="Test App")
     test_app.add_middleware(
         CORSMiddleware,
@@ -40,23 +41,35 @@ def client(temp_project_dir):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Import and register routers
     from routers import projects, commands, artifacts, governance, raid
+
     test_app.include_router(projects.router, prefix="/projects", tags=["projects"])
-    test_app.include_router(commands.router, prefix="/projects/{project_key}/commands", tags=["commands"])
-    test_app.include_router(artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"])
-    test_app.include_router(governance.router, prefix="/projects/{project_key}/governance", tags=["governance"])
-    test_app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid"])
-    
+    test_app.include_router(
+        commands.router, prefix="/projects/{project_key}/commands", tags=["commands"]
+    )
+    test_app.include_router(
+        artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"]
+    )
+    test_app.include_router(
+        governance.router,
+        prefix="/projects/{project_key}/governance",
+        tags=["governance"],
+    )
+    test_app.include_router(
+        raid.router, prefix="/projects/{project_key}/raid", tags=["raid"]
+    )
+
     # Initialize services
     from services.git_manager import GitManager
     from services.llm_service import LLMService
+
     git_manager = GitManager(temp_project_dir)
     git_manager.ensure_repository()
     test_app.state.git_manager = git_manager
     test_app.state.llm_service = LLMService()
-    
+
     with TestClient(test_app) as test_client:
         yield test_client
 
@@ -64,10 +77,7 @@ def client(temp_project_dir):
 @pytest.fixture
 def test_project(client):
     """Create a test project."""
-    response = client.post(
-        "/projects",
-        json={"key": "TEST001", "name": "Test Project"}
-    )
+    response = client.post("/projects", json={"key": "TEST001", "name": "Test Project"})
     assert response.status_code == 201
     return response.json()
 
@@ -87,7 +97,7 @@ class TestRAIDItemCRUDAPI:
             "likelihood": "possible",
             "mitigation_plan": "Test mitigation",
             "next_actions": ["Action 1", "Action 2"],
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
 
         response = client.post("/projects/TEST001/raid", json=item)
@@ -109,7 +119,7 @@ class TestRAIDItemCRUDAPI:
                 "title": f"Item {i}",
                 "description": f"Description {i}",
                 "owner": "Test Owner",
-                "created_by": "test_user"
+                "created_by": "test_user",
             }
             client.post("/projects/TEST001/raid", json=item)
 
@@ -129,7 +139,7 @@ class TestRAIDItemCRUDAPI:
             "title": "Specific Issue",
             "description": "Test description",
             "owner": "Test Owner",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         create_response = client.post("/projects/TEST001/raid", json=item)
         item_id = create_response.json()["id"]
@@ -150,7 +160,7 @@ class TestRAIDItemCRUDAPI:
             "title": "Original Title",
             "description": "Original description",
             "owner": "Original Owner",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         create_response = client.post("/projects/TEST001/raid", json=item)
         item_id = create_response.json()["id"]
@@ -160,7 +170,7 @@ class TestRAIDItemCRUDAPI:
             "title": "Updated Title",
             "status": "in_progress",
             "next_actions": ["New Action"],
-            "updated_by": "another_user"
+            "updated_by": "another_user",
         }
         response = client.put(f"/projects/TEST001/raid/{item_id}", json=updates)
 
@@ -178,7 +188,7 @@ class TestRAIDItemCRUDAPI:
             "title": "To Be Deleted",
             "description": "Test description",
             "owner": "Test Owner",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         create_response = client.post("/projects/TEST001/raid", json=item)
         item_id = create_response.json()["id"]
@@ -201,21 +211,39 @@ class TestRAIDItemFilteringAPI:
         """Test filtering RAID items by type via API."""
         # Create a fresh project for this test
         client.post("/projects", json={"key": "FILT001", "name": "Filter Test 1"})
-        
+
         # Create test data
-        client.post("/projects/FILT001/raid", json={
-            "type": "risk", "title": "Risk 1", "description": "Risk 1",
-            "owner": "Alice", "created_by": "test_user"
-        })
-        client.post("/projects/FILT001/raid", json={
-            "type": "issue", "title": "Issue 1", "description": "Issue 1",
-            "owner": "Bob", "created_by": "test_user"
-        })
-        client.post("/projects/FILT001/raid", json={
-            "type": "risk", "title": "Risk 2", "description": "Risk 2",
-            "owner": "Alice", "created_by": "test_user"
-        })
-        
+        client.post(
+            "/projects/FILT001/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 1",
+                "description": "Risk 1",
+                "owner": "Alice",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT001/raid",
+            json={
+                "type": "issue",
+                "title": "Issue 1",
+                "description": "Issue 1",
+                "owner": "Bob",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT001/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 2",
+                "description": "Risk 2",
+                "owner": "Alice",
+                "created_by": "test_user",
+            },
+        )
+
         response = client.get("/projects/FILT001/raid?type=risk")
 
         assert response.status_code == 200
@@ -227,21 +255,42 @@ class TestRAIDItemFilteringAPI:
         """Test filtering RAID items by status via API."""
         # Create a fresh project for this test
         client.post("/projects", json={"key": "FILT002", "name": "Filter Test 2"})
-        
+
         # Create test data with different statuses
-        client.post("/projects/FILT002/raid", json={
-            "type": "risk", "title": "Risk 1", "description": "Risk 1",
-            "owner": "Alice", "status": "open", "created_by": "test_user"
-        })
-        client.post("/projects/FILT002/raid", json={
-            "type": "issue", "title": "Issue 1", "description": "Issue 1",
-            "owner": "Bob", "status": "in_progress", "created_by": "test_user"
-        })
-        client.post("/projects/FILT002/raid", json={
-            "type": "risk", "title": "Risk 2", "description": "Risk 2",
-            "owner": "Alice", "status": "closed", "created_by": "test_user"
-        })
-        
+        client.post(
+            "/projects/FILT002/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 1",
+                "description": "Risk 1",
+                "owner": "Alice",
+                "status": "open",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT002/raid",
+            json={
+                "type": "issue",
+                "title": "Issue 1",
+                "description": "Issue 1",
+                "owner": "Bob",
+                "status": "in_progress",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT002/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 2",
+                "description": "Risk 2",
+                "owner": "Alice",
+                "status": "closed",
+                "created_by": "test_user",
+            },
+        )
+
         response = client.get("/projects/FILT002/raid?status=open")
 
         assert response.status_code == 200
@@ -253,21 +302,39 @@ class TestRAIDItemFilteringAPI:
         """Test filtering RAID items by owner via API."""
         # Create a fresh project for this test
         client.post("/projects", json={"key": "FILT003", "name": "Filter Test 3"})
-        
+
         # Create test data
-        client.post("/projects/FILT003/raid", json={
-            "type": "risk", "title": "Risk 1", "description": "Risk 1",
-            "owner": "Alice", "created_by": "test_user"
-        })
-        client.post("/projects/FILT003/raid", json={
-            "type": "issue", "title": "Issue 1", "description": "Issue 1",
-            "owner": "Bob", "created_by": "test_user"
-        })
-        client.post("/projects/FILT003/raid", json={
-            "type": "risk", "title": "Risk 2", "description": "Risk 2",
-            "owner": "Alice", "created_by": "test_user"
-        })
-        
+        client.post(
+            "/projects/FILT003/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 1",
+                "description": "Risk 1",
+                "owner": "Alice",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT003/raid",
+            json={
+                "type": "issue",
+                "title": "Issue 1",
+                "description": "Issue 1",
+                "owner": "Bob",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT003/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 2",
+                "description": "Risk 2",
+                "owner": "Alice",
+                "created_by": "test_user",
+            },
+        )
+
         response = client.get("/projects/FILT003/raid?owner=Alice")
 
         assert response.status_code == 200
@@ -279,17 +346,31 @@ class TestRAIDItemFilteringAPI:
         """Test filtering RAID items by priority via API."""
         # Create a fresh project for this test
         client.post("/projects", json={"key": "FILT004", "name": "Filter Test 4"})
-        
+
         # Create test data with different priorities
-        client.post("/projects/FILT004/raid", json={
-            "type": "risk", "title": "Risk 1", "description": "Risk 1",
-            "owner": "Alice", "priority": "high", "created_by": "test_user"
-        })
-        client.post("/projects/FILT004/raid", json={
-            "type": "issue", "title": "Issue 1", "description": "Issue 1",
-            "owner": "Bob", "priority": "medium", "created_by": "test_user"
-        })
-        
+        client.post(
+            "/projects/FILT004/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 1",
+                "description": "Risk 1",
+                "owner": "Alice",
+                "priority": "high",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT004/raid",
+            json={
+                "type": "issue",
+                "title": "Issue 1",
+                "description": "Issue 1",
+                "owner": "Bob",
+                "priority": "medium",
+                "created_by": "test_user",
+            },
+        )
+
         response = client.get("/projects/FILT004/raid?priority=high")
 
         assert response.status_code == 200
@@ -301,22 +382,45 @@ class TestRAIDItemFilteringAPI:
         """Test filtering with multiple criteria via API."""
         # Create a fresh project for this test
         client.post("/projects", json={"key": "FILT005", "name": "Filter Test 5"})
-        
+
         # Create test data
-        client.post("/projects/FILT005/raid", json={
-            "type": "risk", "title": "Risk 1", "description": "Risk 1",
-            "owner": "Alice", "status": "open", "created_by": "test_user"
-        })
-        client.post("/projects/FILT005/raid", json={
-            "type": "risk", "title": "Risk 2", "description": "Risk 2",
-            "owner": "Alice", "status": "closed", "created_by": "test_user"
-        })
-        client.post("/projects/FILT005/raid", json={
-            "type": "issue", "title": "Issue 1", "description": "Issue 1",
-            "owner": "Bob", "status": "open", "created_by": "test_user"
-        })
-        
-        response = client.get("/projects/FILT005/raid?type=risk&owner=Alice&status=open")
+        client.post(
+            "/projects/FILT005/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 1",
+                "description": "Risk 1",
+                "owner": "Alice",
+                "status": "open",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT005/raid",
+            json={
+                "type": "risk",
+                "title": "Risk 2",
+                "description": "Risk 2",
+                "owner": "Alice",
+                "status": "closed",
+                "created_by": "test_user",
+            },
+        )
+        client.post(
+            "/projects/FILT005/raid",
+            json={
+                "type": "issue",
+                "title": "Issue 1",
+                "description": "Issue 1",
+                "owner": "Bob",
+                "status": "open",
+                "created_by": "test_user",
+            },
+        )
+
+        response = client.get(
+            "/projects/FILT005/raid?type=risk&owner=Alice&status=open"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -338,7 +442,7 @@ class TestRAIDTraceabilityAPI:
             "title": "Test Risk",
             "description": "Test description",
             "owner": "Test Owner",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         raid_response = client.post("/projects/TEST001/raid", json=item)
         raid_id = raid_response.json()["id"]
@@ -367,7 +471,7 @@ class TestRAIDTraceabilityAPI:
                 "title": f"Risk {i}",
                 "description": f"Description {i}",
                 "owner": "Test Owner",
-                "created_by": "test_user"
+                "created_by": "test_user",
             }
             if i < 2:  # Link first two items
                 item["linked_decisions"] = [decision_id]
@@ -426,7 +530,7 @@ class TestRAIDValidation:
             "type": "invalid_type",
             "title": "Test",
             "description": "Test",
-            "owner": "Test Owner"
+            "owner": "Test Owner",
         }
         response = client.post("/projects/TEST001/raid", json=item)
         assert response.status_code == 422

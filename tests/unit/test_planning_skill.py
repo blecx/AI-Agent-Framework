@@ -1,6 +1,7 @@
 """
 Unit tests for Planning Skill.
 """
+
 import pytest
 import tempfile
 import shutil

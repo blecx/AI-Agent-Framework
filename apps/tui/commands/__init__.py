@@ -1,6 +1,7 @@
 """
 Command modules for TUI CLI.
 """
+
 from .projects import projects_group
 from .propose import propose_group
 from .artifacts import artifacts_group

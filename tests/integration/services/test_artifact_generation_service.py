@@ -121,7 +121,7 @@ def test_blueprint(blueprint_service, pmp_template, raid_template):
         id="test-blueprint-001",
         name="Standard Project Blueprint",
         description="Standard set of project artifacts",
-        required_templates=[pmp_template.id, raid_template.id]
+        required_templates=[pmp_template.id, raid_template.id],
     )
     return blueprint_service.create_blueprint(blueprint_create)
 
@@ -311,7 +311,7 @@ class TestGenerateFromBlueprint:
         """Test that blueprint generation continues after partial failure."""
         # This test is adjusted because BlueprintService validates templates at creation
         # Instead, we test that generate_from_template catches errors gracefully
-        
+
         # Artificially create a scenario where template exists but fails during generation
         # by passing invalid context that causes validation error
         context_missing_required = {
@@ -322,9 +322,7 @@ class TestGenerateFromBlueprint:
         # This should raise ValidationError (caught in generate_from_blueprint)
         try:
             artifact_service.generate_from_template(
-                pmp_template.id,
-                test_project_key,
-                context_missing_required
+                pmp_template.id, test_project_key, context_missing_required
             )
             assert False, "Should have raised ValidationError"
         except ValidationError:

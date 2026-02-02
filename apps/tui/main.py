@@ -19,23 +19,23 @@ from commands.config import config_group
 def cli():
     """
     ISO 21500 AI-Agent Framework - TUI Client
-    
+
     A command-line interface for managing ISO 21500 projects via the AI Agent API.
-    
+
     \b
     Quick Start:
       # Create a project
       python main.py projects create --key PROJ001 --name "My Project"
-      
+
       # List projects
       python main.py projects list
-      
+
       # Propose a command
       python main.py commands propose --project PROJ001 --command assess_gaps
-      
+
       # Apply a proposal
       python main.py commands apply --project PROJ001 --proposal <proposal-id>
-    
+
     \b
     Environment Variables:
       API_BASE_URL    API endpoint (default: http://localhost:8000)

@@ -1,6 +1,7 @@
 """
 Unit tests for Git Manager Service.
 """
+
 import pytest
 import tempfile
 import shutil

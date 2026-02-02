@@ -3,7 +3,11 @@
 import pytest
 from pydantic import ValidationError
 
-from apps.api.domain.blueprints.models import Blueprint, BlueprintCreate, BlueprintUpdate
+from apps.api.domain.blueprints.models import (
+    Blueprint,
+    BlueprintCreate,
+    BlueprintUpdate,
+)
 
 
 class TestBlueprintModel:
@@ -12,9 +16,7 @@ class TestBlueprintModel:
     def test_blueprint_creation_minimal(self):
         """Test creating a blueprint with minimal fields."""
         blueprint = Blueprint(
-            id="test-bp",
-            name="Test Blueprint",
-            description="A test blueprint"
+            id="test-bp", name="Test Blueprint", description="A test blueprint"
         )
 
         assert blueprint.id == "test-bp"
@@ -32,7 +34,7 @@ class TestBlueprintModel:
             description="Minimal ISO 21500 artifact set",
             required_templates=["pmp-v1", "raid-v1"],
             optional_templates=["schedule-v1"],
-            workflow_requirements=["initiating", "planning", "executing"]
+            workflow_requirements=["initiating", "planning", "executing"],
         )
 
         assert blueprint.id == "iso21500-minimal"
@@ -57,9 +59,7 @@ class TestBlueprintCreateModel:
     def test_blueprint_create_minimal(self):
         """Test creating blueprint request with minimal fields."""
         blueprint_create = BlueprintCreate(
-            id="test-bp",
-            name="Test Blueprint",
-            description="A test blueprint"
+            id="test-bp", name="Test Blueprint", description="A test blueprint"
         )
 
         assert blueprint_create.id == "test-bp"
@@ -74,7 +74,7 @@ class TestBlueprintCreateModel:
             description="Minimal ISO 21500 artifact set",
             required_templates=["pmp-v1", "raid-v1"],
             optional_templates=["schedule-v1"],
-            workflow_requirements=["initiating", "planning"]
+            workflow_requirements=["initiating", "planning"],
         )
 
         assert len(blueprint_create.required_templates) == 2
