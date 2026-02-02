@@ -8,6 +8,8 @@ Following DDD principles: domain layer, SRP, no infrastructure dependencies.
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Dict, Any, Optional
 
+from domain.shared.validators import validate_enum_value, validate_dict_structure
+
 
 class Template(BaseModel):
     """Template domain entity."""
@@ -38,14 +40,7 @@ class Template(BaseModel):
             ValueError: If artifact_type not in allowed set
         """
         allowed_types = {"pmp", "raid", "blueprint", "proposal", "report"}
-        if v not in allowed_types:
-            from domain.errors import invalid_field
-
-            raise ValueError(
-                invalid_field(
-                    "artifact_type", f"must be one of {allowed_types}, got '{v}'"
-                )
-            )
+        validate_enum_value(v, allowed_types, "artifact_type")
         return v
 
     @field_validator("schema")
@@ -63,14 +58,7 @@ class Template(BaseModel):
         Raises:
             ValueError: If schema is not a dict or missing 'type' field
         """
-        if not isinstance(v, dict):
-            from domain.errors import invalid_field
-
-            raise ValueError(invalid_field("schema", "must be a dictionary"))
-        if "type" not in v:
-            from domain.errors import invalid_field
-
-            raise ValueError(invalid_field("schema", "missing required field 'type'"))
+        validate_dict_structure(v, required_keys=["type"], field_name="schema")
         return v
 
 
