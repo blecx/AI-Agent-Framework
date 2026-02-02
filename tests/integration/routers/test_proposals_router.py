@@ -38,7 +38,9 @@ def client(temp_project_docs):
 
     # Debug: Check if proposals router is registered
     print(f"App routes count: {len(app.routes)}")
-    proposal_routes = [r.path for r in app.routes if hasattr(r, 'path') and 'proposal' in r.path]
+    proposal_routes = [
+        r.path for r in app.routes if hasattr(r, "path") and "proposal" in r.path
+    ]
     print(f"Proposal routes: {proposal_routes}")
 
     return TestClient(app)
@@ -95,11 +97,11 @@ def sample_proposal_create():
 def test_create_proposal_success(client, test_project, sample_proposal_create):
     """Test successful proposal creation."""
     project_key = test_project["key"]
-    
+
     # Debug: list all routes
-    routes = [r.path for r in client.app.routes if hasattr(r, 'path')]
+    routes = [r.path for r in client.app.routes if hasattr(r, "path")]
     print(f"All routes: {[r for r in routes if 'proposal' in r]}")
-    
+
     response = client.post(
         f"/api/v1/projects/{project_key}/proposals", json=sample_proposal_create
     )

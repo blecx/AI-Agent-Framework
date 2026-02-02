@@ -1,6 +1,7 @@
 """
 Integration tests for Governance API endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -27,11 +28,11 @@ def client(temp_project_dir):
     """Create a test client with temporary project directory."""
     # Override the PROJECT_DOCS_PATH environment variable
     os.environ["PROJECT_DOCS_PATH"] = temp_project_dir
-    
+
     # Create a new app instance for this test to avoid state sharing
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    
+
     test_app = FastAPI(title="Test App")
     test_app.add_middleware(
         CORSMiddleware,
@@ -40,23 +41,35 @@ def client(temp_project_dir):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Import and register routers
     from routers import projects, commands, artifacts, governance, raid
+
     test_app.include_router(projects.router, prefix="/projects", tags=["projects"])
-    test_app.include_router(commands.router, prefix="/projects/{project_key}/commands", tags=["commands"])
-    test_app.include_router(artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"])
-    test_app.include_router(governance.router, prefix="/projects/{project_key}/governance", tags=["governance"])
-    test_app.include_router(raid.router, prefix="/projects/{project_key}/raid", tags=["raid"])
-    
+    test_app.include_router(
+        commands.router, prefix="/projects/{project_key}/commands", tags=["commands"]
+    )
+    test_app.include_router(
+        artifacts.router, prefix="/projects/{project_key}/artifacts", tags=["artifacts"]
+    )
+    test_app.include_router(
+        governance.router,
+        prefix="/projects/{project_key}/governance",
+        tags=["governance"],
+    )
+    test_app.include_router(
+        raid.router, prefix="/projects/{project_key}/raid", tags=["raid"]
+    )
+
     # Initialize services
     from services.git_manager import GitManager
     from services.llm_service import LLMService
+
     git_manager = GitManager(temp_project_dir)
     git_manager.ensure_repository()
     test_app.state.git_manager = git_manager
     test_app.state.llm_service = LLMService()
-    
+
     with TestClient(test_app) as test_client:
         yield test_client
 
@@ -64,10 +77,7 @@ def client(temp_project_dir):
 @pytest.fixture
 def test_project(client):
     """Create a test project."""
-    response = client.post(
-        "/projects",
-        json={"key": "TEST001", "name": "Test Project"}
-    )
+    response = client.post("/projects", json={"key": "TEST001", "name": "Test Project"})
     assert response.status_code == 201
     return response.json()
 
@@ -86,13 +96,10 @@ class TestGovernanceMetadataAPI:
             "decision_rights": {"architecture": "Tech Lead"},
             "stage_gates": [{"name": "Gate 1", "status": "pending"}],
             "approvals": [{"type": "budget", "approver": "CFO"}],
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
 
-        response = client.post(
-            "/projects/TEST001/governance/metadata",
-            json=metadata
-        )
+        response = client.post("/projects/TEST001/governance/metadata", json=metadata)
 
         assert response.status_code == 201
         data = response.json()
@@ -108,7 +115,7 @@ class TestGovernanceMetadataAPI:
         metadata = {
             "objectives": ["Test Objective"],
             "scope": "Test scope",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         client.post("/projects/TEST001/governance/metadata", json=metadata)
 
@@ -126,7 +133,7 @@ class TestGovernanceMetadataAPI:
         metadata = {
             "objectives": ["Initial Objective"],
             "scope": "Initial scope",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         client.post("/projects/TEST001/governance/metadata", json=metadata)
 
@@ -134,12 +141,9 @@ class TestGovernanceMetadataAPI:
         updates = {
             "objectives": ["Updated Objective"],
             "scope": "Updated scope",
-            "updated_by": "another_user"
+            "updated_by": "another_user",
         }
-        response = client.put(
-            "/projects/TEST001/governance/metadata",
-            json=updates
-        )
+        response = client.put("/projects/TEST001/governance/metadata", json=updates)
 
         assert response.status_code == 200
         data = response.json()
@@ -150,7 +154,7 @@ class TestGovernanceMetadataAPI:
     def test_create_duplicate_metadata_fails(self, client, test_project):
         """Test that creating duplicate metadata returns 409."""
         metadata = {"objectives": ["Test"], "created_by": "test_user"}
-        
+
         # Create first time - should succeed
         response1 = client.post("/projects/TEST001/governance/metadata", json=metadata)
         assert response1.status_code == 201
@@ -177,13 +181,10 @@ class TestDecisionLogAPI:
             "rationale": "Test rationale",
             "impact": "Test impact",
             "status": "approved",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
 
-        response = client.post(
-            "/projects/TEST001/governance/decisions",
-            json=decision
-        )
+        response = client.post("/projects/TEST001/governance/decisions", json=decision)
 
         assert response.status_code == 201
         data = response.json()
@@ -200,7 +201,7 @@ class TestDecisionLogAPI:
                 "title": f"Decision {i}",
                 "description": f"Description {i}",
                 "decision_maker": "CTO",
-                "created_by": "test_user"
+                "created_by": "test_user",
             }
             client.post("/projects/TEST001/governance/decisions", json=decision)
 
@@ -219,11 +220,10 @@ class TestDecisionLogAPI:
             "title": "Specific Decision",
             "description": "Test description",
             "decision_maker": "CTO",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         create_response = client.post(
-            "/projects/TEST001/governance/decisions",
-            json=decision
+            "/projects/TEST001/governance/decisions", json=decision
         )
         decision_id = create_response.json()["id"]
 
@@ -251,11 +251,10 @@ class TestGovernanceTraceability:
             "title": "Test Decision",
             "description": "Test",
             "decision_maker": "CTO",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         decision_response = client.post(
-            "/projects/TEST001/governance/decisions",
-            json=decision
+            "/projects/TEST001/governance/decisions", json=decision
         )
         decision_id = decision_response.json()["id"]
 
@@ -289,10 +288,9 @@ class TestGovernanceErrorHandling:
             "title": "Test",
             "description": "Test",
             "decision_maker": "CTO",
-            "created_by": "test_user"
+            "created_by": "test_user",
         }
         response = client.post(
-            "/projects/NONEXISTENT/governance/decisions",
-            json=decision
+            "/projects/NONEXISTENT/governance/decisions", json=decision
         )
         assert response.status_code == 404

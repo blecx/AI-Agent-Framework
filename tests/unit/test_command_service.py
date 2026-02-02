@@ -1,6 +1,7 @@
 """
 Unit tests for Command Service.
 """
+
 import pytest
 from unittest.mock import Mock, AsyncMock
 from apps.api.services.command_service import CommandService
@@ -91,7 +92,10 @@ class TestProposeCommand:
         self, command_service, mock_git_manager, mock_llm_service
     ):
         """Test proposing artifact generation command."""
-        params = {"artifact_name": "project_charter.md", "artifact_type": "project_charter"}
+        params = {
+            "artifact_name": "project_charter.md",
+            "artifact_type": "project_charter",
+        }
 
         result = await command_service.propose_command(
             "TEST001", "generate_artifact", params, mock_llm_service, mock_git_manager

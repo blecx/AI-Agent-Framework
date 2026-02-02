@@ -49,7 +49,7 @@ class TestBlueprintsRouter:
             "description": "A test blueprint",
             "required_templates": [],
             "optional_templates": [],
-            "workflow_requirements": ["initiating"]
+            "workflow_requirements": ["initiating"],
         }
 
         response = client.post("/api/v1/blueprints", json=blueprint_data)
@@ -64,7 +64,7 @@ class TestBlueprintsRouter:
         blueprint_data = {
             "id": "test-bp",
             "name": "Test Blueprint",
-            "description": "First blueprint"
+            "description": "First blueprint",
         }
 
         # Create first blueprint
@@ -74,7 +74,7 @@ class TestBlueprintsRouter:
         duplicate_data = {
             "id": "test-bp",
             "name": "Duplicate",
-            "description": "Should fail"
+            "description": "Should fail",
         }
 
         response = client.post("/api/v1/blueprints", json=duplicate_data)
@@ -88,7 +88,7 @@ class TestBlueprintsRouter:
             "id": "test-bp",
             "name": "Test Blueprint",
             "description": "Invalid template reference",
-            "required_templates": ["non-existent-template"]
+            "required_templates": ["non-existent-template"],
         }
 
         response = client.post("/api/v1/blueprints", json=blueprint_data)
@@ -110,7 +110,7 @@ class TestBlueprintsRouter:
             blueprint_data = {
                 "id": f"bp-{i}",
                 "name": f"Blueprint {i}",
-                "description": f"Blueprint number {i}"
+                "description": f"Blueprint number {i}",
             }
             client.post("/api/v1/blueprints", json=blueprint_data)
 
@@ -125,7 +125,7 @@ class TestBlueprintsRouter:
         blueprint_data = {
             "id": "test-bp",
             "name": "Test Blueprint",
-            "description": "A test blueprint"
+            "description": "A test blueprint",
         }
         client.post("/api/v1/blueprints", json=blueprint_data)
 
@@ -148,15 +148,12 @@ class TestBlueprintsRouter:
         blueprint_data = {
             "id": "test-bp",
             "name": "Original Name",
-            "description": "Original description"
+            "description": "Original description",
         }
         client.post("/api/v1/blueprints", json=blueprint_data)
 
         # Update it
-        update_data = {
-            "name": "Updated Name",
-            "description": "Updated description"
-        }
+        update_data = {"name": "Updated Name", "description": "Updated description"}
 
         response = client.put("/api/v1/blueprints/test-bp", json=update_data)
 
@@ -180,7 +177,7 @@ class TestBlueprintsRouter:
         blueprint_data = {
             "id": "test-bp",
             "name": "Test Blueprint",
-            "description": "To be deleted"
+            "description": "To be deleted",
         }
         client.post("/api/v1/blueprints", json=blueprint_data)
 
@@ -209,7 +206,7 @@ class TestBlueprintsRouter:
             schema={"type": "object"},
             markdown_template="# Test",
             artifact_type="pmp",
-            version="1.0.0"
+            version="1.0.0",
         )
         template = template_service.create_template(template_create)
 
@@ -218,7 +215,7 @@ class TestBlueprintsRouter:
             "id": "test-bp",
             "name": "Test Blueprint",
             "description": "Blueprint with valid template",
-            "required_templates": [template.id]
+            "required_templates": [template.id],
         }
 
         response = client.post("/api/v1/blueprints", json=blueprint_data)

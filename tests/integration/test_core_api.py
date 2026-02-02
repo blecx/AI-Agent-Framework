@@ -2,6 +2,7 @@
 Integration tests for Core API endpoints.
 Tests the main API endpoints: health, projects, commands, and artifacts.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -289,7 +290,9 @@ class TestArtifactsAPI:
     def test_project_with_artifacts(self, client, temp_project_dir):
         """Create a test project with artifacts."""
         # Create project
-        response = client.post("/projects", json={"key": "ART001", "name": "Artifact Test"})
+        response = client.post(
+            "/projects", json={"key": "ART001", "name": "Artifact Test"}
+        )
         assert response.status_code == 201
 
         # Write some artifacts directly via filesystem
@@ -344,7 +347,9 @@ class TestArtifactsAPI:
         assert isinstance(data, list)
         assert len(data) == 0
 
-    def test_list_artifacts_returns_artifacts(self, client, test_project_with_artifacts):
+    def test_list_artifacts_returns_artifacts(
+        self, client, test_project_with_artifacts
+    ):
         """Test listing artifacts returns created artifacts."""
         response = client.get("/projects/ART001/artifacts")
 
@@ -374,7 +379,10 @@ class TestArtifactsAPI:
         assert response.status_code == 200
         content = response.text
         assert "Project Charter" in content
-        assert response.headers["content-type"] in ["text/markdown", "text/markdown; charset=utf-8"]
+        assert response.headers["content-type"] in [
+            "text/markdown",
+            "text/markdown; charset=utf-8",
+        ]
 
     def test_get_artifact_returns_correct_content(
         self, client, test_project_with_artifacts

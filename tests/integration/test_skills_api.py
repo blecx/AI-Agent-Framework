@@ -1,6 +1,7 @@
 """
 Integration tests for Skills API endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -285,7 +286,10 @@ class TestSkillsAPI:
         # 2. Store plan in memory
         memory_response = client.post(
             f"/api/v1/agents/{agent_id}/skills/memory",
-            json={"memory_type": "short_term", "data": {"current_plan": plan_data["data"]}},
+            json={
+                "memory_type": "short_term",
+                "data": {"current_plan": plan_data["data"]},
+            },
         )
         assert memory_response.status_code == 200
 

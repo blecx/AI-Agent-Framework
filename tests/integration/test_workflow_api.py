@@ -1,6 +1,7 @@
 """
 Integration tests for Workflow API endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -108,7 +109,11 @@ class TestWorkflowStateAPI:
         """Test valid workflow state transition."""
         response = client.patch(
             "/api/v1/projects/TEST001/workflow/state",
-            json={"to_state": "planning", "actor": "test_user", "reason": "Ready to plan"},
+            json={
+                "to_state": "planning",
+                "actor": "test_user",
+                "reason": "Ready to plan",
+            },
         )
 
         assert response.status_code == 200
@@ -228,7 +233,11 @@ class TestAuditEventsAPI:
         # Perform state transition
         client.patch(
             "/api/v1/projects/TEST001/workflow/state",
-            json={"to_state": "planning", "actor": "test_user", "reason": "Ready to plan"},
+            json={
+                "to_state": "planning",
+                "actor": "test_user",
+                "reason": "Ready to plan",
+            },
         )
 
         # Get audit events
@@ -255,7 +264,11 @@ class TestAuditEventsAPI:
     def test_get_audit_events_with_pagination(self, client, test_project):
         """Test pagination of audit events."""
         # Create multiple state transitions to generate events
-        transitions = [("planning", "user1"), ("executing", "user2"), ("monitoring", "user3")]
+        transitions = [
+            ("planning", "user1"),
+            ("executing", "user2"),
+            ("monitoring", "user3"),
+        ]
 
         for to_state, actor in transitions:
             client.patch(
@@ -287,9 +300,7 @@ class TestAuditEventsAPI:
 
         assert response.status_code == 200
         data = response.json()
-        assert all(
-            e["event_type"] == "workflow_state_changed" for e in data["events"]
-        )
+        assert all(e["event_type"] == "workflow_state_changed" for e in data["events"])
         assert data["filtered_by"]["event_type"] == "workflow_state_changed"
 
     def test_filter_audit_events_by_actor(self, client, test_project):

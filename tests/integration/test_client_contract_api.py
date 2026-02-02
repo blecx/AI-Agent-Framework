@@ -2,6 +2,7 @@
 Integration tests for client contract API endpoints.
 Tests new endpoints added for client compatibility: project CRUD, /info, proposals.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -43,7 +44,9 @@ def client(temp_project_dir):
     # Import and register routers
     from routers import projects, proposals, commands_global
 
-    test_app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
+    test_app.include_router(
+        projects.router, prefix="/api/v1/projects", tags=["projects"]
+    )
     test_app.include_router(
         proposals.router,
         prefix="/api/v1/projects/{project_key}/proposals",
@@ -139,14 +142,10 @@ class TestProjectCRUD:
     def test_update_project_name(self, client):
         """Test PUT /api/v1/projects/{key} to update name."""
         # Create project
-        client.post(
-            "/api/v1/projects", json={"key": "UPD001", "name": "Original Name"}
-        )
+        client.post("/api/v1/projects", json={"key": "UPD001", "name": "Original Name"})
 
         # Update project
-        response = client.put(
-            "/api/v1/projects/UPD001", json={"name": "Updated Name"}
-        )
+        response = client.put("/api/v1/projects/UPD001", json={"name": "Updated Name"})
         assert response.status_code == 200
         data = response.json()
         assert data["key"] == "UPD001"
@@ -159,31 +158,23 @@ class TestProjectCRUD:
     def test_update_project_methodology(self, client):
         """Test PUT to update methodology."""
         # Create project
-        client.post(
-            "/api/v1/projects", json={"key": "UPD002", "name": "Test"}
-        )
+        client.post("/api/v1/projects", json={"key": "UPD002", "name": "Test"})
 
         # Update methodology
-        response = client.put(
-            "/api/v1/projects/UPD002", json={"methodology": "PMBOK"}
-        )
+        response = client.put("/api/v1/projects/UPD002", json={"methodology": "PMBOK"})
         assert response.status_code == 200
         data = response.json()
         assert data["methodology"] == "PMBOK"
 
     def test_update_nonexistent_project_returns_404(self, client):
         """Test PUT for nonexistent project returns 404."""
-        response = client.put(
-            "/api/v1/projects/NOTFOUND", json={"name": "New Name"}
-        )
+        response = client.put("/api/v1/projects/NOTFOUND", json={"name": "New Name"})
         assert response.status_code == 404
 
     def test_delete_project(self, client):
         """Test DELETE /api/v1/projects/{key}."""
         # Create project
-        client.post(
-            "/api/v1/projects", json={"key": "DEL001", "name": "To Delete"}
-        )
+        client.post("/api/v1/projects", json={"key": "DEL001", "name": "To Delete"})
 
         # Delete project
         response = client.delete("/api/v1/projects/DEL001")

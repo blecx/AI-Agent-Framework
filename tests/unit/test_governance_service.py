@@ -1,6 +1,7 @@
 """
 Unit tests for Governance Service.
 """
+
 import pytest
 import tempfile
 import shutil
@@ -42,7 +43,9 @@ def test_project(git_manager):
 class TestGovernanceMetadata:
     """Test governance metadata operations."""
 
-    def test_create_governance_metadata(self, governance_service, git_manager, test_project):
+    def test_create_governance_metadata(
+        self, governance_service, git_manager, test_project
+    ):
         """Test creating governance metadata."""
         metadata = {
             "objectives": ["Objective 1", "Objective 2"],
@@ -67,7 +70,9 @@ class TestGovernanceMetadata:
         assert "created_at" in result
         assert "updated_at" in result
 
-    def test_get_governance_metadata(self, governance_service, git_manager, test_project):
+    def test_get_governance_metadata(
+        self, governance_service, git_manager, test_project
+    ):
         """Test retrieving governance metadata."""
         # Create metadata first
         metadata = {
@@ -75,7 +80,9 @@ class TestGovernanceMetadata:
             "scope": "Test scope",
             "created_by": "test_user",
         }
-        governance_service.create_governance_metadata(test_project, metadata, git_manager)
+        governance_service.create_governance_metadata(
+            test_project, metadata, git_manager
+        )
 
         # Retrieve metadata
         result = governance_service.get_governance_metadata(test_project, git_manager)
@@ -84,7 +91,9 @@ class TestGovernanceMetadata:
         assert result["objectives"] == ["Test Objective"]
         assert result["scope"] == "Test scope"
 
-    def test_update_governance_metadata(self, governance_service, git_manager, test_project):
+    def test_update_governance_metadata(
+        self, governance_service, git_manager, test_project
+    ):
         """Test updating governance metadata."""
         # Create initial metadata
         metadata = {
@@ -92,7 +101,9 @@ class TestGovernanceMetadata:
             "scope": "Initial scope",
             "created_by": "test_user",
         }
-        governance_service.create_governance_metadata(test_project, metadata, git_manager)
+        governance_service.create_governance_metadata(
+            test_project, metadata, git_manager
+        )
 
         # Update metadata
         updates = {
@@ -109,7 +120,9 @@ class TestGovernanceMetadata:
         assert result["updated_by"] == "another_user"
         assert result["created_by"] == "test_user"  # Should not change
 
-    def test_get_nonexistent_metadata(self, governance_service, git_manager, test_project):
+    def test_get_nonexistent_metadata(
+        self, governance_service, git_manager, test_project
+    ):
         """Test retrieving metadata that doesn't exist."""
         result = governance_service.get_governance_metadata(test_project, git_manager)
         assert result is None
@@ -182,7 +195,9 @@ class TestDecisionLog:
         assert result["id"] == created["id"]
         assert result["title"] == "Specific Decision"
 
-    def test_get_nonexistent_decision(self, governance_service, git_manager, test_project):
+    def test_get_nonexistent_decision(
+        self, governance_service, git_manager, test_project
+    ):
         """Test retrieving a decision that doesn't exist."""
         result = governance_service.get_decision(
             test_project, "nonexistent-id", git_manager
@@ -229,7 +244,9 @@ class TestGovernanceGitIntegration:
 
         # Create governance metadata
         metadata = {"objectives": ["Test"], "created_by": "test_user"}
-        governance_service.create_governance_metadata(test_project, metadata, git_manager)
+        governance_service.create_governance_metadata(
+            test_project, metadata, git_manager
+        )
 
         # Verify a commit was created
         final_commits = len(list(git_manager.repo.iter_commits()))

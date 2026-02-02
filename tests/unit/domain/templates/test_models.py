@@ -1,6 +1,7 @@
 """
 Unit tests for Template domain models.
 """
+
 import pytest
 from pydantic import ValidationError
 from apps.api.domain.templates.models import Template, TemplateCreate, TemplateUpdate

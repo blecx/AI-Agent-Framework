@@ -7,7 +7,11 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
-from datetime import datetime, timezone
+from .commands import (
+    AssessGapsHandler,
+    GenerateArtifactHandler,
+    GeneratePlanHandler,
+)
 
 if TYPE_CHECKING:
     from git_manager import GitManager
@@ -20,6 +24,13 @@ class CommandService:
         """Initialize command service."""
         # Store proposals in memory (in production, use Redis or similar)
         self.proposals: Dict[str, Dict[str, Any]] = {}
+
+        # Initialize command handlers (Strategy pattern)
+        self.handlers = {
+            "assess_gaps": AssessGapsHandler(),
+            "generate_artifact": GenerateArtifactHandler(),
+            "generate_plan": GeneratePlanHandler(),
+        }
 
     async def propose_command(
         self,
@@ -37,21 +48,12 @@ class CommandService:
         if not project_info:
             raise ValueError(f"Project {project_key} not found")
 
-        # Route to appropriate command handler
-        if command == "assess_gaps":
-            result = await self._propose_assess_gaps(
-                project_key, params, llm_service, git_manager
-            )
-        elif command == "generate_artifact":
-            result = await self._propose_generate_artifact(
-                project_key, params, llm_service, git_manager
-            )
-        elif command == "generate_plan":
-            result = await self._propose_generate_plan(
-                project_key, params, llm_service, git_manager
-            )
-        else:
+        # Delegate to appropriate command handler (Strategy pattern)
+        if command not in self.handlers:
             raise ValueError(f"Unknown command: {command}")
+
+        handler = self.handlers[command]
+        result = await handler.propose(project_key, params, llm_service, git_manager)
 
         # Store proposal
         proposal_data = {
@@ -310,207 +312,3 @@ class CommandService:
             finally:
                 # Release lock
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-    async def _propose_assess_gaps(
-        self, project_key: str, params: Dict[str, Any], llm_service, git_manager
-    ) -> Dict[str, Any]:
-        """Propose gap assessment."""
-        # Check what artifacts exist
-        artifacts = git_manager.list_artifacts(project_key)
-
-        # Define required ISO21500 artifacts
-        required_artifacts = [
-            "project_charter.md",
-            "stakeholder_register.md",
-            "scope_statement.md",
-            "wbs.md",
-            "schedule.md",
-            "budget.md",
-            "quality_plan.md",
-            "risk_register.md",
-            "communication_plan.md",
-            "procurement_plan.md",
-        ]
-
-        existing_names = [a["name"] for a in artifacts]
-        missing = [name for name in required_artifacts if name not in existing_names]
-        present = [name for name in required_artifacts if name in existing_names]
-
-        # Render prompt
-        prompt = llm_service.render_prompt(
-            "assess_gaps.j2",
-            {
-                "project_key": project_key,
-                "missing_artifacts": missing,
-                "present_artifacts": present,
-            },
-        )
-
-        # Get LLM response
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an ISO 21500 project management expert.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        llm_response = await llm_service.chat_completion(messages)
-
-        # Generate gap report
-        gap_report = llm_service.render_output(
-            "gap_report.md",
-            {
-                "project_key": project_key,
-                "missing_artifacts": missing,
-                "present_artifacts": present,
-                "llm_analysis": llm_response,
-                "timestamp": datetime.now(timezone.utc)
-                .isoformat()
-                .replace("+00:00", "Z"),
-            },
-        )
-
-        # Prepare file change
-        file_changes = [
-            {
-                "path": "reports/gap_assessment.md",
-                "operation": "create",
-                "diff": git_manager.get_diff(
-                    project_key, "reports/gap_assessment.md", gap_report
-                ),
-                "content": gap_report,
-            }
-        ]
-
-        return {
-            "assistant_message": f"Gap assessment completed. Found {len(missing)} missing artifacts out of {len(required_artifacts)} required.",
-            "file_changes": file_changes,
-            "draft_commit_message": f"[{project_key}] Add gap assessment report",
-        }
-
-    async def _propose_generate_artifact(
-        self, project_key: str, params: Dict[str, Any], llm_service, git_manager
-    ) -> Dict[str, Any]:
-        """Propose artifact generation."""
-        artifact_name = params.get("artifact_name", "project_charter.md")
-        artifact_type = params.get("artifact_type", "project_charter")
-
-        # Get project info
-        project_info = git_manager.read_project_json(project_key)
-
-        # Render prompt
-        prompt = llm_service.render_prompt(
-            "generate_artifact.j2",
-            {
-                "project_key": project_key,
-                "project_name": project_info.get("name", "Unknown"),
-                "artifact_name": artifact_name,
-                "artifact_type": artifact_type,
-            },
-        )
-
-        # Get LLM response
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an ISO 21500 project management expert. Generate comprehensive project management artifacts.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        llm_response = await llm_service.chat_completion(messages, max_tokens=2048)
-
-        # Use output template as base and incorporate LLM content
-        try:
-            template_name = f"{artifact_type}.md"
-            artifact_content = llm_service.render_output(
-                template_name,
-                {
-                    "project_key": project_key,
-                    "project_name": project_info.get("name", "Unknown"),
-                    "generated_content": llm_response,
-                    "timestamp": datetime.now(timezone.utc)
-                    .isoformat()
-                    .replace("+00:00", "Z"),
-                },
-            )
-        except Exception:
-            # Fallback if template doesn't exist
-            artifact_content = f"""# {artifact_name}
-
-Project: {project_info.get("name", "Unknown")}
-Key: {project_key}
-Generated: {datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
-
-{llm_response}
-"""
-
-        file_path = f"artifacts/{artifact_name}"
-        file_changes = [
-            {
-                "path": file_path,
-                "operation": "create",
-                "diff": git_manager.get_diff(project_key, file_path, artifact_content),
-                "content": artifact_content,
-            }
-        ]
-
-        return {
-            "assistant_message": f"Generated artifact: {artifact_name}",
-            "file_changes": file_changes,
-            "draft_commit_message": f"[{project_key}] Generate {artifact_name}",
-        }
-
-    async def _propose_generate_plan(
-        self, project_key: str, params: Dict[str, Any], llm_service, git_manager
-    ) -> Dict[str, Any]:
-        """Propose project plan generation."""
-        # Get project info
-        project_info = git_manager.read_project_json(project_key)
-
-        # Render prompt
-        prompt = llm_service.render_prompt(
-            "generate_plan.j2",
-            {
-                "project_key": project_key,
-                "project_name": project_info.get("name", "Unknown"),
-            },
-        )
-
-        # Get LLM response
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an ISO 21500 project management expert. Create detailed project schedules.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        llm_response = await llm_service.chat_completion(messages, max_tokens=2048)
-
-        # Generate plan with Mermaid gantt
-        plan_content = llm_service.render_output(
-            "project_plan.md",
-            {
-                "project_key": project_key,
-                "project_name": project_info.get("name", "Unknown"),
-                "llm_schedule": llm_response,
-                "timestamp": datetime.now(timezone.utc)
-                .isoformat()
-                .replace("+00:00", "Z"),
-            },
-        )
-
-        file_path = "artifacts/schedule.md"
-        file_changes = [
-            {
-                "path": file_path,
-                "operation": "create",
-                "diff": git_manager.get_diff(project_key, file_path, plan_content),
-                "content": plan_content,
-            }
-        ]
-
-        return {
-            "assistant_message": "Project schedule generated with timeline and milestones.",
-            "file_changes": file_changes,
-            "draft_commit_message": f"[{project_key}] Generate project schedule",
-        }

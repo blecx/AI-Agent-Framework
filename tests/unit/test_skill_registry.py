@@ -1,6 +1,7 @@
 """
 Unit tests for Skill Registry.
 """
+
 from apps.api.skills.registry import SkillRegistry
 from apps.api.skills.base import SkillResult
 from typing import Dict, Any

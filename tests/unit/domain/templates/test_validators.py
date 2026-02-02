@@ -1,6 +1,7 @@
 """
 Unit tests for Template validators.
 """
+
 import pytest
 from apps.api.domain.templates.validators import (
     validate_json_schema,
@@ -177,14 +178,24 @@ class TestTemplateValidatorRAID:
         schema = {
             "type": "object",
             "properties": {
-                "type": {"type": "string", "enum": ["risk", "assumption", "issue", "dependency"]},
+                "type": {
+                    "type": "string",
+                    "enum": ["risk", "assumption", "issue", "dependency"],
+                },
                 "description": {"type": "string"},
                 "owner": {"type": "string"},
                 "status": {"type": "string"},
                 "impact": {"type": "string"},
                 "due_date": {"type": "string", "format": "date"},
             },
-            "required": ["type", "description", "owner", "status", "impact", "due_date"],
+            "required": [
+                "type",
+                "description",
+                "owner",
+                "status",
+                "impact",
+                "due_date",
+            ],
         }
 
         # Should not raise any exception

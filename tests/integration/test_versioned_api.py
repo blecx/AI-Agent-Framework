@@ -2,6 +2,7 @@
 Integration tests for Versioned API endpoints (/api/v1).
 Tests API versioning, backward compatibility, and complete workflows.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 import tempfile
@@ -44,7 +45,9 @@ def client(temp_project_dir):
     from routers import projects, commands, artifacts, governance, raid, workflow
 
     # API v1 routes
-    test_app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects-v1"])
+    test_app.include_router(
+        projects.router, prefix="/api/v1/projects", tags=["projects-v1"]
+    )
     test_app.include_router(
         commands.router,
         prefix="/api/v1/projects/{project_key}/commands",
@@ -63,7 +66,9 @@ def client(temp_project_dir):
     test_app.include_router(
         raid.router, prefix="/api/v1/projects/{project_key}/raid", tags=["raid-v1"]
     )
-    test_app.include_router(workflow.router, prefix="/api/v1/projects", tags=["workflow-v1"])
+    test_app.include_router(
+        workflow.router, prefix="/api/v1/projects", tags=["workflow-v1"]
+    )
 
     # Add health endpoint
     @test_app.get("/api/v1/health")
@@ -218,7 +223,9 @@ class TestVersionedArtifactsAPI:
 
     def test_list_artifacts_empty_project(self, client):
         """Test listing artifacts for project with no artifacts via /api/v1."""
-        client.post("/api/v1/projects", json={"key": "V1EMPTY", "name": "Empty Project"})
+        client.post(
+            "/api/v1/projects", json={"key": "V1EMPTY", "name": "Empty Project"}
+        )
         response = client.get("/api/v1/projects/V1EMPTY/artifacts")
 
         assert response.status_code == 200
@@ -267,7 +274,11 @@ class TestVersionedWorkflowAPI:
         # Transition from initiating to planning (valid transition)
         response = client.patch(
             "/api/v1/projects/V1WF001/workflow/state",
-            json={"to_state": "planning", "actor": "test_user", "reason": "Test transition"},
+            json={
+                "to_state": "planning",
+                "actor": "test_user",
+                "reason": "Test transition",
+            },
         )
         assert response.status_code == 200
         data = response.json()
