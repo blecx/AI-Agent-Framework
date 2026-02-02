@@ -22,7 +22,7 @@ from fixtures.factories import ProjectFactory  # noqa: E402
 
 
 @pytest.fixture(scope="session")
-def temp_docs_dir():
+def temp_docs_dir() -> str:
     """Create a temporary directory for project documents (session scope)."""
     temp_dir = tempfile.mkdtemp(prefix="e2e-tui-docs-")
     yield temp_dir
@@ -30,7 +30,7 @@ def temp_docs_dir():
 
 
 @pytest.fixture(scope="session")
-def backend_server(temp_docs_dir):
+def backend_server(temp_docs_dir: str) -> str:
     """Start backend API server for E2E tests (session scope).
 
     Starts uvicorn server, waits for health check, yields, then terminates.
@@ -90,18 +90,18 @@ def backend_server(temp_docs_dir):
 
 
 @pytest.fixture
-def tui(backend_server):
+def tui(backend_server: str) -> TUIAutomation:
     """Create TUI automation instance connected to backend server."""
     return TUIAutomation(api_base_url=backend_server, timeout=30)
 
 
 @pytest.fixture
-def project_factory():
+def project_factory() -> ProjectFactory:
     """Provide ProjectFactory for creating test projects."""
     return ProjectFactory()
 
 
 @pytest.fixture
-def unique_project_key():
+def unique_project_key() -> str:
     """Generate a unique project key for each test."""
     return ProjectFactory.random_key()
