@@ -7,6 +7,7 @@ import json
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
+from domain.audit.constants import DEFAULT_QUERY_LIMIT
 from .event_logger import AuditEventLogger
 from .rules_engine import AuditRulesEngine
 
@@ -62,7 +63,7 @@ class AuditOrchestrator:
         self,
         project_key: str,
         git_manager,
-        limit: int = 100,
+        limit: int = DEFAULT_QUERY_LIMIT,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve audit history for a project.

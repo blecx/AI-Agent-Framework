@@ -6,6 +6,11 @@ Aligned with ISO 21500 standards.
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import Optional
 
+from domain.workflow.constants import (
+    DEFAULT_EVENT_LIMIT,
+    MIN_EVENT_LIMIT,
+    MAX_EVENT_LIMIT,
+)
 from models import (
     WorkflowStateInfo,
     WorkflowStateUpdate,
@@ -113,7 +118,12 @@ async def get_audit_events(
     until: Optional[str] = Query(
         None, description="Filter events until timestamp (ISO 8601)"
     ),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of events"),
+    limit: int = Query(
+        DEFAULT_EVENT_LIMIT,
+        ge=MIN_EVENT_LIMIT,
+        le=MAX_EVENT_LIMIT,
+        description="Maximum number of events",
+    ),
     offset: int = Query(0, ge=0, description="Number of events to skip"),
 ):
     """
@@ -264,7 +274,12 @@ async def run_bulk_audit(
 async def get_audit_history(
     project_key: str,
     request: Request,
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of entries"),
+    limit: int = Query(
+        DEFAULT_EVENT_LIMIT,
+        ge=MIN_EVENT_LIMIT,
+        le=MAX_EVENT_LIMIT,
+        description="Maximum number of entries",
+    ),
 ):
     """
     Retrieve audit history for a project.

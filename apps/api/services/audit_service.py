@@ -10,6 +10,7 @@ DEPRECATED FACADE: Prefer using focused services directly for new code:
 
 from typing import Dict, Any, Optional, List
 
+from domain.audit.constants import DEFAULT_QUERY_LIMIT
 from .audit.event_logger import AuditEventLogger
 from .audit.rules_engine import AuditRulesEngine
 from .audit.orchestrator import AuditOrchestrator
@@ -58,7 +59,7 @@ class AuditService:
         actor: Optional[str] = None,
         since: Optional[str] = None,
         until: Optional[str] = None,
-        limit: int = 100,
+        limit: int = DEFAULT_QUERY_LIMIT,
         offset: int = 0,
     ) -> Dict[str, Any]:
         """Delegate to AuditEventLogger."""
@@ -107,7 +108,7 @@ class AuditService:
         self,
         project_key: str,
         git_manager,
-        limit: int = 100,
+        limit: int = DEFAULT_QUERY_LIMIT,
     ) -> List[Dict[str, Any]]:
         """Delegate to AuditOrchestrator."""
         return self.orchestrator.get_audit_history(
