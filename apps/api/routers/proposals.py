@@ -73,7 +73,9 @@ async def list_proposals(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         service = ProposalService(git_manager, audit_service)
@@ -104,7 +106,9 @@ async def get_proposal(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         service = ProposalService(git_manager, audit_service)
@@ -112,7 +116,7 @@ async def get_proposal(
 
         if not proposal:
             raise HTTPException(
-                status_code=404, detail=f"Proposal {proposal_id} not found"
+                status_code=404, detail=f"Proposal '{proposal_id}' not found"
             )
 
         return proposal
@@ -139,7 +143,9 @@ async def apply_proposal(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         service = ProposalService(git_manager, audit_service)
@@ -177,7 +183,9 @@ async def reject_proposal(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     # Extract reason from body
     reason = reject_data.get("reason", "No reason provided")

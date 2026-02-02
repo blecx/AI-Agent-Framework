@@ -30,7 +30,7 @@ async def execute_command(command_request: CommandExecute, request: Request):
     project_info = git_manager.read_project_json(command_request.project_key)
     if not project_info:
         raise HTTPException(
-            status_code=404, detail=f"Project {command_request.project_key} not found"
+            status_code=404, detail=f"Project '{command_request.project_key}' not found"
         )
 
     command_id = str(uuid.uuid4())
@@ -103,7 +103,7 @@ async def get_command(command_id: str, request: Request):
         command_data = command_service.load_command(command_id, git_manager)
         if not command_data:
             raise HTTPException(
-                status_code=404, detail=f"Command {command_id} not found"
+                status_code=404, detail=f"Command '{command_id}' not found"
             )
 
         return CommandHistory(**command_data)

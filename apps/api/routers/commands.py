@@ -54,7 +54,9 @@ async def apply_command(
     # Verify project exists
     project_info = git_manager.read_project_json(project_key)
     if not project_info:
-        raise HTTPException(status_code=404, detail=f"Project {project_key} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
 
     try:
         result = await command_service.apply_proposal(

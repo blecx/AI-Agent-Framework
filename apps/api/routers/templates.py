@@ -72,7 +72,9 @@ async def get_template(template_id: str, request: Request):
     service = _get_template_service(request)
     template = service.get_template(template_id)
     if not template:
-        raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Template '{template_id}' not found"
+        )
     return template
 
 
@@ -99,7 +101,7 @@ async def update_template(
         updated = service.update_template(template_id, template_update)
         if not updated:
             raise HTTPException(
-                status_code=404, detail=f"Template {template_id} not found"
+                status_code=404, detail=f"Template '{template_id}' not found"
             )
         return updated
     except ValueError as e:
@@ -120,5 +122,7 @@ async def delete_template(template_id: str, request: Request):
     service = _get_template_service(request)
     success = service.delete_template(template_id)
     if not success:
-        raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Template '{template_id}' not found"
+        )
     return None
