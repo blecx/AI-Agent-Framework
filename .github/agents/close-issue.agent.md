@@ -30,6 +30,9 @@ Your job is to package an already-decided outcome (completed / not planned / dup
 - Never close issues by guessing; verify issue/PR/commit state with GitHub CLI.
 - Never commit `projectDocs/` or `configs/llm.json`.
 - If the issue is security-sensitive or ambiguous, stop and ask for maintainer confirmation.
+- **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
+  - `/tmp` is world-readable and insecure
+  - Use `.tmp/close-<issue>.json`, `.tmp/issue-<number>-data.json`, etc.
 
 ## Verification Gates (Do These Before Closing)
 
@@ -92,7 +95,8 @@ Note: `./scripts/close-issue.sh` includes a quality guard that fails if the rend
 ### Example
 
 ```bash
-cat > /tmp/close.json <<'JSON'
+# ✅ CORRECT: Use workspace .tmp/ (secure, gitignored)
+cat > .tmp/close-42.json <<'JSON'
 {
 	"summary": "- ...",
 	"how_to_validate": "- ...",
@@ -100,8 +104,11 @@ cat > /tmp/close.json <<'JSON'
 }
 JSON
 
-./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data /tmp/close.json --dry-run
-./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data /tmp/close.json
+./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data .tmp/close-42.json --dry-run
+./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data .tmp/close-42.json
+
+# ❌ FORBIDDEN: Never use /tmp (world-readable, insecure)
+# cat > /tmp/close.json  # INSECURE AND WRONG
 ```
 
 ## Reporting

@@ -44,8 +44,10 @@ You are done only when all are true:
 - Do not bypass repo PR-review gates (required sections, checked checkboxes, no placeholders in evidence).
 - Never commit or stage `projectDocs/` or `configs/llm.json` (backend hygiene). Never commit any secrets (either repo).
 - Do not “fix” unrelated issues. Keep scope to the PR merge + close workflow.
-- If branch protection blocks merging and requires human action (approval/admin), stop and ask for approval or instructions.
-
+- If branch protection blocks merging and requires human action (approval/admin), stop and ask for approval or instructions.- **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
+  - `/tmp` is world-readable and insecure
+  - Use `.tmp/pr-<number>-metrics.json`, `.tmp/close-<issue>.json`, etc.
+  - Scripts may output to `/tmp` but agent must copy/move to `.tmp/` immediately
 ## Repo Detection
 
 Determine the target repo from the PR URL or by querying with `gh pr view`.
@@ -113,7 +115,7 @@ If `actual_hours` provided and not already recorded, run:
 
 - `./scripts/record-completion.py <issue_number> <actual_hours> "notes"`
 
-Include metrics JSON if available (the prmerge script stores metrics briefly in `/tmp/prmerge-metrics-<PR>.json`).
+Include metrics JSON if available (the prmerge script may store metrics in `/tmp/prmerge-metrics-<PR>.json` but you MUST copy it to `.tmp/` immediately for security: `cp /tmp/prmerge-metrics-<PR>.json .tmp/ && rm /tmp/prmerge-metrics-<PR>.json`).
 
 ### A5) Verify
 
