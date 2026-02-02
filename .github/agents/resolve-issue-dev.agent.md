@@ -88,7 +88,45 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Don’t commit or modify `projectDocs/` (separate repo).
 - Don’t commit `configs/llm.json`.
 - Don’t do unrelated refactors outside the chosen issue scope.
+## Temporary file storage (MANDATORY)
 
+**CRITICAL: NEVER use `/tmp` for ANY temporary files, scripts, or data.**
+
+**ALWAYS use `.tmp/` directory in workspace root:**
+
+- **Security:** `/tmp` is world-readable and insecure
+- **Workspace context:** `.tmp/` files are accessible to all workspace tools
+- **Git safety:** `.tmp/` is gitignored (check `.gitignore` confirms this)
+- **Multi-repo awareness:** Each repo has its own `.tmp/` for isolation
+- **Cleanup:** `.tmp/` persists across chat sessions for proper cleanup tracking
+
+**Required patterns:**
+
+```bash
+# ✅ CORRECT: Use workspace-relative .tmp/
+cat > .tmp/pr-body-123.md <<'EOF'
+...
+EOF
+
+# ✅ CORRECT: Reference with absolute path when needed
+cat /home/sw/work/AI-Agent-Framework/.tmp/pr-body-123.md
+
+# ❌ FORBIDDEN: Never use /tmp
+cat > /tmp/pr-body.md  # INSECURE AND WRONG
+
+# ❌ FORBIDDEN: Never use system temp
+mktemp  # Creates files in /tmp - AVOID
+```
+
+**Use cases:**
+
+- PR body drafts: `.tmp/pr-body-<issue-number>.md`
+- Issue content: `.tmp/issue-<issue-number>-<descriptor>.md`
+- CI logs: `.tmp/ci-log-<run-id>.txt`
+- Test data: `.tmp/test-data-<timestamp>.json`
+- Scripts: `.tmp/script-<purpose>.sh`
+
+**Enforcement:** If you catch yourself about to use `/tmp`, STOP and use `.tmp/` instead.
 ## Architecture requirements (mandatory)
 
 **All code changes must follow Domain-Driven Design (DDD) architecture:**
@@ -261,7 +299,12 @@ These are not “agent tools” in the front-matter sense, but are recommended t
 - **Avoid deprecated GitHub Projects (classic) APIs:** `gh pr edit` may fail due to GraphQL `projectCards` deprecation (the CLI query can still reference it).
   - Prefer updating PR bodies via REST: `gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@.tmp/pr-body.md`
   - If you need literal backticks in the body, write to a file using a single-quoted heredoc: `cat > .tmp/pr-body.md <<'EOF' ... EOF`
-  - **Workspace tmp directory:** Use `.tmp/` (in project root, gitignored) instead of `/tmp` for better workspace tool access and multi-repo context
+  - **CRITICAL - Workspace tmp directory:** ALWAYS use `.tmp/` (in project root, gitignored) instead of `/tmp`
+    - **Security:** `/tmp` is world-readable and insecure - anyone can read your data
+    - **Tool access:** `.tmp/` files are accessible to all workspace tools (gh, git, editors)
+    - **Multi-repo context:** Each repo has its own `.tmp/` for proper isolation
+    - **Examples:** `.tmp/pr-body-123.md`, `.tmp/issue-108-plan.md`, `.tmp/ci-log-456.txt`
+    - **FORBIDDEN:** Never use `/tmp`, `mktemp`, or any system temp directory
 - **PR template CI gates:** some repos validate PR descriptions via the `pull_request` event payload.
   - Editing the PR body may not fix an already-failed run; trigger a fresh `pull_request:synchronize` run (push a commit; empty commit is OK) after updating the description.
 - **Vitest excludes:** setting `test.exclude` overrides Vitest defaults; include defaults (e.g., `configDefaults.exclude`) before adding repo-specific excludes like `client/e2e/**`.
