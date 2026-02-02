@@ -25,7 +25,18 @@ class Template(BaseModel):
     @field_validator("artifact_type")
     @classmethod
     def validate_artifact_type(cls, v: str) -> str:
-        """Validate artifact_type is one of allowed values."""
+        """
+        Validate artifact_type is one of allowed values.
+
+        Args:
+            v: The artifact_type value to validate
+
+        Returns:
+            The validated artifact_type
+
+        Raises:
+            ValueError: If artifact_type not in allowed set
+        """
         allowed_types = {"pmp", "raid", "blueprint", "proposal", "report"}
         if v not in allowed_types:
             raise ValueError(f"artifact_type must be one of {allowed_types}, got '{v}'")
@@ -34,7 +45,18 @@ class Template(BaseModel):
     @field_validator("schema")
     @classmethod
     def validate_schema_structure(cls, v: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate schema has basic JSON Schema structure."""
+        """
+        Validate schema has basic JSON Schema structure.
+
+        Args:
+            v: The schema dictionary to validate
+
+        Returns:
+            The validated schema dictionary
+
+        Raises:
+            ValueError: If schema is not a dict or missing 'type' field
+        """
         if not isinstance(v, dict):
             raise ValueError("schema must be a dictionary")
         if "type" not in v:
