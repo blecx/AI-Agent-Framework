@@ -212,6 +212,23 @@ All clients communicate with the same REST API, ensuring feature parity and flex
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
 
+### VS Code Auto-Approve Setup (Optional but Recommended)
+
+If you're using VS Code with GitHub Copilot, run this script to enable auto-approve for all agent commands:
+
+```bash
+./scripts/setup-autoapprove.sh
+```
+
+This configures auto-approve for:
+- **Subagents**: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
+- **Terminal commands**: Git, npm, Python, Docker, and 60+ common commands
+- **All workspaces**: Backend, client, and global VS Code settings
+
+After running, reload VS Code (`Ctrl+Shift+P` → `Developer: Reload Window`) to apply changes.
+
+**Benefits**: No manual approval prompts when using Copilot agents, significantly faster workflow.
+
 ## Local Development Setup
 
 For local development without Docker, follow these steps:

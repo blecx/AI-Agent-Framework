@@ -1,0 +1,266 @@
+#!/usr/bin/env python3
+"""
+Setup VS Code auto-approve settings for Copilot agents.
+
+This script automatically configures auto-approve settings in:
+1. Global VS Code user settings (~/.config/Code/User/settings.json)
+2. Backend workspace (.vscode/settings.json)
+3. Client workspace (_external/AI-Agent-Framework-Client/.vscode/settings.json)
+
+Run this script to enable auto-approve for all Copilot agent commands
+without manual copy-paste.
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Dict, Any
+
+# Auto-approve settings to be applied
+AUTO_APPROVE_SETTINGS = {
+    "chat.agent.maxRequests": 50,
+    "chat.allowAnonymousAccess": True,
+    "chat.checkpoints.showFileChanges": True,
+    "chat.customAgentInSubagent.enabled": True,
+    "chat.tools.subagent.autoApprove": {
+        "resolve-issue-dev": True,
+        "close-issue": True,
+        "pr-merge": True,
+        "Plan": True
+    },
+    "chat.tools.terminal.autoApprove": {
+        # Core executables
+        "bash": True,
+        "python3": True,
+        "python": True,
+        
+        # Git commands
+        "git add": True,
+        "git reset": True,
+        "git commit": True,
+        "git push": True,
+        "git pull": True,
+        "git fetch": True,
+        "git switch": True,
+        "git status": True,
+        "git log": True,
+        "git diff": True,
+        "git branch": True,
+        "git merge": True,
+        "git rebase": True,
+        "git show": True,
+        "git rev-parse": True,
+        "git checkout": True,
+        "git restore": True,
+        "git rm": True,
+        "git stash": True,
+        
+        # Python tooling
+        "python -m black": True,
+        "python -m flake8": True,
+        "python -m pytest": True,
+        "pytest": True,
+        
+        # NPM/Node
+        "npm install": True,
+        "npm run dev": True,
+        "npm test": True,
+        "npm run test": True,
+        "npm run build": True,
+        "npm run lint": True,
+        "npm ci": True,
+        "npm audit": True,
+        "npx vitest": True,
+        "vitest": True,
+        
+        # GitHub CLI
+        "gh": True,
+        
+        # Search tools
+        "rg": True,
+        "fd": True,
+        "grep": True,
+        "awk": True,
+        "sed": True,
+        "find": True,
+        "wc": True,
+        
+        # Shell utilities
+        "cat": True,
+        "head": True,
+        "tail": True,
+        "which": True,
+        "command": True,
+        "cd": True,
+        "ls": True,
+        "pwd": True,
+        "echo": True,
+        "sleep": True,
+        "curl": True,
+        "mkdir": True,
+        "rm": True,
+        "cp": True,
+        "chmod": True,
+        "mv": True,
+        "pushd": True,
+        "popd": True,
+        "source": True,
+        "env": True,
+        "true": True,
+        "printf": True,
+        "getent": True,
+        
+        # Docker
+        "docker": True,
+        "docker-compose": True,
+        "docker compose": True,
+        
+        # Dev tools
+        "act": True,
+        "pre-commit": True,
+        "uv": True,
+    }
+}
+
+
+def get_vscode_settings_path() -> Path:
+    """Get the VS Code user settings path based on OS."""
+    if sys.platform == "linux":
+        return Path.home() / ".config/Code/User/settings.json"
+    elif sys.platform == "darwin":
+        return Path.home() / "Library/Application Support/Code/User/settings.json"
+    elif sys.platform == "win32":
+        return Path(os.environ.get("APPDATA", "")) / "Code/User/settings.json"
+    else:
+        raise OSError(f"Unsupported platform: {sys.platform}")
+
+
+def read_json_file(path: Path) -> Dict[str, Any]:
+    """Read JSON file, handling comments and missing files."""
+    if not path.exists():
+        return {}
+    
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Remove JSON5 style comments (VS Code allows them)
+            lines = []
+            for line in content.split('\n'):
+                # Remove trailing comments
+                if '//' in line:
+                    # Keep strings with //
+                    in_string = False
+                    cleaned = []
+                    i = 0
+                    while i < len(line):
+                        if line[i] == '"' and (i == 0 or line[i-1] != '\\'):
+                            in_string = not in_string
+                        if not in_string and i < len(line) - 1 and line[i:i+2] == '//':
+                            break
+                        cleaned.append(line[i])
+                        i += 1
+                    line = ''.join(cleaned)
+                lines.append(line)
+            content = '\n'.join(lines)
+            return json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f"⚠️  Warning: Could not parse {path}: {e}")
+        print(f"   Creating backup and starting fresh...")
+        # Backup the file
+        backup_path = path.with_suffix('.json.backup')
+        path.rename(backup_path)
+        print(f"   Backup saved to: {backup_path}")
+        return {}
+
+
+def merge_settings(existing: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
+    """Deep merge settings, with new settings taking precedence."""
+    result = existing.copy()
+    
+    for key, value in new.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = merge_settings(result[key], value)
+        else:
+            result[key] = value
+    
+    return result
+
+
+def write_json_file(path: Path, data: Dict[str, Any]) -> None:
+    """Write JSON file with pretty formatting."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write('\n')  # Add trailing newline
+
+
+def update_settings(path: Path, name: str) -> bool:
+    """Update settings file with auto-approve configuration."""
+    print(f"\n📝 Updating {name}...")
+    print(f"   Path: {path}")
+    
+    # Read existing settings
+    existing = read_json_file(path)
+    
+    # Merge with auto-approve settings
+    updated = merge_settings(existing, AUTO_APPROVE_SETTINGS)
+    
+    # Write back
+    try:
+        write_json_file(path, updated)
+        print(f"   ✅ Successfully updated {name}")
+        return True
+    except Exception as e:
+        print(f"   ❌ Failed to update {name}: {e}")
+        return False
+
+
+def main():
+    """Main entry point."""
+    print("🚀 VS Code Auto-Approve Setup")
+    print("=" * 60)
+    
+    success_count = 0
+    total_count = 0
+    
+    # 1. Update global VS Code settings
+    try:
+        global_settings = get_vscode_settings_path()
+        total_count += 1
+        if update_settings(global_settings, "Global VS Code settings"):
+            success_count += 1
+    except Exception as e:
+        print(f"\n❌ Could not update global settings: {e}")
+    
+    # 2. Update backend workspace settings
+    backend_workspace = Path(__file__).parent.parent / ".vscode/settings.json"
+    total_count += 1
+    if update_settings(backend_workspace, "Backend workspace"):
+        success_count += 1
+    
+    # 3. Update client workspace settings
+    client_workspace = Path(__file__).parent.parent / "_external/AI-Agent-Framework-Client/.vscode/settings.json"
+    total_count += 1
+    if update_settings(client_workspace, "Client workspace"):
+        success_count += 1
+    
+    # Summary
+    print("\n" + "=" * 60)
+    print(f"📊 Summary: {success_count}/{total_count} settings files updated")
+    
+    if success_count == total_count:
+        print("\n✅ All settings configured successfully!")
+        print("\n📝 Next steps:")
+        print("   1. Reload VS Code window: Ctrl+Shift+P → 'Developer: Reload Window'")
+        print("   2. Start a fresh chat - commands should auto-approve")
+        print("   3. Test with: @workspace run git status")
+        return 0
+    else:
+        print("\n⚠️  Some settings could not be updated")
+        print("   Check the errors above and try again")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
