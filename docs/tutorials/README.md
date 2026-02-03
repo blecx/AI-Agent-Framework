@@ -206,17 +206,89 @@ Stuck? Check the [Troubleshooting Guide](shared/troubleshooting.md) for:
 
 ## ✅ Validation
 
-All tutorials are validated with automated tests. See [Validation Report](VALIDATION-REPORT.md) for test results.
+All tutorials are validated with automated Playwright tests to ensure accuracy and catch regressions early. The validation suite runs 10 tests in ~51 seconds.
 
-**Run validation yourself:**
+### Automated Validation (CI)
+
+Tutorial validation tests run automatically on every PR via GitHub Actions CI pipeline:
+
+- **Job**: `tutorial validation` in `.github/workflows/ci.yml`
+- **Marker**: `pytest -m tutorial_validation`
+- **Runtime**: ~2 minutes (includes Docker startup)
+- **Browsers**: Chromium via Playwright
+- **Coverage**: GUI basics (4 tutorials), TUI basics (partial)
+
+### Manual Validation
+
+Run the validation suite locally to verify tutorials before committing changes:
 
 ```bash
-# Full tutorial validation
-./docs/tutorials/validation/test-runner.sh
+# Full tutorial validation suite (recommended)
+bash docs/tutorials/validation/test-runner.sh
 
-# Individual tutorial
-pytest tests/e2e/tutorial/test_tui_basics.py::test_tutorial_01 -v
+# Quick validation (Playwright tests only)
+pytest -m tutorial_validation -v
+
+# Individual tutorial validation
+pytest tests/e2e/tutorial/test_gui_basics.py::TestGUITutorial01WebInterface -v
+
+# Specific test case
+pytest tests/e2e/tutorial/test_gui_basics.py::TestGUITutorial01WebInterface::test_web_ui_loads -v
 ```
+
+**Prerequisites for manual runs:**
+- Docker services running (`docker compose up -d`)
+- Python environment activated (`source .venv/bin/activate`)
+- Playwright installed (`python -m playwright install chromium`)
+
+### Validation Report
+
+See [VALIDATION-REPORT.md](VALIDATION-REPORT.md) for:
+- Latest test results and pass rates
+- Known issues and workarounds
+- Test coverage by tutorial
+- Performance metrics
+
+### Test Structure
+
+Tutorial validation tests are organized by interface and difficulty:
+
+```
+tests/e2e/tutorial/
+├── conftest.py              # Shared fixtures (Docker, Playwright)
+├── test_gui_basics.py       # GUI tutorial validation (5 test classes)
+├── test_tui_basics.py       # TUI tutorial validation (5 test classes)
+└── test_advanced_workflows.py  # Advanced tutorial validation (3 test classes)
+```
+
+Each test class validates one tutorial end-to-end by:
+1. Starting fresh Docker environment
+2. Executing tutorial steps programmatically
+3. Asserting expected UI elements or CLI outputs
+4. Verifying artifacts created in `projectDocs/`
+
+### Troubleshooting Validation Failures
+
+**"Docker services not healthy"**
+```bash
+docker compose down -v && docker compose up -d
+curl http://localhost:8000/health  # Should return 200
+```
+
+**"Playwright browser not found"**
+```bash
+python -m playwright install chromium --with-deps
+```
+
+**"Test timeout"**
+- Increase timeout in `conftest.py` (default: 15s)
+- Check system resources (Docker needs ~2GB RAM)
+
+**"Element not found"**
+- Tutorial may have changed but test wasn't updated
+- Open issue with "tutorial" label
+- Check [VALIDATION-REPORT.md](VALIDATION-REPORT.md) for known issues
+
 
 ## 📦 What's Next?
 
