@@ -98,11 +98,11 @@ Master hybrid workflows, automation, and complete ISO 21500 implementation.
 
 ### Advanced Workflows (3 tutorials, 110 minutes)
 
-| Tutorial | Duration | Difficulty | Topics |
-|----------|----------|------------|--------|
-| [01. TUI + GUI Hybrid](advanced/01-tui-gui-hybrid.md) | 20 min | Advanced | Interface selection, hybrid patterns |
-| [02. Complete ISO 21500](advanced/02-complete-iso21500.md) | 60 min | Advanced | Full lifecycle, 9-week project |
-| [03. Automation & Scripting](advanced/03-automation-scripting.md) | 30 min | Advanced | Bash scripts, CI/CD, integrations |
+| Tutorial | Status | Duration | Difficulty | Topics |
+|----------|--------|----------|------------|--------|
+| [01. TUI + GUI Hybrid](advanced/01-tui-gui-hybrid.md) | 🟢 | 20 min | Advanced | Interface selection, hybrid patterns |
+| [02. Complete ISO 21500](advanced/02-complete-iso21500.md) | 🟢 | 60 min | Advanced | Full lifecycle, 9-week project |
+| [03. Automation & Scripting](advanced/03-automation-scripting.md) | 🟢 | 30 min | Advanced | Bash scripts, CI/CD, integrations |
 
 ## 🛠️ Prerequisites
 
