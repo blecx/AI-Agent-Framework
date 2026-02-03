@@ -4,10 +4,16 @@ Unit tests for LLM Service.
 
 import pytest
 import json
+import time
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
-from apps.api.services.llm_service import LLMService
+from apps.api.services.llm_service import (
+    LLMService,
+    CircuitBreaker,
+    CircuitState,
+    CircuitBreakerOpenError,
+)
 
 
 class TestLLMServiceInit:
@@ -261,3 +267,268 @@ class TestClose:
             await service.close()
 
             mock_client.aclose.assert_called_once()
+
+
+class TestCircuitBreaker:
+    """Test circuit breaker functionality."""
+
+    def test_circuit_breaker_init(self):
+        """Test circuit breaker initialization."""
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
+
+        assert cb.state == CircuitState.CLOSED
+        assert cb.failure_count == 0
+        assert cb.success_count == 0
+        assert cb.failure_threshold == 3
+        assert cb.recovery_timeout == 30
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_closed_state_allows_calls(self):
+        """Test that closed circuit allows calls through."""
+        cb = CircuitBreaker()
+
+        async def success_func():
+            return "success"
+
+        wrapped = cb.call(success_func)
+        result = await wrapped()
+
+        assert result == "success"
+        assert cb.state == CircuitState.CLOSED
+        assert cb.success_count == 1
+        assert cb.failure_count == 0
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_opens_after_threshold(self):
+        """Test that circuit opens after failure threshold."""
+        cb = CircuitBreaker(failure_threshold=3)
+
+        async def failing_func():
+            raise Exception("Test failure")
+
+        wrapped = cb.call(failing_func)
+
+        # First 2 failures - circuit still closed
+        for i in range(2):
+            with pytest.raises(Exception):
+                await wrapped()
+            assert cb.state == CircuitState.CLOSED
+            assert cb.failure_count == i + 1
+
+        # 3rd failure - circuit opens
+        with pytest.raises(Exception):
+            await wrapped()
+        assert cb.state == CircuitState.OPEN
+        assert cb.failure_count == 3
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_rejects_when_open(self):
+        """Test that open circuit rejects calls immediately."""
+        cb = CircuitBreaker(failure_threshold=2)
+
+        async def failing_func():
+            raise Exception("Test failure")
+
+        wrapped = cb.call(failing_func)
+
+        # Trigger failures to open circuit
+        for _ in range(2):
+            with pytest.raises(Exception):
+                await wrapped()
+
+        assert cb.state == CircuitState.OPEN
+
+        # Next call should be rejected immediately
+        with pytest.raises(CircuitBreakerOpenError) as exc_info:
+            await wrapped()
+
+        assert "Circuit breaker is OPEN" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_half_open_after_timeout(self):
+        """Test that circuit transitions to half-open after recovery timeout."""
+        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=1)
+
+        async def failing_func():
+            raise Exception("Test failure")
+
+        wrapped = cb.call(failing_func)
+
+        # Open the circuit
+        for _ in range(2):
+            with pytest.raises(Exception):
+                await wrapped()
+
+        assert cb.state == CircuitState.OPEN
+
+        # Wait for recovery timeout
+        time.sleep(1.1)
+
+        # Next call should transition to half-open (but still fail)
+        with pytest.raises(Exception):
+            await wrapped()
+
+        # Circuit should have been in half-open before failing again
+        assert cb.state == CircuitState.OPEN  # Back to open after failure
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_closes_after_success_in_half_open(self):
+        """Test that circuit closes after successful call in half-open state."""
+        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=1)
+
+        call_count = [0]
+
+        async def sometimes_failing_func():
+            call_count[0] += 1
+            if call_count[0] <= 2:
+                raise Exception("Fail first 2 calls")
+            return "success"
+
+        wrapped = cb.call(sometimes_failing_func)
+
+        # Open the circuit
+        for _ in range(2):
+            with pytest.raises(Exception):
+                await wrapped()
+
+        assert cb.state == CircuitState.OPEN
+
+        # Wait for recovery timeout
+        time.sleep(1.1)
+
+        # Successful call in half-open should close circuit
+        result = await wrapped()
+        assert result == "success"
+        assert cb.state == CircuitState.CLOSED
+        assert cb.failure_count == 0
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_resets_failure_count_on_success(self):
+        """Test that failure count resets on successful call."""
+        cb = CircuitBreaker(failure_threshold=5)
+
+        async def sometimes_failing_func(should_fail):
+            if should_fail:
+                raise Exception("Test failure")
+            return "success"
+
+        # Partial failures (below threshold)
+        for _ in range(3):
+            with pytest.raises(Exception):
+                await cb.call(lambda: sometimes_failing_func(True))()
+
+        assert cb.failure_count == 3
+        assert cb.state == CircuitState.CLOSED
+
+        # Success resets counter
+        await cb.call(lambda: sometimes_failing_func(False))()
+
+        assert cb.failure_count == 0
+        assert cb.success_count == 1
+        assert cb.state == CircuitState.CLOSED
+
+    def test_circuit_breaker_get_metrics(self):
+        """Test getting circuit breaker metrics."""
+        cb = CircuitBreaker(failure_threshold=5, recovery_timeout=60)
+        cb.failure_count = 2
+        cb.success_count = 10
+        cb.last_failure_time = 1234567890.0
+        cb.last_success_time = 1234567900.0
+
+        metrics = cb.get_metrics()
+
+        assert metrics["state"] == "closed"
+        assert metrics["failure_count"] == 2
+        assert metrics["success_count"] == 10
+        assert metrics["last_failure_time"] == 1234567890.0
+        assert metrics["last_success_time"] == 1234567900.0
+        assert metrics["failure_threshold"] == 5
+        assert metrics["recovery_timeout"] == 60
+
+
+class TestLLMServiceCircuitBreaker:
+    """Test LLM service integration with circuit breaker."""
+
+    def test_llm_service_has_circuit_breaker(self):
+        """Test that LLM service initializes with circuit breaker."""
+        service = LLMService()
+
+        assert hasattr(service, "circuit_breaker")
+        assert isinstance(service.circuit_breaker, CircuitBreaker)
+        assert service.circuit_breaker.failure_threshold == 5
+        assert service.circuit_breaker.recovery_timeout == 60
+
+    def test_get_circuit_breaker_metrics(self):
+        """Test getting circuit breaker metrics from service."""
+        service = LLMService()
+
+        metrics = service.get_circuit_breaker_metrics()
+
+        assert "state" in metrics
+        assert "failure_count" in metrics
+        assert "success_count" in metrics
+        assert metrics["state"] == "closed"
+
+    @pytest.mark.asyncio
+    async def test_chat_completion_with_circuit_breaker_success(self):
+        """Test successful chat completion updates circuit breaker."""
+        mock_client = AsyncMock()
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "Success response"}}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_client.post.return_value = mock_response
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            service = LLMService()
+            messages = [{"role": "user", "content": "Test"}]
+
+            result = await service.chat_completion(messages)
+
+            assert result == "Success response"
+            assert service.circuit_breaker.success_count == 1
+            assert service.circuit_breaker.failure_count == 0
+            assert service.circuit_breaker.state == CircuitState.CLOSED
+
+    @pytest.mark.asyncio
+    async def test_chat_completion_circuit_breaker_opens_on_failures(self):
+        """Test that circuit breaker opens after multiple failures."""
+        mock_client = AsyncMock()
+        mock_client.post.side_effect = Exception("Network error")
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            service = LLMService()
+            messages = [{"role": "user", "content": "Test"}]
+
+            # Trigger failures to open circuit (5 failures needed)
+            for i in range(5):
+                result = await service.chat_completion(messages)
+                assert "[LLM unavailable:" in result
+                assert service.circuit_breaker.failure_count == i + 1
+
+            # Circuit should now be open
+            assert service.circuit_breaker.state == CircuitState.OPEN
+
+            # Next call should be rejected immediately (no HTTP call)
+            mock_client.post.reset_mock()
+            result = await service.chat_completion(messages)
+
+            assert "[LLM unavailable - circuit breaker open:" in result
+            mock_client.post.assert_not_called()  # No HTTP call made
+
+    @pytest.mark.asyncio
+    async def test_chat_completion_returns_fallback_when_circuit_open(self):
+        """Test that fallback message is returned when circuit is open."""
+        service = LLMService()
+
+        # Manually open the circuit
+        service.circuit_breaker.state = CircuitState.OPEN
+        service.circuit_breaker.failure_count = 5
+        service.circuit_breaker.last_failure_time = time.time()
+
+        messages = [{"role": "user", "content": "Test"}]
+        result = await service.chat_completion(messages)
+
+        assert "[LLM unavailable - circuit breaker open:" in result
+        assert "Circuit breaker is OPEN" in result
