@@ -6,9 +6,15 @@ import json
 import git
 import subprocess
 import logging
+import time
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
+
+try:
+    from .monitoring_service import MetricsCollector
+except ImportError:
+    from monitoring_service import MetricsCollector
 
 
 class GitManager:
@@ -140,33 +146,48 @@ class GitManager:
         self, project_key: str, project_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Create a new project folder with project.json."""
-        project_path = self.get_project_path(project_key)
-        project_path.mkdir(parents=True, exist_ok=True)
+        start_time = time.time()
+        status = "success"
 
-        # Create events directory
-        events_path = project_path / "events"
-        events_path.mkdir(exist_ok=True)
+        try:
+            project_path = self.get_project_path(project_key)
+            project_path.mkdir(parents=True, exist_ok=True)
 
-        # Create artifacts directory
-        artifacts_path = project_path / "artifacts"
-        artifacts_path.mkdir(exist_ok=True)
+            # Create events directory
+            events_path = project_path / "events"
+            events_path.mkdir(exist_ok=True)
 
-        # Write project.json
-        project_json_path = project_path / "project.json"
-        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        project_info = {
-            **project_data,
-            "methodology": "ISO21500",
-            "created_at": now,
-            "updated_at": now,
-        }
-        project_json_path.write_text(json.dumps(project_info, indent=2))
+            # Create artifacts directory
+            artifacts_path = project_path / "artifacts"
+            artifacts_path.mkdir(exist_ok=True)
 
-        # Commit
-        self.repo.index.add([str(project_json_path.relative_to(self.base_path))])
-        self.repo.index.commit(f"Create project {project_key}")
+            # Write project.json
+            project_json_path = project_path / "project.json"
+            now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            project_info = {
+                **project_data,
+                "methodology": "ISO21500",
+                "created_at": now,
+                "updated_at": now,
+            }
+            project_json_path.write_text(json.dumps(project_info, indent=2))
 
-        return project_info
+            # Commit
+            self.repo.index.add([str(project_json_path.relative_to(self.base_path))])
+            self.repo.index.commit(f"Create project {project_key}")
+
+            # Record successful metrics
+            duration = time.time() - start_time
+            MetricsCollector.record_git_operation("create_project", duration, status)
+
+            return project_info
+
+        except Exception:
+            # Record error metrics
+            duration = time.time() - start_time
+            status = "error"
+            MetricsCollector.record_git_operation("create_project", duration, status)
+            raise
 
     def read_project_json(self, project_key: str) -> Optional[Dict[str, Any]]:
         """Read project.json for a project."""
@@ -191,20 +212,38 @@ class GitManager:
 
     def commit_changes(self, project_key: str, message: str, files: List[str]) -> str:
         """Stage and commit changes for a project."""
-        project_path = self.get_project_path(project_key)
+        start_time = time.time()
+        status = "success"
 
-        # Convert to relative paths from repo root
-        relative_files = []
-        for file_path in files:
-            full_path = project_path / file_path
-            if full_path.exists():
-                relative_files.append(str(full_path.relative_to(self.base_path)))
+        try:
+            project_path = self.get_project_path(project_key)
 
-        if relative_files:
-            self.repo.index.add(relative_files)
-            commit = self.repo.index.commit(message)
-            return commit.hexsha
-        return ""
+            # Convert to relative paths from repo root
+            relative_files = []
+            for file_path in files:
+                full_path = project_path / file_path
+                if full_path.exists():
+                    relative_files.append(str(full_path.relative_to(self.base_path)))
+
+            if relative_files:
+                self.repo.index.add(relative_files)
+                commit = self.repo.index.commit(message)
+                result = commit.hexsha
+            else:
+                result = ""
+
+            # Record successful metrics
+            duration = time.time() - start_time
+            MetricsCollector.record_git_operation("commit", duration, status)
+
+            return result
+
+        except Exception:
+            # Record error metrics
+            duration = time.time() - start_time
+            status = "error"
+            MetricsCollector.record_git_operation("commit", duration, status)
+            raise
 
     def get_diff(self, project_key: str, file_path: str, content: str) -> str:
         """Generate unified diff for proposed changes."""

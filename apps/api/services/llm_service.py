@@ -18,6 +18,11 @@ from tenacity import (
     retry_if_exception_type,
 )
 
+try:
+    from .monitoring_service import MetricsCollector
+except ImportError:
+    from monitoring_service import MetricsCollector
+
 
 class CircuitState(Enum):
     """Circuit breaker states."""
@@ -252,16 +257,36 @@ class LLMService:
         Returns:
             LLM response content or fallback message
         """
+        start_time = time.time()
+        provider = self.config.get("model", "unknown")
+        status = "success"
+
         try:
             # Wrap with circuit breaker
             protected_call = self.circuit_breaker.call(self._chat_completion_with_retry)
-            return await protected_call(messages, temperature, max_tokens)
+            result = await protected_call(messages, temperature, max_tokens)
+
+            # Record successful metrics
+            duration = time.time() - start_time
+            MetricsCollector.record_llm_call(provider, duration, status)
+
+            return result
+
         except CircuitBreakerOpenError as e:
             # Circuit is open, return fallback immediately
+            duration = time.time() - start_time
+            status = "circuit_breaker_open"
+            MetricsCollector.record_llm_call(provider, duration, status)
+
             print(f"Circuit breaker OPEN: {e}")
             return f"[LLM unavailable - circuit breaker open: {str(e)}]"
+
         except Exception as e:
             # Other errors (after retries exhausted)
+            duration = time.time() - start_time
+            status = "error"
+            MetricsCollector.record_llm_call(provider, duration, status)
+
             print(f"LLM request failed after retries: {e}")
             return f"[LLM unavailable: {str(e)}]"
 
