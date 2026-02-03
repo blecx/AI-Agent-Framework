@@ -29,7 +29,7 @@ def _get_or_create_metric(metric_class, name, documentation, labelnames=None, **
     """Get existing metric or create new one, avoiding duplicate registration."""
     if name in _metrics_cache:
         return _metrics_cache[name]
-    
+
     try:
         if labelnames:
             metric = metric_class(name, documentation, labelnames, **kwargs)
