@@ -276,25 +276,27 @@ def fresh_project(tui_automation):
     return project_key
 
 
-# Optional: Web driver fixture (requires Playwright)
-# Uncomment if GUI testing is needed
-
-# @pytest.fixture
-# def web_driver(clean_project_docs):
-#     """
-#     Provides a Playwright web driver for GUI testing.
-#     Requires: pip install playwright && playwright install
-#     """
-#     from playwright.sync_api import sync_playwright
-#     
-#     with sync_playwright() as p:
-#         browser = p.chromium.launch(headless=True)
-#         page = browser.new_page()
-#         page.goto(WEB_BASE_URL)
-#         
-#         yield page
-#         
-#         browser.close()
+@pytest.fixture
+def browser_page(docker_environment):
+    """
+    Provides a Playwright browser page for GUI testing.
+    Requires: pip install playwright && playwright install chromium
+    """
+    from playwright.sync_api import sync_playwright
+    
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            viewport={"width": 1280, "height": 720},
+            ignore_https_errors=True
+        )
+        page = context.new_page()
+        page.set_default_timeout(10000)  # 10s default timeout
+        
+        yield page
+        
+        context.close()
+        browser.close()
 
 
 # Test markers configuration (add to pytest.ini)
