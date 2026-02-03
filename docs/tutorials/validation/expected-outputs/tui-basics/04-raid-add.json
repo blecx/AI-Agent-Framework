@@ -1,0 +1,10 @@
+{
+  "id": "RAID-001",
+  "project": "TEST-001",
+  "type": "risk",
+  "severity": "High",
+  "description": "Test risk description",
+  "mitigation": "Test mitigation strategy",
+  "status": "Open",
+  "created_at": "2026-02-03T10:00:00Z"
+}

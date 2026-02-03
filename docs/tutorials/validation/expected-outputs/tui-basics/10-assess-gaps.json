@@ -1,0 +1,15 @@
+{
+  "project": "TEST-001",
+  "workflow_state": "Planning",
+  "artifacts_count": 1,
+  "raid_entries_count": 1,
+  "gaps": [
+    {
+      "type": "artifact",
+      "name": "Work Breakdown Structure",
+      "recommended": true,
+      "phase": "Planning"
+    }
+  ],
+  "compliance_score": 0.75
+}

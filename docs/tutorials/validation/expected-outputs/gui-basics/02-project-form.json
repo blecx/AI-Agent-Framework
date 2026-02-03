@@ -1,0 +1,28 @@
+{
+  "form_elements": [
+    {
+      "id": "project-key-input",
+      "type": "text",
+      "label": "Project Key",
+      "required": true,
+      "pattern": "^[A-Z0-9-]+$"
+    },
+    {
+      "id": "project-name-input",
+      "type": "text",
+      "label": "Project Name",
+      "required": true
+    },
+    {
+      "id": "project-description-input",
+      "type": "textarea",
+      "label": "Description",
+      "required": false
+    },
+    {
+      "id": "create-project-btn",
+      "type": "button",
+      "text": "Create Project"
+    }
+  ]
+}

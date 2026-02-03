@@ -1,0 +1,37 @@
+{
+  "artifact_tree": [
+    {
+      "path": "artifacts/",
+      "type": "directory",
+      "children": [
+        {
+          "path": "charter.md",
+          "type": "file",
+          "size_kb": 3.2
+        }
+      ]
+    },
+    {
+      "path": "raid/",
+      "type": "directory",
+      "children": [
+        {
+          "path": "register.json",
+          "type": "file",
+          "size_kb": 1.5
+        }
+      ]
+    },
+    {
+      "path": "workflow/",
+      "type": "directory",
+      "children": [
+        {
+          "path": "state.json",
+          "type": "file",
+          "size_kb": 0.3
+        }
+      ]
+    }
+  ]
+}

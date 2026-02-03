@@ -1,0 +1,7 @@
+{
+  "key": "TEST-001",
+  "name": "Test Project",
+  "description": "A test project for tutorial validation",
+  "workflow_state": "Initiating",
+  "created_at": "2026-02-03T10:00:00Z"
+}
