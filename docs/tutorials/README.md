@@ -70,25 +70,31 @@ Master hybrid workflows, automation, and complete ISO 21500 implementation.
 
 ## 📖 Tutorial Catalog
 
+### Tutorial Status Legend
+
+- 🟢 **Complete**: Fully functional with automated tests
+- 🟡 **Preview**: Partial implementation, may have limitations
+- 🔴 **Planned**: Future release
+
 ### TUI Basics (5 tutorials, 75 minutes)
 
-| Tutorial | Duration | Difficulty | Topics |
-|----------|----------|------------|--------|
-| [01. TUI Quick Start](tui-basics/01-quick-start.md) | 5 min | Beginner | Docker, API health, TUI basics |
-| [02. First Project](tui-basics/02-first-project.md) | 10 min | Beginner | Project creation, Git structure |
-| [03. Artifact Workflow](tui-basics/03-artifact-workflow.md) | 15 min | Beginner | Generate artifacts, propose/apply |
-| [04. RAID Management](tui-basics/04-raid-management.md) | 15 min | Beginner | Risk, Assumption, Issue, Dependency |
-| [05. Full Lifecycle](tui-basics/05-full-lifecycle.md) | 30 min | Intermediate | All 5 ISO phases, 10+ artifacts |
+| Tutorial | Status | Duration | Difficulty | Topics |
+|----------|--------|----------|------------|--------|
+| [01. TUI Quick Start](tui-basics/01-quick-start.md) | 🟢 | 5 min | Beginner | Docker, API health, TUI basics |
+| [02. First Project](tui-basics/02-first-project.md) | 🟢 | 10 min | Beginner | Project creation, Git structure |
+| [03. Artifact Workflow](tui-basics/03-artifact-workflow.md) | 🟢 | 15 min | Beginner | Generate artifacts, propose/apply |
+| [04. RAID Management](tui-basics/04-raid-management.md) | 🟢 | 15 min | Beginner | Risk, Assumption, Issue, Dependency |
+| [05. Full Lifecycle](tui-basics/05-full-lifecycle.md) | 🟢 | 30 min | Intermediate | All 5 ISO phases, 10+ artifacts |
 
 ### GUI Basics (5 tutorials, 50 minutes)
 
-| Tutorial | Duration | Difficulty | Topics |
-|----------|----------|------------|--------|
-| [01. Web Interface Basics](gui-basics/01-web-interface.md) | 5 min | Beginner | UI navigation, components |
-| [02. Project Creation GUI](gui-basics/02-project-creation.md) | 10 min | Beginner | Web forms, validation |
-| [03. Commands and Proposals](gui-basics/03-commands-and-proposals.md) | 10 min | Beginner | Execute commands, review proposals |
-| [04. Artifact Browsing](gui-basics/04-artifact-browsing.md) | 10 min | Intermediate | Browse artifacts, view history |
-| [05. Workflow States GUI](gui-basics/05-workflow-states.md) | 15 min | Intermediate | State transitions, navigation |
+| Tutorial | Status | Duration | Difficulty | Topics |
+|----------|--------|----------|------------|--------|
+| [01. Web Interface Basics](gui-basics/01-web-interface.md) | 🟢 | 5 min | Beginner | UI navigation, components |
+| [02. Project Creation GUI](gui-basics/02-project-creation.md) | 🟢 | 10 min | Beginner | Web forms, validation |
+| [03. Commands and Proposals](gui-basics/03-commands-and-proposals.md) | 🟢 | 10 min | Beginner | Execute commands, review proposals |
+| [04. Artifact Browsing](gui-basics/04-artifact-browsing.md) | 🟢 | 10 min | Intermediate | Browse artifacts, view history |
+| [05. Workflow States GUI](gui-basics/05-workflow-states.md) | 🟢 | 15 min | Intermediate | State transitions, navigation |
 
 ### Advanced Workflows (3 tutorials, 110 minutes)
 

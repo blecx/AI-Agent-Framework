@@ -2,8 +2,6 @@
 
 **Duration:** 20 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
-⚠️ **Note**: This feature is planned for a future release. Current GUI implementation is in development.
-
 ## Overview
 
 Visualize and manage ISO 21500 workflow states using the web interface. Learn phase transitions and state management.

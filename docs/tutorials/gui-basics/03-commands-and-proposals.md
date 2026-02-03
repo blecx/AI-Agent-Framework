@@ -2,8 +2,6 @@
 
 **Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
-⚠️ **Note**: This feature is planned for a future release. Current GUI implementation is in development.
-
 ## Overview
 
 Execute commands and review proposals using the web interface. Learn the CommandPanel component and ProposalModal workflow.
