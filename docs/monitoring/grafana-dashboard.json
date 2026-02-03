@@ -1,0 +1,213 @@
+{
+  "dashboard": {
+    "title": "ISO 21500 AI Agent - System Overview",
+    "tags": ["iso21500", "ai-agent", "monitoring"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(api_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "requests/sec", "format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Request Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "seconds", "format": "s"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(api_requests_total{status_code=~\"5..\"}[5m])",
+            "legendFormat": "{{status_code}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "errors/sec", "format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"type": "gt", "params": [0.1]},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 4,
+        "title": "Requests in Progress",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "api_requests_in_progress",
+            "legendFormat": "Active Requests",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "requests", "format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "LLM Call Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(llm_calls_total{status=\"success\"}[5m]) / rate(llm_calls_total[5m])",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "success rate", "format": "percentunit", "max": 1}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "LLM Call Latency",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(llm_call_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 {{provider}}",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(llm_call_duration_seconds_bucket[5m]))",
+            "legendFormat": "p50 {{provider}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"label": "seconds", "format": "s"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Git Operations Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(git_operations_total[5m])",
+            "legendFormat": "{{operation}} ({{status}})",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "operations/sec", "format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Slow Operations",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(slow_operations_total[5m])",
+            "legendFormat": "{{operation}} ({{threshold}})",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "slow ops/sec", "format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "memory_usage_bytes",
+            "legendFormat": "Used Memory",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "bytes", "format": "bytes"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Disk Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "targets": [
+          {
+            "expr": "disk_usage_percent",
+            "legendFormat": "{{path}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "percent", "format": "percent", "max": 100}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"type": "gt", "params": [90]},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "name": "Low Disk Space",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      }
+    ]
+  }
+}

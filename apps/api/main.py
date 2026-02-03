@@ -1,7 +1,9 @@
 import os
+import time
+import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 """Main FastAPI application for ISO 21500 Project Management AI Agent System."""
@@ -20,10 +22,15 @@ try:
         commands_global,
         templates,
         blueprints,
+        health,
     )
     from .services.git_manager import GitManager
     from .services.llm_service import LLMService
     from .services.audit_service import AuditService
+    from .services.monitoring_service import (
+        MetricsCollector,
+        REQUEST_IN_PROGRESS,
+    )
 except ImportError:
     # Local execution from apps/api (e.g. `uvicorn main:app`)
     from routers import (
@@ -38,10 +45,15 @@ except ImportError:
         commands_global,
         templates,
         blueprints,
+        health,
     )
     from services.git_manager import GitManager
     from services.llm_service import LLMService
     from services.audit_service import AuditService
+    from services.monitoring_service import (
+        MetricsCollector,
+        REQUEST_IN_PROGRESS,
+    )
 
 
 @asynccontextmanager
@@ -75,6 +87,88 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ============================================================================
+# Monitoring Middleware
+# ============================================================================
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    """
+    Middleware to collect request metrics.
+
+    Tracks:
+    - Request count by method/endpoint/status
+    - Request duration
+    - Requests in progress
+    - Correlation ID for tracing
+    """
+    # Generate correlation ID
+    correlation_id = str(uuid.uuid4())
+    request.state.correlation_id = correlation_id
+
+    # Track in-progress requests
+    REQUEST_IN_PROGRESS.inc()
+
+    start_time = time.time()
+
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+
+        # Record metrics
+        MetricsCollector.record_request(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=response.status_code,
+            duration=duration,
+        )
+
+        # Add correlation ID to response headers
+        response.headers["X-Correlation-ID"] = correlation_id
+
+        return response
+
+    except Exception as e:
+        duration = time.time() - start_time
+
+        # Record error metrics
+        MetricsCollector.record_request(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=500,
+            duration=duration,
+        )
+        MetricsCollector.record_error(
+            error_type=type(e).__name__,
+            endpoint=request.url.path,
+        )
+
+        raise
+
+    finally:
+        REQUEST_IN_PROGRESS.dec()
+
+
+# ============================================================================
+# Metrics Endpoint
+# ============================================================================
+
+
+@app.get("/metrics")
+async def metrics():
+    """
+    Prometheus metrics endpoint.
+
+    Returns metrics in OpenMetrics format for Prometheus scraping.
+    """
+    return Response(
+        content=MetricsCollector.generate_metrics(),
+        media_type=MetricsCollector.get_content_type(),
+    )
+
 
 # ============================================================================
 # API v1 Routes (Versioned)
@@ -114,6 +208,7 @@ app.include_router(templates.router, prefix="/api/v1/templates", tags=["template
 app.include_router(
     blueprints.router, prefix="/api/v1/blueprints", tags=["blueprints-v1"]
 )
+app.include_router(health.router, tags=["health"])
 
 # ============================================================================
 # Backward Compatibility Routes (Deprecated - use /api/v1/ instead)
@@ -178,30 +273,5 @@ async def info_v1():
     return {
         "name": "ISO 21500 Project Management AI Agent",
         "version": "1.0.0",
-        "api_version": "v1",
-    }
-
-
-@app.get("/health")
-async def health():
-    """Detailed health check (deprecated - use /api/v1/health)."""
-    docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
-    return {
-        "status": "healthy",
-        "docs_path": docs_path,
-        "docs_exists": os.path.exists(docs_path),
-        "docs_is_git": os.path.exists(os.path.join(docs_path, ".git")),
-    }
-
-
-@app.get("/api/v1/health")
-async def health_v1():
-    """Detailed health check (versioned)."""
-    docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
-    return {
-        "status": "healthy",
-        "docs_path": docs_path,
-        "docs_exists": os.path.exists(docs_path),
-        "docs_is_git": os.path.exists(os.path.join(docs_path, ".git")),
         "api_version": "v1",
     }
