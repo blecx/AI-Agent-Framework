@@ -40,10 +40,10 @@ Build on basics with workflow management and full lifecycle.
 2. **[Full Lifecycle TUI](tui-basics/05-full-lifecycle.md)** (30 min)
    - Navigate all 5 ISO 21500 phases
    - Produce 10+ different artifacts
-3. **[RAID Entry Management GUI](gui-basics/03-raid-entry-management.md)** (10 min)
-   - Add/edit/view RAID entries via web UI
-4. **[Proposal Workflow GUI](gui-basics/04-proposal-workflow.md)** (10 min)
-   - Review diffs, apply changes, manage state
+3. **[Commands and Proposals GUI](gui-basics/03-commands-and-proposals.md)** (10 min)
+   - Execute commands, review proposals via web UI
+4. **[Artifact Browsing GUI](gui-basics/04-artifact-browsing.md)** (10 min)
+   - Browse project artifacts, view history
 
 **Total: 110 minutes** | **What You'll Learn**: Complete ISO 21500 lifecycle, state management, GUI workflows
 
@@ -86,8 +86,8 @@ Master hybrid workflows, automation, and complete ISO 21500 implementation.
 |----------|----------|------------|--------|
 | [01. Web Interface Basics](gui-basics/01-web-interface.md) | 5 min | Beginner | UI navigation, components |
 | [02. Project Creation GUI](gui-basics/02-project-creation.md) | 10 min | Beginner | Web forms, validation |
-| [03. RAID Entry Management](gui-basics/03-raid-entry-management.md) | 10 min | Beginner | Add/edit RAID via GUI |
-| [04. Proposal Workflow GUI](gui-basics/04-proposal-workflow.md) | 10 min | Intermediate | Review diffs, apply changes |
+| [03. Commands and Proposals](gui-basics/03-commands-and-proposals.md) | 10 min | Beginner | Execute commands, review proposals |
+| [04. Artifact Browsing](gui-basics/04-artifact-browsing.md) | 10 min | Intermediate | Browse artifacts, view history |
 | [05. Workflow States GUI](gui-basics/05-workflow-states.md) | 15 min | Intermediate | State transitions, navigation |
 
 ### Advanced Workflows (3 tutorials, 110 minutes)
