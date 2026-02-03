@@ -26,10 +26,23 @@ _metrics_cache = {}
 
 
 def _get_or_create_metric(metric_class, name, documentation, labelnames=None, **kwargs):
-    """Get existing metric or create new one, avoiding duplicate registration."""
+    """
+    Get existing metric or create new one, avoiding duplicate registration.
+    
+    This function is designed to be idempotent - calling it multiple times
+    with the same name will return the same metric instance without errors.
+    """
+    # Check cache first
     if name in _metrics_cache:
         return _metrics_cache[name]
 
+    # Check if already in registry before attempting creation
+    for collector in list(REGISTRY._collector_to_names.keys()):
+        if hasattr(collector, "_name") and collector._name == name:
+            _metrics_cache[name] = collector
+            return collector
+    
+    # Create new metric and handle any registration conflicts
     try:
         if labelnames:
             metric = metric_class(name, documentation, labelnames, **kwargs)
@@ -37,13 +50,17 @@ def _get_or_create_metric(metric_class, name, documentation, labelnames=None, **
             metric = metric_class(name, documentation, **kwargs)
         _metrics_cache[name] = metric
         return metric
-    except ValueError:
-        # Already registered (may happen if imported multiple times)
-        # Try to retrieve from registry
-        for collector in list(REGISTRY._collector_to_names.keys()):
-            if hasattr(collector, "_name") and collector._name == name:
-                _metrics_cache[name] = collector
-                return collector
+    except Exception as e:
+        # If creation failed due to duplicate, try to find the existing metric
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in ["duplicate", "already", "conflict"]):
+            # Search registry again more thoroughly
+            for collector in list(REGISTRY._collector_to_names.keys()):
+                names = REGISTRY._collector_to_names.get(collector, set())
+                if name in names or (hasattr(collector, "_name") and collector._name == name):
+                    _metrics_cache[name] = collector
+                    return collector
+        # If we can't find it or it's a different error, re-raise
         raise
 
 
