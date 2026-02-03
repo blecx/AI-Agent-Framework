@@ -117,7 +117,32 @@
     "uv": true,
     "npm ci": true,
     "npm audit": true,
-    "vitest": true
+    "vitest": true,
+    "git tag": true,
+    "git remote": true,
+    "git ls-remote": true,
+    "xargs": true,
+    "jq": true,
+    "history": true,
+    "sort": true,
+    "uniq": true,
+    "tee": true,
+    "/^git log --oneline origin\\/main\\.\\.HEAD$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^git tag -l \\| xargs -I {} sh -c 'git ls-remote --tags origin {} \\| grep -q {} \\|\\| echo \\\"Local only: {}\\\"'$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^git remote -v && git branch -vv$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^git tag -l && echo \\\"---\\\" && git ls-remote --tags origin \\| awk '{print \\$2}' \\| sed 's\\|refs\\/tags\\/\\|\\|' \\| sort$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   },
   "chat.allowAnonymousAccess": true,
   "chat.checkpoints.showFileChanges": true,
