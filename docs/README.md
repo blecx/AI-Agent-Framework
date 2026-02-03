@@ -18,6 +18,7 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 **Quick Links:**
 - 🚀 [Setup Guide](../QUICKSTART.md)
+- 📚 [Tutorials](tutorials/README.md) - **NEW! Step-by-step learning paths**
 - 🤝 [Contributing Guide](CONTRIBUTING.md) - **Start here if you want to contribute!**
 - 💻 [Development Guide](development.md)
 - 📖 [API Documentation](http://localhost:8000/docs) (when running)
@@ -244,6 +245,52 @@ const proposalData = await proposal.json();
 ```
 
 For complete API documentation, run the API server and visit: `http://localhost:8000/docs`
+
+---
+
+## Documentation Structure
+
+```
+docs/
+├── README.md                          # This file
+├── development.md                     # Local development guide
+├── tutorials/                         # NEW! Step-by-step learning tutorials
+├── architecture/                      # System architecture documentation
+├── deployment/                        # Deployment guides
+├── api/                               # API and client integration guides
+├── spec/                              # Formal specifications
+├── adr/                               # Architecture Decision Records
+├── chat/                              # Development transcripts
+└── howto/                             # Procedural guides
+```
+
+---
+
+## Tutorials (NEW!)
+
+**Interactive learning path from beginner to advanced.**
+
+| Tutorial Suite | Duration | Difficulty | Description |
+|----------------|----------|------------|-------------|
+| [TUI Basics](tutorials/tui-basics/) | 75 min | Beginner | 5 tutorials covering Docker setup, project creation, artifacts, RAID, and full lifecycle |
+| [GUI Basics](tutorials/gui-basics/) | 50 min | Beginner-Intermediate | 5 tutorials covering web interface, project forms, RAID management, proposals, and workflow states |
+| [Advanced Workflows](tutorials/advanced/) | 110 min | Advanced | 3 tutorials covering TUI+GUI hybrid workflows, complete ISO 21500 lifecycle, and automation/scripting |
+| [Setup Guide](tutorials/shared/00-setup-guide.md) | N/A | All Levels | Complete environment setup (Docker, Git, verification) |
+| [Troubleshooting](tutorials/shared/troubleshooting.md) | N/A | All Levels | Common issues and solutions for Docker, API, TUI, GUI, and Git problems |
+
+**Quick Links:**
+
+- 📚 [Tutorial Index](tutorials/README.md) - Learning paths and complete catalog
+- 🌱 [Beginner Path (60 min)](tutorials/README.md#-beginner-path-60-minutes) - TUI basics + GUI basics
+- 🚀 [Intermediate Path (110 min)](tutorials/README.md#-intermediate-path-110-minutes) - Add full lifecycle and workflow states
+- 🎯 [Advanced Path (220 min)](tutorials/README.md#-advanced-path-220-minutes) - Hybrid workflows, complete ISO 21500, automation
+
+**Why Tutorials?**
+
+- **Hands-On Learning**: Real Todo Application project example throughout
+- **Validated Content**: All tutorials tested with automated E2E tests
+- **Progressive Difficulty**: Build skills from basics to automation
+- **Multiple Interfaces**: Learn both TUI (command-line) and GUI (web) approaches
 
 ---
 
