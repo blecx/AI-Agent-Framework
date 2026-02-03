@@ -22,8 +22,9 @@ This system provides intelligent project management following ISO 21500 standard
 **New to the project?** Start here:
 
 - 🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 10 minutes
-- � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - NEW! Run autonomous agent from VS Code chat
-- �🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
+- 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels
+- � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run autonomous agent from VS Code chat
+- 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
 - 📖 **[Documentation Hub](docs/README.md)** - Complete documentation index
 
 **Architecture & Design:**
@@ -139,6 +140,16 @@ The framework includes a powerful extensible skills system that provides cogniti
 ## User Interfaces & Clients
 
 The AI-Agent Framework provides multiple interfaces to suit different workflows and use cases:
+
+### 🎓 Learning Resources
+
+**New users?** Start with our comprehensive tutorials:
+
+- **[TUI Quick Start](docs/tutorials/tui-basics/01-quick-start.md)** - Get started with command-line interface (5 min)
+- **[Web Interface Basics](docs/tutorials/gui-basics/01-web-interface.md)** - Learn the web GUI (5 min)
+- **[Complete Learning Paths](docs/tutorials/README.md)** - Structured paths from beginner to advanced (60-220 minutes)
+
+All tutorials use a Todo Application example to teach real-world ISO 21500 project management.
 
 ### 🖥️ TUI (Text User Interface)
 

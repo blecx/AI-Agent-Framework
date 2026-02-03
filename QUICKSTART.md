@@ -226,6 +226,37 @@ python -m src.client health  # CLI mode
 
 **Full documentation:** [client/README.md](client/README.md)
 
+## Next Steps
+
+Now that you have the system running, here's where to go next:
+
+### Learn Through Tutorials
+
+Our comprehensive tutorial suite will teach you everything from basics to advanced workflows:
+
+**🌱 Beginner Path (60 minutes):**
+
+- [TUI Quick Start](docs/tutorials/tui-basics/01-quick-start.md) - Docker setup and basic commands (5 min)
+- [First Project](docs/tutorials/tui-basics/02-first-project.md) - Create your first project (10 min)
+- [Web Interface Basics](docs/tutorials/gui-basics/01-web-interface.md) - Navigate the web UI (5 min)
+- [Complete Beginner Path](docs/tutorials/README.md#-beginner-path-60-minutes) - Full guided tour
+
+**🚀 Intermediate Path (110 minutes):**
+
+- Learn workflow management and ISO 21500 lifecycle
+- [View Intermediate Path](docs/tutorials/README.md#-intermediate-path-110-minutes)
+
+**🎯 Advanced Path (220 minutes):**
+
+- Master hybrid workflows and automation
+- [View Advanced Path](docs/tutorials/README.md#-advanced-path-220-minutes)
+
+**📚 All Tutorials:** [docs/tutorials/README.md](docs/tutorials/README.md)
+
+### Explore the System
+
+After tutorials, dive deeper into capabilities:
+
 ## Getting Started with WebUI
 
 The WebUI is a **separate repository** with a modern React-based interface.
