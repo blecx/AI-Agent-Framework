@@ -10,7 +10,7 @@ Run with: pytest tests/e2e/tutorial/test_tui_basics.py -v
 import pytest
 import json
 from pathlib import Path
-from tests.helpers.tui_automation import TUIAutomation, TUIResult
+from helpers.tui_automation import TUIAutomation, TUIResult
 
 
 @pytest.fixture(scope="module")
