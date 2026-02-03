@@ -1,0 +1,37 @@
+{
+  "automation_scripts": [
+    {
+      "script": "create-projects-batch.sh",
+      "purpose": "Batch project creation from CSV",
+      "inputs": ["projects.csv"],
+      "outputs": ["Multiple projects created"],
+      "exit_code": 0
+    },
+    {
+      "script": "import-raid-entries.sh",
+      "purpose": "Bulk RAID import from CSV",
+      "inputs": ["PROJECT_KEY", "raid-entries.csv"],
+      "outputs": ["RAID entries imported"],
+      "exit_code": 0
+    },
+    {
+      "script": "raid-report.sh",
+      "purpose": "Generate RAID summary report",
+      "inputs": ["PROJECT_KEY"],
+      "outputs": ["raid-report-YYYYMMDD.md"],
+      "exit_code": 0
+    },
+    {
+      "script": "project-status.sh",
+      "purpose": "Project status summary",
+      "inputs": ["PROJECT_KEY"],
+      "outputs": ["Status display"],
+      "exit_code": 0
+    }
+  ],
+  "ci_cd_integration": {
+    "github_actions": true,
+    "cron_jobs": true,
+    "external_tools": ["JIRA", "Slack"]
+  }
+}

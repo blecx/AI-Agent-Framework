@@ -1,0 +1,18 @@
+{
+  "raid_table_columns": [
+    "ID",
+    "Type",
+    "Severity",
+    "Description",
+    "Status",
+    "Actions"
+  ],
+  "raid_entry": {
+    "id": "RAID-001",
+    "type": "risk",
+    "severity": "High",
+    "description": "Test risk description",
+    "status": "Open",
+    "actions": ["Edit", "Resolve", "Delete"]
+  }
+}

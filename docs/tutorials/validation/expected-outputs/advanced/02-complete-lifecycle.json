@@ -1,0 +1,41 @@
+{
+  "iso21500_phases": [
+    {
+      "phase": "Initiating",
+      "duration_weeks": 1,
+      "artifacts": ["charter.md", "stakeholders.md"],
+      "raid_entries": 7,
+      "workflow_state": "Initiating"
+    },
+    {
+      "phase": "Planning",
+      "duration_weeks": 2,
+      "artifacts": ["wbs.md", "schedule.md", "budget.md", "requirements.md", "test-plan.md"],
+      "raid_entries": 15,
+      "workflow_state": "Planning"
+    },
+    {
+      "phase": "Executing",
+      "duration_weeks": 5,
+      "artifacts": ["api-design.md", "frontend-architecture.md", "database-schema.md", "test-results.md"],
+      "raid_entries": 19,
+      "workflow_state": "Executing"
+    },
+    {
+      "phase": "Monitoring",
+      "duration": "Continuous",
+      "artifacts": ["status-reports (weekly)", "milestone-reviews"],
+      "raid_entries": "Dynamic",
+      "workflow_state": "Executing"
+    },
+    {
+      "phase": "Closing",
+      "duration_weeks": 1,
+      "artifacts": ["lessons-learned.md", "deployment.md", "project-summary.md"],
+      "raid_entries": 24,
+      "workflow_state": "Closing"
+    }
+  ],
+  "total_duration_weeks": 9,
+  "total_artifacts": 19
+}

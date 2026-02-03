@@ -1,0 +1,6 @@
+{
+  "proposal_id": "workflow-update-20260203-100000",
+  "status": "applied",
+  "workflow_state": "Planning",
+  "git_commit": "a1b2c3d [TEST-001] Workflow state updated to Planning"
+}

@@ -1,0 +1,30 @@
+{
+  "hybrid_workflow": {
+    "steps": [
+      {
+        "step": 1,
+        "interface": "TUI",
+        "action": "Create project",
+        "command": "python main.py projects create --key TEST --name Test"
+      },
+      {
+        "step": 2,
+        "interface": "GUI",
+        "action": "Verify project in UI",
+        "url": "http://localhost:5173/?project=TEST"
+      },
+      {
+        "step": 3,
+        "interface": "TUI",
+        "action": "Add RAID entry",
+        "command": "python main.py raid add --project TEST ..."
+      },
+      {
+        "step": 4,
+        "interface": "GUI",
+        "action": "Review RAID in table view",
+        "element": "#raid-table"
+      }
+    ]
+  }
+}

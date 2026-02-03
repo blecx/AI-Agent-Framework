@@ -1,0 +1,23 @@
+{
+  "diff_view": {
+    "before": {
+      "workflow": {
+        "state": "Initiating"
+      }
+    },
+    "after": {
+      "workflow": {
+        "state": "Planning"
+      }
+    },
+    "changes": [
+      {
+        "path": "workflow.state",
+        "from": "Initiating",
+        "to": "Planning",
+        "type": "modification"
+      }
+    ]
+  },
+  "actions": ["Apply", "Reject"]
+}
