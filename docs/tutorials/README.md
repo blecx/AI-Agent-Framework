@@ -72,7 +72,7 @@ Master hybrid workflows, automation, and complete ISO 21500 implementation.
 
 ### Tutorial Status Legend
 
-- 🟢 **Complete**: Fully functional with automated tests
+- 🟢 **Complete**: Fully functional (automated or manually validated)
 - 🟡 **Preview**: Partial implementation, may have limitations
 - 🔴 **Planned**: Future release
 
