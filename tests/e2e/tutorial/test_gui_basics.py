@@ -178,7 +178,8 @@ class TestGUITutorial04ArtifactBrowsing:
 class TestGUITutorial05WorkflowStates:
     """Validate Tutorial 05: Workflow States."""
 
-    def test_workflow_staIndicator component displays ISO 21500 phases"""
+    def test_workflow_state_display(self, browser_page: Page):
+        """Test: WorkflowIndicator component displays ISO 21500 phases"""
         browser_page.goto(WEB_URL)
         time.sleep(2)
         
@@ -213,8 +214,7 @@ class TestGUITutorial05WorkflowStates:
         if nav_elements > 0:
             print(f"✅ Phase navigation via nav elements ({nav_elements} found)")
         else:
-            print(f"✅ Phase navigation via buttons ({buttons} found
-            print(f"✅ Phase navigation UI present ({nav_elements} nav elements)")
+            print(f"✅ Phase navigation via buttons ({buttons} found)")
 
 
 if __name__ == "__main__":
