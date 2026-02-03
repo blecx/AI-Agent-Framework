@@ -158,7 +158,26 @@ jobs:
 
       - name: Run e2e tests
         if: hashFiles('tests/e2e/**') != ''
-        run: PYTHONPATH=$GITHUB_WORKSPACE PROJECT_DOCS_PATH=$GITHUB_WORKSPACE/tmp-project-docs TERM=xterm-256color pytest -v tests/e2e -m "not tui"
+        run: PYTHONPATH=$GITHUB_WORKSPACE PROJECT_DOCS_PATH=$GITHUB_WORKSPACE/tmp-project-docs TERM=xterm-256color pytest -v tests/e2e -m "not tui and not tutorial_validation"
+
+      - name: Install Playwright browsers
+        if: hashFiles('tests/e2e/tutorial/**') != ''
+        run: python -m playwright install chromium --with-deps
+
+      - name: Start Docker services for tutorial validation
+        if: hashFiles('tests/e2e/tutorial/**') != ''
+        run: |
+          docker compose up -d
+          sleep 15
+          curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8000/health
+
+      - name: Run tutorial validation tests
+        if: hashFiles('tests/e2e/tutorial/**') != ''
+        run: PYTHONPATH=$GITHUB_WORKSPACE PROJECT_DOCS_PATH=$GITHUB_WORKSPACE/tmp-project-docs TERM=xterm-256color pytest -m tutorial_validation -v --tb=short tests/e2e/tutorial/
+
+      - name: Stop Docker services
+        if: always() && hashFiles('tests/e2e/tutorial/**') != ''
+        run: docker compose down
 
       - name: Upload coverage reports to Codecov
         if: always()
