@@ -2,6 +2,8 @@
 
 **Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
+⚠️ **Note**: This feature is planned for a future release. Current GUI implementation is in development.
+
 ## Overview
 
 Browse and view project artifacts using the ArtifactsList component. Learn navigation, file viewing, and download capabilities.
