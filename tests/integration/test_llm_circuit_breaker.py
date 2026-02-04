@@ -125,10 +125,10 @@ class TestLLMCircuitBreakerIntegration:
     async def test_mixed_success_and_failure_scenarios(self):
         """Test circuit behavior with mixed success/failure patterns."""
         mock_client = AsyncMock()
-        
+
         # Track which request we're on
         request_count = [0]
-        
+
         async def side_effect(*args, **kwargs):
             # Request 1: Success
             if request_count[0] == 0:
@@ -281,7 +281,9 @@ class TestLLMCircuitBreakerMetrics:
             if request_num[0] in [0, 2, 4]:  # Successes on requests 0, 2, 4
                 mock_response = Mock()
                 mock_response.json.return_value = {
-                    "choices": [{"message": {"content": f"Response {request_num[0] + 1}"}}]
+                    "choices": [
+                        {"message": {"content": f"Response {request_num[0] + 1}"}}
+                    ]
                 }
                 mock_response.raise_for_status = Mock()
                 return mock_response
