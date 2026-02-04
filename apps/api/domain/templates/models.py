@@ -8,7 +8,7 @@ Following DDD principles: domain layer, SRP, no infrastructure dependencies.
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Dict, Any, Optional
 
-from domain.shared.validators import validate_enum_value, validate_dict_structure
+from ..shared.validators import validate_enum_value, validate_dict_structure
 
 
 class Template(BaseModel):
