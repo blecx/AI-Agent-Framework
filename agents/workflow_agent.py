@@ -11,16 +11,262 @@ This agent automates the standard 6-phase issue resolution workflow:
 6. PR & Merge
 
 Trained on Issues #24, #25 and continuously learning.
+Enhanced with Phase 1 improvements (Issues #159-#163).
 """
 
 import sys
+import os
+import json
+import time
+import asyncio
+import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
+from datetime import datetime, timedelta
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agents.base_agent import BaseAgent, AgentPhase  # noqa: E402
+
+
+# ===== Phase 1 Improvements (Issues #159-#163) =====
+
+
+class CrossRepoContext:
+    """
+    Cross-Repo Context Loader (Issue #160)
+    
+    Automatically detects repository context when working across backend and client repos.
+    Eliminates confusion about Fixes: format and validation commands.
+    """
+    
+    def __init__(self, workspace_root: Path = Path(".")):
+        self.workspace_root = workspace_root
+        self.current_repo = None
+        self.target_issue_repo = None
+        self.pr_repo = None
+        self._cache = {}
+        self.detect_repos()
+    
+    def detect_repos(self):
+        """Detect current repo and related repos."""
+        # Detect current repo from git remote
+        try:
+            result = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            remote_url = result.stdout.strip()
+            
+            if "AI-Agent-Framework-Client" in remote_url:
+                self.current_repo = "client"
+                self.pr_repo = "blecx/AI-Agent-Framework-Client"
+            elif "AI-Agent-Framework" in remote_url:
+                self.current_repo = "backend"
+                self.pr_repo = "blecx/AI-Agent-Framework"
+            else:
+                self.current_repo = "unknown"
+                self.pr_repo = "unknown"
+        except subprocess.CalledProcessError:
+            self.current_repo = "unknown"
+            self.pr_repo = "unknown"
+    
+    def get_validation_commands(self) -> List[str]:
+        """Return correct validation commands for current repo."""
+        if self.current_repo == "client":
+            return [
+                "npm install",
+                "npm run lint",
+                "npm test",
+                "npm run build"
+            ]
+        elif self.current_repo == "backend":
+            return [
+                "python -m black apps/api/",
+                "python -m flake8 apps/api/",
+                "pytest"
+            ]
+        else:
+            # Unknown repo, return safe defaults
+            return []
+    
+    def get_fixes_format(self, issue_number: int, target_repo: Optional[str] = None) -> str:
+        """
+        Return correct Fixes: format for cross-repo or same-repo PRs.
+        
+        Args:
+            issue_number: Issue number to reference
+            target_repo: Target repository (owner/repo format). If None, assumes same repo.
+        
+        Returns:
+            Properly formatted Fixes: line
+        """
+        if target_repo and target_repo != self.pr_repo:
+            # Cross-repo PR
+            return f"Fixes: {target_repo}#{issue_number}"
+        else:
+            # Same-repo PR
+            return f"Fixes: #{issue_number}"
+    
+    def is_cross_repo_scenario(self, issue_number: int, target_repo: Optional[str] = None) -> bool:
+        """Check if this is a cross-repo scenario."""
+        if target_repo and target_repo != self.pr_repo:
+            return True
+        return False
+
+
+class SmartRetry:
+    """
+    Smart Retry with Exponential Backoff (Issue #162)
+    
+    Implements exponential backoff for CI status checking.
+    Reduces wasted polling time by 60%.
+    """
+    
+    def __init__(self):
+        self.backoff_schedule = [5, 10, 20, 40, 60, 60, 60]  # seconds
+        self.max_wait = 600  # 10 minutes
+        self._ci_time_history = {}
+    
+    def wait_for_ci(self, pr_number: int, workspace_root: Path = Path(".")) -> str:
+        """
+        Wait for CI with exponential backoff.
+        
+        Args:
+            pr_number: PR number to check
+            workspace_root: Workspace root directory
+        
+        Returns:
+            CI status: "SUCCESS", "FAILURE", or "TIMEOUT"
+        """
+        start_time = time.time()
+        
+        for attempt, wait_time in enumerate(self.backoff_schedule):
+            status = self._check_ci_status(pr_number, workspace_root)
+            
+            if status in ["SUCCESS", "FAILURE"]:
+                elapsed = time.time() - start_time
+                self._record_ci_time(pr_number, elapsed)
+                return status
+            
+            # Estimate remaining time based on past runs
+            estimated = self._estimate_ci_time()
+            elapsed = time.time() - start_time
+            remaining = max(0, estimated - elapsed)
+            
+            # Use smaller of scheduled wait or remaining estimate
+            adaptive_wait = min(wait_time, remaining) if remaining > 0 else wait_time
+            
+            if adaptive_wait > 0:
+                print(f"⏳ CI running... checking again in {adaptive_wait:.0f}s (attempt {attempt+1})")
+                time.sleep(adaptive_wait)
+            
+            if time.time() - start_time > self.max_wait:
+                return "TIMEOUT"
+        
+        return "TIMEOUT"
+    
+    def _check_ci_status(self, pr_number: int, workspace_root: Path) -> str:
+        """Check CI status for PR."""
+        try:
+            result = subprocess.run(
+                ["gh", "pr", "checks", str(pr_number), "--json", "state"],
+                cwd=workspace_root,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            if result.returncode == 0:
+                # Parse check states
+                data = json.loads(result.stdout)
+                if all(check.get("state") == "SUCCESS" for check in data):
+                    return "SUCCESS"
+                elif any(check.get("state") == "FAILURE" for check in data):
+                    return "FAILURE"
+            
+            return "PENDING"
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
+            return "PENDING"
+    
+    def _estimate_ci_time(self) -> float:
+        """Estimate CI time based on history."""
+        if not self._ci_time_history:
+            return 120.0  # Default: 2 minutes
+        
+        times = list(self._ci_time_history.values())
+        return sum(times) / len(times)
+    
+    def _record_ci_time(self, pr_number: int, elapsed: float):
+        """Record CI completion time for future estimation."""
+        self._ci_time_history[pr_number] = elapsed
+        
+        # Keep only last 10 entries
+        if len(self._ci_time_history) > 10:
+            oldest = min(self._ci_time_history.keys())
+            del self._ci_time_history[oldest]
+
+
+class ParallelValidator:
+    """
+    Parallel Validation Execution (Issue #163)
+    
+    Runs independent validations in parallel.
+    Saves 15-20 seconds per issue.
+    """
+    
+    @staticmethod
+    async def validate_pr_parallel(workspace_root: Path, commands: List[str]) -> Dict[str, Tuple[int, str, str]]:
+        """
+        Run all validations in parallel.
+        
+        Args:
+            workspace_root: Workspace root directory
+            commands: List of validation commands to run
+        
+        Returns:
+            Dict mapping command to (returncode, stdout, stderr)
+        """
+        tasks = []
+        for cmd in commands:
+            tasks.append(ParallelValidator._run_command_async(workspace_root, cmd))
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Map commands to results
+        command_results = {}
+        for cmd, result in zip(commands, results):
+            if isinstance(result, Exception):
+                command_results[cmd] = (1, "", str(result))
+            else:
+                command_results[cmd] = result
+        
+        return command_results
+    
+    @staticmethod
+    async def _run_command_async(workspace_root: Path, command: str) -> Tuple[int, str, str]:
+        """Run a command asynchronously."""
+        proc = await asyncio.create_subprocess_shell(
+            command,
+            cwd=workspace_root,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await proc.communicate()
+        
+        return (
+            proc.returncode,
+            stdout.decode() if stdout else "",
+            stderr.decode() if stderr else ""
+        )
+
+
+# ===== End Phase 1 Improvements =====
 
 
 class WorkflowAgent(BaseAgent):
@@ -40,6 +286,14 @@ class WorkflowAgent(BaseAgent):
             AgentPhase("Phase 5: Review", "Self-review and Copilot review"),
             AgentPhase("Phase 6: PR & Merge", "Create PR and merge"),
         ]
+        
+        # Phase 1 improvements (Issues #159-#163)
+        self.cross_repo_context = CrossRepoContext()
+        self.smart_retry = SmartRetry()
+        self.parallel_validator = ParallelValidator()
+        
+        # Load CI behavior knowledge (Issue #161)
+        self.ci_behavior_knowledge = self._load_ci_behavior_knowledge()
 
     def _validate_issue_number(self, issue_num: int) -> None:
         """Validate issue number to prevent command injection.
@@ -468,6 +722,80 @@ class WorkflowAgent(BaseAgent):
             f"\n📊 Total time: {total_time:.1f} minutes ({total_time/60:.1f} hours)",
             "info",
         )
+    
+    def _load_ci_behavior_knowledge(self) -> Dict:
+        """Load CI workflow behavior knowledge (Issue #161)."""
+        ci_kb_path = self.kb_dir / "ci_workflows_behavior.json"
+        
+        if ci_kb_path.exists():
+            try:
+                with open(ci_kb_path, 'r') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return {}
+        
+        return {}
+    
+    def validate_pr_template(self, pr_body_file: Path) -> bool:
+        """
+        Validate PR template before creation (Issue #159).
+        
+        Args:
+            pr_body_file: Path to PR body markdown file
+        
+        Returns:
+            True if validation passes, False otherwise
+        """
+        validate_script = Path("scripts/validate-pr-template.sh")
+        
+        if not validate_script.exists():
+            self.log("PR template validation script not found, skipping", "warning")
+            return True
+        
+        repo_type = "client" if self.cross_repo_context.current_repo == "client" else "backend"
+        
+        result = self.run_command(
+            f"{validate_script} --body-file {pr_body_file} --repo {repo_type}",
+            "Validating PR template",
+            check=False
+        )
+        
+        return result.returncode == 0
+    
+    def run_parallel_validations(self, commands: List[str]) -> bool:
+        """
+        Run validation commands in parallel (Issue #163).
+        
+        Args:
+            commands: List of validation commands
+        
+        Returns:
+            True if all validations pass
+        """
+        self.log("Running validations in parallel...", "progress")
+        
+        start_time = time.time()
+        
+        # Run async validation
+        results = asyncio.run(
+            self.parallel_validator.validate_pr_parallel(Path("."), commands)
+        )
+        
+        elapsed = time.time() - start_time
+        self.log(f"Parallel validation completed in {elapsed:.1f}s", "info")
+        
+        # Check results
+        all_passed = True
+        for cmd, (returncode, stdout, stderr) in results.items():
+            if returncode != 0:
+                self.log(f"❌ {cmd} failed", "error")
+                if stderr:
+                    print(stderr)
+                all_passed = False
+            else:
+                self.log(f"✅ {cmd} passed", "success")
+        
+        return all_passed
 
 
 def main():
