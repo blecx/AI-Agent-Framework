@@ -47,11 +47,19 @@ The `prmerge` command automates these steps:
 - **NEW:** Validates PR description follows template requirements
   - Checks for required sections (Summary, Acceptance Criteria, Validation, etc.)
   - Verifies "Fixes: #N" line exists (where N is issue number)
+  - **Cross-repo support:** Accepts `Fixes: #N` for same-repo or `Fixes: owner/repo#N` for cross-repo
   - Ensures acceptance criteria checkboxes are checked
   - Validates automated checks evidence is filled (inline format)
   - Reports missing sections or warnings before merge
 - Fails fast if CI is failing or template validation fails
 - Displays PR details (number, title, branch, URL)
+
+**⚠️ CI Re-run Behavior:**
+- **Workflow reruns use cached PR payload** - updating PR description won't affect existing workflow runs
+- To trigger fresh CI with updated PR description:
+  1. Push a new commit (e.g., empty commit: `git commit --allow-empty -m "chore: trigger CI"`), OR
+  2. Close and reopen the PR to force a fresh `pull_request` event
+- Avoid using `gh run rerun` if you've updated the PR description - it will validate the OLD description
 
 ### 2. **Review PR**
 

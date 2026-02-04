@@ -42,6 +42,8 @@ This system provides intelligent project management following ISO 21500 standard
 - 🔗 **[E2E Testing](E2E_TESTING.md)** - Cross-repo E2E testing with client
 - 🎯 **[API Integration Guide](docs/api/client-integration-guide.md)** - Building custom clients
 - 🏛️ **[Architecture Decision Records](docs/adr/)** - Key architectural decisions
+- 🔄 **[PR Merge Workflow](docs/prmerge-command.md)** - Automated PR merge and issue closing
+- 🐛 **[PR Troubleshooting](docs/prmerge-best-practices.md#troubleshooting-common-issues)** - Common CI and merge issues
 
 ## Architecture
 
