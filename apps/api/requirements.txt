@@ -28,6 +28,9 @@ aiofiles==23.2.1
 # YAML Parsing
 pyyaml==6.0.1
 
+# System Monitoring
+psutil==5.9.8
+
 # Environment Variables
 python-dotenv==1.0.0
 
