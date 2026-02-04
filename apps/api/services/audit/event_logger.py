@@ -8,7 +8,7 @@ import uuid
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
-from domain.audit.constants import DEFAULT_QUERY_LIMIT
+from apps.api.domain.audit.constants import DEFAULT_QUERY_LIMIT
 
 
 class AuditEventLogger:

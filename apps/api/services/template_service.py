@@ -11,7 +11,7 @@ import json
 import uuid
 from typing import List, Optional
 
-from domain.templates.models import Template, TemplateCreate, TemplateUpdate
+from ..domain.templates.models import Template, TemplateCreate, TemplateUpdate
 from services.git_manager import GitManager
 
 

@@ -15,10 +15,10 @@ from datetime import datetime, timezone
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
 
-from domain.proposals.models import Proposal, ProposalStatus, ChangeType
-from services.proposal_service import ProposalService
-from services.git_manager import GitManager
-from services.audit_service import AuditService
+from apps.api.domain.proposals.models import Proposal, ProposalStatus, ChangeType
+from apps.api.services.proposal_service import ProposalService
+from apps.api.services.git_manager import GitManager
+from apps.api.services.audit_service import AuditService
 
 
 @pytest.fixture

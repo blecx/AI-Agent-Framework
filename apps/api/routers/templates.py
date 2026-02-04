@@ -6,7 +6,7 @@ Aligned with DDD architecture - thin controller pattern.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
-from domain.templates.models import Template, TemplateCreate, TemplateUpdate
+from ..domain.templates.models import Template, TemplateCreate, TemplateUpdate
 from services.template_service import TemplateService
 
 
