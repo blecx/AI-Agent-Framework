@@ -2,6 +2,8 @@
 
 This guide shows you how to get the ISO 21500 Project Management AI Agent system up and running.
 
+> **💡 Multi-Repository Project:** This project includes a separate client repository at [AI-Agent-Framework-Client](https://github.com/blecx/AI-Agent-Framework-Client). For full-stack development, see the [Development Guide](docs/development.md#cross-repository-coordination) for cross-repo workflow.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
