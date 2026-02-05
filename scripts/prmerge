@@ -1,5 +1,5 @@
 #!/bin/bash
-# /PRmerge - Comprehensive PR merge workflow command
+# prmerge - Comprehensive PR merge workflow command
 # 
 # Usage: prmerge <issue_number> [<actual_hours>]
 #
@@ -14,10 +14,73 @@
 # 8. Records completion for learning system
 # 9. Suggests next issue
 #
+# Multi-repo support:
+# - Automatically detects if running in AI-Agent-Framework or AI-Agent-Framework-Client
+# - Works with client repo when invoked from backend root (uses _external/ path)
+#
 # Example:
 #   prmerge 24 7.5
 
 set -e
+
+# Detect repository context
+detect_repo() {
+    local current_dir="$(pwd)"
+    
+    # Check if we're in the client repo or _external/AI-Agent-Framework-Client
+    if [[ "$current_dir" == *"AI-Agent-Framework-Client"* ]]; then
+        echo "client"
+        return 0
+    fi
+    
+    # Check if _external/AI-Agent-Framework-Client exists (backend invoking client PR)
+    if [[ -d "_external/AI-Agent-Framework-Client" ]]; then
+        echo "backend-with-client"
+        return 0
+    fi
+    
+    # Default to backend
+    echo "backend"
+}
+
+# Get repository root path
+get_repo_path() {
+    local repo_type="$1"
+    
+    case "$repo_type" in
+        client)
+            echo "$(pwd)"
+            ;;
+        backend-with-client)
+            echo "$(pwd)/_external/AI-Agent-Framework-Client"
+            ;;
+        backend)
+            echo "$(pwd)"
+            ;;
+    esac
+}
+
+# Get GitHub repository name
+get_repo_name() {
+    local repo_type="$1"
+    
+    case "$repo_type" in
+        client|backend-with-client)
+            echo "blecx/AI-Agent-Framework-Client"
+            ;;
+        backend)
+            echo "blecx/AI-Agent-Framework"
+            ;;
+    esac
+}
+
+REPO_TYPE=$(detect_repo)
+REPO_PATH=$(get_repo_path "$REPO_TYPE")
+REPO_NAME=$(get_repo_name "$REPO_TYPE")
+
+if [[ "$REPO_TYPE" == "backend-with-client" ]]; then
+    info "Working with client repository: $REPO_PATH"
+fi
 
 # Color codes for output
 RED='\033[0;31m'
@@ -155,9 +218,9 @@ validate_pr_template() {
         fi
     done
     
-    # Check if Fixes: line exists
-    if ! echo "$pr_body" | grep -Eq "^Fixes: #[0-9]+"; then
-        warnings+=("Missing 'Fixes: #<issue>' line")
+    # Check if Fixes: line exists (accepts #N or owner/repo#N format)
+    if ! echo "$pr_body" | grep -Eq "^Fixes: (#[0-9]+|[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+)"; then
+        warnings+=("Missing 'Fixes: #<issue>' or 'Fixes: owner/repo#<issue>' line")
     fi
     
     # Check if acceptance criteria have checkboxes

@@ -709,6 +709,32 @@ This will:
 
 ## Cross-Repository Workflow
 
+### Cross-Repo Issue Linking Patterns
+
+When creating PRs that resolve issues in a different repository:
+
+**Client PR → Backend Issue:**
+```markdown
+Fixes: blecx/AI-Agent-Framework#149
+```
+
+**Backend PR → Client Issue:**
+```markdown
+Fixes: blecx/AI-Agent-Framework-Client#111
+```
+
+**Same-Repo Issue:**
+```markdown
+Fixes: #42
+```
+
+**⚠️ PR Review Gate Behavior:**
+- The `prmerge` script now accepts both `Fixes: #N` and `Fixes: owner/repo#N` formats
+- Cross-repo references enable GitHub auto-close across repositories
+- Always include cross-repo coordination notes in PR description
+
+### Repository-Specific Commands
+
 **For AI-Agent-Framework-Client issues:**
 
 - All commands run from `_external/AI-Agent-Framework-Client/`

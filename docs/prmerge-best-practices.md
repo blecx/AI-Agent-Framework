@@ -19,6 +19,53 @@ Based on analysis of the AI-Agent-Framework project structure, workflow patterns
 
 ---
 
+## Troubleshooting Common Issues
+
+### CI Not Triggering After PR Updates
+
+**Problem:** Updated PR description but CI still validates old version.
+
+**Root Cause:** GitHub Actions workflow reruns (`gh run rerun`) use the cached PR payload from the original event, not the current PR state.
+
+**Solutions:**
+1. **Push a new commit** (preferred):
+   ```bash
+   git commit --allow-empty -m "chore: trigger CI with updated PR description"
+   git push
+   ```
+
+2. **Close and reopen PR** (forces fresh pull_request event):
+   ```bash
+   gh pr close <PR_NUMBER>
+   gh pr reopen <PR_NUMBER>
+   ```
+
+3. **Wait for next push** - Any code change will trigger fresh CI
+
+### Merge Conflicts After Rebase
+
+**Problem:** Branch shows CONFLICTING status despite being up-to-date.
+
+**Root Cause:** Main has advanced, branch needs rebase.
+
+**Solution:**
+```bash
+git fetch origin main
+git rebase origin/main
+# Resolve conflicts if any
+git push --force-with-lease
+```
+
+### Cross-Repo Issue References
+
+**Problem:** prmerge warns about missing "Fixes: #N" line when using cross-repo reference.
+
+**Root Cause:** prmerge regex only checked for `#N` format, not `owner/repo#N`.
+
+**Solution:** Updated in latest version to accept both formats. If using older version, confirm despite warning - GitHub will still auto-close the issue.
+
+---
+
 ## 1. Issue Type Templates ✅ **RECOMMENDED**
 
 ### Analysis
