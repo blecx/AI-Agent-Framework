@@ -4,7 +4,7 @@ Command propose and apply workflow.
 
 import click
 from api_client import APIClient
-from utils import print_success, print_error, print_json, print_info, confirm_action
+from utils import print_success, print_error, print_info, confirm_action
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -68,7 +68,7 @@ def propose_command(project: str, command: str, artifact_name: str, artifact_typ
                 console.print(syntax)
 
         # Show apply command
-        console.print(f"\n[bold green]To apply this proposal, run:[/bold green]")
+        console.print("\n[bold green]To apply this proposal, run:[/bold green]")
         console.print(
             f"  python main.py commands apply --project {project} --proposal {result['proposal_id']}"
         )
@@ -102,7 +102,7 @@ def apply_command(project: str, proposal: str, yes: bool):
         # Display result
         console.print(f"\n[bold cyan]Commit Hash:[/bold cyan] {result['commit_hash']}")
         console.print(f"\n[bold cyan]Message:[/bold cyan] {result['message']}")
-        console.print(f"\n[bold cyan]Changed Files:[/bold cyan]")
+        console.print("\n[bold cyan]Changed Files:[/bold cyan]")
         for file in result["changed_files"]:
             console.print(f"  • {file}")
 

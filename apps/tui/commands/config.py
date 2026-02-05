@@ -3,7 +3,6 @@ Configuration management commands.
 Allows runtime configuration of API settings.
 """
 
-import os
 import click
 from pathlib import Path
 from config import Config
@@ -99,7 +98,7 @@ def show_config():
             masked_key = f"{Config.API_KEY[:4]}...{Config.API_KEY[-4:]}"
         console.print(f"[bold]API Key:[/bold] {masked_key}")
     else:
-        console.print(f"[bold]API Key:[/bold] [dim]Not configured[/dim]")
+        console.print("[bold]API Key:[/bold] [dim]Not configured[/dim]")
 
     # Check if .env file exists
     tui_dir = Path(__file__).parent.parent
@@ -109,7 +108,7 @@ def show_config():
         console.print(f"\n[dim]Config file: {env_file}[/dim]")
     else:
         console.print(
-            f"\n[dim]No .env file found. Using environment variables or defaults.[/dim]"
+            "\n[dim]No .env file found. Using environment variables or defaults.[/dim]"
         )
 
 
