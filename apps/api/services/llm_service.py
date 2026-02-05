@@ -170,8 +170,7 @@ class LLMService:
                 Path(__file__).resolve().parent.parent.parent.parent / "templates"
             )
         self.jinja_env = Environment(
-            loader=FileSystemLoader(str(template_path)),
-            autoescape=True
+            loader=FileSystemLoader(str(template_path)), autoescape=True
         )
 
     def _load_config(self) -> Dict[str, Any]:
