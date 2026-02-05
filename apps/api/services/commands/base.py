@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..git_manager import GitManager
+    from services.git_manager import GitManager
 
 
 class CommandHandler(ABC):

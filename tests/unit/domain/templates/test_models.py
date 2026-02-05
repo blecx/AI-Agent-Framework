@@ -10,7 +10,7 @@ from pydantic import ValidationError
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../apps/api"))
 
-from domain.templates.models import Template, TemplateCreate, TemplateUpdate
+from apps.api.domain.templates.models import Template, TemplateCreate, TemplateUpdate
 
 
 class TestTemplateModel:

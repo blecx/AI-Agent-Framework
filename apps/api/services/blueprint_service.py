@@ -11,7 +11,11 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from domain.blueprints.models import Blueprint, BlueprintCreate, BlueprintUpdate
+from apps.api.domain.blueprints.models import (
+    Blueprint,
+    BlueprintCreate,
+    BlueprintUpdate,
+)
 from services.git_manager import GitManager
 from services.template_service import TemplateService
 

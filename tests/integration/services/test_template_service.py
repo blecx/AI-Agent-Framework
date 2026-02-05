@@ -14,9 +14,9 @@ import os
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
 
-from domain.templates.models import TemplateCreate, TemplateUpdate
-from services.template_service import TemplateService
-from services.git_manager import GitManager
+from apps.api.domain.templates.models import TemplateCreate, TemplateUpdate
+from apps.api.services.template_service import TemplateService
+from apps.api.services.git_manager import GitManager
 
 
 @pytest.fixture

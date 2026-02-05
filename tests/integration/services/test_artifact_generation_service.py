@@ -16,11 +16,11 @@ from services.artifact_generation_service import (
     ArtifactGenerationError,
     ValidationError,
 )
-from services.template_service import TemplateService
-from services.blueprint_service import BlueprintService
-from services.git_manager import GitManager
-from domain.templates.models import TemplateCreate
-from domain.blueprints.models import BlueprintCreate
+from apps.api.services.template_service import TemplateService
+from apps.api.services.blueprint_service import BlueprintService
+from apps.api.services.git_manager import GitManager
+from apps.api.domain.templates.models import TemplateCreate
+from apps.api.domain.blueprints.models import BlueprintCreate
 
 
 @pytest.fixture

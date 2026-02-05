@@ -6,7 +6,7 @@ Delegates to ProposalService for all business logic.
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import Optional
 
-from domain.proposals.models import (
+from apps.api.domain.proposals.models import (
     Proposal,
     ProposalCreate,
     ProposalStatus,
