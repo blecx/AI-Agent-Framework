@@ -518,6 +518,14 @@ When in doubt, consult README.md, QUICKSTART.md, or docs/development.md for exte
 
 ## Additional Resources
 
+**Optimized Agent Workflows:** See `.github/prompts/agents/` for performance-optimized workflows:
+
+- `resolve-issue-dev.md` - Issue resolution workflow (30-45min → 5-10min)
+- `pr-merge.md` - PR merge with admin bypass and cleanup
+- `close-issue.md` - Issue closure with early-exit conditions
+- `Plan.md` - Research agent with limited scope
+- `README.md` - Optimization principles and guidelines
+
 **Workflow Templates:** See `.github/prompts/` for reusable templates to help with:
 
 - Planning features and creating specs

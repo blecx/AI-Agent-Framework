@@ -2,6 +2,23 @@
 
 This directory contains optimized workflow prompts for AI agents that resolve issues, merge PRs, and plan implementations.
 
+## How to Use
+
+These prompts are automatically referenced by agents when running in their respective modes:
+
+1. **VS Code Copilot Integration**: Agents are invoked via `chat.tools.subagent.autoApprove` settings
+   - Configuration: See `docs/VSCODE-GLOBAL-SETTINGS.md`
+   - Settings file: `.vscode/settings.json`
+   - Auto-approved agents: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
+
+2. **Copilot Instructions**: These workflows are referenced in `.github/copilot-instructions.md`
+   - Agents automatically follow these patterns when in their respective modes
+   - No additional configuration needed
+
+3. **Manual Reference**: Use these as guides when running agents manually
+   - Copy workflow steps into agent instructions
+   - Follow optimization patterns documented here
+
 ## Available Agents
 
 ### Core Workflow Agents
