@@ -25,6 +25,18 @@ By the end of this tutorial, you will:
 - **Network access:** Ports 8080 (web UI) and 8000 (API) must be available
 - **No coding knowledge required** - this is a visual, browser-based tutorial
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of web interface navigation
+> - Overview of all UI components
+> - Browser developer tools usage
+> - API documentation walkthrough
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ### Quick Verification
 
 Before starting, verify your environment is ready:

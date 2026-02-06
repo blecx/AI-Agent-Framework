@@ -25,6 +25,18 @@ By the end of this tutorial, you will:
 
 **Note:** If you haven't installed Docker yet, see the [Setup Guide](../shared/00-setup-guide.md).
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of all commands
+> - Docker startup and verification
+> - Common pitfalls and solutions
+> - Tips for efficient TUI usage
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## What is the TUI?
 
 The TUI (Text User Interface) is a command-line client for the AI-Agent Framework. It provides:

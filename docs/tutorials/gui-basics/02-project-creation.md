@@ -28,6 +28,18 @@ By the end of this tutorial, you will:
 - API health check passed (green indicator in UI header)
 - No existing TODO-001 project (we'll create it fresh)
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of project creation form
+> - Field validation rules explained
+> - Form submission and verification
+> - Troubleshooting common errors
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ### Quick Verification
 
 Before starting, verify readiness:

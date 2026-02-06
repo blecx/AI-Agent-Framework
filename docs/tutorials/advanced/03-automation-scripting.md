@@ -4,6 +4,18 @@
 **Difficulty:** Advanced  
 **Prerequisites:** TUI Basics, ISO 21500 Lifecycle tutorial
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of automation scripts
+> - Batch operations and CSV processing
+> - CI/CD integration examples
+> - Error handling patterns
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## Overview
 
 This tutorial teaches you how to automate common project management workflows using bash scripts and the TUI CLI. Learn to create batch operations, generate reports, and integrate the framework into CI/CD pipelines.

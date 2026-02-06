@@ -28,6 +28,18 @@ By the end of this tutorial, you will:
 - Web UI showing TODO-001 project details
 - Understanding of Git concepts (commits, diffs) helpful but not required
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of propose/apply workflow
+> - CommandPanel and ProposalModal walkthrough
+> - Diff viewer usage and interpretation
+> - Proposal acceptance and rejection examples
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ### Quick Verification
 
 Verify your environment before starting:

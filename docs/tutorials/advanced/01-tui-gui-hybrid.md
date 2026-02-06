@@ -4,6 +4,18 @@
 **Difficulty:** Advanced  
 **Prerequisites:** TUI Basics, GUI Basics tutorials
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of hybrid workflows
+> - Interface switching techniques
+> - Real-world productivity examples
+> - When to use TUI vs GUI decision-making
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## Overview
 
 This tutorial demonstrates how to combine the TUI (Terminal User Interface) and GUI (Graphical User Interface) to maximize productivity. Learn when to use each interface and how to leverage their complementary strengths.
