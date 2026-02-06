@@ -10,9 +10,10 @@ This directory contains two agent systems for issue resolution.
 
 ### Files
 - `autonomous_workflow_agent.py` - Main AI agent implementation
-- `tools.py` - 12 tool functions (GitHub, Git, Files, Testing, KB, ML)
+- `tools.py` - 13 tool functions (GitHub, Git, Files, Testing, Coverage, KB, ML)
 - `command_cache.py` - Command result caching (saves 8-12s per issue)
 - `time_estimator.py` - ML-based time estimation (RandomForest model)
+- `coverage_analyzer.py` - Test coverage analysis and quality gates (NEW)
 - `llm_client.py` - GitHub Models client factory
 - `knowledge/` - Knowledge base (auto-updated after each issue)
 
@@ -39,8 +40,35 @@ source .venv/bin/activate
 - ✅ **Learns from each issue** (guaranteed post-execution)
 - ✅ **Caches command results** (1-hour TTL, saves 8-12s per issue)
 - ✅ **ML-based time estimation** (RandomForest with confidence scoring)
+- ✅ **Coverage analysis** (enforces 80%+ threshold, detects regressions)
 
-### ML Time Estimation (NEW)
+### Coverage Analysis (NEW)
+
+Agents automatically analyze test coverage to maintain quality:
+
+- **Analyzer:** CoverageAnalyzer enforces coverage quality gates
+- **Features:** Before/after comparison, regression detection, threshold enforcement
+- **Output:** Pass/fail status + low coverage warnings + metrics
+- **Metrics:** `coverage_regressions_prevented`, `average_coverage_delta`
+
+**How it works:**
+
+```python
+# Analyze coverage impact of changes
+result = analyze_coverage_impact(
+    changed_files=["apps/api/main.py", "apps/api/models.py"],
+    coverage_threshold=80.0
+)
+# Returns: {"passed": true, "total_coverage": 85.5, "low_coverage_files": []}
+```
+
+**Benefits:**
+- ✅ Prevents coverage regressions
+- ✅ Warns about files below 80% threshold
+- ✅ Catches untested code early
+- ✅ Maintains/improves overall coverage
+
+### ML Time Estimation
 
 Agents use machine learning to predict issue resolution times more accurately:
 
