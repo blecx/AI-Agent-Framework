@@ -13,7 +13,8 @@ This directory contains two agent systems for issue resolution.
 - `tools.py` - 13 tool functions (GitHub, Git, Files, Testing, Coverage, KB, ML)
 - `command_cache.py` - Command result caching (saves 8-12s per issue)
 - `time_estimator.py` - ML-based time estimation (RandomForest model)
-- `coverage_analyzer.py` - Test coverage analysis and quality gates (NEW)
+- `coverage_analyzer.py` - Test coverage analysis and quality gates
+- `commit_strategy.py` - Multi-stage commit strategy for better Git history (NEW)
 - `llm_client.py` - GitHub Models client factory
 - `knowledge/` - Knowledge base (auto-updated after each issue)
 
@@ -67,6 +68,32 @@ result = analyze_coverage_impact(
 - ✅ Warns about files below 80% threshold
 - ✅ Catches untested code early
 - ✅ Maintains/improves overall coverage
+
+### Multi-Stage Commit Strategy (NEW)
+
+Agents can organize changes into logical, reviewable commits instead of one large commit:
+
+**How it works:**
+
+```python
+# Execute multi-stage commit strategy
+strategy = get_commit_strategy(working_directory=".")
+result = strategy.execute_strategy(message_template="Implement feature", dry_run=False)
+# Returns: {"success": true, "commits_created": 3, "stages_executed": ["tests", "implementation", "documentation"]}
+```
+
+**Stages (in order):**
+1. **Tests (red):** Test files first (test-driven development)
+2. **Implementation (green):** Core implementation files
+3. **Documentation:** README, docs, comments
+4. **Refactoring:** Code cleanup and optimization
+
+**Benefits:**
+- ✅ Better Git history (logical progression)
+- ✅ Easier code review (smaller, focused commits)
+- ✅ Safer rollbacks (revert individual stages)
+- ✅ Enforces TDD workflow (tests before implementation)
+- ✅ Tracks metrics: commits_per_pr (target 2-4), pr_review_time_minutes
 
 ### ML Time Estimation
 
