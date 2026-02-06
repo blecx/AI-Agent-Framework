@@ -11,7 +11,7 @@ from apps.api.domain.workflow.constants import (
     MIN_EVENT_LIMIT,
     MAX_EVENT_LIMIT,
 )
-from models import (
+from apps.api.models import (
     WorkflowStateInfo,
     WorkflowStateUpdate,
     AuditEventList,

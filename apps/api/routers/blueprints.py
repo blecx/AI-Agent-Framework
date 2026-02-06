@@ -11,7 +11,7 @@ from apps.api.domain.blueprints.models import (
     BlueprintCreate,
     BlueprintUpdate,
 )
-from services.blueprint_service import BlueprintService
+from apps.api.services.blueprint_service import BlueprintService
 
 
 router = APIRouter()

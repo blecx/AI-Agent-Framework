@@ -16,7 +16,7 @@ from apps.api.domain.templates.models import (
     TemplateCreate,
     TemplateUpdate,
 )
-from services.git_manager import GitManager
+from apps.api.services.git_manager import GitManager
 
 
 class TemplateService:

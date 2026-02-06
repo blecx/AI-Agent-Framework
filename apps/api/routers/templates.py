@@ -11,7 +11,7 @@ from apps.api.domain.templates.models import (
     TemplateCreate,
     TemplateUpdate,
 )
-from services.template_service import TemplateService
+from apps.api.services.template_service import TemplateService
 
 
 router = APIRouter()
