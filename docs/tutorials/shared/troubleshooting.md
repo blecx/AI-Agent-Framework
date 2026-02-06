@@ -938,7 +938,124 @@ If all checkboxes pass, issue is resolved! 🎉
 
 ---
 
-## 📚 Related Documentation
+## � Mobile Browser Issues
+
+### Mobile Device Compatibility
+
+**Issue:** Trying to use Web UI on tablet or smartphone
+
+**Background:**
+
+The Web UI is designed for desktop browsers and has limited mobile support:
+- ✅ **Desktop**: Full support (Chrome, Firefox, Edge, Safari)
+- ⚠️ **Tablets**: Limited support (read-only recommended)
+- ❌ **Smartphones**: Not supported
+
+**Solution:**
+
+For mobile access, use one of these alternatives:
+
+1. **SSH + TUI (Recommended for Mobile):**
+   ```bash
+   # From mobile terminal app (Termux, iSH, etc.)
+   ssh user@your-server
+   cd AI-Agent-Framework
+   docker compose exec api python /app/apps/tui/cli.py projects list
+   ```
+
+2. **Remote Desktop:**
+   - Use VNC/RDP to access a desktop environment
+   - Run Web UI in full desktop browser
+
+3. **Tablet Workarounds (Read-Only):**
+   - Use landscape mode only
+   - Zoom out to fit content (pinch or Ctrl+/-)
+   - Avoid creating projects or applying commands
+   - Monitor status only
+
+See [Mobile Compatibility Guide](../../clients/README.md#mobile-browser-compatibility) for detailed compatibility matrix.
+
+---
+
+### Touch Scrolling Not Working
+
+**Error:** Cannot scroll code diffs or artifact content on touch devices
+
+**Cause:** Diff viewer optimized for mouse/trackpad, not touch gestures
+
+**Solution:**
+
+1. **Two-Finger Scroll:** Try using two fingers to scroll (may work on some tablets)
+2. **External Mouse:** Connect bluetooth mouse to tablet
+3. **Zoom Browser:** Use browser zoom to make content fit
+4. **Desktop Mode:** Enable "Request Desktop Site" in mobile browser settings
+5. **Use TUI Instead:** Switch to terminal interface for mobile access
+
+---
+
+### UI Elements Too Small on Tablet
+
+**Issue:** Buttons and links hard to tap accurately on tablet
+
+**Cause:** UI designed for mouse pointer precision, not finger touch
+
+**Solution:**
+
+1. **Landscape Orientation:** Always use landscape mode (more space)
+2. **Zoom In:** Pinch to zoom or use Ctrl++ to enlarge UI
+3. **Stylus:** Use stylus pen for accurate tapping (iPad Pencil, etc.)
+4. **External Mouse:** Connect bluetooth mouse
+5. **Desktop Browser:** Use tablet in "Desktop Mode" if available
+
+**Prevention:** Avoid complex workflows on tablets. Use mobile for monitoring only.
+
+---
+
+### Virtual Keyboard Covers Input Fields
+
+**Issue:** On-screen keyboard hides text input when typing
+
+**Cause:** Mobile browsers don't adjust viewport when keyboard appears
+
+**Solution:**
+
+1. **Scroll After Focus:** Manually scroll down after tapping input field
+2. **Hide Keyboard:** Tap outside input to hide keyboard, read content, then re-focus
+3. **Landscape Mode:** More vertical space available
+4. **External Keyboard:** Connect bluetooth keyboard to tablet
+5. **Desktop Site Mode:** May improve viewport behavior
+
+**Workaround:** Prefer read-only operations on mobile. Use desktop for input-heavy tasks.
+
+---
+
+### Screen Too Small Error
+
+**Issue:** "Minimum screen width 768px required" message on phone
+
+**Cause:** UI components not designed for phone screens
+
+**Solution:**
+
+**Phones are not supported.** Use these alternatives:
+
+1. **SSH + TUI:** Best option for phones
+   ```bash
+   ssh user@server
+   docker compose exec api python /app/apps/tui/cli.py --help
+   ```
+
+2. **Remote Desktop:** Access full desktop via VNC/RDP app
+
+3. **Wait Until Near Desktop:** Access Web UI when you have larger screen
+
+4. **Tablet Alternative:** Use tablet (10"+ screen) in landscape mode
+
+**Recommendation:** Keep phone for monitoring only. Execute commands from desktop/laptop.
+
+---
+
+## �📚 Related Documentation
 
 - **[Error Catalog](../ERROR-CATALOG.md)**: Quick reference for 25+ common error messages
 - **[Setup Guide](00-setup-guide.md)**: Initial environment setup
