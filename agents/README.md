@@ -10,8 +10,9 @@ This directory contains two agent systems for issue resolution.
 
 ### Files
 - `autonomous_workflow_agent.py` - Main AI agent implementation
-- `tools.py` - 11 tool functions (GitHub, Git, Files, Testing, KB)
+- `tools.py` - 12 tool functions (GitHub, Git, Files, Testing, KB, ML)
 - `command_cache.py` - Command result caching (saves 8-12s per issue)
+- `time_estimator.py` - ML-based time estimation (RandomForest model)
 - `llm_client.py` - GitHub Models client factory
 - `knowledge/` - Knowledge base (auto-updated after each issue)
 
@@ -37,6 +38,31 @@ source .venv/bin/activate
 - ✅ Creates pull requests
 - ✅ **Learns from each issue** (guaranteed post-execution)
 - ✅ **Caches command results** (1-hour TTL, saves 8-12s per issue)
+- ✅ **ML-based time estimation** (RandomForest with confidence scoring)
+
+### ML Time Estimation (NEW)
+
+Agents use machine learning to predict issue resolution times more accurately:
+
+- **Model:** RandomForestRegressor trained on historical data
+- **Features:** files_to_change, lines_estimate, domain, multi-repo, dependencies, complexity
+- **Output:** Estimated hours + confidence % + reasoning
+- **Metrics:** Mean Absolute Error (MAE) tracked
+
+**How it works:**
+
+```python
+# Get estimate for backend work
+estimate = get_time_estimate(
+    files_to_change=5,
+    lines_estimate=200,
+    domain="backend",
+    complexity_score=3
+)
+# Returns: "Time Estimate: 2.8 hours (Confidence: 75%)"
+```
+
+**Improves over time:** As more issues are resolved and added to the knowledge base, predictions become more accurate.
 
 ### Command Caching (NEW)
 

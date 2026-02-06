@@ -41,6 +41,10 @@ psutil==5.9.8
 # OpenAI-compatible LLM Client
 openai==1.10.0
 
+# Machine Learning
+scikit-learn==1.4.0
+numpy==1.26.3
+
 # Retry Logic for Circuit Breaker
 tenacity==8.2.3
 
