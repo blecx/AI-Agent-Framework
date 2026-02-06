@@ -14,7 +14,8 @@ This directory contains two agent systems for issue resolution.
 - `command_cache.py` - Command result caching (saves 8-12s per issue)
 - `time_estimator.py` - ML-based time estimation (RandomForest model)
 - `coverage_analyzer.py` - Test coverage analysis and quality gates
-- `commit_strategy.py` - Multi-stage commit strategy for better Git history (NEW)
+- `commit_strategy.py` - Multi-stage commit strategy for better Git history
+- `learning_scorer.py` - Learning relevance scoring and filtering (NEW)
 - `llm_client.py` - GitHub Models client factory
 - `knowledge/` - Knowledge base (auto-updated after each issue)
 
@@ -94,6 +95,36 @@ result = strategy.execute_strategy(message_template="Implement feature", dry_run
 - ✅ Safer rollbacks (revert individual stages)
 - ✅ Enforces TDD workflow (tests before implementation)
 - ✅ Tracks metrics: commits_per_pr (target 2-4), pr_review_time_minutes
+
+### Learning Relevance Scoring (NEW)
+
+Agents score and filter learnings by relevance to avoid applying outdated or irrelevant patterns:
+
+**Scoring factors:**
+- **Recency:** 90-day half-life decay (newer = more relevant)
+- **Domain match:** 1.0 for exact match, 0.3 for cross-domain
+- **Repository match:** 1.0 for same repo, 0.5 for cross-repo
+- **Success rate:** Historical success of this learning
+- **Application frequency:** Number of successful applications
+
+**Usage:**
+
+```python
+# Score and filter learnings for current context
+scorer = get_learning_scorer(relevance_threshold=0.3)
+relevant = scorer.get_relevant_learnings(
+    learnings=all_learnings,
+    current_domain="backend",
+    current_repository="AI-Agent-Framework"
+)
+# Returns: List of ScoredLearning sorted by relevance (highest first)
+```
+
+**Benefits:**
+- ✅ Apply only relevant learnings to current issue
+- ✅ Reduce false positives from outdated patterns
+- ✅ Faster problem solving (less noise)
+- ✅ Tracks metrics: learning_relevance_score_avg, irrelevant_learnings_filtered
 
 ### ML Time Estimation
 
