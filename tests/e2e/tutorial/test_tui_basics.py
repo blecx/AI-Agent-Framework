@@ -20,6 +20,7 @@ def tui():
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.e2e
 class TestTutorial01QuickStart:
     """Validate Tutorial 01: Quick Start commands."""
@@ -54,6 +55,7 @@ class TestTutorial01QuickStart:
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.e2e
 class TestTutorial02FirstProject:
     """Validate Tutorial 02: First Project commands."""
@@ -179,6 +181,7 @@ class TestTutorial02FirstProject:
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.e2e
 class TestTutorial03ArtifactWorkflow:
     """Validate Tutorial 03: Artifact Workflow commands."""
@@ -261,6 +264,7 @@ class TestTutorial03ArtifactWorkflow:
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.e2e
 class TestTutorial04RAIDManagement:
     """Validate Tutorial 04: RAID Management commands."""
@@ -410,6 +414,7 @@ class TestTutorial04RAIDManagement:
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.e2e
 class TestTutorial05FullLifecycle:
     """Validate Tutorial 05: Full Lifecycle commands."""
@@ -512,6 +517,7 @@ class TestTutorial05FullLifecycle:
 
 
 @pytest.mark.tutorial
+@pytest.mark.tutorial_validation
 @pytest.mark.integration
 def test_tutorial_sequence(tui):
     """
