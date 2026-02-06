@@ -207,6 +207,7 @@ Stuck? We have comprehensive resources to help:
 - **[Error Catalog](ERROR-CATALOG.md)**: 25+ common errors with exact messages, causes, and solutions
 - **[Troubleshooting Guide](shared/troubleshooting.md)**: Detailed step-by-step problem resolution
 - **[Setup Guide](shared/00-setup-guide.md)**: Initial environment configuration
+- **[Performance Benchmarks](shared/performance-benchmarks.md)**: Timing data, resource usage, optimization tips
 
 Quick reference:
 - Docker issues (ports, volumes, networking)
