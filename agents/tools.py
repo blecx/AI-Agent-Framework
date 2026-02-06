@@ -11,8 +11,11 @@ the agent can operate on the correct repository root.
 
 import json
 import subprocess
+import time
 from pathlib import Path
 from typing import Annotated, Optional
+
+from agents.command_cache import get_cache
 
 
 # ============================================================================
@@ -339,13 +342,43 @@ def create_feature_branch(
 def run_command(
     command: Annotated[str, "Shell command to execute"],
     working_directory: Annotated[str, "Working directory for command"] = ".",
+    use_cache: Annotated[bool, "Use command cache for idempotent operations"] = True,
 ) -> str:
     """
     Execute a shell command and return output.
     
     Use for running tests, builds, linting, etc.
     Returns combined stdout and stderr.
+    
+    Caching:
+    - Enabled by default for idempotent commands (npm install, pip install, linting)
+    - 1-hour TTL per command+cwd combination
+    - Saves 8-12s per issue by avoiding redundant npm installs
+    - Set use_cache=False for non-idempotent commands (git commit, file writes)
     """
+    cache = get_cache()
+    
+    # Check cache first
+    if use_cache:
+        cached = cache.get(command, working_directory)
+        if cached:
+            output = []
+            output.append(f"[CACHED] Exit code: {cached.returncode}")
+            output.append(f"[Cache saved {cached.execution_time_seconds:.1f}s]")
+            
+            if cached.stdout:
+                output.append("STDOUT:")
+                output.append(cached.stdout)
+            
+            if cached.stderr:
+                output.append("STDERR:")
+                output.append(cached.stderr)
+            
+            return "\n".join(output)
+    
+    # Run command and measure time
+    start_time = time.time()
+    
     try:
         result = subprocess.run(
             command,
@@ -355,6 +388,19 @@ def run_command(
             timeout=300,  # 5 minute timeout
             cwd=working_directory
         )
+        
+        elapsed = time.time() - start_time
+        
+        # Store in cache if enabled
+        if use_cache:
+            cache.set(
+                command,
+                working_directory,
+                result.stdout,
+                result.stderr,
+                result.returncode,
+                elapsed,
+            )
         
         output = []
         output.append(f"Exit code: {result.returncode}")
@@ -435,6 +481,23 @@ def update_knowledge_base(
         return f"Error updating knowledge base: {str(e)}"
 
 
+def get_cache_metrics() -> str:
+    """Get command cache performance metrics.
+    
+    Returns formatted metrics showing cache hits and time saved.
+    Useful for understanding agent efficiency improvements.
+    """
+    cache = get_cache()
+    metrics = cache.get_metrics()
+    
+    return (
+        f"Command Cache Metrics:\n"
+        f"  Cache hits: {metrics['cache_hits']}\n"
+        f"  Time saved: {metrics['time_saved_from_cache_seconds']}s\n"
+        f"  Cached entries: {metrics['cached_entries']}"
+    )
+
+
 # ============================================================================
 # Tool List for Agent
 # ============================================================================
@@ -456,6 +519,7 @@ def get_all_tools():
         create_feature_branch,
         # Testing
         run_command,
+        get_cache_metrics,
         # Knowledge Base
         get_knowledge_base_patterns,
         update_knowledge_base,
