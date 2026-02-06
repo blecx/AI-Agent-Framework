@@ -12,6 +12,7 @@ jsonschema==4.21.1
 
 # HTTP Client
 httpx==0.26.0
+requests==2.31.0
 
 # Template Engine
 jinja2==3.1.3
