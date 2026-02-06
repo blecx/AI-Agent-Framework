@@ -48,6 +48,8 @@ tenacity==8.2.3
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
+pytest-playwright==0.4.4
+requests==2.31.0
 
 # Development Dependencies (optional)
 black==24.1.1
