@@ -104,6 +104,12 @@ Master hybrid workflows, automation, and complete ISO 21500 implementation.
 | [02. Complete ISO 21500](advanced/02-complete-iso21500.md) | 🟢 | 60 min | Advanced | Full lifecycle, 9-week project |
 | [03. Automation & Scripting](advanced/03-automation-scripting.md) | 🟢 | 30 min | Advanced | Bash scripts, CI/CD, integrations |
 
+### Examples & Resources
+
+| Resource | Status | Topics |
+|----------|--------|--------|
+| [CI/CD Integration Examples](examples/ci-cd/README.md) | 🟢 | GitHub Actions, GitLab CI, automation patterns |
+
 ## 🛠️ Prerequisites
 
 Before starting any tutorial, complete the [Setup Guide](shared/00-setup-guide.md) to install and verify:

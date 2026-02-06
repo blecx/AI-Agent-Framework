@@ -1,0 +1,390 @@
+# GitLab CI/CD Pipeline Example
+#
+# This pipeline automates project management tasks using the AI Agent Framework TUI.
+# Copy this file to: .gitlab-ci.yml
+#
+# Features:
+# - Multi-stage pipeline (validate, generate, deploy)
+# - Dependency caching for faster builds
+# - Manual and scheduled triggers
+# - Artifact retention and upload
+
+# Pipeline configuration
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'  # Manual trigger
+
+# Define pipeline stages
+stages:
+  - setup
+  - validate
+  - generate
+  - report
+  - deploy
+
+# Global variables
+variables:
+  PYTHON_VERSION: "3.12"
+  PROJECT_DOCS_PATH: "$CI_PROJECT_DIR/projectDocs"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Override with CI/CD variable: PROJECT_KEY
+  PROJECT_KEY: "${PROJECT_KEY:-AUTO-DETECT}"
+
+# Default Docker image
+default:
+  image: python:3.12-slim
+
+# Cache pip dependencies across jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+    - .venv/
+
+# Before script: Install dependencies (runs before each job)
+before_script:
+  - echo "Setting up environment..."
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip install -r requirements.txt
+  - git config --global user.name "${GIT_USER_NAME:-GitLab CI}"
+  - git config --global user.email "${GIT_USER_EMAIL:-ci@gitlab.com}"
+
+# Stage 1: Setup and initialization
+setup:
+  stage: setup
+  script:
+    - echo "Initializing project environment..."
+    - mkdir -p projectDocs
+    - |
+      if [ "$PROJECT_KEY" == "AUTO-DETECT" ]; then
+        export PROJECT_KEY="${CI_PROJECT_NAMESPACE}-${CI_PROJECT_NAME}" | tr '[:lower:]' '[:upper:]' | tr '-' '_'
+        echo "Auto-detected PROJECT_KEY=$PROJECT_KEY"
+      fi
+    - echo "PROJECT_KEY=$PROJECT_KEY" > project.env
+    - cd apps/tui
+    - python main.py projects list || echo "TUI initialized"
+  artifacts:
+    paths:
+      - project.env
+    expire_in: 1 hour
+
+# Stage 2: Validate existing artifacts
+validate-artifacts:
+  stage: validate
+  dependencies:
+    - setup
+  script:
+    - source project.env
+    - echo "Validating artifacts for project: $PROJECT_KEY"
+    - cd apps/tui
+    - |
+      if python main.py projects list | grep -q "$PROJECT_KEY"; then
+        echo "Project found, validating artifacts..."
+        
+        # Check required artifacts
+        REQUIRED_ARTIFACTS="PROJECT_CHARTER.md PROJECT_PLAN.md RAID_REGISTER.md"
+        MISSING_COUNT=0
+        
+        for ARTIFACT in $REQUIRED_ARTIFACTS; do
+          if [ -f "../../projectDocs/$PROJECT_KEY/artifacts/$ARTIFACT" ]; then
+            echo "✅ Found: $ARTIFACT"
+          else
+            echo "❌ Missing: $ARTIFACT"
+            MISSING_COUNT=$((MISSING_COUNT + 1))
+          fi
+        done
+        
+        if [ $MISSING_COUNT -gt 0 ]; then
+          echo "⚠️ Validation warning: $MISSING_COUNT artifacts missing"
+        else
+          echo "✅ All required artifacts present"
+        fi
+      else
+        echo "ℹ️ Project not found, will be created in next stage"
+      fi
+  allow_failure: true  # Don't fail pipeline if artifacts are missing
+
+# Stage 3a: Create project (if needed)
+create-project:
+  stage: generate
+  dependencies:
+    - setup
+  script:
+    - source project.env
+    - echo "Checking/creating project: $PROJECT_KEY"
+    - cd apps/tui
+    - |
+      if python main.py projects list | grep -q "$PROJECT_KEY"; then
+        echo "ℹ️ Project already exists: $PROJECT_KEY"
+      else
+        echo "Creating new project: $PROJECT_KEY"
+        python main.py projects create \
+          --key "$PROJECT_KEY" \
+          --name "$CI_PROJECT_NAME" \
+          --description "GitLab project: $CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME"
+        echo "✅ Project created successfully"
+      fi
+  environment:
+    name: production
+    action: prepare
+  only:
+    - main
+    - develop
+    - schedules
+    - web
+
+# Stage 3b: Generate artifacts
+generate-artifacts:
+  stage: generate
+  dependencies:
+    - setup
+    - create-project
+  script:
+    - source project.env
+    - echo "Generating artifacts for: $PROJECT_KEY"
+    - cd apps/tui
+    - |
+      echo "Generating project charter..."
+      python main.py artifacts generate --project "$PROJECT_KEY" --type charter || echo "Charter skipped"
+      
+      echo "Generating project plan..."
+      python main.py artifacts generate --project "$PROJECT_KEY" --type plan || echo "Plan skipped"
+      
+      echo "Generating WBS..."
+      python main.py artifacts generate --project "$PROJECT_KEY" --type wbs || echo "WBS skipped"
+      
+      echo "Generating RAID register..."
+      python main.py artifacts generate --project "$PROJECT_KEY" --type raid || echo "RAID skipped"
+      
+      echo "✅ Artifact generation completed"
+  artifacts:
+    name: "project-artifacts-$PROJECT_KEY"
+    paths:
+      - projectDocs/$PROJECT_KEY/artifacts/
+    expire_in: 90 days
+  environment:
+    name: production
+    action: prepare
+  only:
+    - main
+    - develop
+    - schedules
+    - web
+
+# Stage 4a: Generate RAID report (scheduled only)
+raid-report:
+  stage: report
+  dependencies:
+    - setup
+  script:
+    - source project.env
+    - echo "Generating RAID report..."
+    - cd apps/tui
+    - |
+      # Get all projects
+      PROJECTS=$(python main.py projects list --format json | jq -r '.[].key' 2>/dev/null || echo "$PROJECT_KEY")
+      
+      echo "=== RAID Report $(date +'%Y-%m-%d %H:%M:%S') ===" > /tmp/raid-report.txt
+      
+      for PROJECT in $PROJECTS; do
+        echo "" >> /tmp/raid-report.txt
+        echo "--- Project: $PROJECT ---" >> /tmp/raid-report.txt
+        python main.py raid list --project "$PROJECT" --filter severity=High >> /tmp/raid-report.txt 2>&1 || echo "No RAID entries" >> /tmp/raid-report.txt
+      done
+      
+      cat /tmp/raid-report.txt
+  artifacts:
+    name: "raid-report-$CI_PIPELINE_ID"
+    paths:
+      - /tmp/raid-report.txt
+    expire_in: 30 days
+  only:
+    - schedules
+
+# Stage 4b: Compliance validation (manual/scheduled)
+validate-compliance:
+  stage: report
+  dependencies:
+    - setup
+  script:
+    - source project.env
+    - echo "Running compliance validation for: $PROJECT_KEY"
+    - cd apps/tui
+    - |
+      REQUIRED_ARTIFACTS=("PROJECT_CHARTER.md" "PROJECT_PLAN.md" "RAID_REGISTER.md" "WBS.md")
+      MISSING_COUNT=0
+      
+      for ARTIFACT in "${REQUIRED_ARTIFACTS[@]}"; do
+        if [ ! -f "../../projectDocs/$PROJECT_KEY/artifacts/$ARTIFACT" ]; then
+          echo "❌ Missing required artifact: $ARTIFACT"
+          MISSING_COUNT=$((MISSING_COUNT + 1))
+        else
+          echo "✅ Found: $ARTIFACT"
+        fi
+      done
+      
+      if [ $MISSING_COUNT -gt 0 ]; then
+        echo "❌ Compliance validation FAILED: $MISSING_COUNT missing artifacts"
+        exit 1
+      else
+        echo "✅ Compliance validation PASSED"
+      fi
+  only:
+    - schedules
+    - web
+
+# Stage 5: Deploy/commit artifacts
+deploy-artifacts:
+  stage: deploy
+  dependencies:
+    - setup
+    - generate-artifacts
+  script:
+    - source project.env
+    - echo "Deploying artifacts for: $PROJECT_KEY"
+    - cd projectDocs/$PROJECT_KEY
+    - |
+      if [ -n "$(git status --porcelain)" ]; then
+        git add -A
+        git commit -m "chore: auto-generate artifacts via GitLab CI [skip ci]
+
+        Pipeline: $CI_PIPELINE_ID
+        Job: $CI_JOB_ID
+        Triggered by: $CI_PIPELINE_SOURCE
+        Commit: $CI_COMMIT_SHA"
+        
+        echo "✅ Artifacts committed to local git"
+        
+        # Optional: Push to remote (configure remote first)
+        # git remote add origin https://oauth2:${CI_JOB_TOKEN}@gitlab.com/yourorg/project-docs.git
+        # git push origin main
+      else
+        echo "ℹ️ No changes to deploy"
+      fi
+  environment:
+    name: production
+    action: start
+  only:
+    - main
+    - develop
+    - web
+  when: manual  # Require manual approval to commit
+
+# Additional job: Full regeneration (manual only)
+full-regenerate:
+  stage: generate
+  dependencies:
+    - setup
+  script:
+    - source project.env
+    - echo "Starting FULL regeneration for: $PROJECT_KEY"
+    - cd apps/tui
+    - python main.py artifacts regenerate --project "$PROJECT_KEY" --force
+    - echo "✅ Full regeneration completed"
+  artifacts:
+    name: "regenerated-artifacts-$PROJECT_KEY"
+    paths:
+      - projectDocs/$PROJECT_KEY/
+    expire_in: 90 days
+  only:
+    - web
+  when: manual
+
+# Cleanup job: Remove old artifacts
+cleanup-old-artifacts:
+  stage: deploy
+  script:
+    - echo "Cleaning up old artifacts..."
+    - find projectDocs -type f -name "*.bak" -mtime +30 -delete || echo "No old backups"
+    - find projectDocs -type f -name ".DS_Store" -delete || echo "No .DS_Store files"
+    - echo "✅ Cleanup completed"
+  only:
+    - schedules
+  when: on_success
+
+# Performance optimization: Use Docker layer caching
+.docker-cache:
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_BUILDKIT: 1
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+# Example: Build custom Docker image with caching
+build-custom-image:
+  extends: .docker-cache
+  stage: setup
+  script:
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  only:
+    - main
+  when: manual
+
+# Notification job: Send status to Slack (if webhook configured)
+notify-slack:
+  stage: deploy
+  dependencies:
+    - setup
+  script:
+    - |
+      if [ -n "$SLACK_WEBHOOK_URL" ]; then
+        source project.env
+        STATUS_EMOJI="✅"
+        STATUS_TEXT="Success"
+        
+        if [ "$CI_JOB_STATUS" == "failed" ]; then
+          STATUS_EMOJI="❌"
+          STATUS_TEXT="Failed"
+        fi
+        
+        curl -X POST "$SLACK_WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"text\": \"$STATUS_EMOJI GitLab CI Pipeline: $STATUS_TEXT\",
+            \"blocks\": [{
+              \"type\": \"section\",
+              \"text\": {
+                \"type\": \"mrkdwn\",
+                \"text\": \"*Project:* $PROJECT_KEY\n*Pipeline:* $CI_PIPELINE_ID\n*Status:* $STATUS_TEXT\n*Branch:* $CI_COMMIT_BRANCH\"
+              }
+            }]
+          }"
+        echo "✅ Notification sent to Slack"
+      else
+        echo "ℹ️ SLACK_WEBHOOK_URL not configured, skipping notification"
+      fi
+  when: always
+  allow_failure: true
+
+# Security: Run dependency scanning
+dependency-scanning:
+  stage: validate
+  image: python:3.12-slim
+  script:
+    - pip install safety
+    - safety check --json || echo "Security vulnerabilities detected"
+  allow_failure: true
+  only:
+    - main
+    - merge_requests
+
+# Parallel execution example: Process multiple projects
+.parallel-template:
+  stage: generate
+  script:
+    - cd apps/tui
+    - python main.py artifacts generate --project "$PROJECT" --type all
+  parallel:
+    matrix:
+      - PROJECT: ["PROJ-A", "PROJ-B", "PROJ-C"]
+  only:
+    - schedules
+  when: manual
