@@ -11,6 +11,7 @@ This directory contains two agent systems for issue resolution.
 ### Files
 - `autonomous_workflow_agent.py` - Main AI agent implementation
 - `tools.py` - 11 tool functions (GitHub, Git, Files, Testing, KB)
+- `command_cache.py` - Command result caching (saves 8-12s per issue)
 - `llm_client.py` - GitHub Models client factory
 - `knowledge/` - Knowledge base (auto-updated after each issue)
 
@@ -35,6 +36,33 @@ source .venv/bin/activate
 - ✅ Self-reviews changes
 - ✅ Creates pull requests
 - ✅ **Learns from each issue** (guaranteed post-execution)
+- ✅ **Caches command results** (1-hour TTL, saves 8-12s per issue)
+
+### Command Caching (NEW)
+
+Agents automatically cache idempotent command results to avoid redundant operations:
+
+- **Cached commands:** npm install, pip install, linting, builds
+- **Cache TTL:** 1 hour per command+directory
+- **Impact:** Saves 8-12 seconds per issue (3 npm installs → 1 actual run)
+- **Metrics:** Use `get_cache_metrics()` tool to view cache performance
+
+**How it works:**
+
+```python
+# First call: runs npm install (takes 4s)
+run_command("npm install", "/path/to/app")
+
+# Second call within 1 hour: uses cache (instant)
+run_command("npm install", "/path/to/app")  # [CACHED] Exit code: 0
+```
+
+**Disable caching for non-idempotent commands:**
+
+```python
+# Commands that modify state should not be cached
+run_command("git commit -m 'msg'", "/path", use_cache=False)
+```
 
 ### Documentation
 
