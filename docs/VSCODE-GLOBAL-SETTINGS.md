@@ -1,5 +1,7 @@
 # VS Code Global Settings for AI Agent Framework
 
+This guide configures VS Code to auto-approve agent operations and terminal commands, enabling the optimized agent workflows defined in `.github/prompts/agents/` to run efficiently without user intervention.
+
 To enable auto-approve globally across all VS Code instances (not just this workspace), add these settings to your **User Settings** (`~/.config/Code/User/settings.json` on Linux, `%APPDATA%\Code\User\settings.json` on Windows, `~/Library/Application Support/Code/User/settings.json` on macOS):
 
 ## How to Apply Global Settings
@@ -105,10 +107,12 @@ To enable auto-approve globally across all VS Code instances (not just this work
 ### Subagent Auto-Approve
 
 - **`chat.tools.subagent.autoApprove`**: Automatically approves running specific agent modes without prompting
-  - `resolve-issue-dev`: Auto-approves the issue resolution agent
-  - `close-issue`: Auto-approves issue closing operations
-  - `pr-merge`: Auto-approves PR merge operations
-  - `Plan`: Auto-approves planning agent operations
+  - `resolve-issue-dev`: Auto-approves the issue resolution agent (see `.github/prompts/agents/resolve-issue-dev.md`)
+  - `close-issue`: Auto-approves issue closing operations (see `.github/prompts/agents/close-issue.md`)
+  - `pr-merge`: Auto-approves PR merge operations (see `.github/prompts/agents/pr-merge.md`)
+  - `Plan`: Auto-approves planning agent operations (see `.github/prompts/agents/Plan.md`)
+
+**Note:** These agent names correspond to optimized workflow prompts in `.github/prompts/agents/` that implement early-exit conditions, batch operations, and eliminate polling loops to reduce resolution time from 30-45 minutes to 5-10 minutes.
 
 ### Terminal Command Auto-Approve
 
@@ -168,3 +172,19 @@ If auto-approve doesn't work in a fresh chat:
 - Backend workspace: `/home/sw/work/AI-Agent-Framework/.vscode/settings.json`
 - Client workspace: `/home/sw/work/AI-Agent-Framework/_external/AI-Agent-Framework-Client/.vscode/settings.json`
 - This guide: `/home/sw/work/AI-Agent-Framework/docs/VSCODE-GLOBAL-SETTINGS.md`
+
+## Agent Workflow References
+
+The auto-approved agents listed above use optimized workflows that implement:
+- **Early-exit conditions** (skip completed work)
+- **Single-pass operations** (no polling loops)
+- **Limited search scope** (max 5 results)
+- **Batch git operations** (3 commands → 1)
+- **Clear success criteria** (testable conditions)
+
+For detailed workflow documentation:
+- `.github/prompts/agents/resolve-issue-dev.md` - Issue resolution workflow (9 steps)
+- `.github/prompts/agents/pr-merge.md` - PR merge with admin bypass (6 steps)
+- `.github/prompts/agents/close-issue.md` - Issue closure workflow (4 steps)
+- `.github/prompts/agents/Plan.md` - Research agent with limited scope (5 steps)
+- `.github/prompts/agents/README.md` - Optimization principles and performance metrics
