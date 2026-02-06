@@ -254,12 +254,11 @@ class TestTutorial02CompleteLifecycle:
         assert success, f"Project creation failed: {result.stderr}"
 
         # Verify directory structure (Tutorial 02, Step 1 - Verification)
+        # Note: Only artifacts/ is created by default; raid/ and workflow/ are created on-demand
         project_path = project_docs_path / clean_project
-        assert project_path.exists()
-        assert (project_path / "artifacts").exists()
-        assert (project_path / "raid").exists()
-        assert (project_path / "workflow").exists()
-        print(f"✅ Initiating phase: Project {clean_project} created with ISO 21500 structure")
+        assert project_path.exists(), f"Project directory not created: {project_path}"
+        assert (project_path / "artifacts").exists(), "artifacts/ directory not created"
+        print(f"✅ Initiating phase: Project {clean_project} created with basic structure")
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
     def test_propose_assess_gaps_command(self, tui_path, clean_project):
