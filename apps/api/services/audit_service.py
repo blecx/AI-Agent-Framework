@@ -10,7 +10,7 @@ DEPRECATED FACADE: Prefer using focused services directly for new code:
 
 from typing import Dict, Any, Optional, List
 
-from domain.audit.constants import DEFAULT_QUERY_LIMIT
+from apps.api.domain.audit.constants import DEFAULT_QUERY_LIMIT
 from .audit.event_logger import AuditEventLogger
 from .audit.rules_engine import AuditRulesEngine
 from .audit.orchestrator import AuditOrchestrator

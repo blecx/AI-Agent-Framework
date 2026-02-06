@@ -6,12 +6,12 @@ Aligned with ISO 21500 standards.
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import Optional
 
-from domain.workflow.constants import (
+from apps.api.domain.workflow.constants import (
     DEFAULT_EVENT_LIMIT,
     MIN_EVENT_LIMIT,
     MAX_EVENT_LIMIT,
 )
-from models import (
+from apps.api.models import (
     WorkflowStateInfo,
     WorkflowStateUpdate,
     AuditEventList,

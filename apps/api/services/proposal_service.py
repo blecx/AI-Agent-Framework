@@ -8,10 +8,10 @@ import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 
-from domain.proposals.models import Proposal, ProposalStatus, ChangeType
-from services.git_manager import GitManager
-from services.audit_service import AuditService
-from services.diff_service import DiffService
+from apps.api.domain.proposals.models import Proposal, ProposalStatus, ChangeType
+from apps.api.services.git_manager import GitManager
+from apps.api.services.audit_service import AuditService
+from apps.api.services.diff_service import DiffService
 
 
 class ConflictError(Exception):

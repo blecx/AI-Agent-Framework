@@ -6,13 +6,13 @@ Delegates to ProposalService for all business logic.
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import Optional
 
-from domain.proposals.models import (
+from apps.api.domain.proposals.models import (
     Proposal,
     ProposalCreate,
     ProposalStatus,
     ChangeType,
 )
-from services.proposal_service import ProposalService
+from apps.api.services.proposal_service import ProposalService
 
 router = APIRouter()
 
