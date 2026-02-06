@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from apps.api.domain.blueprints.models import (
+from domain.blueprints.models import (
     Blueprint,
     BlueprintCreate,
     BlueprintUpdate,

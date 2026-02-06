@@ -11,7 +11,7 @@ import json
 import uuid
 from typing import List, Optional
 
-from apps.api.domain.templates.models import (
+from domain.templates.models import (
     Template,
     TemplateCreate,
     TemplateUpdate,
