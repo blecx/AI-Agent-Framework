@@ -79,7 +79,7 @@ Commands:
 - **create_charter** - Generate project charter
 - **define_wbs** - Create Work Breakdown Structure
 - **plan_schedule** - Create project schedule
-- **(Step 2 features coming soon)**: apply_template, select_blueprint, etc.
+- **(Step 2 features - REST API available)**: Template management, Blueprint selection, Artifact generation with proposal workflow (see [Step 2 Status](../../../planning/step-2-complete-status.md) for details)
 
 ### Step 2: Propose Your First Command (Project Charter)
 
@@ -527,10 +527,17 @@ Congratulations! You've completed the Artifact Workflow tutorial. You now know:
 | **define_wbs** | Work Breakdown Structure | wbs.md, wbs-diagram.svg |
 | **plan_schedule** | Project schedule | schedule.md, gantt-chart.svg |
 
-**Step 2 Commands (Coming Soon):**
-- `apply_template` - Apply project template
-- `select_blueprint` - Use project blueprint
-- `generate_proposal` - Create detailed proposal document
+**Step 2 REST API (Available Now):**
+
+Step 2 features are available via REST API endpoints (TUI commands in progress):
+
+- **POST /templates** - Create project templates with validation rules
+- **GET /blueprints** - List available project blueprints
+- **POST /artifacts** - Generate artifacts from templates with Jinja2 rendering
+- **POST /proposals** - Create change proposals with diff visualization
+- **POST /proposals/{id}/apply** - Apply approved proposals to project
+
+See [Step 2 Complete Status](../../../planning/step-2-complete-status.md) for full implementation details (16/18 issues merged).
 
 ## Next Steps
 

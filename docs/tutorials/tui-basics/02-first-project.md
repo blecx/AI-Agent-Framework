@@ -249,8 +249,8 @@ drwxr-xr-x 8 user user 4096 Feb  3 12:34 .git
 **What's in the project directory:**
 - **.git/** - Git repository metadata
 - **project.json** - Project metadata file
-- Future: **artifacts/** directory (created when artifacts are generated)
-- Future: **raid.json** (created when RAID entries are added)
+- **artifacts/** - Artifact files (created via Step 2 REST API: POST /artifacts)
+- **raid.json** - RAID register entries (created via Step 1: POST /raid)
 
 ```bash
 # View project metadata
