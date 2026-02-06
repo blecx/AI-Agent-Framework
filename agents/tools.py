@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 from agents.command_cache import get_cache
+from agents.coverage_analyzer import get_coverage_analyzer
 from agents.time_estimator import TimeEstimator
 
 
@@ -542,6 +543,77 @@ def get_time_estimate(
     )
 
 
+def analyze_coverage_impact(
+    changed_files: Annotated[list[str], "List of files that were changed"],
+    coverage_threshold: Annotated[
+        float, "Minimum coverage percentage (default 80)"
+    ] = 80.0,
+    working_directory: Annotated[str, "Working directory"] = ".",
+) -> str:
+    """
+    Analyze test coverage impact of code changes.
+
+    This tool:
+    - Runs tests with coverage
+    - Detects coverage regressions
+    - Warns about files below threshold
+    - Enforces coverage quality gates
+
+    Returns JSON with coverage analysis results and pass/fail status.
+    """
+    try:
+        analyzer = get_coverage_analyzer(
+            coverage_threshold=coverage_threshold,
+            working_directory=working_directory,
+        )
+
+        # Get current coverage
+        current_coverage = analyzer.get_current_coverage()
+        if not current_coverage:
+            return json.dumps(
+                {
+                    "error": "Failed to generate coverage report",
+                    "suggestion": "Run: pytest tests/ --cov=apps/api --cov=apps/tui --cov-report=json",
+                },
+                indent=2,
+            )
+
+        # Analyze changed files against threshold
+        diff_result = {
+            "total_coverage": current_coverage.total_percent,
+            "files_analyzed": len(
+                [f for f in changed_files if f in current_coverage.files]
+            ),
+            "low_coverage_files": [],
+            "coverage_threshold": coverage_threshold,
+        }
+
+        # Check changed files against threshold
+        low_coverage_files = []
+        for file_path in changed_files:
+            if file_path in current_coverage.files:
+                file_cov = current_coverage.files[file_path]
+                if file_cov.percent_covered < coverage_threshold:
+                    low_coverage_files.append(
+                        {
+                            "path": file_cov.path,
+                            "coverage": round(file_cov.percent_covered, 1),
+                            "missing_lines": file_cov.missing_lines,
+                        }
+                    )
+
+        diff_result["low_coverage_files"] = low_coverage_files
+        diff_result["passed"] = len(low_coverage_files) == 0
+
+        # Add metrics
+        diff_result["metrics"] = analyzer.get_metrics()
+
+        return json.dumps(diff_result, indent=2)
+
+    except Exception as e:
+        return json.dumps({"error": f"Coverage analysis failed: {e}"}, indent=2)
+
+
 # ============================================================================
 # Tool List for Agent
 # ============================================================================
@@ -566,6 +638,7 @@ def get_all_tools():
         run_command,
         get_cache_metrics,
         get_time_estimate,
+        analyze_coverage_impact,
         # Knowledge Base
         get_knowledge_base_patterns,
         update_knowledge_base,
