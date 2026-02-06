@@ -1,0 +1,348 @@
+# GitHub Actions Workflow Example
+# 
+# This workflow automates project management tasks using the AI Agent Framework TUI.
+# Copy this file to: .github/workflows/project-management.yml
+#
+# Features:
+# - Auto-generate project artifacts on push
+# - Schedule nightly RAID reports
+# - Manual trigger for specific projects
+# - Commit generated artifacts back to repository
+
+name: Project Management Automation
+
+on:
+  # Trigger on push to main/develop branches
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'projectDocs/**'  # Only run when project docs change
+      - '.github/workflows/project-management.yml'
+  
+  # Schedule: Run every weekday at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * 1-5'
+  
+  # Manual trigger with project key input
+  workflow_dispatch:
+    inputs:
+      project_key:
+        description: 'Project key to process (e.g., TEST-12345)'
+        required: true
+        type: string
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - generate-artifacts
+          - raid-report
+          - validate-compliance
+          - full-regenerate
+
+# Required permissions for committing changes
+permissions:
+  contents: write
+
+# Environment variables
+env:
+  PYTHON_VERSION: '3.12'
+  PROJECT_KEY: ${{ github.event.inputs.project_key || 'AUTO-DETECT' }}
+
+jobs:
+  # Job 1: Generate project artifacts
+  generate-artifacts:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.action == 'generate-artifacts' || github.event.inputs.action == 'full-regenerate'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git operations
+          submodules: recursive  # Initialize projectDocs submodule if used
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_USER_NAME || 'GitHub Actions Bot' }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL || 'actions@github.com' }}"
+      
+      - name: Initialize projectDocs directory
+        run: |
+          if [ ! -d "projectDocs" ]; then
+            echo "Creating projectDocs directory..."
+            mkdir -p projectDocs
+            cd projectDocs
+            git init
+            git config user.name "${{ secrets.GIT_USER_NAME || 'GitHub Actions Bot' }}"
+            git config user.email "${{ secrets.GIT_USER_EMAIL || 'actions@github.com' }}"
+          fi
+      
+      - name: Detect or validate project key
+        id: project
+        run: |
+          if [ "${{ env.PROJECT_KEY }}" == "AUTO-DETECT" ]; then
+            # Auto-detect from repository name
+            PROJECT_KEY="${{ github.repository_owner }}-$(basename ${{ github.repository }} | tr '[:lower:]' '[:upper:]' | tr '-' '_')"
+            echo "Auto-detected project key: $PROJECT_KEY"
+          else
+            PROJECT_KEY="${{ env.PROJECT_KEY }}"
+            echo "Using provided project key: $PROJECT_KEY"
+          fi
+          echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Create project (if not exists)
+        run: |
+          cd apps/tui
+          python main.py projects list | grep -q "${{ steps.project.outputs.PROJECT_KEY }}" || {
+            echo "Creating new project: ${{ steps.project.outputs.PROJECT_KEY }}"
+            python main.py projects create \
+              --key "${{ steps.project.outputs.PROJECT_KEY }}" \
+              --name "${{ github.repository }}" \
+              --description "Automated project for ${{ github.repository }}"
+          }
+        env:
+          PROJECT_DOCS_PATH: ../../projectDocs
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      
+      - name: Generate project artifacts
+        run: |
+          cd apps/tui
+          echo "Generating artifacts for project: ${{ steps.project.outputs.PROJECT_KEY }}"
+          
+          # Generate all standard artifacts
+          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type charter || echo "Charter generation skipped"
+          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type plan || echo "Plan generation skipped"
+          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type wbs || echo "WBS generation skipped"
+          
+          echo "Artifact generation completed"
+        env:
+          PROJECT_DOCS_PATH: ../../projectDocs
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      
+      - name: Commit generated artifacts
+        run: |
+          cd projectDocs/${{ steps.project.outputs.PROJECT_KEY }}
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: auto-generate artifacts via GitHub Actions [skip ci]
+
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Triggered by: ${{ github.event_name }}
+            Commit: ${{ github.sha }}"
+            
+            echo "✅ Artifacts committed successfully"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-artifacts-${{ steps.project.outputs.PROJECT_KEY }}
+          path: projectDocs/${{ steps.project.outputs.PROJECT_KEY }}/artifacts/
+          retention-days: 90
+
+  # Job 2: Generate RAID report
+  raid-report:
+    runs-on: ubuntu-latest
+    if: github.event.schedule || github.event.inputs.action == 'raid-report'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Generate RAID report
+        run: |
+          cd apps/tui
+          
+          # List all projects
+          PROJECTS=$(python main.py projects list --format json | jq -r '.[].key' || echo "")
+          
+          if [ -z "$PROJECTS" ]; then
+            echo "No projects found"
+            exit 0
+          fi
+          
+          # Generate report for each project
+          for PROJECT in $PROJECTS; do
+            echo "=== RAID Report for $PROJECT ===" | tee -a /tmp/raid-report.txt
+            python main.py raid list --project "$PROJECT" --filter severity=High | tee -a /tmp/raid-report.txt || echo "No high-severity items"
+            echo "" | tee -a /tmp/raid-report.txt
+          done
+        env:
+          PROJECT_DOCS_PATH: ../../projectDocs
+      
+      - name: Upload RAID report
+        uses: actions/upload-artifact@v4
+        with:
+          name: raid-report-${{ github.run_id }}
+          path: /tmp/raid-report.txt
+          retention-days: 30
+      
+      - name: Send notification (optional)
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          REPORT_CONTENT=$(cat /tmp/raid-report.txt | head -100)
+          
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"📊 Daily RAID Report\",
+              \"blocks\": [{
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*RAID Report Summary*\n\`\`\`\n${REPORT_CONTENT}\n\`\`\`\"
+                }
+              }]
+            }"
+
+  # Job 3: Validate compliance
+  validate-compliance:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'validate-compliance' || github.event.schedule
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Validate artifacts
+        run: |
+          cd apps/tui
+          
+          PROJECT_KEY="${{ steps.project.outputs.PROJECT_KEY || github.event.inputs.project_key }}"
+          
+          if [ -z "$PROJECT_KEY" ]; then
+            echo "Error: PROJECT_KEY not set"
+            exit 1
+          fi
+          
+          echo "Validating compliance for: $PROJECT_KEY"
+          
+          # Check required artifacts exist
+          REQUIRED_ARTIFACTS=("PROJECT_CHARTER.md" "PROJECT_PLAN.md" "RAID_REGISTER.md")
+          MISSING_ARTIFACTS=0
+          
+          for ARTIFACT in "${REQUIRED_ARTIFACTS[@]}"; do
+            if [ ! -f "../../projectDocs/$PROJECT_KEY/artifacts/$ARTIFACT" ]; then
+              echo "❌ Missing required artifact: $ARTIFACT"
+              MISSING_ARTIFACTS=$((MISSING_ARTIFACTS + 1))
+            else
+              echo "✅ Found: $ARTIFACT"
+            fi
+          done
+          
+          if [ $MISSING_ARTIFACTS -gt 0 ]; then
+            echo "Compliance validation FAILED: $MISSING_ARTIFACTS missing artifacts"
+            exit 1
+          fi
+          
+          echo "✅ Compliance validation PASSED"
+        env:
+          PROJECT_DOCS_PATH: ../../projectDocs
+
+  # Job 4: Full regeneration (manual only)
+  full-regenerate:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'full-regenerate'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_USER_NAME || 'GitHub Actions Bot' }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL || 'actions@github.com' }}"
+      
+      - name: Full artifact regeneration
+        run: |
+          cd apps/tui
+          
+          PROJECT_KEY="${{ github.event.inputs.project_key }}"
+          
+          echo "Starting full regeneration for: $PROJECT_KEY"
+          
+          # Regenerate all artifacts
+          python main.py artifacts regenerate --project "$PROJECT_KEY" --force
+          
+          echo "✅ Full regeneration completed"
+        env:
+          PROJECT_DOCS_PATH: ../../projectDocs
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      
+      - name: Commit regenerated artifacts
+        run: |
+          cd projectDocs/${{ github.event.inputs.project_key }}
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: full artifact regeneration via GitHub Actions [skip ci]
+
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Requested by: ${{ github.actor }}"
+            
+            echo "✅ Changes committed"
+          else
+            echo "ℹ️ No changes to commit"
+          fi

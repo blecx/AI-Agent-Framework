@@ -8,6 +8,8 @@
 
 This tutorial teaches you how to automate common project management workflows using bash scripts and the TUI CLI. Learn to create batch operations, generate reports, and integrate the framework into CI/CD pipelines.
 
+> **💡 Looking for CI/CD integration?** See our comprehensive [CI/CD Integration Examples](../examples/ci-cd/README.md) with ready-to-use GitHub Actions and GitLab CI workflows.
+
 ## Learning Objectives
 
 By the end of this tutorial, you will be able to:
@@ -959,8 +961,10 @@ echo "✓ Notification sent to Slack"
 
 ## Additional Resources
 
+- **[CI/CD Integration Examples](../examples/ci-cd/README.md)** - Ready-to-use GitHub Actions and GitLab CI workflows
 - [TUI Command Reference](../tui-basics/03-tui-command-cheatsheet.md)
 - [Bash Scripting Best Practices](https://google.github.io/styleguide/shellguide.html)
 - [jq Manual](https://stedolan.github.io/jq/manual/)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
 - [Cron Syntax Guide](https://crontab.guru/)
