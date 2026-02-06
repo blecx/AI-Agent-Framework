@@ -196,11 +196,18 @@ This provides a realistic context for learning ISO 21500 concepts.
 
 ### Troubleshooting
 
-Stuck? Check the [Troubleshooting Guide](shared/troubleshooting.md) for:
+Stuck? We have comprehensive resources to help:
 
+- **[Error Catalog](ERROR-CATALOG.md)**: 25+ common errors with exact messages, causes, and solutions
+- **[Troubleshooting Guide](shared/troubleshooting.md)**: Detailed step-by-step problem resolution
+- **[Setup Guide](shared/00-setup-guide.md)**: Initial environment configuration
+
+Quick reference:
 - Docker issues (ports, volumes, networking)
 - API connection problems
 - TUI command failures
+- GUI/Web UI errors
+- Git/projectDocs issues
 - GUI not loading
 - Git conflicts in projectDocs
 

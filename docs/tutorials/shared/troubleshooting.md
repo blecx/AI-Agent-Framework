@@ -2,6 +2,8 @@
 
 This guide helps you resolve common issues when working with the ISO 21500 AI-Agent Framework tutorials.
 
+> 💡 **Quick Reference**: Looking for a specific error message? Check the [**Error Catalog**](../ERROR-CATALOG.md) for 25+ common errors with exact messages, causes, and solutions.
+
 ## 📋 Quick Diagnosis
 
 **Before diving into specific issues, try these quick fixes:**
@@ -938,6 +940,7 @@ If all checkboxes pass, issue is resolved! 🎉
 
 ## 📚 Related Documentation
 
+- **[Error Catalog](../ERROR-CATALOG.md)**: Quick reference for 25+ common error messages
 - **[Setup Guide](00-setup-guide.md)**: Initial environment setup
 - **[Tutorial Index](../README.md)**: All available tutorials
 - **[Development Guide](../../development.md)**: Contributing and development
