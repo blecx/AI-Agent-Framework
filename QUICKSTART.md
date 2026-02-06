@@ -9,6 +9,23 @@ This guide shows you how to get the ISO 21500 Project Management AI Agent system
 - Docker and Docker Compose installed
 - (Optional) LM Studio or another OpenAI-compatible LLM running locally
 
+### System Requirements
+
+**For Web UI (Browser-based):**
+- Desktop browser: Chrome, Firefox, Edge, or Safari (latest versions)
+- Minimum screen resolution: 1280x720
+- Mouse and keyboard recommended
+
+**Mobile/Tablet Support:**
+- ⚠️ Tablets (iPad, Android 10"+): Limited support, landscape mode only, read-only recommended
+- ❌ Smartphones: Not supported (screen too small for UI)
+- See [Mobile Compatibility Guide](docs/clients/README.md#mobile-browser-compatibility) for details
+
+**For TUI/CLI:**
+- Terminal with color support
+- SSH access (for remote use)
+- Works on any device with terminal access (including mobile via SSH)
+
 ## Setup Steps
 
 ### 1. Clone the Repository

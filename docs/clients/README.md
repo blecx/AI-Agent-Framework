@@ -808,6 +808,88 @@ We welcome contributions for new clients!
 
 ---
 
+## Mobile Browser Compatibility
+
+### Compatibility Matrix
+
+| Browser | Desktop | Tablet (iPad/Android) | Phone | Notes |
+|---------|---------|----------------------|-------|-------|
+| Chrome | ✅ Full Support | ⚠️ Limited | ❌ Not Recommended | Touch gestures work, but UI not optimized |
+| Firefox | ✅ Full Support | ⚠️ Limited | ❌ Not Recommended | Responsive design partial |
+| Safari (iOS) | ✅ Full Support | ⚠️ Limited | ❌ Not Recommended | Works but viewport scaling issues |
+| Edge | ✅ Full Support | ⚠️ Limited | ❌ Not Recommended | Similar to Chrome |
+
+### Mobile-Specific Notes
+
+**✅ What Works on Tablets:**
+- Viewing project lists and artifacts
+- Reading diff views (landscape orientation recommended)
+- Monitoring command status
+- Basic navigation and project selection
+
+**⚠️ Tablet Limitations:**
+- Touch interactions not optimized (designed for mouse/trackpad)
+- Small UI elements may be difficult to tap accurately
+- Text input fields may have focus issues
+- Code diffs hard to read in portrait mode
+- No pinch-to-zoom support in code viewers
+
+**❌ Not Supported on Phones:**
+- Screen too small for diff viewer and code artifacts
+- UI components not responsive below 768px width
+- Command proposal interface not usable
+- File browser requires minimum 900px width
+
+### Recommended Setup
+
+**For Production Use:**
+- Desktop browser (Chrome, Firefox, Edge, Safari)
+- Minimum screen resolution: 1280x720
+- Mouse and keyboard for optimal interaction
+
+**For Monitoring Only:**
+- Tablet in landscape mode (iPad, Android 10"+)
+- Minimum screen width: 768px
+- Read-only operations only
+
+**Not Recommended:**
+- Smartphones (any size)
+- Portrait tablet mode
+- Touch-only interaction for complex workflows
+
+### Known Mobile Issues
+
+1. **Touch Scrolling:** Code diff areas may not scroll properly with touch
+2. **Modal Dialogs:** Proposal modals may overflow on small screens
+3. **Text Selection:** Difficult to select/copy code on touch devices
+4. **Keyboard:** Virtual keyboards may obscure input fields
+5. **Performance:** Large diffs may cause lag on mobile devices
+
+### Workarounds for Mobile Users
+
+If you must access from mobile:
+
+1. **Use Landscape Mode:** Always rotate tablet to landscape
+2. **Zoom Out:** Use browser zoom (pinch or Ctrl+/-) to fit content
+3. **Read-Only:** Avoid creating projects or applying commands
+4. **TUI Alternative:** Use SSH + TUI client for mobile terminal access
+5. **Remote Desktop:** Consider remote desktop to a full desktop environment
+
+### Mobile Development Plans
+
+Mobile optimization is not currently planned. The web UI is designed for:
+- Desktop development workflows
+- Professional project management
+- Code review and diff viewing
+- Complex multi-step interactions
+
+For mobile access, we recommend:
+- **SSH + TUI:** Command-line access via mobile terminal app (Termux, iSH)
+- **Remote Desktop:** VNC/RDP to desktop environment
+- **WebUI (Future):** Enhanced client may add responsive design
+
+---
+
 ## Support
 
 For issues or questions:

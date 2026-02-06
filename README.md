@@ -240,6 +240,9 @@ For local development without Docker, follow these steps:
 - **Python 3.12** (matches GitHub Actions CI)
 - **Git**
 - (Optional) LM Studio or OpenAI-compatible LLM endpoint
+- **Desktop browser** for Web UI: Chrome, Firefox, Edge, or Safari (latest versions)
+  - Minimum screen resolution: 1280x720
+  - ⚠️ Mobile/tablet support limited - see [Mobile Compatibility](docs/clients/README.md#mobile-browser-compatibility)
 
 ### Step-by-Step Setup
 
