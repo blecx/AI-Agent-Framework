@@ -22,6 +22,18 @@ By the end of this tutorial, you will:
 - Docker services running
 - Project TODO-001 created
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of RAID management commands
+> - Real-world risk and issue examples
+> - RAID register filtering techniques
+> - Status transition workflows
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## What is RAID?
 
 **RAID** is an acronym for:

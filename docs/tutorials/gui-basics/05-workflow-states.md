@@ -34,6 +34,18 @@ By the end of this tutorial, you will be able to:
 - **Understanding:** Basic knowledge of project management lifecycle
 - **No external tools required** - all interaction is browser-based
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of workflow state transitions
+> - ISO 21500 phase explanations
+> - Phase completion tracking
+> - RAID integration with workflow states
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ### Quick Verification
 
 Verify your project is in a workflow state:

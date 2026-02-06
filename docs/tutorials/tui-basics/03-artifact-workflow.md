@@ -24,6 +24,18 @@ By the end of this tutorial, you will:
 - Project TODO-001 created
 - Basic understanding of project structure
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of propose/apply workflow
+> - Diff viewer navigation
+> - Proposal acceptance and rejection examples
+> - Artifact inspection techniques
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## The Propose/Apply Pattern
 
 The AI-Agent Framework uses a **two-step workflow** for artifact generation:

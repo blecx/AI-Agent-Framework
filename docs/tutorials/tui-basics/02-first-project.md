@@ -23,6 +23,18 @@ By the end of this tutorial, you will:
 - Terminal access
 - Basic understanding of Git concepts (helpful but not required)
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Live demonstration of project creation
+> - Real-time Git repository inspection
+> - Project key naming best practices
+> - Troubleshooting common errors
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## The Todo App Example
 
 Throughout this tutorial series, we'll use a consistent example: **Todo Application MVP**

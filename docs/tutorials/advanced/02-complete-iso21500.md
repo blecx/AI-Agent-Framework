@@ -4,6 +4,18 @@
 **Difficulty:** Advanced  
 **Prerequisites:** TUI Basics, GUI Basics, Hybrid Workflows tutorial
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Complete project lifecycle (60 minutes)
+> - All five ISO 21500 phases demonstrated
+> - Real-world Todo MVP example
+> - Best practices for each phase
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## Overview
 
 This tutorial walks through a complete ISO 21500 project lifecycle for a real-world example: building a Todo Application MVP. You'll experience all five process groups (Initiating, Planning, Executing, Monitoring & Controlling, Closing) and learn how the framework supports each phase.

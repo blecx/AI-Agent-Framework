@@ -13,6 +13,7 @@
 - [Testing Guidelines](#testing-guidelines)
 - [Documentation Requirements](#documentation-requirements)
 - [Submitting Pull Requests](#submitting-pull-requests)
+- [Video Contributions](#video-contributions)
 - [Getting Help](#getting-help)
 
 ## Quick Start for New Contributors
@@ -896,6 +897,154 @@ Describe how you tested:
 5. **Merge** - Squash and merge to main
 
 **Typical timeline:** 1-3 days for review
+
+## Video Contributions
+
+We welcome video content to complement our written tutorials!
+
+### Why Video Content Matters
+
+- **Visual Learning:** Many users learn better by watching demonstrations
+- **Reduces Support Load:** Shows exact steps, reduces misunderstandings
+- **Showcases Features:** Video highlights capabilities that text may miss
+- **Builds Community:** Contributors gain visibility, users feel connected
+
+### What Videos We Need
+
+See [docs/tutorials/VIDEO-PLAN.md](tutorials/VIDEO-PLAN.md) for our complete video content roadmap, including:
+
+**Priority 1: Core Concepts (5-10 min each)**
+- System overview and architecture
+- Docker setup walkthrough
+- TUI vs GUI decision guide
+- Propose/apply workflow explanation
+
+**Priority 2: Tutorial Companions**
+- Beginner path (10 min)
+- Intermediate path (15 min)
+- Advanced path (20 min)
+
+**Priority 3: Deep Dives (15-20 min each)**
+- ISO 21500 phases explained
+- Template customization
+- CI/CD integration patterns
+
+### Video Contribution Workflow
+
+1. **Check VIDEO-PLAN.md:** Review planned topics and claim one by commenting on [Issue #186](https://github.com/blecx/AI-Agent-Framework/issues/186)
+2. **Record following guidelines:** See technical specifications below
+3. **Submit for review:** Open PR with video link and tutorial updates
+4. **Iterate based on feedback:** Maintainers will review content accuracy
+5. **Publish:** After approval, video will be linked in documentation
+
+### Recording Guidelines
+
+**Tools Required:**
+- Screen recording: OBS Studio (recommended), Camtasia, or QuickTime
+- Microphone: USB mic (Blue Yeti, Audio-Technica AT2020) or similar
+- Audio: Noise cancellation (Krisp, RTX Voice)
+- Editing: DaVinci Resolve (free), OpenShot, or Audacity
+
+**Technical Specifications:**
+- Resolution: 1920x1080 (1080p minimum)
+- Frame rate: 30fps
+- Format: MP4 (H.264)
+- Audio: 48kHz, 192 kbps AAC
+- Length: 5-30 minutes (shorter preferred)
+
+**Content Requirements:**
+- Clear audio (no background noise)
+- Readable text (large fonts, high contrast)
+- Follows tutorial structure (if companion video)
+- Shows successful completion of tasks
+- Demonstrates error handling (optional but valuable)
+
+**Best Practices:**
+1. **Preparation:**
+   - Clean environment (`docker compose down -v`)
+   - Fresh terminal with clear history
+   - Prepared examples and data
+   - Outline (not scripted word-for-word)
+2. **During Recording:**
+   - Start with title card (tutorial name, duration)
+   - Speak clearly at moderate pace
+   - Pause between sections (easier editing)
+   - Show errors and fixes (learning opportunity)
+   - Use cursor highlighting
+3. **Post-Production:**
+   - Cut dead air and mistakes
+   - Add chapter markers (YouTube)
+   - Speed up long waits (docker build, etc.)
+   - Add text overlays for key commands
+   - Generate subtitles (manual preferred)
+
+### Hosting Options
+
+**Approved Platforms:**
+- **YouTube** (primary, best for embedding)
+- Vimeo (alternative)
+- GitHub Releases (short clips only, < 50MB)
+
+**Requirements:**
+- Public or unlisted visibility (not private)
+- Downloadable preferred (resilience)
+- Subtitles/captions included
+- Creative Commons license preferred (CC BY 4.0)
+
+### Submission Checklist
+
+When submitting a video contribution PR:
+
+- [ ] Video uploaded to approved platform (YouTube/Vimeo)
+- [ ] Video link added to relevant tutorial file(s)
+- [ ] VIDEO-PLAN.md updated with ✅ and link
+- [ ] Subtitles/captions included
+- [ ] Video description includes GitHub repo link
+- [ ] Duration matches target (5-30 minutes)
+- [ ] Audio quality verified (no noise/distortion)
+- [ ] All commands shown execute successfully
+- [ ] PR description includes video link preview
+
+### Quality Standards
+
+**Must Have:**
+- Clear audio (>= -20dB average)
+- Readable text (font size >= 14pt)
+- Successful task completion
+- Follows tutorial structure
+- Under 30 minutes
+
+**Nice to Have:**
+- Chapter markers/timestamps
+- Manual subtitles (not auto-generated)
+- Multiple takes showing alternatives
+- Error demonstrations with fixes
+- Links to related tutorials
+
+### Review Process
+
+1. **Submit PR** with video link and tutorial updates
+2. **Maintainer review** (content accuracy, quality)
+3. **Community feedback** (optional, for major videos)
+4. **Revisions** if needed (rarely required)
+5. **Merge** when approved
+6. **Announce** in releases and discussions
+
+### Compensation
+
+Video contributions are **volunteer-based** and unpaid at this time. However:
+
+- **Recognition:** Contributors credited in video descriptions and documentation
+- **Portfolio:** Use videos in your portfolio/resume
+- **Community:** Gain visibility in project management and developer communities
+
+We may explore sponsorship models for professional production in the future.
+
+### Questions?
+
+- See [VIDEO-PLAN.md](tutorials/VIDEO-PLAN.md) for detailed guidelines
+- Comment on [Issue #186](https://github.com/blecx/AI-Agent-Framework/issues/186)
+- Open a [Discussion](https://github.com/blecx/AI-Agent-Framework/discussions) for questions
 
 ## Getting Help
 

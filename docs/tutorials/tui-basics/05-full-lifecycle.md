@@ -21,6 +21,18 @@ By the end of this tutorial, you will:
 - Docker services running
 - Understanding of RAID and artifacts
 
+## 🎥 Video Walkthrough
+
+> **Coming Soon:** A video walkthrough of this tutorial will be available.
+> 
+> **What to expect:**
+> - Complete project lifecycle demonstration (30 minutes)
+> - Transition between all five ISO 21500 phases
+> - Best practices for each phase
+> - Common pitfalls and how to avoid them
+> 
+> **Interested in contributing?** See [VIDEO-PLAN.md](../VIDEO-PLAN.md) for recording guidelines.
+
 ## ISO 21500 Phases
 
 The ISO 21500 standard defines five process groups:
