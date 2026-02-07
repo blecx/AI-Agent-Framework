@@ -152,5 +152,8 @@
     "close-issue": true,
     "pr-merge": true,
     "Plan": true
-  }
+  },
+  "git.ignoredRepositories": [
+    "${workspaceFolder}/projectDocs"
+  ]
 }
