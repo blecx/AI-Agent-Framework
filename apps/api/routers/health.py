@@ -66,58 +66,55 @@ def check_git_repository(docs_path: str) -> Dict[str, Any]:
 def check_llm_service(llm_service) -> Dict[str, Any]:
     """Check LLM service availability."""
     try:
-        # Get LLM config to check if endpoint is configured
-        config_path = llm_service.config_path
+        # LLM service is optional - system can work with templates
+        # Just check if the service object exists and has config
+        if llm_service is None:
+            return {
+                "healthy": True,
+                "message": "LLM service not initialized (using templates fallback)",
+            }
+
+        # Try to access the config (which should always exist after __init__)
+        if not hasattr(llm_service, "config"):
+            return {
+                "healthy": True,
+                "message": "LLM service config not found (using templates fallback)",
+            }
+
+        config = llm_service.config
+        base_url = config.get("base_url", "")
 
         status = {
-            "healthy": False,
-            "config_exists": os.path.exists(config_path),
-            "endpoint_configured": False,
+            "healthy": True,  # Default to healthy since LLM is optional
+            "endpoint_configured": bool(base_url),
             "message": "",
         }
 
-        if not os.path.exists(config_path):
-            status["message"] = "LLM config file not found (using templates fallback)"
-            status["healthy"] = True  # This is OK - system can work with templates
-            return status
-
-        # Check if base_url is configured
-        try:
-            import json
-
-            with open(config_path) as f:
-                config = json.load(f)
-                base_url = config.get("base_url", "")
-                status["endpoint_configured"] = bool(base_url)
-
-                if base_url:
-                    # Try a quick connectivity check (timeout 2s)
-                    try:
-                        response = httpx.get(f"{base_url}/models", timeout=2.0)
-                        status["healthy"] = response.status_code == 200
-                        status["message"] = (
-                            "LLM service is reachable"
-                            if status["healthy"]
-                            else f"LLM service returned status {response.status_code}"
-                        )
-                    except httpx.TimeoutException:
-                        status["message"] = "LLM service timeout (may be slow)"
-                        status["healthy"] = False
-                    except Exception as e:
-                        status["message"] = f"Cannot reach LLM service: {str(e)}"
-                        status["healthy"] = False
-                else:
-                    status["message"] = "LLM endpoint not configured (using templates)"
-                    status["healthy"] = True  # This is OK
-        except Exception as e:
-            status["message"] = f"Error reading LLM config: {str(e)}"
-            status["healthy"] = False
+        if base_url:
+            # Try a quick connectivity check (timeout 2s)
+            try:
+                response = httpx.get(f"{base_url}/models", timeout=2.0)
+                status["healthy"] = response.status_code == 200
+                status["message"] = (
+                    "LLM service is reachable"
+                    if status["healthy"]
+                    else f"LLM service returned status {response.status_code}"
+                )
+            except httpx.TimeoutException:
+                status["message"] = "LLM service timeout (using templates fallback)"
+                status["healthy"] = True  # Still healthy, fallback to templates
+            except Exception as e:
+                status["message"] = f"Cannot reach LLM service (using templates fallback): {str(e)}"
+                status["healthy"] = True  # Still healthy, fallback to templates
+        else:
+            status["message"] = "LLM endpoint not configured (using templates)"
+            status["healthy"] = True
 
         return status
 
     except Exception as e:
         return {
-            "healthy": False,
+            "healthy": True,  # Always healthy since LLM is optional
             "message": f"Error checking LLM service: {str(e)}",
         }
 
