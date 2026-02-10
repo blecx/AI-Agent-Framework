@@ -178,10 +178,13 @@ class LLMService:
         config_path = os.getenv("LLM_CONFIG_PATH", "/config/llm.json")
 
         # Default LM Studio compatible config
+        # Note: "lm-studio" is a placeholder API key, not a real secret.
+        # LM Studio uses this as a dummy value for local development.
+        # Production deployments can override via mounted config file.
         default_config = {
             "provider": "lmstudio",
             "base_url": "http://host.docker.internal:1234/v1",
-            "api_key": "lm-studio",
+            "api_key": "lm-studio",  # Placeholder for LM Studio (not a real secret)
             "model": "local-model",
             "temperature": 0.7,
             "max_tokens": 4096,

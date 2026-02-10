@@ -69,6 +69,10 @@ async def lifespan(app: FastAPI):
         app.state.git_manager = git_manager
     except Exception as e:
         # Log error but don't fail startup - health checks will report this
+        # This handles cases like missing Git, permission issues, or mounted volumes
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Git manager initialization failed: {e}", exc_info=True)
         print(f"Warning: Git manager initialization failed: {e}")
         print(f"API will start but project document management may be unavailable.")
         app.state.git_manager = None
