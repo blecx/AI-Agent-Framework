@@ -12,7 +12,7 @@ from domain.proposals.models import (
     ProposalStatus,
     ChangeType,
 )
-from apps.api.services.proposal_service import ProposalService
+from services.proposal_service import ProposalService
 
 router = APIRouter()
 
