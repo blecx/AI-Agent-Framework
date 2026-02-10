@@ -84,26 +84,61 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # The backend compose bind-mounts ./projectDocs; ensure it exists in the checked-out server repo.
+          # Create bind mount directory for projectDocs
           mkdir -p server/projectDocs
-          docker compose -f server/docker-compose.yml up -d --build api
+          
+          # Override docker-compose to use bind mount instead of named volume
+          # This ensures projectDocs exists and is accessible
+          cat > server/docker-compose.override.yml <<EOF
+          version: '3.8'
+          services:
+            api:
+              volumes:
+                # Use bind mount for CI (overrides named volume)
+                - ./projectDocs:/projectDocs
+          EOF
+          
+          # Start API with override
+          cd server
+          docker compose up -d --build api
+          cd ..
+          
+          echo "API container started, waiting for initialization..."
+          sleep 5
 
       - name: Wait for API health
         shell: bash
         run: |
           set -euo pipefail
           url="${{ inputs.api_health_url }}"
-          echo "Waiting for API: $url"
+          echo "Waiting for API health check: $url"
+          echo "Timeout: 120 seconds (60 retries x 2s)"
+          
           for i in {1..60}; do
-            if curl -fsS "$url" >/dev/null; then
-              echo "API is healthy."
+            echo -n "Attempt $i/60... "
+            if response=$(curl -fsS "$url" 2>&1); then
+              echo "✓ API is healthy!"
+              echo "Response: $response"
               exit 0
             fi
+            echo "✗ Not ready yet"
             sleep 2
           done
-          echo "API did not become healthy in time."
-          docker compose -f server/docker-compose.yml ps
-          docker compose -f server/docker-compose.yml logs --no-color --tail=200 api
+          
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
+          echo "API HEALTH CHECK FAILED"
+          echo "═══════════════════════════════════════════════════════════"
+          echo ""
+          echo "API did not become healthy within 120 seconds."
+          echo ""
+          echo "Container status:"
+          cd server && docker compose ps && cd ..
+          echo ""
+          echo "API logs (last 200 lines):"
+          cd server && docker compose logs --no-color --tail=200 api && cd ..
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
           exit 1
 
       - name: Set up Node
@@ -165,4 +200,8 @@ jobs:
         if: always()
         shell: bash
         run: |
-          docker compose -f server/docker-compose.yml down -v
+          cd server
+          docker compose down -v
+          cd ..
+          # Clean up override file
+          rm -f server/docker-compose.override.yml
