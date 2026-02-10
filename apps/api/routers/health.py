@@ -94,21 +94,17 @@ def check_llm_service(llm_service) -> Dict[str, Any]:
             # Try a quick connectivity check (timeout 2s)
             try:
                 response = httpx.get(f"{base_url}/models", timeout=2.0)
-                status["healthy"] = response.status_code == 200
-                status["message"] = (
-                    "LLM service is reachable"
-                    if status["healthy"]
-                    else f"LLM service returned status {response.status_code}"
-                )
+                # LLM is optional - always healthy regardless of response
+                if response.status_code == 200:
+                    status["message"] = "LLM service is reachable"
+                else:
+                    status["message"] = f"LLM service returned status {response.status_code} (using templates fallback)"
             except httpx.TimeoutException:
                 status["message"] = "LLM service timeout (using templates fallback)"
-                status["healthy"] = True  # Still healthy, fallback to templates
             except Exception as e:
                 status["message"] = f"Cannot reach LLM service (using templates fallback): {str(e)}"
-                status["healthy"] = True  # Still healthy, fallback to templates
         else:
             status["message"] = "LLM endpoint not configured (using templates)"
-            status["healthy"] = True
 
         return status
 
