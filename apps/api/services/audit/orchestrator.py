@@ -7,7 +7,7 @@ import json
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
-from apps.api.domain.audit.constants import DEFAULT_QUERY_LIMIT
+from domain.audit.constants import DEFAULT_QUERY_LIMIT
 from .event_logger import AuditEventLogger
 from .rules_engine import AuditRulesEngine
 

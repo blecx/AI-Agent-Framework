@@ -6,12 +6,12 @@ Aligned with DDD architecture - thin controller pattern.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
-from apps.api.domain.blueprints.models import (
+from domain.blueprints.models import (
     Blueprint,
     BlueprintCreate,
     BlueprintUpdate,
 )
-from apps.api.services.blueprint_service import BlueprintService
+from services.blueprint_service import BlueprintService
 
 
 router = APIRouter()
