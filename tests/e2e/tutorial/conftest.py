@@ -300,10 +300,19 @@ def browser_page(docker_environment):
     Provides a Playwright browser page for GUI testing.
     Requires: pip install playwright && playwright install chromium
     """
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, Error as PlaywrightError
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        try:
+            browser = p.chromium.launch(headless=True)
+        except PlaywrightError as e:
+            msg = str(e)
+            if "Executable doesn't exist" in msg or "playwright install" in msg:
+                pytest.skip(
+                    "Playwright browsers are not installed in this environment. "
+                    "Install them with 'playwright install' (or 'playwright install chromium') to run GUI tutorial tests."
+                )
+            raise
         context = browser.new_context(
             viewport={"width": 1280, "height": 720}, ignore_https_errors=True
         )

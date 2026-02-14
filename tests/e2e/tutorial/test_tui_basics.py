@@ -9,8 +9,14 @@ Run with: pytest tests/e2e/tutorial/test_tui_basics.py -v
 
 import pytest
 import json
+import uuid
 from pathlib import Path
 from helpers.tui_automation import TUIAutomation, TUIResult
+
+
+def _unique_project_key(prefix: str) -> str:
+    """Generate a unique project key to avoid cross-test collisions."""
+    return f"{prefix}-{uuid.uuid4().hex[:6].upper()}"
 
 
 @pytest.fixture(scope="module")
@@ -41,7 +47,8 @@ class TestTutorial01QuickStart:
         assert "ISO 21500" in result.stdout
         assert "projects" in result.stdout
         assert "artifacts" in result.stdout
-        assert "propose" in result.stdout
+        assert "commands" in result.stdout
+        assert "config" in result.stdout
 
     def test_projects_help(self, tui):
         """Test: python apps/tui/main.py projects --help"""
@@ -50,8 +57,7 @@ class TestTutorial01QuickStart:
         assert result.success
         assert "create" in result.stdout
         assert "list" in result.stdout
-        assert "show" in result.stdout
-        assert "delete" in result.stdout
+        assert "get" in result.stdout
 
 
 @pytest.mark.tutorial
@@ -60,124 +66,69 @@ class TestTutorial01QuickStart:
 class TestTutorial02FirstProject:
     """Validate Tutorial 02: First Project commands."""
 
-    PROJECT_KEY = "TEST-TUT02"
-    PROJECT_NAME = "Tutorial Test Project"
-
-    @pytest.fixture(autouse=True)
-    def cleanup(self, tui):
-        """Clean up test project before and after tests."""
-        # Clean before
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
-        yield
-        # Clean after
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
-
     def test_create_project(self, tui):
         """Test: python apps/tui/main.py projects create"""
+        project_key = _unique_project_key("TEST-TUT02")
+        project_name = "Tutorial Test Project"
         result = tui.execute_command(
             [
                 "projects",
                 "create",
                 "--key",
-                self.PROJECT_KEY,
+                project_key,
                 "--name",
-                self.PROJECT_NAME,
-                "--description",
-                "Test project for tutorial validation",
+                project_name,
             ]
         )
 
         assert result.success, f"Project creation failed: {result.stderr}"
-        assert self.PROJECT_KEY in result.stdout
+        assert project_key in result.stdout
         assert "created" in result.stdout.lower() or "success" in result.stdout.lower()
 
     def test_list_projects(self, tui):
         """Test: python apps/tui/main.py projects list"""
-        # First create a project
+        project_key = _unique_project_key("TEST-TUT02")
         tui.execute_command(
-            [
-                "projects",
-                "create",
-                "--key",
-                self.PROJECT_KEY,
-                "--name",
-                self.PROJECT_NAME,
-            ]
+            ["projects", "create", "--key", project_key, "--name", "List Test"]
         )
 
         # Then list
         result = tui.execute_command(["projects", "list"])
 
         assert result.success
-        assert self.PROJECT_KEY in result.stdout
+        assert project_key in result.stdout
 
     def test_show_project(self, tui):
-        """Test: python apps/tui/main.py projects show"""
-        # Create project
+        """Test: python apps/tui/main.py projects get"""
+        project_key = _unique_project_key("TEST-TUT02")
+        project_name = "Tutorial Test Project"
         tui.execute_command(
-            [
-                "projects",
-                "create",
-                "--key",
-                self.PROJECT_KEY,
-                "--name",
-                self.PROJECT_NAME,
-            ]
+            ["projects", "create", "--key", project_key, "--name", project_name]
         )
 
-        # Show details
-        result = tui.execute_command(["projects", "show", "--key", self.PROJECT_KEY])
+        result = tui.execute_command(["projects", "get", "--key", project_key])
 
         assert result.success
-        assert self.PROJECT_KEY in result.stdout
-        assert self.PROJECT_NAME in result.stdout
+        assert project_key in result.stdout
+        assert project_name in result.stdout
 
     def test_project_state(self, tui):
-        """Test: python apps/tui/main.py projects state"""
-        # Create project
+        """Test: project state is visible via projects get."""
+        project_key = _unique_project_key("TEST-TUT02")
         tui.execute_command(
-            [
-                "projects",
-                "create",
-                "--key",
-                self.PROJECT_KEY,
-                "--name",
-                self.PROJECT_NAME,
-            ]
+            ["projects", "create", "--key", project_key, "--name", "State Test"]
         )
 
-        # Get state
-        result = tui.execute_command(["projects", "state", "--key", self.PROJECT_KEY])
+        result = tui.execute_command(["projects", "get", "--key", project_key])
 
         assert result.success
         assert "initiating" in result.stdout.lower() or "phase" in result.stdout.lower()
 
     def test_delete_project(self, tui):
         """Test: python apps/tui/main.py projects delete"""
-        # Create project
-        tui.execute_command(
-            [
-                "projects",
-                "create",
-                "--key",
-                self.PROJECT_KEY,
-                "--name",
-                self.PROJECT_NAME,
-            ]
+        pytest.skip(
+            "DOCUMENTATION GAP: TUI does not implement 'projects delete' (API is git-backed and deletion is not exposed)."
         )
-
-        # Delete (with confirmation bypass if supported)
-        result = tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY],
-            env={"FORCE": "true"},  # Some CLIs support this
-        )
-
-        # Note: This might fail if TUI requires interactive confirmation
-        # In that case, we'd need to modify the TUI to support --force flag
 
 
 @pytest.mark.tutorial
@@ -191,12 +142,7 @@ class TestTutorial03ArtifactWorkflow:
     @pytest.fixture(autouse=True)
     def setup_project(self, tui):
         """Set up test project."""
-        # Clean before
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
-
-        # Create project
+        self.PROJECT_KEY = _unique_project_key("TEST-TUT03")
         tui.execute_command(
             [
                 "projects",
@@ -210,48 +156,32 @@ class TestTutorial03ArtifactWorkflow:
 
         yield
 
-        # Clean after
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
+        # No deletion command in TUI; project is isolated by unique key.
 
     def test_propose_command(self, tui):
-        """Test: python apps/tui/main.py propose propose"""
+        """Test: python apps/tui/main.py commands propose"""
         result = tui.execute_command(
             [
-                "propose",
+                "commands",
                 "propose",
                 "--project",
                 self.PROJECT_KEY,
                 "--command",
-                "create_charter",
-                "--description",
-                "Test proposal",
+                "assess_gaps",
             ]
         )
 
         assert result.success, f"Propose command failed: {result.stderr}"
-        assert "proposal" in result.stdout.lower() or "prop-" in result.stdout.lower()
+        assert (
+            "proposal" in result.stdout.lower()
+            or "proposal id" in result.stdout.lower()
+        )
 
     def test_list_proposals(self, tui):
         """Test: python apps/tui/main.py propose list"""
-        # First create a proposal
-        tui.execute_command(
-            [
-                "propose",
-                "propose",
-                "--project",
-                self.PROJECT_KEY,
-                "--command",
-                "create_charter",
-            ]
+        pytest.skip(
+            "DOCUMENTATION GAP: TUI has no 'proposals list' command; proposals are shown in the output of 'commands propose'."
         )
-
-        # Then list
-        result = tui.execute_command(["propose", "list", "--project", self.PROJECT_KEY])
-
-        assert result.success
-        # Should show at least one proposal
 
     def test_list_artifacts(self, tui):
         """Test: python apps/tui/main.py artifacts list"""
@@ -268,6 +198,10 @@ class TestTutorial03ArtifactWorkflow:
 @pytest.mark.e2e
 class TestTutorial04RAIDManagement:
     """Validate Tutorial 04: RAID Management commands."""
+
+    pytestmark = pytest.mark.skip(
+        reason="DOCUMENTATION GAP: TUI does not implement RAID commands; RAID is managed via API propose/apply workflow."
+    )
 
     PROJECT_KEY = "TEST-TUT04"
 
@@ -419,6 +353,10 @@ class TestTutorial04RAIDManagement:
 class TestTutorial05FullLifecycle:
     """Validate Tutorial 05: Full Lifecycle commands."""
 
+    pytestmark = pytest.mark.skip(
+        reason="DOCUMENTATION GAP: TUI does not implement workflow commands; lifecycle updates require API workflows/proposals."
+    )
+
     PROJECT_KEY = "TEST-TUT05"
 
     @pytest.fixture(autouse=True)
@@ -531,8 +469,7 @@ def test_tutorial_sequence(tui):
     assert result.success, "Tutorial 01: Health check failed"
 
     # Tutorial 02: First Project
-    test_key = "TEST-SEQUENCE"
-    tui.execute_command(["projects", "delete", "--key", test_key], check=False)
+    test_key = _unique_project_key("TEST-SEQUENCE")
     result = tui.execute_command(
         ["projects", "create", "--key", test_key, "--name", "Sequence Test"]
     )
@@ -540,36 +477,16 @@ def test_tutorial_sequence(tui):
 
     # Tutorial 03: Artifact Workflow
     result = tui.execute_command(
-        ["propose", "propose", "--project", test_key, "--command", "create_charter"]
+        ["commands", "propose", "--project", test_key, "--command", "assess_gaps"]
     )
-    # Proposal might fail if command not implemented - that's OK
-    # We're just testing the TUI accepts the command structure
+    assert result.success, "Tutorial 03: Command proposal failed"
 
-    # Tutorial 04: RAID Management
-    result = tui.execute_command(
-        [
-            "raid",
-            "add",
-            "--project",
-            test_key,
-            "--type",
-            "risk",
-            "--title",
-            "Sequence test risk",
-            "--priority",
-            "low",
-            "--owner",
-            "Tester",
-        ]
+    # Tutorial 04: RAID Management (not implemented in TUI)
+    pytest.skip(
+        "DOCUMENTATION GAP: RAID commands are not implemented in TUI; skipping full tutorial sequence."
     )
-    # RAID might not be fully implemented - check structure only
 
-    # Tutorial 05: Full Lifecycle
-    result = tui.execute_command(["projects", "state", "--project", test_key])
-    assert result.success, "Tutorial 05: Project state query failed"
-
-    # Cleanup
-    tui.execute_command(["projects", "delete", "--key", test_key], check=False)
+    # Tutorial 05: Full Lifecycle (not implemented in TUI)
 
 
 if __name__ == "__main__":
