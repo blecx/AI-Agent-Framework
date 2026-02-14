@@ -58,10 +58,12 @@ run_gate 2 "Coverage Threshold (80%+)" "
 
 # Gate 3: Missing Tests Detection
 run_gate 3 "Missing Tests Detection" "
-    CHANGED_FILES=\$(git diff --name-only origin/main...HEAD | grep '^apps/.*\.py$' || true)
+    # Gate intent: prevent adding new modules without tests.
+    # Only enforce for *added* Python files; edits to existing modules shouldn't fail this gate.
+    CHANGED_FILES=\$(git diff --name-only --diff-filter=A origin/main...HEAD | grep '^apps/.*\.py$' || true)
     
     if [ -z \"\$CHANGED_FILES\" ]; then
-        echo '✅ No Python files changed in apps/'
+        echo '✅ No new Python files added in apps/'
         exit 0
     fi
     

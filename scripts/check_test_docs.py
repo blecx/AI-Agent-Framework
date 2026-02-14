@@ -43,7 +43,8 @@ def get_documented_directories(readme_path: Path) -> Set[str]:
     patterns = [
         r"`tests/([^`]+)/?`",
         r"\*\*tests/([^*]+)/?\*\*",
-        r"tests/([a-z_/]+)/?",
+        # Allow digits in directory names (e.g. tests/e2e/)
+        r"tests/([a-z0-9_/]+)/?",
     ]
 
     for pattern in patterns:

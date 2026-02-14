@@ -132,11 +132,15 @@ jobs:
       
       - name: Check for missing test files
         run: |
-          # Get changed Python files in apps/
-          CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '^apps/.*\.py$' || true)
+          # Get *new* Python files added in apps/.
+          #
+          # Note: This gate is meant to prevent adding new modules without tests.
+          # It should not fail for edits to existing modules (e.g., formatting or refactors)
+          # where tests may already exist but not follow a 1:1 mirrored file-path convention.
+          CHANGED_FILES=$(git diff --name-only --diff-filter=A origin/main...HEAD | grep '^apps/.*\.py$' || true)
           
           if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No Python files changed in apps/"
+            echo "✅ No new Python files added in apps/"
             exit 0
           fi
           
