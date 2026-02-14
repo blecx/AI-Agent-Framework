@@ -23,6 +23,8 @@ jobs:
     name: "Gate 1: All Tests Pass"
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       
@@ -42,17 +44,17 @@ jobs:
       
       - name: Run unit tests
         run: |
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/unit/ -v --tb=short -m "not tui"
+          pytest tests/unit/ -v --tb=short -m "not tui"
       
       - name: Run integration tests
         run: |
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/integration/ -v --tb=short
+          pytest tests/integration/ -v --tb=short
       
       - name: Run E2E tests
         env:
           TERM: xterm-256color
         run: |
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/e2e/ -v --tb=short -m "not tui"
+          pytest tests/e2e/ -v --tb=short -m "not tui"
       
       - name: Gate Status
         if: failure()
@@ -66,6 +68,8 @@ jobs:
     name: "Gate 2: Coverage Threshold (80%+)"
     runs-on: ubuntu-latest
     needs: test
+    env:
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -279,7 +283,7 @@ jobs:
       
       - name: Run flake8
         run: |
-          python -m flake8 apps/api/ apps/tui/ tests/ --count --show-source --statistics
+          python -m flake8 apps/api/ apps/tui/ --count --show-source --statistics
       
       - name: Gate Status
         if: failure()
@@ -359,6 +363,8 @@ jobs:
     name: "Gate 8: Test Execution Time (<10min)"
     runs-on: ubuntu-latest
     needs: test
+    env:
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       
@@ -379,7 +385,7 @@ jobs:
       - name: Run tests with timing
         run: |
           START_TIME=$(date +%s)
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui"
+          pytest tests/ -v --tb=short -q -m "not tui"
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
           
@@ -398,6 +404,8 @@ jobs:
     name: "Gate 9: Flaky Test Detection"
     runs-on: ubuntu-latest
     needs: test
+    env:
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       
@@ -421,15 +429,15 @@ jobs:
           echo "Running test suite 3 times to detect flaky tests..."
           
           # Run 1
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run1.log 2>&1
+          pytest tests/ -v --tb=short -q -m "not tui" > run1.log 2>&1
           RUN1=$?
           
           # Run 2
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run2.log 2>&1
+          pytest tests/ -v --tb=short -q -m "not tui" > run2.log 2>&1
           RUN2=$?
           
           # Run 3
-          PYTHONPATH=$GITHUB_WORKSPACE pytest tests/ -v --tb=short -q -m "not tui" > run3.log 2>&1
+          pytest tests/ -v --tb=short -q -m "not tui" > run3.log 2>&1
           RUN3=$?
           
           # Check for inconsistent results

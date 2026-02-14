@@ -96,12 +96,14 @@ def check_api_running():
 @pytest.mark.slow
 class TestTutorial01HybridWorkflow:
     """Tests for Tutorial 01: TUI + GUI Hybrid Workflows.
-    
+
     NOTE: Tutorial documents commands that don't exist. These tests validate
     actual TUI capabilities.
     """
 
-    @pytest.mark.skipif(not check_api_running(), reason="API not running (required for TUI)")
+    @pytest.mark.skipif(
+        not check_api_running(), reason="API not running (required for TUI)"
+    )
     def test_tui_health_check(self, tui_path):
         """Test TUI can check API health (Tutorial 01, Step 1)."""
         result = subprocess.run(
@@ -116,9 +118,11 @@ class TestTutorial01HybridWorkflow:
         print("✅ TUI health check passed")
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
-    def test_create_project_tui_actual_api(self, tui_path, clean_project, project_docs_path):
+    def test_create_project_tui_actual_api(
+        self, tui_path, clean_project, project_docs_path
+    ):
         """Test project creation with ACTUAL TUI API (Tutorial 01, Step 2).
-        
+
         Tutorial shows: --description flag (doesn't exist)
         Actual API: Only --key and --name supported
         """
@@ -144,7 +148,9 @@ class TestTutorial01HybridWorkflow:
             or "already exists" in result.stdout.lower()
             or "already exists" in result.stderr.lower()
         )
-        assert success, f"Project creation failed: {result.stderr}\nStdout: {result.stdout}"
+        assert (
+            success
+        ), f"Project creation failed: {result.stderr}\nStdout: {result.stdout}"
 
         # Verify project directory
         project_path = project_docs_path / clean_project
@@ -156,7 +162,16 @@ class TestTutorial01HybridWorkflow:
         """Test listing projects via TUI (Tutorial 01, verification)."""
         # Create project first
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             capture_output=True,
         )
@@ -178,7 +193,16 @@ class TestTutorial01HybridWorkflow:
         """Test getting project details via TUI (Tutorial 01, Step 3 - GUI alternative)."""
         # Create project first
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             check=True,
             capture_output=True,
@@ -199,7 +223,7 @@ class TestTutorial01HybridWorkflow:
 
     def test_raid_operations_not_supported(self):
         """Document that RAID operations from Tutorial 01 don't exist in TUI.
-        
+
         Tutorial shows: python main.py raid add --type risk ... (Tutorial 01, Step 4)
         Reality: No 'raid' command exists - RAID operations are via API propose/apply
         """
@@ -211,7 +235,7 @@ class TestTutorial01HybridWorkflow:
 
     def test_artifacts_create_not_supported(self):
         """Document that artifacts create from Tutorial 02 doesn't exist in TUI.
-        
+
         Tutorial shows: python main.py artifacts create --type charter ...
         Reality: No 'artifacts create' - use commands propose with generate_artifact
         """
@@ -227,12 +251,14 @@ class TestTutorial01HybridWorkflow:
 @pytest.mark.slow
 class TestTutorial02CompleteLifecycle:
     """Tests for Tutorial 02: Complete ISO 21500 Lifecycle.
-    
+
     NOTE: Tutorial documents non-existent commands. Tests validate actual propose/apply workflow.
     """
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
-    def test_initiating_phase_project_creation(self, tui_path, clean_project, project_docs_path):
+    def test_initiating_phase_project_creation(
+        self, tui_path, clean_project, project_docs_path
+    ):
         """Test project creation for Initiating phase (Tutorial 02, Part 1, Step 1)."""
         result = subprocess.run(
             [
@@ -258,14 +284,25 @@ class TestTutorial02CompleteLifecycle:
         project_path = project_docs_path / clean_project
         assert project_path.exists(), f"Project directory not created: {project_path}"
         assert (project_path / "artifacts").exists(), "artifacts/ directory not created"
-        print(f"✅ Initiating phase: Project {clean_project} created with basic structure")
+        print(
+            f"✅ Initiating phase: Project {clean_project} created with basic structure"
+        )
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
     def test_propose_assess_gaps_command(self, tui_path, clean_project):
         """Test proposing assess_gaps command (Tutorial 02, Step 5 - actual workflow)."""
         # Create project first
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             check=True,
             capture_output=True,
@@ -298,7 +335,16 @@ class TestTutorial02CompleteLifecycle:
         """Test proposing artifact generation (Tutorial 02, Step 2-3 - actual API)."""
         # Create project
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             check=True,
             capture_output=True,
@@ -336,25 +382,23 @@ class TestTutorial02CompleteLifecycle:
 @pytest.mark.slow
 class TestTutorial03AutomationScripting:
     """Tests for Tutorial 03: Automation Scripting.
-    
+
     Tests validate scriptable TUI commands (projects create, list, get).
     """
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
-    def test_batch_project_creation_script_actual_api(self, tui_path, project_docs_path):
+    def test_batch_project_creation_script_actual_api(
+        self, tui_path, project_docs_path
+    ):
         """Test batch project creation script with ACTUAL TUI API (Tutorial 03, Part 2).
-        
+
         Tutorial shows: --description flag in scripts
         Actual API: Only --key and --name work
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create CSV without description (not supported)
             csv_path = Path(tmpdir) / "projects.csv"
-            csv_path.write_text(
-                "KEY,NAME\n"
-                "TST-A,Test A\n"
-                "TST-B,Test B\n"
-            )
+            csv_path.write_text("KEY,NAME\n" "TST-A,Test A\n" "TST-B,Test B\n")
 
             # Create script with actual TUI API
             script_path = Path(tmpdir) / "create-batch.sh"
@@ -379,7 +423,7 @@ done < {csv_path}
 
             # Script should complete (even if some projects exist)
             assert result.returncode == 0, f"Script failed: {result.stderr}"
-            
+
             # Verify at least one project was created
             verify_result = subprocess.run(
                 ["python", "main.py", "projects", "list"],
@@ -395,7 +439,16 @@ done < {csv_path}
         """Test project listing in bash script (Tutorial 03, Part 5 - Status Reports)."""
         # Create test project
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             check=True,
             capture_output=True,
@@ -431,16 +484,27 @@ exit $?
 @pytest.mark.slow
 class TestActualTUICapabilities:
     """Integration tests covering actual TUI capabilities (not tutorial-specific).
-    
+
     These tests document what the TUI can actually do today.
     """
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
-    def test_full_project_lifecycle_actual_api(self, tui_path, clean_project, project_docs_path):
+    def test_full_project_lifecycle_actual_api(
+        self, tui_path, clean_project, project_docs_path
+    ):
         """Test complete project workflow using actual TUI commands."""
         # 1. Create project
         result = subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "E2E Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "E2E Test",
+            ],
             cwd=tui_path,
             capture_output=True,
             text=True,
@@ -495,7 +559,9 @@ class TestActualTUICapabilities:
                 text=True,
             )
             assert result.returncode == 0
-            assert len(result.stdout.strip().split("\n")) >= 1  # At least project creation commit
+            assert (
+                len(result.stdout.strip().split("\n")) >= 1
+            )  # At least project creation commit
 
         print("✅ Full project lifecycle completed with actual TUI API")
 
@@ -504,7 +570,16 @@ class TestActualTUICapabilities:
         """Test that artifacts can be listed (read-only) via TUI."""
         # Create project
         subprocess.run(
-            ["python", "main.py", "projects", "create", "--key", clean_project, "--name", "Test"],
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Test",
+            ],
             cwd=tui_path,
             check=True,
             capture_output=True,
