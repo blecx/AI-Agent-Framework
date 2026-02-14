@@ -96,9 +96,7 @@ def test_health_check_detailed_overall_healthy(client, monkeypatch):
     assert "checks" in payload
 
 
-def test_health_check_detailed_overall_degraded_when_llm_unhealthy(
-    client, monkeypatch
-):
+def test_health_check_detailed_overall_degraded_when_llm_unhealthy(client, monkeypatch):
     monkeypatch.setattr(
         health_router,
         "check_git_repository",
@@ -258,7 +256,9 @@ def test_check_disk_space_healthy(monkeypatch, tmp_path):
     monkeypatch.setattr(
         health_router.psutil,
         "disk_usage",
-        lambda _path: Usage(total=10 * 1024**3, used=1 * 1024**3, free=9 * 1024**3, percent=10.0),
+        lambda _path: Usage(
+            total=10 * 1024**3, used=1 * 1024**3, free=9 * 1024**3, percent=10.0
+        ),
     )
 
     status = health_router.check_disk_space(str(tmp_path), min_free_gb=1.0)
@@ -272,7 +272,9 @@ def test_check_disk_space_unhealthy(monkeypatch, tmp_path):
     monkeypatch.setattr(
         health_router.psutil,
         "disk_usage",
-        lambda _path: Usage(total=10 * 1024**3, used=9.5 * 1024**3, free=0.5 * 1024**3, percent=95.0),
+        lambda _path: Usage(
+            total=10 * 1024**3, used=9.5 * 1024**3, free=0.5 * 1024**3, percent=95.0
+        ),
     )
 
     status = health_router.check_disk_space(str(tmp_path), min_free_gb=1.0)
@@ -286,7 +288,9 @@ def test_check_memory_healthy(monkeypatch):
     monkeypatch.setattr(
         health_router.psutil,
         "virtual_memory",
-        lambda: Mem(total=10 * 1024**3, used=2 * 1024**3, available=8 * 1024**3, percent=20.0),
+        lambda: Mem(
+            total=10 * 1024**3, used=2 * 1024**3, available=8 * 1024**3, percent=20.0
+        ),
     )
 
     status = health_router.check_memory(min_free_percent=10.0)
@@ -300,7 +304,12 @@ def test_check_memory_unhealthy(monkeypatch):
     monkeypatch.setattr(
         health_router.psutil,
         "virtual_memory",
-        lambda: Mem(total=10 * 1024**3, used=9.5 * 1024**3, available=0.5 * 1024**3, percent=95.0),
+        lambda: Mem(
+            total=10 * 1024**3,
+            used=9.5 * 1024**3,
+            available=0.5 * 1024**3,
+            percent=95.0,
+        ),
     )
 
     status = health_router.check_memory(min_free_percent=10.0)
