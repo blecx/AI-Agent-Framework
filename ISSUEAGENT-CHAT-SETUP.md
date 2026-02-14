@@ -28,6 +28,16 @@ Or manually install:
 3. Navigate to: `.vscode/extensions/issueagent`
 4. Click "Install"
 
+## Create-Issue Workflow (optional)
+
+If you want the **create-issue** workflow to be discoverable in the VS Code chat agent menu, you can also use:
+
+```text
+@create-issue
+```
+
+This opens the workflow prompt (`.github/prompts/agents/create-issue.md`) and shows a copy/paste command to run the existing `create-issue` workflow via Copilot subagents.
+
 ### Step 2: Verify It Works
 
 1. Open VS Code Chat (sidebar or `Ctrl+Alt+I`)
@@ -38,7 +48,7 @@ Or manually install:
 
 ### Basic Command
 
-```
+```text
 @issueagent
 ```
 
@@ -51,7 +61,7 @@ That's it! The agent will:
 
 ### What You'll See
 
-```
+```text
 🤖 Autonomous Issue Agent Starting...
 
 📋 Phase 1: Issue Selection
