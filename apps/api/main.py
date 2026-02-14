@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     """Initialize services on startup."""
     # Initialize project docs git repository
     docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
-    
+
     # Initialize git manager with error handling
     try:
         git_manager = GitManager(docs_path)
@@ -71,10 +71,11 @@ async def lifespan(app: FastAPI):
         # Log error but don't fail startup - health checks will report this
         # This handles cases like missing Git, permission issues, or mounted volumes
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Git manager initialization failed: {e}", exc_info=True)
         print(f"Warning: Git manager initialization failed: {e}")
-        print(f"API will start but project document management may be unavailable.")
+        print("API will start but project document management may be unavailable.")
         app.state.git_manager = None
 
     # Store services in app state

@@ -98,11 +98,15 @@ def check_llm_service(llm_service) -> Dict[str, Any]:
                 if response.status_code == 200:
                     status["message"] = "LLM service is reachable"
                 else:
-                    status["message"] = f"LLM service returned status {response.status_code} (using templates fallback)"
+                    status["message"] = (
+                        f"LLM service returned status {response.status_code} (using templates fallback)"
+                    )
             except httpx.TimeoutException:
                 status["message"] = "LLM service timeout (using templates fallback)"
             except Exception as e:
-                status["message"] = f"Cannot reach LLM service (using templates fallback): {str(e)}"
+                status["message"] = (
+                    f"Cannot reach LLM service (using templates fallback): {str(e)}"
+                )
         else:
             status["message"] = "LLM endpoint not configured (using templates)"
 
@@ -178,21 +182,25 @@ def check_memory(min_free_percent: float = 10.0) -> Dict[str, Any]:
 async def health_check_simple():
     """
     Simple health check (backward compatible).
-    
+
     Always returns 200 OK if API is running, even if some components are degraded.
     This ensures infrastructure health checks pass while detailed status is available
     at /api/v1/health for monitoring.
     """
     docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
     docs_exists = os.path.exists(docs_path)
-    docs_is_git = os.path.exists(os.path.join(docs_path, ".git")) if docs_exists else False
-    
+    docs_is_git = (
+        os.path.exists(os.path.join(docs_path, ".git")) if docs_exists else False
+    )
+
     return {
         "status": "healthy",  # Always healthy if API responds
         "docs_path": docs_path,
         "docs_exists": docs_exists,
         "docs_is_git": docs_is_git,
-        "message": "API is running" if docs_is_git else "API running (docs not initialized)",
+        "message": (
+            "API is running" if docs_is_git else "API running (docs not initialized)"
+        ),
     }
 
 
