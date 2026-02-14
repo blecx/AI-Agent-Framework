@@ -23,6 +23,38 @@
 
 set -e
 
+# Color codes for output (must be defined before helper functions use them)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions (must be defined before first use)
+info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+success() {
+    echo -e "${GREEN}✅${NC} $1"
+}
+
+warning() {
+    echo -e "${YELLOW}⚠️${NC} $1"
+}
+
+error() {
+    echo -e "${RED}❌${NC} $1"
+}
+
+section() {
+    echo ""
+    echo "========================================="
+    echo "$1"
+    echo "========================================="
+    echo ""
+}
+
 # Detect repository context
 detect_repo() {
     local current_dir="$(pwd)"
@@ -81,38 +113,6 @@ REPO_NAME=$(get_repo_name "$REPO_TYPE")
 if [[ "$REPO_TYPE" == "backend-with-client" ]]; then
     info "Working with client repository: $REPO_PATH"
 fi
-
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Helper functions
-info() {
-    echo -e "${BLUE}ℹ${NC} $1"
-}
-
-success() {
-    echo -e "${GREEN}✅${NC} $1"
-}
-
-warning() {
-    echo -e "${YELLOW}⚠️${NC} $1"
-}
-
-error() {
-    echo -e "${RED}❌${NC} $1"
-}
-
-section() {
-    echo ""
-    echo "========================================="
-    echo "$1"
-    echo "========================================="
-    echo ""
-}
 
 # Detect issue type for template selection
 detect_issue_type() {
