@@ -502,6 +502,47 @@ fi
 ISSUE_NUMBER=$1
 ACTUAL_HOURS=${2:-""}
 
+# CRITICAL GUARD: Prevent PR/issue creation attempts
+# pr-merge is ONLY for merging existing PRs - delegate creation tasks
+if [[ "$ISSUE_NUMBER" =~ ^(create|new|add)$ ]] || \
+   [[ "$*" =~ create.*pr|new.*pr|create.*issue|new.*issue ]]; then
+    error "pr-merge is for MERGING existing PRs only, not creation"
+    echo ""
+    echo "❌ Wrong tool for this task!"
+    echo ""
+    echo "For PR/issue creation, use the appropriate agent:"
+    echo ""
+    echo "  📝 To implement issue and create PR:"
+    echo "     @workspace /runSubagent resolve-issue-dev \"implement issue #N\""
+    echo ""
+    echo "  📝 To create new issue:"
+    echo "     gh issue create --title \"...\" --body \"...\""
+    echo "     OR use GitHub UI: https://github.com/$REPO_NAME/issues/new"
+    echo ""
+    echo "  📝 To fix existing PR:"
+    echo "     @workspace /runSubagent resolve-issue-dev \"fix PR #N\""
+    echo ""
+    echo "For help:"
+    echo "  - resolve-issue-dev agent: Implements issues, creates/fixes PRs, fixes CI"
+    echo "  - pr-merge: Merges existing ready PRs (this tool)"
+    echo "  - close-issue agent: Closes issues with templates"
+    echo ""
+    exit 1
+fi
+
+# Validate issue number is numeric
+if ! [[ "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+    error "Invalid issue number: $ISSUE_NUMBER"
+    echo ""
+    echo "Usage: prmerge <issue_number> [<actual_hours>]"
+    echo ""
+    echo "Examples:"
+    echo "  prmerge 24"
+    echo "  prmerge 24 7.5"
+    echo ""
+    exit 1
+fi
+
 # Determine repository root and working directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
