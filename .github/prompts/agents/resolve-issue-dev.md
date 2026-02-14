@@ -68,30 +68,133 @@
 Fixes #<issue-number>" && git push -u origin HEAD
    ```
 
-8. **Create PR**
+8. **Create PR** (with template compliance)
+   
+   a. **Learn template format from recent successful PR**:
+
    ```bash
-   # Use PR template from recent successful PR
-   gh pr view <recent-pr> --json body --jq .body | head -60 > .tmp/pr-template.md
+   # Get exact template format from recent merged PR
+   gh pr list --state merged --limit 5 --json number,title
+   gh pr view <recent-pr-number> --json body --jq .body | head -80 > .tmp/pr-template-ref.md
+   ```
+
+   b. **Create PR body with ALL required sections**:
+
+   ```bash
+   cat > .tmp/pr-body-<issue-number>.md <<'EOF'
+   # Summary
    
-   # Create PR body from template
-   cat > .tmp/pr-body-<issue-number>.md <<EOF
-   ... (fill template with issue details)
+   [2-6 sentence description of what changed and why]
+   
+   ## Goal / Acceptance Criteria (required)
+   
+   - [x] AC1: [Copy from issue, mark complete]
+   - [x] AC2: [Copy from issue, mark complete]
+   - [x] AC3: [Copy from issue, mark complete]
+   
+   ## Issue / Tracking Link (required)
+   
+   Fixes: #<issue-number>
+   
+   ## Validation (required)
+   
+   ### Automated checks
+   
+   - [x] Lint passes (attach output or CI link):
+     - Command(s): `npm run lint` (or `black`/`flake8`)
+     - Evidence (CI link or pasted summary): [PASTE ACTUAL OUTPUT]
+   - [x] Build passes (attach output or CI link):
+     - Command(s): `npm run build` (or backend commands)
+     - Evidence (CI link or pasted summary): [PASTE ACTUAL OUTPUT]
+   - [x] Tests pass (if applicable):
+     - Command(s): `npm test -- --run` (or `pytest`)
+     - Evidence (CI link or pasted summary): [PASTE ACTUAL OUTPUT]
+   
+   ### Manual test evidence (required)
+   
+   - [x] Manual test entry #1
+     - Scenario: [Describe what was tested]
+     - Steps:
+       1. [Step 1]
+       2. [Step 2]
+       3. [Step 3]
+     - Expected result: [What should happen]
+     - Actual result / Evidence: [Screenshots, logs, or terminal output]
+   
+   ## Cross-repo / Downstream impact (always include)
+   
+   - Related repos/services impacted: [List or "None"]
+   - Required coordinated releases/PRs: [List or "None"]
+   - Follow-up issues/PRs needed: [List or "None"]
    EOF
-   
+   ```
+
+   c. **Create PR**:
+
+   ```bash
    gh pr create --title "feat: <title> (Issue #<issue-number>)" --body-file .tmp/pr-body-<issue-number>.md
    ```
 
-9. **CI validation** (optional, check once)
+   d. **Key principle: Create first, fix if needed**
+
+- Don't block on potential template issues
+- Let CI validate the template
+- Fix and re-trigger if CI catches missing sections
+- This maintains momentum while ensuring quality
+
+1. **CI validation** (check once, fix if needed)
+
    ```bash
    sleep 30  # Wait for CI to start
-   gh pr checks <PR>  # Single check, no --watch
+   gh pr checks <PR>  # Check status
    ```
-   - **Optimization:** Don't poll CI in loops
-   - **Early exit:** If checks passing, done. If failing, report and exit.
+
+   **If CI fails on PR template validation:**
+
+   a. Get CI logs to identify missing sections:
+
+   ```bash
+   # Find the failed run and get logs
+   gh run list --workflow=ci.yml --limit 3
+   gh run view <RUN_ID> --log-failed | grep "MISSING\|required"
+   ```
+
+   b. Fix PR body with missing sections:
+
+   ```bash
+   # Update the PR body file with correct sections
+   cat > .tmp/pr-body-<issue-number>.md <<'EOF'
+   [... corrected body with ALL required sections ...]
+   EOF
+   ```
+
+   c. Update PR via REST API (avoids deprecated GraphQL):
+
+   ```bash
+   gh api -X PATCH repos/<owner>/<repo>/pulls/<PR_NUMBER> --field body=@.tmp/pr-body-<issue-number>.md
+   ```
+
+   d. **CRITICAL: Trigger fresh CI run** (template updates don't auto-trigger):
+
+   ```bash
+   git commit --allow-empty -m "chore: trigger CI re-run with updated PR description"
+   git push
+   ```
+
+   e. Wait and verify fix:
+
+   ```bash
+   sleep 30
+   gh pr checks <PR>
+   ```
+
+   **If checks pass:** PR is ready for review/merge
+   **If checks still fail:** Review logs and repeat steps b-e with corrections
 
 **Success Criteria:** PR created, locally validated, CI checks initiated.
 
 **Optimization Notes:**
+
 - Priority order ensures backend-first dependency management
 - Single issue fetch (no repeated API calls)
 - Batch git operations (add + commit + push in one line)
@@ -101,6 +204,7 @@ Fixes #<issue-number>" && git push -u origin HEAD
 - Early exit conditions at every decision point
 
 **Architecture Requirements:**
+
 - Backend: domain/ → services/ → routers/ (DDD)
 - Frontend: domain clients → components (SRP)
 - File size targets: < 200 lines per file
