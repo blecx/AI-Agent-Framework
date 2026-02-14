@@ -15,6 +15,11 @@ const path = require('path');
 function activate(context) {
   console.log('Issue Agent extension activated');
 
+  registerIssueAgentParticipant(context);
+  registerCreateIssueParticipant(context);
+}
+
+function registerIssueAgentParticipant(context) {
   // Register chat participant
   const participant = vscode.chat.createChatParticipant(
     'issueagent.chat',
@@ -47,6 +52,101 @@ function activate(context) {
   );
 
   context.subscriptions.push(participant);
+}
+
+function registerCreateIssueParticipant(context) {
+  const participant = vscode.chat.createChatParticipant(
+    'create-issue.chat',
+    async (request, chatContext, stream, token) => {
+      try {
+        if (token.isCancellationRequested) {
+          return;
+        }
+
+        const command = request.command || 'run';
+
+        if (command === 'open') {
+          await openCreateIssueWorkflowInEditor(stream);
+          return;
+        }
+
+        if (command !== 'run') {
+          stream.markdown(
+            `Unknown command: \`${command}\`. Use \`/create-issue\`, \`/create-issue run\`, or \`/create-issue open\`.`,
+          );
+          return;
+        }
+
+        await handleCreateIssueRunCommand(request, stream);
+      } catch (error) {
+        stream.markdown(`❌ **Error:** ${error.message}`);
+        console.error('Create-Issue participant error:', error);
+      }
+    },
+  );
+
+  participant.iconPath = vscode.Uri.file(
+    path.join(context.extensionPath, 'icon.png'),
+  );
+
+  context.subscriptions.push(participant);
+}
+
+async function openCreateIssueWorkflowInEditor(stream) {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    stream.markdown('❌ No workspace folder open.');
+    return;
+  }
+
+  const repoRoot = workspaceFolder.uri.fsPath;
+  const workflowPath = path.join(
+    repoRoot,
+    '.github',
+    'prompts',
+    'agents',
+    'create-issue.md',
+  );
+
+  const workflowUri = vscode.Uri.file(workflowPath);
+  await vscode.commands.executeCommand('vscode.open', workflowUri);
+}
+
+async function handleCreateIssueRunCommand(request, stream) {
+  await openCreateIssueWorkflowInEditor(stream);
+
+  const rawText =
+    (request.prompt ?? request.message ?? request.text ?? request.query ?? '')
+      .toString()
+      .trim();
+
+  stream.markdown('## create-issue workflow launcher\n');
+  stream.markdown(
+    'This participant makes the repo\'s `create-issue` workflow easy to discover in the chat agent menu.\n\n',
+  );
+
+  stream.markdown('### How to run the workflow\n');
+  if (rawText) {
+    stream.markdown(
+      `Copy/paste this into Copilot Chat to draft + create the issue:\n\n` +
+        `\`\`\`\n@workspace /runSubagent create-issue "${rawText.replace(/"/g, '\\"')}"\n\`\`\`\n`,
+    );
+  } else {
+    stream.markdown(
+      'Provide a one-line description after the mention, e.g. `@create-issue add JWT auth to API`, then re-run.\n\n',
+    );
+    stream.markdown('Or copy/paste and fill in your description:\n\n');
+    stream.markdown(
+      '```\n@workspace /runSubagent create-issue "<describe the work>"\n```\n',
+    );
+  }
+
+  stream.markdown('### Why this exists\n');
+  stream.markdown(
+    '- VS Code\'s agent menu lists **chat participants** provided by extensions (like `@issueagent`).\n' +
+      '- The file `.github/prompts/agents/create-issue.md` is a **workflow spec**, not a participant by itself.\n' +
+      '- This participant bridges discoverability without duplicating the workflow.\n',
+  );
 }
 
 /**

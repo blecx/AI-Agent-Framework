@@ -11,7 +11,9 @@
     "Chat"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onChatParticipant:issueagent.chat",
+    "onChatParticipant:create-issue.chat"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -25,6 +27,22 @@
           {
             "name": "run",
             "description": "Select next issue and run autonomous agent"
+          }
+        ]
+      },
+      {
+        "id": "create-issue.chat",
+        "name": "create-issue",
+        "description": "Launcher for the repo's create-issue workflow (draft/create GitHub issues)",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "run",
+            "description": "Open the create-issue workflow and show how to run it"
+          },
+          {
+            "name": "open",
+            "description": "Open the create-issue workflow prompt file"
           }
         ]
       }
