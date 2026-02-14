@@ -11,6 +11,7 @@ import shutil
 import time
 import sys
 import os
+import socket
 from pathlib import Path
 import httpx
 
@@ -44,6 +45,13 @@ def backend_server(temp_docs_dir: str) -> str:
     env = os.environ.copy()
     env["PROJECT_DOCS_PATH"] = temp_docs_dir
 
+    # Pick a free localhost port to avoid conflicts with other tests
+    # (e.g. Docker-based tutorial tests that bind host port 8000).
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+
     proc = subprocess.Popen(
         [
             sys.executable,
@@ -53,7 +61,7 @@ def backend_server(temp_docs_dir: str) -> str:
             "--host",
             "127.0.0.1",
             "--port",
-            "8000",
+            str(port),
         ],
         cwd=str(api_dir),
         env=env,
@@ -63,7 +71,7 @@ def backend_server(temp_docs_dir: str) -> str:
     )
 
     # Wait for server to be ready (health check)
-    api_url = "http://localhost:8000"
+    api_url = f"http://localhost:{port}"
     max_wait = 10
     start_time = time.time()
 

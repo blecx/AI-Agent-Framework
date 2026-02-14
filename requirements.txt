@@ -31,6 +31,10 @@ pyyaml==6.0.1
 # Environment Variables
 python-dotenv==1.0.0
 
+# TUI dependencies (used by CLI + tutorial E2E tests)
+click==8.1.7
+rich==13.7.0
+
 # Monitoring & Observability
 prometheus-client==0.19.0
 python-json-logger==2.0.7
