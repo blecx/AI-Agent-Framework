@@ -14,7 +14,7 @@ from helpers.tui_automation import TUIAutomation, TUIResult
 
 
 @pytest.fixture(scope="module")
-def tui():
+def tui(docker_environment):
     """TUI automation helper for running commands."""
     return TUIAutomation(api_base_url="http://localhost:8000")
 
