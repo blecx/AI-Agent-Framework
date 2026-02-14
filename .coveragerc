@@ -9,7 +9,7 @@ omit =
     */venv/*
     */.venv/*
     */site-packages/*
-    */main.py
+
 
 [report]
 # Reporting options

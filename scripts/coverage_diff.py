@@ -74,6 +74,37 @@ def get_coverage_data() -> Dict[str, float]:
     return coverage_by_file
 
 
+def _coverage_lookup_key(cov_file: str) -> str:
+    """Normalize coverage.json file keys for matching.
+
+    Coverage JSON keys may be absolute paths, repo-relative paths, or paths
+    relative to the configured --cov source. Normalizing to a POSIX-like string
+    makes suffix-matching more reliable.
+    """
+
+    try:
+        return Path(cov_file).as_posix()
+    except Exception:
+        return str(cov_file)
+
+
+def _candidate_suffixes(changed_file: str) -> Set[str]:
+    """Generate possible suffixes that might appear in coverage.json for a file."""
+
+    suffixes: Set[str] = {changed_file}
+
+    # coverage.py may record paths relative to the --cov source directory
+    # (e.g. "main.py" instead of "apps/api/main.py").
+    if changed_file.startswith("apps/api/"):
+        suffixes.add(changed_file.removeprefix("apps/api/"))
+    if changed_file.startswith("apps/tui/"):
+        suffixes.add(changed_file.removeprefix("apps/tui/"))
+
+    # Last-resort fallback: basename.
+    suffixes.add(Path(changed_file).name)
+    return {s for s in suffixes if s}
+
+
 def main():
     """Main coverage diff validation logic"""
     if len(sys.argv) < 3:
@@ -111,14 +142,19 @@ def main():
     below_threshold = []
 
     for file in changed_files:
-        # Coverage reports use absolute paths, try to match
+        # Coverage reports can use absolute paths, repo-relative paths, or
+        # paths relative to the --cov source. Try a few suffix candidates.
         coverage_percent = None
+        candidates = _candidate_suffixes(file)
 
-        # Try different path formats
-        for cov_file in coverage_data.keys():
-            if cov_file.endswith(file) or file in cov_file:
-                coverage_percent = coverage_data[cov_file]
-                break
+        # Prefer the most specific (longest) suffix match.
+        best_match_len = -1
+        for cov_file_raw, percent in coverage_data.items():
+            cov_file = _coverage_lookup_key(cov_file_raw)
+            for cand in candidates:
+                if cov_file.endswith(cand) and len(cand) > best_match_len:
+                    coverage_percent = percent
+                    best_match_len = len(cand)
 
         if coverage_percent is None:
             # File might be new and not in coverage report yet
@@ -138,10 +174,17 @@ def main():
 
     print(f"✅ All changed files have {threshold}%+ coverage")
     for file in sorted(changed_files):
-        for cov_file, percent in coverage_data.items():
-            if cov_file.endswith(file) or file in cov_file:
-                print(f"  - {file}: {percent:.1f}%")
-                break
+        candidates = _candidate_suffixes(file)
+        best_match = None
+        best_match_len = -1
+        for cov_file_raw, percent in coverage_data.items():
+            cov_file = _coverage_lookup_key(cov_file_raw)
+            for cand in candidates:
+                if cov_file.endswith(cand) and len(cand) > best_match_len:
+                    best_match = percent
+                    best_match_len = len(cand)
+        if best_match is not None:
+            print(f"  - {file}: {best_match:.1f}%")
 
     return 0
 
