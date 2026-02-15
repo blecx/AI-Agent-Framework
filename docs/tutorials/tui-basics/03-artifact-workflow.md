@@ -48,4 +48,4 @@ python apps/tui/main.py artifacts get --project TODO-001 --path artifacts/projec
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16

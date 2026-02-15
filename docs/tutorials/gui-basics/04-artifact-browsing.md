@@ -101,4 +101,4 @@ curl -s http://localhost:8000/projects/TODO-001/artifacts | jq .
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16

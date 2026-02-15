@@ -30,4 +30,4 @@ For new integrations, prefer `/api/v1/*` endpoints in scripts.
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16

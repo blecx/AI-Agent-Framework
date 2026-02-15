@@ -1,6 +1,6 @@
 # Tutorial Validation Report (Post-Refresh)
 
-**Date:** 2026-02-15  
+**Date:** 2026-02-16  
 **Scope:** Documentation refresh verification for `docs/tutorials/**`
 
 ## Summary
@@ -24,8 +24,8 @@ Per-file issues were created for changed tutorial files as part of the plan/issu
 
 ## Notes
 
-This report supersedes older historical validation snapshots that no longer reflect current behavior after the 2026-02-15 refresh.
+This report supersedes older historical validation snapshots that no longer reflect current behavior after the 2026-02-16 refresh.
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16

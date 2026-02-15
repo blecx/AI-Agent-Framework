@@ -35,4 +35,4 @@ Prefer `/api/v1/*` routes for new automation, while legacy routes still work.
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16
