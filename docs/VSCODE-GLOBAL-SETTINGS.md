@@ -23,7 +23,8 @@ To enable auto-approve globally across all VS Code instances (not just this work
     "resolve-issue-dev": true,
     "close-issue": true,
     "pr-merge": true,
-    "Plan": true
+    "Plan": true,
+    "tutorial": true
   },
   "chat.tools.terminal.autoApprove": {
     "npm install": true,
@@ -111,6 +112,7 @@ To enable auto-approve globally across all VS Code instances (not just this work
   - `close-issue`: Auto-approves issue closing operations (see `.github/prompts/agents/close-issue.md`)
   - `pr-merge`: Auto-approves PR merge operations (see `.github/prompts/agents/pr-merge.md`)
   - `Plan`: Auto-approves planning agent operations (see `.github/prompts/agents/Plan.md`)
+  - `tutorial`: Auto-approves tutorial generation/audit agent runs (see `.github/prompts/agents/tutorial.md`)
 
 **Note:** These agent names correspond to optimized workflow prompts in `.github/prompts/agents/` that implement early-exit conditions, batch operations, and eliminate polling loops to reduce resolution time from 30-45 minutes to 5-10 minutes.
 
@@ -176,6 +178,7 @@ If auto-approve doesn't work in a fresh chat:
 ## Agent Workflow References
 
 The auto-approved agents listed above use optimized workflows that implement:
+
 - **Early-exit conditions** (skip completed work)
 - **Single-pass operations** (no polling loops)
 - **Limited search scope** (max 5 results)
@@ -183,8 +186,10 @@ The auto-approved agents listed above use optimized workflows that implement:
 - **Clear success criteria** (testable conditions)
 
 For detailed workflow documentation:
+
 - `.github/prompts/agents/resolve-issue-dev.md` - Issue resolution workflow (9 steps)
 - `.github/prompts/agents/pr-merge.md` - PR merge with admin bypass (6 steps)
 - `.github/prompts/agents/close-issue.md` - Issue closure workflow (4 steps)
 - `.github/prompts/agents/Plan.md` - Research agent with limited scope (5 steps)
+- `.github/prompts/agents/tutorial.md` - Tutorial authoring and strict audit workflow rails
 - `.github/prompts/agents/README.md` - Optimization principles and performance metrics
