@@ -1,0 +1,306 @@
+# Review Remediation Plan (2026-02-15)
+# Source: Technical review findings from recent chat session.
+# Note: CI governance gap has already been implemented via Issue #264 and PR #265.
+# Execution order follows repo guidance: backend issues first, then client issues.
+
+meta:
+  generated_on: "2026-02-15"
+  status:
+    completed:
+      - "CI governance incident template and policy (Issue #264, PR #265)"
+    remaining_problem_count: 9
+  loop_definition:
+    - "Plan: define objective, scope, acceptance criteria, constraints"
+    - "Task: implementation checklist"
+    - "Issue: create one issue per loop"
+    - "PR: one PR per issue, include validation evidence"
+    - "Merge: squash + branch delete + .tmp cleanup + main sync"
+
+execution_order:
+  backend:
+    - BE-R1
+    - BE-R2
+    - BE-R3
+    - BE-R4
+    - BE-R5
+  client:
+    - UX-R1
+    - UX-R2
+    - UX-R3
+    - UX-R4
+
+AI-Agent-Framework:
+  - id: BE-R1
+    size: S
+    title: "docs(tui): align tutorial docs with implemented TUI commands"
+    labels: ["docs", "backend/tui", "quality"]
+    dependencies: []
+    plan:
+      goal: "Remove documented command drift that causes tutorial E2E skips and onboarding confusion."
+      in_scope:
+        - "Update tutorials and command examples to match current TUI capabilities in apps/tui/main.py."
+        - "Preserve existing command behavior (docs-only correction)."
+      out_of_scope:
+        - "Adding new TUI commands to match old docs."
+    tasks:
+      - "Inventory tutorial command references under tests/e2e/tutorial and docs/*.md."
+      - "Cross-check each command against apps/tui/main.py."
+      - "Replace invalid commands with valid workflow-based instructions."
+      - "Run tutorial-related tests to confirm removed DOCUMENTATION GAP skips where applicable."
+    issue_template:
+      acceptance_criteria:
+        - "No documented command examples reference non-existent TUI commands."
+        - "Tutorial text aligns with actual TUI/API propose/apply workflow."
+        - "Validation notes updated in docs where direct command equivalents do not exist."
+      validation:
+        - "pytest tests/e2e/tutorial -q (or targeted subset)"
+        - "Manual command spot-check against apps/tui/main.py"
+    pr_checklist:
+      - "Reference issue ID in PR title/body"
+      - "Include before/after command examples"
+      - "Provide test evidence for tutorial suite impact"
+    merge_checklist:
+      - "Squash merge"
+      - "Delete feature branch"
+      - "Clean .tmp issue/pr files"
+
+  - id: BE-R2
+    size: S
+    title: "docs(planning): reconcile Step 2 completion status with closed issues"
+    labels: ["docs", "planning", "governance"]
+    dependencies: ["BE-R1"]
+    plan:
+      goal: "Restore traceability accuracy between planning docs and GitHub issue state."
+      in_scope:
+        - "Update planning/step-2-complete-status.md checkboxes and summary flags."
+      out_of_scope:
+        - "Any functional code changes."
+    tasks:
+      - "Verify current state of #69-#78 and #102-#109."
+      - "Update stale unchecked items and aggregate completion section."
+      - "Add timestamped note documenting reconciliation date."
+    issue_template:
+      acceptance_criteria:
+        - "Step 2 checklist reflects current issue states."
+        - "All completion summary indicators are consistent."
+      validation:
+        - "gh issue view/list evidence attached"
+        - "Manual review of planning file"
+    pr_checklist:
+      - "Include evidence table mapping issue->state"
+      - "No unrelated file modifications"
+    merge_checklist:
+      - "Squash merge + cleanup"
+
+  - id: BE-R3
+    size: L
+    title: "refactor(agent): split workflow_agent monolith into phase services"
+    labels: ["backend", "refactor", "agent"]
+    dependencies: ["BE-R2"]
+    plan:
+      goal: "Reduce complexity and improve testability of agents/workflow_agent.py."
+      in_scope:
+        - "Extract phase executors (context/planning/implementation/review/merge)."
+        - "Isolate side effects (subprocess, gh/git, user prompts) behind adapters."
+        - "Minimize runtime path hacks in core orchestration."
+      out_of_scope:
+        - "Behavioral redesign of workflow semantics."
+    tasks:
+      - "Define service interfaces for each phase."
+      - "Extract and wire phase modules with dependency injection."
+      - "Add unit tests for each phase service and orchestration integration tests."
+      - "Preserve CLI/API behavior compatibility."
+    issue_template:
+      acceptance_criteria:
+        - "workflow_agent.py reduced significantly and focused on orchestration."
+        - "Phase logic covered by dedicated tests."
+        - "No regression in existing workflow execution paths."
+      validation:
+        - "pytest tests/agents -q"
+        - "Representative end-to-end workflow run"
+    pr_checklist:
+      - "Split into reviewable commits (extract -> wire -> tests)"
+      - "Document migration map old function -> new module"
+    merge_checklist:
+      - "Prefer squash, ensure branch cleanup"
+
+  - id: BE-R4
+    size: M
+    title: "refactor(agent-tools): modularize tools.py and standardize typed error contracts"
+    labels: ["backend", "refactor", "agent"]
+    dependencies: ["BE-R3"]
+    plan:
+      goal: "Improve reliability by replacing string-based error signaling and mixed concerns in agents/tools.py."
+      in_scope:
+        - "Split tools by domain (github, git, filesystem, testing, knowledge-base)."
+        - "Introduce typed result/error model for tool outputs."
+      out_of_scope:
+        - "Large behavior changes to external CLI interactions."
+    tasks:
+      - "Design shared result schema."
+      - "Migrate existing tools incrementally with compatibility wrappers."
+      - "Update callers and tests to consume typed results."
+    issue_template:
+      acceptance_criteria:
+        - "Tool modules separated by concern."
+        - "No tool returns ambiguous 'Error: ...' string protocol."
+        - "Call sites handle typed success/failure consistently."
+      validation:
+        - "pytest tests/agents -q"
+        - "Static scan confirms no legacy error-string pattern in migrated modules"
+    pr_checklist:
+      - "Backward compatibility notes"
+      - "Refactor-only scope guard"
+    merge_checklist:
+      - "Squash merge + cleanup"
+
+  - id: BE-R5
+    size: M
+    title: "fix(kb): make knowledge-base updates schema-aware and backward-compatible"
+    labels: ["backend", "data", "bug"]
+    dependencies: ["BE-R4"]
+    plan:
+      goal: "Prevent schema corruption in agents knowledge JSON files when appending new data."
+      in_scope:
+        - "Update update_knowledge_base logic to preserve object-based schema."
+        - "Add schema validation tests for workflow_patterns and time_estimates."
+      out_of_scope:
+        - "Redesign of KB schema itself."
+    tasks:
+      - "Implement schema-aware merge/update behavior."
+      - "Add regression tests for top-level object files."
+      - "Document update behavior and constraints."
+    issue_template:
+      acceptance_criteria:
+        - "Existing JSON structure retained after updates."
+        - "Regression tests fail on old behavior and pass on new logic."
+      validation:
+        - "pytest tests/agents -q"
+        - "Manual round-trip sample update on both KB files"
+    pr_checklist:
+      - "Include before/after JSON snapshots in PR description"
+    merge_checklist:
+      - "Squash + cleanup"
+
+AI-Agent-Framework-Client:
+  - id: UX-R1
+    size: M
+    title: "refactor(api): split monolithic apiClient.ts into domain-specific clients"
+    labels: ["webui/ux", "refactor", "api"]
+    dependencies: ["BE-R5"]
+    plan:
+      goal: "Improve maintainability and consistency by reducing multi-domain coupling in apiClient.ts."
+      in_scope:
+        - "Extract proposals, commands, RAID, workflow, and audit clients."
+        - "Unify error/retry semantics across clients."
+      out_of_scope:
+        - "Backend API contract changes."
+    tasks:
+      - "Define per-domain client interfaces."
+      - "Move endpoints incrementally with compatibility exports."
+      - "Update consuming components and tests."
+    issue_template:
+      acceptance_criteria:
+        - "apiClient.ts reduced to composition/root wiring."
+        - "Domain clients have consistent success/error behavior."
+      validation:
+        - "npm run lint"
+        - "npm run build"
+        - "vitest tests for client wrappers"
+    pr_checklist:
+      - "Migration notes for import path changes"
+    merge_checklist:
+      - "Squash + branch cleanup"
+
+  - id: UX-R2
+    size: M
+    title: "refactor(ui): split ArtifactEditor into focused subcomponents and hooks"
+    labels: ["webui/ux", "refactor", "components"]
+    dependencies: ["UX-R1"]
+    plan:
+      goal: "Reduce complexity and coupling in ArtifactEditor while preserving behavior."
+      in_scope:
+        - "Extract schema form renderer, action toolbar, validation hook, and state controller."
+      out_of_scope:
+        - "UX redesign of form behavior."
+    tasks:
+      - "Create `useArtifactEditorForm` hook and focused presentational components."
+      - "Port tests to cover extracted units."
+      - "Keep existing i18n keys and callback contracts."
+    issue_template:
+      acceptance_criteria:
+        - "ArtifactEditor file size and cyclomatic complexity reduced materially."
+        - "All existing interactions remain functionally equivalent."
+      validation:
+        - "npm run lint"
+        - "npm run build"
+        - "component tests green"
+    pr_checklist:
+      - "Include architecture diagram of old/new component split"
+    merge_checklist:
+      - "Squash + cleanup"
+
+  - id: UX-R3
+    size: S
+    title: "fix(nav): replace window.location.assign with router-based navigation"
+    labels: ["webui/ux", "bug", "routing"]
+    dependencies: ["UX-R2"]
+    plan:
+      goal: "Avoid full page reloads and preserve SPA state during in-app transitions."
+      in_scope:
+        - "Replace hard redirects with useNavigate/internal route APIs."
+        - "Add regression tests for state-preserving navigation path."
+      out_of_scope:
+        - "Route redesign."
+    tasks:
+      - "Refactor navigation call sites in ArtifactEditor and related helpers."
+      - "Add test asserting no hard reload behavior."
+    issue_template:
+      acceptance_criteria:
+        - "No `window.location.assign` in client source for internal navigation paths."
+        - "Navigation preserves app state and history behavior."
+      validation:
+        - "npm run lint"
+        - "navigation tests pass"
+    pr_checklist:
+      - "Search evidence included in PR"
+    merge_checklist:
+      - "Squash + cleanup"
+
+  - id: UX-R4
+    size: S
+    title: "feat(nav): resolve placeholder routes with explicit coming-soon or dedicated destinations"
+    labels: ["webui/ux", "navigation", "product"]
+    dependencies: ["UX-R3"]
+    plan:
+      goal: "Remove misleading nav entries that map multiple concepts to the same route without indication."
+      in_scope:
+        - "Either implement distinct routes or mark entries as coming soon/disabled with clear messaging."
+      out_of_scope:
+        - "Major IA redesign."
+    tasks:
+      - "Audit nav items with duplicate route targets."
+      - "Implement explicit UX treatment for unavailable destinations."
+      - "Update i18n and tests accordingly."
+    issue_template:
+      acceptance_criteria:
+        - "Each nav item has clear destination semantics."
+        - "No ambiguous duplicate destination without user-facing explanation."
+      validation:
+        - "npm run lint"
+        - "npm run build"
+        - "navigation tests updated"
+    pr_checklist:
+      - "Screenshots/GIF of updated navigation behavior"
+    merge_checklist:
+      - "Squash + cleanup"
+
+loop_operational_checklist:
+  per_issue:
+    - "Create branch: issue/<id>-<slug>"
+    - "Keep PR <= ~200 changed lines when feasible"
+    - "Include required PR headings and checked checkboxes"
+    - "Run repo-appropriate validation commands"
+    - "Squash merge and delete branch"
+    - "Cleanup: rm -f .tmp/pr-body-<id>.md .tmp/issue-<id>-*.md"
+    - "Verify cleanup: ls -la .tmp/*<id>* 2>/dev/null || echo '✓ Cleanup verified'"
