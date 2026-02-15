@@ -245,7 +245,9 @@ class ParallelValidator:
         adapter = side_effects or SubprocessWorkflowSideEffectAdapter()
         tasks = []
         for cmd in commands:
-            tasks.append(ParallelValidator._run_command_async(adapter, workspace_root, cmd))
+            tasks.append(
+                ParallelValidator._run_command_async(adapter, workspace_root, cmd)
+            )
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -676,24 +678,27 @@ class ErrorRecovery:
         try:
             if recovery_cmd == "auto_remove_unused_import":
                 success = self._remove_unused_import(error_output, context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Removed unused import"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Removed unused import",
+                    failure_message="Recovery handler explicit no-op: auto_remove_unused_import",
+                )
 
             elif recovery_cmd == "add_null_to_type":
                 success = self._add_null_to_type(error_output, context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Added | null to type"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Added | null to type",
+                    failure_message="Recovery handler explicit no-op: add_null_to_type",
+                )
 
             elif recovery_cmd == "convert_evidence_to_inline":
                 success = self._convert_evidence_to_inline(context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Converted evidence to inline format"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Converted evidence to inline format",
+                    failure_message="Recovery handler explicit no-op: convert_evidence_to_inline",
+                )
 
             elif recovery_cmd.startswith("npm install"):
                 module = pattern["match"].group(1)
@@ -702,14 +707,36 @@ class ErrorRecovery:
                     cmd.split(), cwd=self.workspace_root, check=False
                 )
                 if result.returncode == 0:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
+                    self._record_successful_recovery()
                     return True, f"Installed module: {module}"
+                return (
+                    False,
+                    f"Recovery command failed: {cmd} (exit {result.returncode})",
+                )
 
-            return False, "Recovery command not implemented"
+            return (
+                False,
+                f"Unsupported recovery command: {recovery_cmd} "
+                f"(error_type={pattern['error_type']})",
+            )
 
         except Exception as e:
-            return False, f"Recovery failed: {e}"
+            return False, f"Recovery handler exception for {recovery_cmd}: {e}"
+
+    def _record_successful_recovery(self) -> None:
+        """Increment recovery success metrics."""
+        self.metrics["auto_recoveries_successful"] += 1
+        self.metrics["user_interventions_avoided"] += 1
+
+    def _finalize_recovery_result(
+        self, success: bool, success_message: str, failure_message: str
+    ) -> Tuple[bool, str]:
+        """Return deterministic recovery outcome and update metrics on success."""
+        if success:
+            self._record_successful_recovery()
+            return True, success_message
+
+        return False, failure_message
 
     def _remove_unused_import(self, error_output: str, context: Dict) -> bool:
         """Remove unused import from file."""
@@ -1110,16 +1137,12 @@ class WorkflowAgent(BaseAgent):
             phase.name, {"issue_num": issue_num}
         )
         if learnings:
-            self.log(
-                f"📚 Found {len(learnings)} relevant learnings from KB", "info"
-            )
+            self.log(f"📚 Found {len(learnings)} relevant learnings from KB", "info")
             for learning in learnings[:3]:  # Show top 3
                 error_desc = learning.get("error", learning.get("description", "N/A"))[
                     :80
                 ]
-                self.log(
-                    f"  • {learning.get('type', 'unknown')}: {error_desc}", "info"
-                )
+                self.log(f"  • {learning.get('type', 'unknown')}: {error_desc}", "info")
 
         try:
             phase_output = {}
