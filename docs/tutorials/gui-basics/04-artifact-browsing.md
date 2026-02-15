@@ -66,7 +66,7 @@ drwxr-xr-x plans/
 
 ## Steps
 
-### Step 1: Access Artifacts View
+### Step 1: Access Artifacts Tab
 
 Navigate to the artifacts browser for your project.
 
@@ -103,7 +103,7 @@ The artifacts browser may appear in different locations depending on UI layout:
 **Layout Pattern B: Sidebar Navigation**
 1. Look for "Artifacts" item in left sidebar under project name
 2. Click "Artifacts" navigation item
-3. Main content switches to artifacts view
+3. Main content switches to artifact browser
 
 **Layout Pattern C: Section Accordion**
 1. Scroll in main content to find "Artifacts" section
@@ -118,11 +118,11 @@ The artifacts browser may appear in different locations depending on UI layout:
 - Artifact count indicator (e.g., "12 files, 3 folders")
 - Loading spinner (brief) while fetching artifact list
 
-✅ **Checkpoint 1.2:** Artifacts view is visible and loaded
+✅ **Checkpoint 1.2:** Artifacts tab is visible and loaded
 
 **Screenshot Reference:** `docs/screenshots/gui-04-artifacts-overview.png`
 
-#### 1.3: Understand Artifacts View Layout
+#### 1.3: Understand Artifacts Tab Layout
 
 **Artifacts Panel Components:**
 
@@ -153,7 +153,7 @@ The artifacts browser may appear in different locations depending on UI layout:
 - No file selected (preview panel hidden)
 - Search filter empty
 
-✅ **Checkpoint 1.3:** Understand complete artifacts view layout
+✅ **Checkpoint 1.3:** Understand complete artifact browser layout
 
 ### Step 2: Navigate Artifact Tree Structure
 
@@ -716,7 +716,7 @@ TODO-001-extracted/
 
 **Exercise: Verify completeness**
 
-1. Return to web UI artifacts view
+1. Return to web UI artifact browser
 2. Note folder structure and file count
 3. Compare with extracted ZIP structure
 4. Verify all folders and files match
@@ -1000,15 +1000,12 @@ Total: 5 files, 10.1 KB
 
 **View specific artifact:**
 ```bash
-python apps/tui/main.py artifacts view --project TODO-001 --path charters/project-charter.md
+python apps/tui/main.py artifacts get --project TODO-001 --path artifacts/charters/project-charter.md
 ```
 
 **Export all artifacts as ZIP:**
 ```bash
-python apps/tui/main.py artifacts export --project TODO-001 --output todo-artifacts.zip
-
-# Verify ZIP
-unzip -l todo-artifacts.zip
+curl -s http://localhost:8000/projects/TODO-001/artifacts | jq .
 ```
 
 **Search artifacts:**
@@ -1024,7 +1021,7 @@ See [TUI Artifact Workflow](../tui-basics/03-artifact-workflow.md) for complete 
 | **Tree Navigation** | Visual expand/collapse | Hierarchical text list |
 | **File Viewing** | In-browser rendering | Terminal pager (less/more) |
 | **Download** | Click download button | Specify --output path |
-| **Export ZIP** | Click "Export All" | `artifacts export` command |
+| **Export ZIP** | Click "Export All" | Use GUI export action or API endpoint |
 | **Search** | Real-time filter | `--filter` flag |
 | **Markdown** | Rendered HTML | Raw or terminal markdown |
 | **Bulk Operations** | Checkboxes + buttons | Script with loops |
@@ -1063,7 +1060,7 @@ curl http://localhost:8000/artifacts/TODO-001
 
 **Solutions:**
 - **API not responding:** Restart API container: `docker compose restart api`
-- **No artifacts generated:** Run charter command first (see Tutorial 03)
+- **No files generated yet:** Run the Tutorial 03 command flow first
 - **Permission errors:** Check projectDocs folder permissions: `chmod -R 755 projectDocs/`
 - **CORS issue:** Check browser console for CORS errors, verify API CORS config
 
@@ -1203,7 +1200,7 @@ docker compose logs api --tail=100 | grep -i "export\|zip"
 
 Before proceeding to Tutorial 05, verify you can:
 
-- [ ] Navigate to Artifacts view for your project
+- [ ] Navigate to Artifacts tab for your project
 - [ ] See artifact folder tree structure (charters, plans, risks, etc.)
 - [ ] Expand and collapse folders by clicking
 - [ ] View contents of at least 3 different folders

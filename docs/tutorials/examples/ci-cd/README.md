@@ -114,7 +114,7 @@ curl "https://gitlab.com/api/v4/projects/$PROJECT_ID/pipelines" \
   run: |
     cd apps/tui
     python main.py projects create --key ${{ github.repository_owner }}-$(basename ${{ github.repository }})
-    python main.py artifacts generate --project $PROJECT_KEY --type charter
+    python main.py commands propose --project $PROJECT_KEY --command generate_artifact --artifact-name "project-charter.md" --artifact-type "project_charter"
     cp projectDocs/$PROJECT_KEY/artifacts/PROJECT_CHARTER.md $GITHUB_WORKSPACE/docs/
 ```
 
@@ -133,8 +133,7 @@ nightly-raid-report:
   only:
     - schedules
   script:
-    - cd apps/tui
-    - python main.py raid list --project $PROJECT_KEY --filter severity=High > /tmp/high-priority.txt
+    - curl -s "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" | jq '.items[] | select(.priority=="high")' > /tmp/high-priority.txt
     - python scripts/send-email.py --to team@example.com --file /tmp/high-priority.txt
 ```
 
@@ -152,7 +151,8 @@ nightly-raid-report:
   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
   run: |
     cd apps/tui
-    python main.py artifacts regenerate --project $PROJECT_KEY
+    python main.py commands propose --project $PROJECT_KEY --command generate_plan
+    python main.py commands apply --project $PROJECT_KEY --proposal "$PROPOSAL_ID"
     cd projectDocs/$PROJECT_KEY
     git add -A
     git commit -m "chore: regenerate artifacts [skip ci]" || echo "No changes"
@@ -175,9 +175,9 @@ weekly-compliance:
   only:
     - schedules
   script:
-    - cd apps/tui
-    - python main.py artifacts validate --project $PROJECT_KEY --strict
-    - python main.py raid validate --project $PROJECT_KEY --require-mitigations
+    - test -d "projectDocs/$PROJECT_KEY/artifacts"
+    - test -f "projectDocs/$PROJECT_KEY/project.json"
+    - curl -fsS "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" >/dev/null
   allow_failure: false
 ```
 
@@ -306,7 +306,7 @@ strategy:
     project: [PROJ-A, PROJ-B, PROJ-C]
 steps:
   - name: Process ${{ matrix.project }}
-    run: cd apps/tui && python main.py artifacts generate --project ${{ matrix.project }}
+    run: cd apps/tui && python main.py commands propose --project ${{ matrix.project }} --command generate_plan
 ```
 
 **GitLab CI:**
@@ -316,7 +316,7 @@ process-projects:
     matrix:
       - PROJECT: [PROJ-A, PROJ-B, PROJ-C]
   script:
-    - cd apps/tui && python main.py artifacts generate --project $PROJECT
+    - cd apps/tui && python main.py commands propose --project $PROJECT --command generate_plan
 ```
 
 ### Conditional Execution
@@ -327,11 +327,11 @@ Run different steps based on conditions:
 ```yaml
 - name: Generate Charter (new projects only)
   if: github.event.action == 'created'
-  run: cd apps/tui && python main.py artifacts generate --type charter
+  run: cd apps/tui && python main.py commands propose --project $PROJECT_KEY --command generate_artifact --artifact-name "project-charter.md" --artifact-type "project_charter"
   
 - name: Update RAID (existing projects)
   if: github.event.action != 'created'
-  run: cd apps/tui && python main.py raid sync
+  run: curl -s "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" | jq .
 ```
 
 **GitLab CI:**
@@ -340,7 +340,7 @@ generate-charter:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"'
   script:
-    - cd apps/tui && python main.py artifacts generate --type charter
+    - cd apps/tui && python main.py commands propose --project $PROJECT_KEY --command generate_artifact --artifact-name "project-charter.md" --artifact-type "project_charter"
 ```
 
 ### Artifact Retention

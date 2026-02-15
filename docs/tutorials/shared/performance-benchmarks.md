@@ -45,7 +45,7 @@ All benchmarks were collected in a controlled environment:
 | `projects create` | 2.3s | 2.1-2.8s | Includes git init + metadata write |
 | `projects list` | 0.4s | 0.3-0.6s | Queries projectDocs directory |
 | `projects get <key>` | 0.5s | 0.4-0.7s | Reads metadata + git log |
-| `projects delete <key>` | 1.8s | 1.5-2.2s | Git cleanup + directory removal |
+| Project deletion (legacy benchmark) | 1.8s | 1.5-2.2s | Git cleanup + directory removal |
 | `projects switch_phase` | 1.2s | 1.0-1.5s | Updates state + git commit |
 
 **Performance Factors:**
@@ -57,11 +57,11 @@ All benchmarks were collected in a controlled environment:
 
 | Command | Median Time | Min-Max | LLM Time | Notes |
 |---------|-------------|---------|----------|-------|
-| `propose create_charter` | 6.5s | 5.8-8.2s | 4.5s | 800-1000 token output |
-| `propose create_scope` | 5.2s | 4.7-6.5s | 3.5s | 600-800 token output |
-| `propose create_wbs` | 7.8s | 7.0-9.5s | 6.0s | 1200-1500 token output |
-| `propose create_schedule` | 6.0s | 5.5-7.2s | 4.2s | 900-1100 token output |
-| `propose create_budget` | 5.8s | 5.2-7.0s | 4.0s | 700-900 token output |
+| `commands propose assess_gaps` | 6.5s | 5.8-8.2s | 4.5s | 800-1000 token output |
+| `commands propose generate_artifact` | 5.2s | 4.7-6.5s | 3.5s | 600-800 token output |
+| `commands propose generate_plan` | 7.8s | 7.0-9.5s | 6.0s | 1200-1500 token output |
+| `commands apply <proposal-id>` | 6.0s | 5.5-7.2s | 4.2s | Proposal resolution + commit |
+| `artifacts get` | 5.8s | 5.2-7.0s | 4.0s | Content fetch + render path |
 | `apply <proposal-id>` | 1.5s | 1.2-1.9s | 0s | Git commit only |
 | `reject <proposal-id>` | 0.8s | 0.6-1.1s | 0s | Metadata update |
 
@@ -230,9 +230,9 @@ Instead of running commands one-by-one, batch them:
 
 ```bash
 # ❌ Slow: Sequential (50s total)
-python apps/tui/main.py propose create_charter --key TODO-001
-python apps/tui/main.py propose create_scope --key TODO-001
-python apps/tui/main.py propose create_wbs --key TODO-001
+python apps/tui/main.py commands propose --project TODO-001 --command assess_gaps
+python apps/tui/main.py commands propose --project TODO-001 --command generate_artifact --artifact-name charter.md --artifact-type project_charter
+python apps/tui/main.py commands propose --project TODO-001 --command generate_plan
 
 # ✅ Fast: Batch script (20s total with parallelization)
 ./scripts/batch_propose.sh TODO-001 "charter scope wbs"
