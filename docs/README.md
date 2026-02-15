@@ -18,6 +18,7 @@ Welcome to the comprehensive documentation for the ISO 21500 Project Management 
 
 **Quick Links:**
 - 🚀 [Setup Guide](../QUICKSTART.md)
+- 🧰 [Install & LLM Setup](howto/install-and-llm-setup.md)
 - 📚 [Tutorials](tutorials/README.md) - **NEW! Step-by-step learning paths**
 - 🤝 [Contributing Guide](CONTRIBUTING.md) - **Start here if you want to contribute!**
 - 💻 [Development Guide](development.md)
@@ -479,6 +480,7 @@ Step-by-step procedural guides for common tasks.
 | Guide | Description | Last Updated |
 |-------|-------------|--------------|
 | [Chat Context Storage](howto/chat-context-in-repo.md) | Best practices for storing and restoring conversational context in repositories | 2026-01-09 |
+| [Install & LLM Setup](howto/install-and-llm-setup.md) | End-to-end install guide for Docker images and local setup, plus GitHub/OpenAI/local LLM config examples | 2026-02-15 |
 
 **Topics Covered:**
 - Why store chat context?
@@ -570,7 +572,7 @@ Find all documentation related to a specific feature or decision.
 
 **Documentation:**
 - **Specification:** [MVP Spec - Docker Configuration](spec/mvp-iso21500-agent.md#docker-configuration)
-- **Setup Guide:** [Quick Start - Docker](../QUICKSTART.md#4-start-the-services)
+- **Setup Guide:** [Install & LLM Setup (Docker)](howto/install-and-llm-setup.md#option-a-docker-images-and-containers)
 - **Discussion:** [Chat Transcript - Part 4](chat/2026-01-09-blecx-copilot-transcript.md#part-4-docker-and-deployment)
 - **Configuration:**
   - `docker-compose.yml` - Orchestration

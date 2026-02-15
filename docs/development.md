@@ -100,6 +100,9 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
    # Edit configs/llm.json with your settings
    ```
 
+   For provider-specific examples (GitHub Models, OpenAI, LM Studio, Ollama), use:
+   [docs/howto/install-and-llm-setup.md](howto/install-and-llm-setup.md)
+
 ---
 
 ## Project Structure
@@ -553,37 +556,26 @@ See `tests/README.md` for detailed testing documentation.
 
 ### Testing LLM Integration
 
-1. **Without LLM** (template fallback):
+Use the canonical provider setup examples and then validate behavior here:
+
+- [docs/howto/install-and-llm-setup.md#llm-connection-configuration](howto/install-and-llm-setup.md#llm-connection-configuration)
+
+Quick validation:
+
+1. **Without LLM** (template fallback)
    - Remove or don't configure `configs/llm.json`
-   - System will use template-based generation
-
-2. **With LM Studio:**
-   - Start LM Studio and load a model
-   - Start the local server (port 1234)
-   - Configure `configs/llm.json`:
-     ```json
-     {
-       "provider": "lmstudio",
-       "base_url": "http://localhost:1234/v1",
-       "api_key": "lm-studio",
-       "model": "local-model"
-     }
-     ```
-
-3. **With OpenAI:**
-   - Configure `configs/llm.json`:
-     ```json
-     {
-       "provider": "openai",
-       "base_url": "https://api.openai.com/v1",
-       "api_key": "your-api-key",
-       "model": "gpt-4"
-     }
-     ```
+   - System uses template-based generation
+2. **With configured LLM**
+   - Start API and run a command workflow
+   - Confirm responses are generated and no connection errors appear in logs
 
 ---
 
 ## Docker Integration
+
+For complete Docker install and image workflows, see:
+
+- [docs/howto/install-and-llm-setup.md#option-a-docker-images-and-containers](howto/install-and-llm-setup.md#option-a-docker-images-and-containers)
 
 ### How `.venv` and Docker Work Together
 
