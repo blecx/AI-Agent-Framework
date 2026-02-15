@@ -18,11 +18,43 @@ from typing import Annotated, Optional
 from agents.command_cache import get_cache
 from agents.coverage_analyzer import get_coverage_analyzer
 from agents.time_estimator import TimeEstimator
+from agents.tooling.filesystem_tools import (
+    list_directory_contents_typed,
+    read_file_content_typed,
+    write_file_content_typed,
+)
+from agents.tooling.git_tools import (
+    create_feature_branch_typed,
+    get_changed_files_typed,
+    git_commit_typed,
+)
+from agents.tooling.github_tools import (
+    create_github_pr_typed,
+    fetch_github_issue_typed,
+    list_github_issues_typed,
+)
 
 
 # ============================================================================
 # GitHub Tools
 # ============================================================================
+
+
+def _legacy_result_or_error(
+    result,
+    *,
+    error_prefix: str,
+    fallback_error_message: str,
+) -> str:
+    """Convert typed results to legacy string responses for compatibility."""
+    if result.ok:
+        return result.value or ""
+
+    details = None
+    if result.error:
+        details = result.error.details or result.error.message
+    details = details or fallback_error_message
+    return f"{error_prefix}{details}"
 
 
 def fetch_github_issue(
@@ -35,32 +67,16 @@ def fetch_github_issue(
 
     Returns JSON string with issue title, body, labels, etc.
     """
-    try:
-        cmd = [
-            "gh",
-            "issue",
-            "view",
-            str(issue_number),
-            "--json",
-            "number,title,body,labels,state,assignees",
-        ]
-        if repo:
-            cmd.extend(["--repo", repo])
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-
-        if result.returncode != 0:
-            return f"Error fetching issue: {result.stderr}"
-
-        return result.stdout
-    except Exception as e:
-        return f"Error: {str(e)}"
+    result = fetch_github_issue_typed(
+        issue_number=issue_number,
+        repo=repo,
+        working_directory=working_directory,
+    )
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error fetching issue: ",
+        fallback_error_message="failed to fetch issue",
+    )
 
 
 def create_github_pr(
@@ -73,21 +89,16 @@ def create_github_pr(
 
     Returns PR URL or error message.
     """
-    try:
-        result = subprocess.run(
-            ["gh", "pr", "create", "--title", title, "--body", body],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-
-        if result.returncode != 0:
-            return f"Error creating PR: {result.stderr}"
-
-        return result.stdout
-    except Exception as e:
-        return f"Error: {str(e)}"
+    result = create_github_pr_typed(
+        title=title,
+        body=body,
+        working_directory=working_directory,
+    )
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error creating PR: ",
+        fallback_error_message="failed to create pull request",
+    )
 
 
 def list_github_issues(
@@ -102,43 +113,22 @@ def list_github_issues(
 
     Returns JSON array string with fields needed for selection/triage.
     """
-    try:
-        state_norm = (state or "open").strip().lower()
-        if state_norm in {"opened"}:
-            state_norm = "open"
-        if state_norm not in {"open", "closed"}:
-            return "Error: state must be 'open' or 'closed'"
+    result = list_github_issues_typed(
+        repo=repo,
+        state=state,
+        limit=limit,
+        label=label,
+        search=search,
+        working_directory=working_directory,
+    )
+    if (not result.ok) and result.error and result.error.code == "INVALID_ARGUMENT":
+        return f"Error: {result.error.message}"
 
-        cmd = [
-            "gh",
-            "issue",
-            "list",
-            "--repo",
-            repo,
-            "--state",
-            state_norm,
-            "--limit",
-            str(limit),
-            "--json",
-            "number,title,labels,createdAt,updatedAt,author,assignees",
-        ]
-        if label:
-            cmd.extend(["--label", label])
-        if search:
-            cmd.extend(["--search", search])
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-        if result.returncode != 0:
-            return f"Error listing issues: {result.stderr}"
-        return result.stdout
-    except Exception as e:
-        return f"Error: {str(e)}"
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error listing issues: ",
+        fallback_error_message="failed to list issues",
+    )
 
 
 # ============================================================================
@@ -155,18 +145,26 @@ def read_file_content(
 
     Returns file content or error message.
     """
-    try:
-        path = Path(base_directory) / file_path
-        if not path.exists():
-            return f"Error: File {file_path} does not exist"
+    result = read_file_content_typed(
+        file_path=file_path,
+        base_directory=base_directory,
+    )
+    if (
+        (not result.ok)
+        and result.error
+        and result.error.code
+        in {
+            "FILE_NOT_FOUND",
+            "FILE_TOO_LARGE",
+        }
+    ):
+        return f"Error: {result.error.message}"
 
-        if path.stat().st_size > 1_000_000:  # 1MB limit
-            return f"Error: File {file_path} is too large (>1MB)"
-
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception as e:
-        return f"Error reading file: {str(e)}"
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error reading file: ",
+        fallback_error_message="failed to read file",
+    )
 
 
 def write_file_content(
@@ -179,16 +177,16 @@ def write_file_content(
 
     Returns success message or error.
     """
-    try:
-        path = Path(base_directory) / file_path
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        return f"Successfully wrote {len(content)} bytes to {file_path}"
-    except Exception as e:
-        return f"Error writing file: {str(e)}"
+    result = write_file_content_typed(
+        file_path=file_path,
+        content=content,
+        base_directory=base_directory,
+    )
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error writing file: ",
+        fallback_error_message="failed to write file",
+    )
 
 
 def list_directory_contents(
@@ -200,24 +198,26 @@ def list_directory_contents(
 
     Returns newline-separated list of entries.
     """
-    try:
-        path = Path(base_directory) / directory_path
-        if not path.exists():
-            return f"Error: Directory {directory_path} does not exist"
+    result = list_directory_contents_typed(
+        directory_path=directory_path,
+        base_directory=base_directory,
+    )
+    if (
+        (not result.ok)
+        and result.error
+        and result.error.code
+        in {
+            "DIRECTORY_NOT_FOUND",
+            "NOT_A_DIRECTORY",
+        }
+    ):
+        return f"Error: {result.error.message}"
 
-        if not path.is_dir():
-            return f"Error: {directory_path} is not a directory"
-
-        entries = []
-        for item in sorted(path.iterdir()):
-            if item.is_dir():
-                entries.append(f"{item.name}/")
-            else:
-                entries.append(item.name)
-
-        return "\n".join(entries)
-    except Exception as e:
-        return f"Error listing directory: {str(e)}"
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error listing directory: ",
+        fallback_error_message="failed to list directory",
+    )
 
 
 # ============================================================================
@@ -234,39 +234,15 @@ def git_commit(
 
     Returns commit hash or error message.
     """
-    try:
-        # Stage all changes
-        subprocess.run(
-            ["git", "add", "-A"],
-            check=True,
-            capture_output=True,
-            cwd=working_directory,
-        )
-
-        # Commit
-        result = subprocess.run(
-            ["git", "commit", "-m", message],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-
-        if result.returncode != 0:
-            return f"Error committing: {result.stderr}"
-
-        # Get commit hash
-        hash_result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=working_directory,
-        )
-
-        return f"Committed: {hash_result.stdout.strip()}\n{result.stdout}"
-    except Exception as e:
-        return f"Error: {str(e)}"
+    result = git_commit_typed(
+        message=message,
+        working_directory=working_directory,
+    )
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error committing: ",
+        fallback_error_message="failed to commit",
+    )
 
 
 def get_changed_files(
@@ -277,21 +253,11 @@ def get_changed_files(
 
     Returns list of changed files or empty string.
     """
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-
-        if result.returncode != 0:
-            return f"Error: {result.stderr}"
-
-        return result.stdout
-    except Exception as e:
-        return f"Error: {str(e)}"
+    result = get_changed_files_typed(working_directory=working_directory)
+    if not result.ok:
+        details = result.error.details if result.error else "failed to read git status"
+        return f"Error: {details}"
+    return result.value or ""
 
 
 def create_feature_branch(
@@ -303,36 +269,15 @@ def create_feature_branch(
 
     Returns success message or error.
     """
-    try:
-        # Checkout main and pull latest
-        subprocess.run(
-            ["git", "checkout", "main"],
-            check=True,
-            capture_output=True,
-            cwd=working_directory,
-        )
-        subprocess.run(
-            ["git", "pull", "origin", "main"],
-            check=True,
-            capture_output=True,
-            cwd=working_directory,
-        )
-
-        # Create and checkout new branch
-        result = subprocess.run(
-            ["git", "checkout", "-b", branch_name],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=working_directory,
-        )
-
-        if result.returncode != 0:
-            return f"Error creating branch: {result.stderr}"
-
-        return f"Created and checked out branch: {branch_name}"
-    except Exception as e:
-        return f"Error: {str(e)}"
+    result = create_feature_branch_typed(
+        branch_name=branch_name,
+        working_directory=working_directory,
+    )
+    return _legacy_result_or_error(
+        result,
+        error_prefix="Error creating branch: ",
+        fallback_error_message="failed to create branch",
+    )
 
 
 # ============================================================================
@@ -426,6 +371,74 @@ def run_command(
 # ============================================================================
 
 
+_KB_PRIMARY_LIST_KEYS = {
+    "workflow_patterns": "issues",
+    "time_estimates": "completed_issues",
+    "problem_solutions": "problems",
+}
+
+
+def _deep_merge_dicts(existing: dict, incoming: dict) -> dict:
+    """Merge nested dictionaries while preserving existing schema structure."""
+    merged = dict(existing)
+
+    for key, incoming_value in incoming.items():
+        existing_value = merged.get(key)
+
+        if isinstance(existing_value, dict) and isinstance(incoming_value, dict):
+            merged[key] = _deep_merge_dicts(existing_value, incoming_value)
+        elif isinstance(existing_value, list) and isinstance(incoming_value, list):
+            merged[key] = [*existing_value, *incoming_value]
+        else:
+            merged[key] = incoming_value
+
+    return merged
+
+
+def _append_into_primary_list(existing: dict, incoming, category: str) -> dict:
+    """Append incoming record(s) into the category's primary list field."""
+    primary_key = _KB_PRIMARY_LIST_KEYS.get(category)
+    if not primary_key:
+        return existing
+
+    updated = dict(existing)
+    current_items = updated.get(primary_key, [])
+    if not isinstance(current_items, list):
+        current_items = []
+
+    if isinstance(incoming, list):
+        current_items = [*current_items, *incoming]
+    else:
+        current_items = [*current_items, incoming]
+
+    updated[primary_key] = current_items
+    return updated
+
+
+def _merge_knowledge_payload(existing, incoming, category: str):
+    """Merge knowledge payloads while preserving existing schema shape."""
+    if isinstance(existing, dict):
+        if isinstance(incoming, dict):
+            return _deep_merge_dicts(existing, incoming)
+        return _append_into_primary_list(existing, incoming, category)
+
+    if isinstance(existing, list):
+        if isinstance(incoming, list):
+            return [*existing, *incoming]
+        return [*existing, incoming]
+
+    # Backward-compatible fallback for invalid/unexpected existing content.
+    if isinstance(incoming, list):
+        return incoming
+
+    if category in _KB_PRIMARY_LIST_KEYS:
+        if isinstance(incoming, dict):
+            return incoming
+        return {_KB_PRIMARY_LIST_KEYS[category]: [incoming]}
+
+    return [incoming]
+
+
 def get_knowledge_base_patterns() -> str:
     """
     Load workflow patterns from knowledge base.
@@ -459,28 +472,29 @@ def update_knowledge_base(
         kb_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing data
-        existing = []
+        existing = None
         if kb_file.exists():
             with open(kb_file, "r") as f:
                 try:
                     existing = json.load(f)
-                    if not isinstance(existing, list):
-                        existing = [existing]
                 except json.JSONDecodeError:
-                    existing = []
+                    existing = None
 
         # Parse new data
         new_data = json.loads(data)
-        if not isinstance(new_data, list):
-            new_data = [new_data]
 
-        # Append and save
-        existing.extend(new_data)
+        # Schema-aware merge with legacy-list compatibility
+        existing = _merge_knowledge_payload(existing, new_data, category)
 
         with open(kb_file, "w") as f:
             json.dump(existing, f, indent=2)
 
-        return f"Updated {category} with {len(new_data)} new entries"
+        if isinstance(new_data, list):
+            count = len(new_data)
+        else:
+            count = 1
+
+        return f"Updated {category} with {count} new entries"
     except Exception as e:
         return f"Error updating knowledge base: {str(e)}"
 

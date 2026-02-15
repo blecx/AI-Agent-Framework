@@ -36,6 +36,9 @@ from agents.workflow_side_effect_adapters import (  # noqa: E402
     WorkflowSideEffectAdapter,
     WorkflowSideEffectError,
 )
+from agents.validation_profiles import (  # noqa: E402
+    get_validation_commands as get_profile_validation_commands,
+)
 
 
 # ===== Phase 1 Improvements (Issues #159-#163) =====
@@ -88,13 +91,11 @@ class CrossRepoContext:
 
     def get_validation_commands(self) -> List[str]:
         """Return correct validation commands for current repo."""
-        if self.current_repo == "client":
-            return ["npm install", "npm run lint", "npm test", "npm run build"]
-        elif self.current_repo == "backend":
-            return ["python -m black apps/api/", "python -m flake8 apps/api/", "pytest"]
-        else:
-            # Unknown repo, return safe defaults
-            return []
+        if self.current_repo in {"client", "backend"}:
+            return get_profile_validation_commands(self.current_repo, "full")
+
+        # Unknown repo, return safe defaults
+        return []
 
     def get_fixes_format(
         self, issue_number: int, target_repo: Optional[str] = None
@@ -245,7 +246,9 @@ class ParallelValidator:
         adapter = side_effects or SubprocessWorkflowSideEffectAdapter()
         tasks = []
         for cmd in commands:
-            tasks.append(ParallelValidator._run_command_async(adapter, workspace_root, cmd))
+            tasks.append(
+                ParallelValidator._run_command_async(adapter, workspace_root, cmd)
+            )
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -530,47 +533,26 @@ class SmartValidation:
             List of validation commands to run
         """
         changes = self.analyze_changes()
-        commands = []
 
         if changes["doc_only"]:
             # Only markdown linting for doc changes
-            if repo_type == "client":
-                commands = ["npx markdownlint '**/*.md' --ignore node_modules"]
-            else:
-                commands = []  # Backend doesn't have markdown linting
+            commands = get_profile_validation_commands(repo_type, "doc_only")
             self.metrics["unnecessary_test_runs_avoided"] += 1
             self.metrics["validation_time_saved_per_issue"] += 120  # 2 minutes saved
 
         elif changes["test_only"]:
             # Lint + tests only (no build)
-            if repo_type == "client":
-                commands = ["npm run lint", "npm test"]
-            else:
-                commands = [
-                    "python -m black apps/api/",
-                    "python -m flake8 apps/api/",
-                    "pytest",
-                ]
+            commands = get_profile_validation_commands(repo_type, "test_only")
             self.metrics["validation_time_saved_per_issue"] += 60  # 1 minute saved
 
         elif changes["type_only"]:
             # Type check + lint only
-            if repo_type == "client":
-                commands = ["npx tsc --noEmit", "npm run lint"]
-            else:
-                commands = ["python -m mypy apps/api/"]
+            commands = get_profile_validation_commands(repo_type, "type_only")
             self.metrics["validation_time_saved_per_issue"] += 90  # 1.5 minutes saved
 
         else:
             # Full validation
-            if repo_type == "client":
-                commands = ["npm run lint", "npm test", "npm run build"]
-            else:
-                commands = [
-                    "python -m black apps/api/",
-                    "python -m flake8 apps/api/",
-                    "pytest",
-                ]
+            commands = get_profile_validation_commands(repo_type, "full")
 
         return commands
 
@@ -676,24 +658,27 @@ class ErrorRecovery:
         try:
             if recovery_cmd == "auto_remove_unused_import":
                 success = self._remove_unused_import(error_output, context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Removed unused import"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Removed unused import",
+                    failure_message="Recovery handler explicit no-op: auto_remove_unused_import",
+                )
 
             elif recovery_cmd == "add_null_to_type":
                 success = self._add_null_to_type(error_output, context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Added | null to type"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Added | null to type",
+                    failure_message="Recovery handler explicit no-op: add_null_to_type",
+                )
 
             elif recovery_cmd == "convert_evidence_to_inline":
                 success = self._convert_evidence_to_inline(context)
-                if success:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
-                    return True, "Converted evidence to inline format"
+                return self._finalize_recovery_result(
+                    success=success,
+                    success_message="Converted evidence to inline format",
+                    failure_message="Recovery handler explicit no-op: convert_evidence_to_inline",
+                )
 
             elif recovery_cmd.startswith("npm install"):
                 module = pattern["match"].group(1)
@@ -702,14 +687,36 @@ class ErrorRecovery:
                     cmd.split(), cwd=self.workspace_root, check=False
                 )
                 if result.returncode == 0:
-                    self.metrics["auto_recoveries_successful"] += 1
-                    self.metrics["user_interventions_avoided"] += 1
+                    self._record_successful_recovery()
                     return True, f"Installed module: {module}"
+                return (
+                    False,
+                    f"Recovery command failed: {cmd} (exit {result.returncode})",
+                )
 
-            return False, "Recovery command not implemented"
+            return (
+                False,
+                f"Unsupported recovery command: {recovery_cmd} "
+                f"(error_type={pattern['error_type']})",
+            )
 
         except Exception as e:
-            return False, f"Recovery failed: {e}"
+            return False, f"Recovery handler exception for {recovery_cmd}: {e}"
+
+    def _record_successful_recovery(self) -> None:
+        """Increment recovery success metrics."""
+        self.metrics["auto_recoveries_successful"] += 1
+        self.metrics["user_interventions_avoided"] += 1
+
+    def _finalize_recovery_result(
+        self, success: bool, success_message: str, failure_message: str
+    ) -> Tuple[bool, str]:
+        """Return deterministic recovery outcome and update metrics on success."""
+        if success:
+            self._record_successful_recovery()
+            return True, success_message
+
+        return False, failure_message
 
     def _remove_unused_import(self, error_output: str, context: Dict) -> bool:
         """Remove unused import from file."""
@@ -1004,6 +1011,7 @@ class WorkflowAgent(BaseAgent):
 
         # Load CI behavior knowledge (Issue #161)
         self.ci_behavior_knowledge = self._load_ci_behavior_knowledge()
+        self.interactive = False
 
     def _validate_issue_number(self, issue_num: int) -> None:
         """Validate issue number to prevent command injection.
@@ -1075,6 +1083,7 @@ class WorkflowAgent(BaseAgent):
         """
         # Validate inputs
         self._validate_issue_number(issue_num)
+        self.interactive = bool(kwargs.get("interactive", False))
 
         self.log(f"🎯 Executing workflow for Issue #{issue_num}", "info")
 
@@ -1108,16 +1117,12 @@ class WorkflowAgent(BaseAgent):
             phase.name, {"issue_num": issue_num}
         )
         if learnings:
-            self.log(
-                f"📚 Found {len(learnings)} relevant learnings from KB", "info"
-            )
+            self.log(f"📚 Found {len(learnings)} relevant learnings from KB", "info")
             for learning in learnings[:3]:  # Show top 3
                 error_desc = learning.get("error", learning.get("description", "N/A"))[
                     :80
                 ]
-                self.log(
-                    f"  • {learning.get('type', 'unknown')}: {error_desc}", "info"
-                )
+                self.log(f"  • {learning.get('type', 'unknown')}: {error_desc}", "info")
 
         try:
             phase_output = {}
@@ -1323,6 +1328,11 @@ Examples:
         help="Run in dry-run mode (no actual commands)",
     )
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Enable guided prompt pauses between workflow phase steps.",
+    )
+    parser.add_argument(
         "--kb-dir",
         type=str,
         default="agents/knowledge",
@@ -1332,7 +1342,11 @@ Examples:
     args = parser.parse_args()
 
     agent = WorkflowAgent(kb_dir=Path(args.kb_dir))
-    success = agent.run(dry_run=args.dry_run, issue_num=args.issue)
+    success = agent.run(
+        dry_run=args.dry_run,
+        issue_num=args.issue,
+        interactive=args.interactive,
+    )
 
     sys.exit(0 if success else 1)
 

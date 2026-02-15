@@ -13,6 +13,7 @@ class ProjectCreate(BaseModel):
 
     key: str = Field(..., description="Unique project key", pattern="^[a-zA-Z0-9_-]+$")
     name: str = Field(..., description="Project name")
+    description: Optional[str] = Field(None, description="Optional project description")
 
 
 class ProjectInfo(BaseModel):
@@ -20,6 +21,7 @@ class ProjectInfo(BaseModel):
 
     key: str
     name: str
+    description: Optional[str] = None
     methodology: str = "ISO21500"
     created_at: str
     updated_at: str
@@ -29,6 +31,7 @@ class ProjectUpdate(BaseModel):
     """Request model for updating a project."""
 
     name: Optional[str] = Field(None, description="Project name", min_length=1)
+    description: Optional[str] = Field(None, description="Project description")
     methodology: Optional[str] = Field(None, description="Project methodology")
 
 
