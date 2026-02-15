@@ -1,6 +1,6 @@
 # Performance Benchmarks
 
-**Last Updated:** February 2026 | **Test Environment:** Docker on Ubuntu 22.04 LTS
+**Last Updated:** 2026-02-16 | **Test Environment:** Docker on Ubuntu 22.04 LTS
 
 ## Overview
 

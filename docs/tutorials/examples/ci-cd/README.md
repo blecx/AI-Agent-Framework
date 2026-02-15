@@ -133,8 +133,9 @@ nightly-raid-report:
   only:
     - schedules
   script:
-    - curl -s "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" | jq '.items[] | select(.priority=="high")' > /tmp/high-priority.txt
-    - python scripts/send-email.py --to team@example.com --file /tmp/high-priority.txt
+    - mkdir -p .tmp
+    - curl -s "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" | jq '.items[] | select(.priority=="high")' > .tmp/high-priority.txt
+    - python scripts/send-email.py --to team@example.com --file .tmp/high-priority.txt
 ```
 
 ### Use Case 3: Post-Merge Artifact Update
@@ -472,3 +473,7 @@ Found an issue or have an improvement? Please open an issue or submit a PR with 
 ## License
 
 Examples are provided under the same license as the AI Agent Framework project.
+
+---
+
+**Last Updated:** 2026-02-16

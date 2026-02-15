@@ -53,4 +53,4 @@ Expected command groups: `projects`, `commands`, `artifacts`, `config`, `health`
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16

@@ -85,4 +85,4 @@ python apps/tui/main.py commands apply --project TODO-001 --proposal <proposal-i
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16
