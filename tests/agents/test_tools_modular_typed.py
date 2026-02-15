@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for modular agent tools and typed contracts."""
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from agents.tools import (
     fetch_github_issue,
     list_github_issues,
     read_file_content,
+    update_knowledge_base,
 )
 from agents.tooling.filesystem_tools import read_file_content_typed
 from agents.tooling.git_tools import create_feature_branch_typed
@@ -100,3 +102,94 @@ def test_create_feature_branch_typed_uses_modern_git_switch(monkeypatch):
     assert result.value == "Created and checked out branch: feat/issue-280"
     assert fake_run.calls[0]["command"] == ["git", "switch", "main"]
     assert fake_run.calls[2]["command"] == ["git", "switch", "-c", "feat/issue-280"]
+
+
+def test_update_knowledge_base_preserves_workflow_patterns_object_schema(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    kb_dir = tmp_path / "agents" / "knowledge"
+    kb_dir.mkdir(parents=True)
+
+    original = {
+        "version": "1.0.0",
+        "last_updated": "2026-01-01T00:00:00",
+        "issues": [{"issue_num": 1}],
+        "common_phases": ["Planning"],
+        "workflow_variants": {"standard_6_phase": {"count": 1}},
+    }
+    (kb_dir / "workflow_patterns.json").write_text(json.dumps(original), encoding="utf-8")
+
+    incoming = {
+        "last_updated": "2026-02-15T10:00:00",
+        "issues": [{"issue_num": 2}],
+    }
+
+    message = update_knowledge_base("workflow_patterns", json.dumps(incoming))
+
+    assert message == "Updated workflow_patterns with 1 new entries"
+    updated = json.loads((kb_dir / "workflow_patterns.json").read_text(encoding="utf-8"))
+
+    assert isinstance(updated, dict)
+    assert updated["issues"] == [{"issue_num": 1}, {"issue_num": 2}]
+    assert updated["common_phases"] == ["Planning"]
+    assert updated["workflow_variants"] == {"standard_6_phase": {"count": 1}}
+    assert updated["last_updated"] == "2026-02-15T10:00:00"
+
+
+def test_update_knowledge_base_preserves_time_estimates_object_schema(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    kb_dir = tmp_path / "agents" / "knowledge"
+    kb_dir.mkdir(parents=True)
+
+    original = {
+        "version": "1.0.0",
+        "last_updated": "2026-01-01T00:00:00",
+        "completed_issues": [{"issue_num": 10, "actual_hours": 2.0}],
+        "statistics": {"sample_size": 1},
+        "phase_averages": {"planning": 0.5},
+    }
+    (kb_dir / "time_estimates.json").write_text(json.dumps(original), encoding="utf-8")
+
+    incoming = {
+        "last_updated": "2026-02-15T12:00:00",
+        "completed_issues": [{"issue_num": 11, "actual_hours": 3.0}],
+    }
+
+    message = update_knowledge_base("time_estimates", json.dumps(incoming))
+
+    assert message == "Updated time_estimates with 1 new entries"
+    updated = json.loads((kb_dir / "time_estimates.json").read_text(encoding="utf-8"))
+
+    assert isinstance(updated, dict)
+    assert updated["completed_issues"] == [
+        {"issue_num": 10, "actual_hours": 2.0},
+        {"issue_num": 11, "actual_hours": 3.0},
+    ]
+    assert updated["statistics"] == {"sample_size": 1}
+    assert updated["phase_averages"] == {"planning": 0.5}
+    assert updated["last_updated"] == "2026-02-15T12:00:00"
+
+
+def test_update_knowledge_base_legacy_list_schema_still_appends(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    kb_dir = tmp_path / "agents" / "knowledge"
+    kb_dir.mkdir(parents=True)
+
+    (kb_dir / "problem_solutions.json").write_text(
+        json.dumps([{"problem": "old"}]),
+        encoding="utf-8",
+    )
+
+    message = update_knowledge_base(
+        "problem_solutions",
+        json.dumps({"problem": "new"}),
+    )
+
+    assert message == "Updated problem_solutions with 1 new entries"
+    updated = json.loads((kb_dir / "problem_solutions.json").read_text(encoding="utf-8"))
+    assert updated == [{"problem": "old"}, {"problem": "new"}]

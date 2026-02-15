@@ -371,6 +371,74 @@ def run_command(
 # ============================================================================
 
 
+_KB_PRIMARY_LIST_KEYS = {
+    "workflow_patterns": "issues",
+    "time_estimates": "completed_issues",
+    "problem_solutions": "problems",
+}
+
+
+def _deep_merge_dicts(existing: dict, incoming: dict) -> dict:
+    """Merge nested dictionaries while preserving existing schema structure."""
+    merged = dict(existing)
+
+    for key, incoming_value in incoming.items():
+        existing_value = merged.get(key)
+
+        if isinstance(existing_value, dict) and isinstance(incoming_value, dict):
+            merged[key] = _deep_merge_dicts(existing_value, incoming_value)
+        elif isinstance(existing_value, list) and isinstance(incoming_value, list):
+            merged[key] = [*existing_value, *incoming_value]
+        else:
+            merged[key] = incoming_value
+
+    return merged
+
+
+def _append_into_primary_list(existing: dict, incoming, category: str) -> dict:
+    """Append incoming record(s) into the category's primary list field."""
+    primary_key = _KB_PRIMARY_LIST_KEYS.get(category)
+    if not primary_key:
+        return existing
+
+    updated = dict(existing)
+    current_items = updated.get(primary_key, [])
+    if not isinstance(current_items, list):
+        current_items = []
+
+    if isinstance(incoming, list):
+        current_items = [*current_items, *incoming]
+    else:
+        current_items = [*current_items, incoming]
+
+    updated[primary_key] = current_items
+    return updated
+
+
+def _merge_knowledge_payload(existing, incoming, category: str):
+    """Merge knowledge payloads while preserving existing schema shape."""
+    if isinstance(existing, dict):
+        if isinstance(incoming, dict):
+            return _deep_merge_dicts(existing, incoming)
+        return _append_into_primary_list(existing, incoming, category)
+
+    if isinstance(existing, list):
+        if isinstance(incoming, list):
+            return [*existing, *incoming]
+        return [*existing, incoming]
+
+    # Backward-compatible fallback for invalid/unexpected existing content.
+    if isinstance(incoming, list):
+        return incoming
+
+    if category in _KB_PRIMARY_LIST_KEYS:
+        if isinstance(incoming, dict):
+            return incoming
+        return {_KB_PRIMARY_LIST_KEYS[category]: [incoming]}
+
+    return [incoming]
+
+
 def get_knowledge_base_patterns() -> str:
     """
     Load workflow patterns from knowledge base.
@@ -404,28 +472,29 @@ def update_knowledge_base(
         kb_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing data
-        existing = []
+        existing = None
         if kb_file.exists():
             with open(kb_file, "r") as f:
                 try:
                     existing = json.load(f)
-                    if not isinstance(existing, list):
-                        existing = [existing]
                 except json.JSONDecodeError:
-                    existing = []
+                    existing = None
 
         # Parse new data
         new_data = json.loads(data)
-        if not isinstance(new_data, list):
-            new_data = [new_data]
 
-        # Append and save
-        existing.extend(new_data)
+        # Schema-aware merge with legacy-list compatibility
+        existing = _merge_knowledge_payload(existing, new_data, category)
 
         with open(kb_file, "w") as f:
             json.dump(existing, f, indent=2)
 
-        return f"Updated {category} with {len(new_data)} new entries"
+        if isinstance(new_data, list):
+            count = len(new_data)
+        else:
+            count = 1
+
+        return f"Updated {category} with {count} new entries"
     except Exception as e:
         return f"Error updating knowledge base: {str(e)}"
 
