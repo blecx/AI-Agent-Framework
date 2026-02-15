@@ -18,7 +18,6 @@ import sys
 import json
 import time
 import asyncio
-import subprocess
 from pathlib import Path
 from typing import List, Optional, Dict, Tuple
 from datetime import datetime, timedelta
@@ -30,6 +29,12 @@ from agents.base_agent import BaseAgent, AgentPhase  # noqa: E402
 from agents.workflow_phase_services import (  # noqa: E402
     WorkflowPhaseService,
     build_default_phase_services,
+)
+from agents.workflow_side_effect_adapters import (  # noqa: E402
+    CommandExecutionResult,
+    SubprocessWorkflowSideEffectAdapter,
+    WorkflowSideEffectAdapter,
+    WorkflowSideEffectError,
 )
 
 
@@ -44,8 +49,13 @@ class CrossRepoContext:
     Eliminates confusion about Fixes: format and validation commands.
     """
 
-    def __init__(self, workspace_root: Path = Path(".")):
+    def __init__(
+        self,
+        workspace_root: Path = Path("."),
+        side_effects: Optional[WorkflowSideEffectAdapter] = None,
+    ):
         self.workspace_root = workspace_root
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.current_repo = None
         self.target_issue_repo = None
         self.pr_repo = None
@@ -56,11 +66,9 @@ class CrossRepoContext:
         """Detect current repo and related repos."""
         # Detect current repo from git remote
         try:
-            result = subprocess.run(
+            result = self.side_effects.run(
                 ["git", "remote", "get-url", "origin"],
                 cwd=self.workspace_root,
-                capture_output=True,
-                text=True,
                 check=True,
             )
             remote_url = result.stdout.strip()
@@ -74,7 +82,7 @@ class CrossRepoContext:
             else:
                 self.current_repo = "unknown"
                 self.pr_repo = "unknown"
-        except subprocess.CalledProcessError:
+        except WorkflowSideEffectError:
             self.current_repo = "unknown"
             self.pr_repo = "unknown"
 
@@ -125,7 +133,8 @@ class SmartRetry:
     Reduces wasted polling time by 60%.
     """
 
-    def __init__(self):
+    def __init__(self, side_effects: Optional[WorkflowSideEffectAdapter] = None):
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.backoff_schedule = [5, 10, 20, 40, 60, 60, 60]  # seconds
         self.max_wait = 600  # 10 minutes
         self._ci_time_history = {}
@@ -173,11 +182,9 @@ class SmartRetry:
     def _check_ci_status(self, pr_number: int, workspace_root: Path) -> str:
         """Check CI status for PR."""
         try:
-            result = subprocess.run(
+            result = self.side_effects.run(
                 ["gh", "pr", "checks", str(pr_number), "--json", "state"],
                 cwd=workspace_root,
-                capture_output=True,
-                text=True,
                 check=True,
             )
 
@@ -190,7 +197,7 @@ class SmartRetry:
                     return "FAILURE"
 
             return "PENDING"
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
+        except (WorkflowSideEffectError, json.JSONDecodeError):
             return "PENDING"
 
     def _estimate_ci_time(self) -> float:
@@ -221,7 +228,9 @@ class ParallelValidator:
 
     @staticmethod
     async def validate_pr_parallel(
-        workspace_root: Path, commands: List[str]
+        workspace_root: Path,
+        commands: List[str],
+        side_effects: Optional[WorkflowSideEffectAdapter] = None,
     ) -> Dict[str, Tuple[int, str, str]]:
         """
         Run all validations in parallel.
@@ -233,9 +242,10 @@ class ParallelValidator:
         Returns:
             Dict mapping command to (returncode, stdout, stderr)
         """
+        adapter = side_effects or SubprocessWorkflowSideEffectAdapter()
         tasks = []
         for cmd in commands:
-            tasks.append(ParallelValidator._run_command_async(workspace_root, cmd))
+            tasks.append(ParallelValidator._run_command_async(adapter, workspace_root, cmd))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -251,23 +261,14 @@ class ParallelValidator:
 
     @staticmethod
     async def _run_command_async(
-        workspace_root: Path, command: str
+        side_effects: WorkflowSideEffectAdapter, workspace_root: Path, command: str
     ) -> Tuple[int, str, str]:
         """Run a command asynchronously."""
-        proc = await asyncio.create_subprocess_shell(
-            command,
-            cwd=workspace_root,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout, stderr = await proc.communicate()
-
-        return (
-            proc.returncode,
-            stdout.decode() if stdout else "",
-            stderr.decode() if stderr else "",
-        )
+        try:
+            result = await side_effects.run_async_shell(command, cwd=workspace_root)
+            return (result.returncode, result.stdout, result.stderr)
+        except WorkflowSideEffectError as exc:
+            return (1, "", str(exc))
 
 
 # ===== End Phase 1 Improvements =====
@@ -416,8 +417,13 @@ class SmartValidation:
     Runs targeted validations to save time.
     """
 
-    def __init__(self, workspace_root: Path = Path(".")):
+    def __init__(
+        self,
+        workspace_root: Path = Path("."),
+        side_effects: Optional[WorkflowSideEffectAdapter] = None,
+    ):
         self.workspace_root = workspace_root
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.metrics = {
             "validation_time_saved_per_issue": 0.0,
             "unnecessary_test_runs_avoided": 0,
@@ -432,11 +438,9 @@ class SmartValidation:
         """
         try:
             # Get changed files
-            result = subprocess.run(
+            result = self.side_effects.run(
                 ["git", "diff", "--name-only", "HEAD"],
                 cwd=self.workspace_root,
-                capture_output=True,
-                text=True,
                 check=True,
             )
 
@@ -506,7 +510,7 @@ class SmartValidation:
                     "full": True,
                 }
 
-        except subprocess.CalledProcessError:
+        except WorkflowSideEffectError:
             # Default to full validation on error
             return {
                 "doc_only": False,
@@ -579,8 +583,13 @@ class ErrorRecovery:
     Reduces user interventions by 40%.
     """
 
-    def __init__(self, workspace_root: Path = Path(".")):
+    def __init__(
+        self,
+        workspace_root: Path = Path("."),
+        side_effects: Optional[WorkflowSideEffectAdapter] = None,
+    ):
         self.workspace_root = workspace_root
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.recovery_patterns = self._init_recovery_patterns()
         self.metrics = {
             "auto_recoveries_successful": 0,
@@ -689,8 +698,8 @@ class ErrorRecovery:
             elif recovery_cmd.startswith("npm install"):
                 module = pattern["match"].group(1)
                 cmd = recovery_cmd.format(module=module)
-                result = subprocess.run(
-                    cmd.split(), cwd=self.workspace_root, capture_output=True, text=True
+                result = self.side_effects.run(
+                    cmd.split(), cwd=self.workspace_root, check=False
                 )
                 if result.returncode == 0:
                     self.metrics["auto_recoveries_successful"] += 1
@@ -727,7 +736,8 @@ class IssuePreflight:
     Prevents 90% of 'wrong implementation' issues.
     """
 
-    def __init__(self):
+    def __init__(self, side_effects: Optional[WorkflowSideEffectAdapter] = None):
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.metrics = {"issues_failed_preflight": 0, "rework_time_saved_hours": 0.0}
 
     def validate_issue(self, issue_data: Dict) -> Tuple[bool, List[str]]:
@@ -794,7 +804,7 @@ class IssuePreflight:
             Issue data dict or None if fetch fails
         """
         try:
-            result = subprocess.run(
+            result = self.side_effects.run(
                 [
                     "gh",
                     "issue",
@@ -804,15 +814,13 @@ class IssuePreflight:
                     "title,body,labels,state",
                 ],
                 cwd=workspace_root,
-                capture_output=True,
-                text=True,
                 check=True,
             )
 
             if result.returncode == 0:
                 return json.loads(result.stdout)
 
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
+        except (WorkflowSideEffectError, json.JSONDecodeError):
             pass
 
         return None
@@ -826,8 +834,13 @@ class DocUpdater:
     Prevents docs from going stale.
     """
 
-    def __init__(self, workspace_root: Path = Path(".")):
+    def __init__(
+        self,
+        workspace_root: Path = Path("."),
+        side_effects: Optional[WorkflowSideEffectAdapter] = None,
+    ):
         self.workspace_root = workspace_root
+        self.side_effects = side_effects or SubprocessWorkflowSideEffectAdapter()
         self.metrics = {"auto_doc_updates": 0, "doc_staleness_issues_prevented": 0}
 
     def detect_documentation_impact(self) -> Dict[str, List[str]]:
@@ -841,11 +854,9 @@ class DocUpdater:
 
         try:
             # Get git diff
-            result = subprocess.run(
+            result = self.side_effects.run(
                 ["git", "diff", "HEAD", "--unified=0"],
                 cwd=self.workspace_root,
-                capture_output=True,
-                text=True,
                 check=True,
             )
 
@@ -877,7 +888,7 @@ class DocUpdater:
                 )
                 self.metrics["doc_staleness_issues_prevented"] += 1
 
-        except subprocess.CalledProcessError:
+        except WorkflowSideEffectError:
             pass
 
         return impacts
@@ -952,6 +963,10 @@ class WorkflowAgent(BaseAgent):
     def __init__(self, kb_dir: Path = Path("agents/knowledge")):
         super().__init__(name="workflow_agent", version="1.0.0", kb_dir=kb_dir)
 
+        self.side_effects: WorkflowSideEffectAdapter = (
+            SubprocessWorkflowSideEffectAdapter()
+        )
+
         # Define workflow phases
         self.phases = [
             AgentPhase("Phase 1: Context", "Read issue and gather context"),
@@ -965,16 +980,22 @@ class WorkflowAgent(BaseAgent):
         ]
 
         # Phase 1 improvements (Issues #159-#163)
-        self.cross_repo_context = CrossRepoContext()
-        self.smart_retry = SmartRetry()
+        self.cross_repo_context = CrossRepoContext(side_effects=self.side_effects)
+        self.smart_retry = SmartRetry(side_effects=self.side_effects)
         self.parallel_validator = ParallelValidator()
 
         # Phase 2 improvements (Issues #164-#168)
         self.incremental_kb = IncrementalKnowledgeBase(kb_dir=kb_dir)
-        self.smart_validation = SmartValidation(workspace_root=Path("."))
-        self.error_recovery = ErrorRecovery(workspace_root=Path("."))
-        self.issue_preflight = IssuePreflight()
-        self.doc_updater = DocUpdater(workspace_root=Path("."))
+        self.smart_validation = SmartValidation(
+            workspace_root=Path("."), side_effects=self.side_effects
+        )
+        self.error_recovery = ErrorRecovery(
+            workspace_root=Path("."), side_effects=self.side_effects
+        )
+        self.issue_preflight = IssuePreflight(side_effects=self.side_effects)
+        self.doc_updater = DocUpdater(
+            workspace_root=Path("."), side_effects=self.side_effects
+        )
 
         # Phase service interfaces (Issue #273)
         self.phase_services: Dict[str, WorkflowPhaseService] = (
@@ -998,6 +1019,45 @@ class WorkflowAgent(BaseAgent):
         if issue_num < self.MIN_ISSUE_NUMBER or issue_num > self.MAX_ISSUE_NUMBER:
             raise ValueError(
                 f"Issue number must be between {self.MIN_ISSUE_NUMBER} and {self.MAX_ISSUE_NUMBER}"
+            )
+
+    def run_command(
+        self, command: str, description: Optional[str] = None, check: bool = True
+    ) -> CommandExecutionResult:
+        """Run command via workflow side-effect adapter.
+
+        This override ensures workflow phases access subprocess/CLI side effects
+        through adapter interfaces with standardized error handling.
+        """
+        if description:
+            self.log(description, "progress")
+
+        self.log(f"Command: {command}", "info")
+
+        if self.dry_run:
+            self.log("(Dry run - command not executed)", "info")
+            return CommandExecutionResult(returncode=0, stdout="", stderr="")
+
+        try:
+            result = self.side_effects.run(command, shell=True, check=check)
+
+            if result.stdout:
+                self.log(f"Output: {result.stdout.strip()}", "info")
+
+            return result
+
+        except WorkflowSideEffectError as exc:
+            self.log(f"Command failed: {exc}", "error")
+            if exc.stderr:
+                self.log(f"Error: {exc.stderr.strip()}", "error")
+
+            if check:
+                raise
+
+            return CommandExecutionResult(
+                returncode=exc.returncode or 1,
+                stdout="",
+                stderr=exc.stderr or str(exc),
             )
 
     def execute(self, issue_num: int, **kwargs) -> bool:
@@ -1608,7 +1668,9 @@ class WorkflowAgent(BaseAgent):
 
         # Run async validation
         results = asyncio.run(
-            self.parallel_validator.validate_pr_parallel(Path("."), commands)
+            self.parallel_validator.validate_pr_parallel(
+                Path("."), commands, side_effects=self.side_effects
+            )
         )
 
         elapsed = time.time() - start_time
