@@ -118,7 +118,9 @@ def test_update_knowledge_base_preserves_workflow_patterns_object_schema(
         "common_phases": ["Planning"],
         "workflow_variants": {"standard_6_phase": {"count": 1}},
     }
-    (kb_dir / "workflow_patterns.json").write_text(json.dumps(original), encoding="utf-8")
+    (kb_dir / "workflow_patterns.json").write_text(
+        json.dumps(original), encoding="utf-8"
+    )
 
     incoming = {
         "last_updated": "2026-02-15T10:00:00",
@@ -128,7 +130,9 @@ def test_update_knowledge_base_preserves_workflow_patterns_object_schema(
     message = update_knowledge_base("workflow_patterns", json.dumps(incoming))
 
     assert message == "Updated workflow_patterns with 1 new entries"
-    updated = json.loads((kb_dir / "workflow_patterns.json").read_text(encoding="utf-8"))
+    updated = json.loads(
+        (kb_dir / "workflow_patterns.json").read_text(encoding="utf-8")
+    )
 
     assert isinstance(updated, dict)
     assert updated["issues"] == [{"issue_num": 1}, {"issue_num": 2}]
@@ -191,5 +195,7 @@ def test_update_knowledge_base_legacy_list_schema_still_appends(
     )
 
     assert message == "Updated problem_solutions with 1 new entries"
-    updated = json.loads((kb_dir / "problem_solutions.json").read_text(encoding="utf-8"))
+    updated = json.loads(
+        (kb_dir / "problem_solutions.json").read_text(encoding="utf-8")
+    )
     assert updated == [{"problem": "old"}, {"problem": "new"}]
