@@ -27,6 +27,10 @@ from datetime import datetime, timedelta
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agents.base_agent import BaseAgent, AgentPhase  # noqa: E402
+from agents.workflow_phase_services import (  # noqa: E402
+    WorkflowPhaseService,
+    build_default_phase_services,
+)
 
 
 # ===== Phase 1 Improvements (Issues #159-#163) =====
@@ -972,6 +976,11 @@ class WorkflowAgent(BaseAgent):
         self.issue_preflight = IssuePreflight()
         self.doc_updater = DocUpdater(workspace_root=Path("."))
 
+        # Phase service interfaces (Issue #273)
+        self.phase_services: Dict[str, WorkflowPhaseService] = (
+            build_default_phase_services()
+        )
+
         # Load CI behavior knowledge (Issue #161)
         self.ci_behavior_knowledge = self._load_ci_behavior_knowledge()
 
@@ -1053,20 +1062,13 @@ class WorkflowAgent(BaseAgent):
         try:
             phase_output = {}
 
-            if "Phase 1" in phase.name:
-                success = self._phase1_context(issue_num)
-            elif "Phase 2" in phase.name:
-                success = self._phase2_planning(issue_num)
-            elif "Phase 3" in phase.name:
-                success = self._phase3_implementation(issue_num)
-            elif "Phase 4" in phase.name:
-                success, phase_output = self._phase4_testing(issue_num)
-            elif "Phase 5" in phase.name:
-                success = self._phase5_review(issue_num)
-            elif "Phase 6" in phase.name:
-                success = self._phase6_merge(issue_num)
-            else:
+            service = self._get_phase_service(phase.name)
+            if not service:
                 success = False
+            else:
+                execution_result = service.execute(self, issue_num)
+                success = execution_result.success
+                phase_output = execution_result.output
 
             if success:
                 phase.complete()
@@ -1105,6 +1107,13 @@ class WorkflowAgent(BaseAgent):
                 )
 
             return False
+
+    def _get_phase_service(self, phase_name: str) -> Optional[WorkflowPhaseService]:
+        """Resolve the configured phase service for a phase display name."""
+        for phase_key, service in self.phase_services.items():
+            if phase_key in phase_name:
+                return service
+        return None
 
     def _phase1_context(self, issue_num: int) -> bool:
         """Phase 1: Context Gathering.
