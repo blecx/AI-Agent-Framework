@@ -1004,6 +1004,7 @@ class WorkflowAgent(BaseAgent):
 
         # Load CI behavior knowledge (Issue #161)
         self.ci_behavior_knowledge = self._load_ci_behavior_knowledge()
+        self.interactive = False
 
     def _validate_issue_number(self, issue_num: int) -> None:
         """Validate issue number to prevent command injection.
@@ -1075,6 +1076,7 @@ class WorkflowAgent(BaseAgent):
         """
         # Validate inputs
         self._validate_issue_number(issue_num)
+        self.interactive = bool(kwargs.get("interactive", False))
 
         self.log(f"🎯 Executing workflow for Issue #{issue_num}", "info")
 
@@ -1323,6 +1325,11 @@ Examples:
         help="Run in dry-run mode (no actual commands)",
     )
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Enable guided prompt pauses between workflow phase steps.",
+    )
+    parser.add_argument(
         "--kb-dir",
         type=str,
         default="agents/knowledge",
@@ -1332,7 +1339,11 @@ Examples:
     args = parser.parse_args()
 
     agent = WorkflowAgent(kb_dir=Path(args.kb_dir))
-    success = agent.run(dry_run=args.dry_run, issue_num=args.issue)
+    success = agent.run(
+        dry_run=args.dry_run,
+        issue_num=args.issue,
+        interactive=args.interactive,
+    )
 
     sys.exit(0 if success else 1)
 

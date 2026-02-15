@@ -24,6 +24,30 @@ def _detect_validation_repo_type(agent: Any) -> str:
     return "backend"
 
 
+def _is_interactive_mode(agent: Any) -> bool:
+    """Return whether phase execution should prompt for user input."""
+
+    return bool(getattr(agent, "interactive", False))
+
+
+def _prompt_or_default(agent: Any, message: str, default: str = "") -> str:
+    """Prompt user when interactive; otherwise return default response."""
+
+    if not agent.dry_run and _is_interactive_mode(agent):
+        return input(message)
+
+    if not agent.dry_run:
+        agent.log(f"Skipping prompt in non-interactive mode: {message}", "info")
+
+    return default
+
+
+def _pause_or_continue(agent: Any, message: str) -> None:
+    """Pause for input only in interactive mode."""
+
+    _prompt_or_default(agent, message, default="")
+
+
 @dataclass
 class PhaseExecutionResult:
     """Normalized result for a workflow phase execution."""
@@ -81,7 +105,9 @@ class ContextPhaseService:
 
                 if not agent.dry_run:
                     print("\n❌ Issue has quality issues that should be addressed first.")
-                    response = input("Continue anyway? (y/n): ")
+                    response = _prompt_or_default(
+                        agent, "Continue anyway? (y/n): ", default="n"
+                    )
                     if response.lower() != "y":
                         return PhaseExecutionResult(False, {})
             else:
@@ -110,7 +136,9 @@ class ContextPhaseService:
             print(result.stdout)
             print("=" * 60)
             print("\n⏸️  Review the issue context above.")
-            input("Press Enter when ready to continue to Planning phase...")
+            _pause_or_continue(
+                agent, "Press Enter when ready to continue to Planning phase..."
+            )
 
         return PhaseExecutionResult(True, {})
 
@@ -193,7 +221,7 @@ class PlanningPhaseService:
 
         print(f"\n📄 Planning document created at: {plan_file}")
         print("\n⏸️  Fill in the planning document with details from the issue.")
-        input("Press Enter when planning is complete...")
+        _pause_or_continue(agent, "Press Enter when planning is complete...")
 
         return PhaseExecutionResult(True, {})
 
@@ -218,7 +246,7 @@ class ImplementationPhaseService:
             print("  5. Commit changes with descriptive message")
             print("\n⚠️  Important: Get approval before removing any functionality")
             print("\n⏸️  Complete the implementation.")
-            input("Press Enter when implementation is complete...")
+            _pause_or_continue(agent, "Press Enter when implementation is complete...")
 
         return PhaseExecutionResult(True, {})
 
@@ -303,7 +331,9 @@ class TestingPhaseService:
 
                     if not agent.dry_run:
                         print(f"\n💡 Suggested solution: {known_problem['solution']}")
-                        response = input("Apply suggested fix? (y/n): ")
+                        response = _prompt_or_default(
+                            agent, "Apply suggested fix? (y/n): ", default="n"
+                        )
                         if response.lower() != "y":
                             success = False
                             break
@@ -364,7 +394,11 @@ class ReviewPhaseService:
                     print(f"\n{doc_file}:")
                     print(suggestion)
 
-                response = input("\nAdd reminder to update docs? (y/n): ")
+                response = _prompt_or_default(
+                    agent,
+                    "\nAdd reminder to update docs? (y/n): ",
+                    default="n",
+                )
                 if response.lower() == "y":
                     print("✅ Remember to update documentation before creating PR")
         else:
@@ -387,7 +421,7 @@ class ReviewPhaseService:
             )
             print("    • Address any issues found")
             print("\n⏸️  Complete both review steps.")
-            input("Press Enter when reviews are complete...")
+            _pause_or_continue(agent, "Press Enter when reviews are complete...")
 
         return PhaseExecutionResult(True, {})
 
@@ -410,7 +444,7 @@ class PrMergePhaseService:
         print("\n📋 Creating Pull Request...")
         print("Next step: gh pr create --fill")
 
-        input("Press Enter to create PR...")
+        _pause_or_continue(agent, "Press Enter to create PR...")
 
         result = agent.run_command(
             "gh pr create --fill", "Creating pull request", check=False
@@ -426,7 +460,7 @@ class PrMergePhaseService:
 
         if prmerge_script.exists():
             print("\n🔍 Running prmerge validation...")
-            input("Press Enter to run prmerge...")
+            _pause_or_continue(agent, "Press Enter to run prmerge...")
 
             result = agent.run_command(
                 str(prmerge_script), "Running prmerge workflow", check=False
@@ -444,7 +478,7 @@ class PrMergePhaseService:
             print("  1. Wait for CI checks to pass")
             print("  2. Get approval from reviewers")
             print("  3. Merge PR")
-            input("Press Enter when PR is merged...")
+            _pause_or_continue(agent, "Press Enter when PR is merged...")
 
         return PhaseExecutionResult(True, {})
 
