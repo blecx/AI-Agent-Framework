@@ -23,13 +23,24 @@ Current groups:
 - `config`
 - `health`
 
-## 3) Run health check
+## 3) Know what is TUI vs REST
+
+The current TUI does **not** expose `raid` or `workflow` groups.
+Use REST endpoints for those capabilities:
+
+- RAID: `/projects/{project_key}/raid`
+- Workflow state: `/projects/{project_key}/workflow/state`
+- Allowed transitions: `/projects/{project_key}/workflow/allowed-transitions`
+
+Versioned equivalents are available under `/api/v1/projects/{project_key}/...`.
+
+## 4) Run health check
 
 ```bash
 python apps/tui/main.py health
 ```
 
-## 4) List projects
+## 5) List projects
 
 ```bash
 python apps/tui/main.py projects list
