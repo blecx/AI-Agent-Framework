@@ -28,7 +28,12 @@ async def create_project(project: ProjectCreate, request: Request):
 
     # Create project
     project_info = git_manager.create_project(
-        project.key, {"key": project.key, "name": project.name}
+        project.key,
+        {
+            "key": project.key,
+            "name": project.name,
+            "description": project.description,
+        },
     )
 
     # Initialize workflow state
@@ -41,6 +46,7 @@ async def create_project(project: ProjectCreate, request: Request):
             "event_type": "project_created",
             "project_key": project.key,
             "project_name": project.name,
+            "project_description": project.description,
         },
     )
 
@@ -122,6 +128,8 @@ async def update_project(project_key: str, update: ProjectUpdate, request: Reque
     # Update fields that are provided
     if update.name is not None:
         project_info["name"] = update.name
+    if update.description is not None:
+        project_info["description"] = update.description
     if update.methodology is not None:
         project_info["methodology"] = update.methodology
 
