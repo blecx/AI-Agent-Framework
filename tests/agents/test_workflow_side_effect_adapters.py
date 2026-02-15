@@ -9,6 +9,7 @@ from agents.workflow_agent import (
     SmartValidation,
     WorkflowAgent,
 )
+from agents.validation_profiles import get_validation_commands
 from agents.workflow_side_effect_adapters import (
     CommandExecutionResult,
     SubprocessWorkflowSideEffectAdapter,
@@ -140,6 +141,60 @@ def test_cross_repo_context_uses_adapter_output_when_available():
 
     assert context.current_repo == "backend"
     assert context.pr_repo == "blecx/AI-Agent-Framework"
+
+
+def test_cross_repo_context_validation_commands_use_canonical_profile():
+    context = CrossRepoContext(
+        side_effects=_StubAdapter(stdout="git@github.com:blecx/AI-Agent-Framework.git")
+    )
+
+    assert context.get_validation_commands() == get_validation_commands(
+        "backend", "full"
+    )
+
+
+def test_smart_validation_uses_canonical_profiles_for_change_modes():
+    validator = SmartValidation(workspace_root=Path("."), side_effects=_StubAdapter())
+
+    validator.analyze_changes = lambda: {
+        "doc_only": True,
+        "test_only": False,
+        "type_only": False,
+        "full": False,
+    }
+    assert validator.get_validation_commands("client") == get_validation_commands(
+        "client", "doc_only"
+    )
+
+    validator.analyze_changes = lambda: {
+        "doc_only": False,
+        "test_only": True,
+        "type_only": False,
+        "full": False,
+    }
+    assert validator.get_validation_commands("backend") == get_validation_commands(
+        "backend", "test_only"
+    )
+
+    validator.analyze_changes = lambda: {
+        "doc_only": False,
+        "test_only": False,
+        "type_only": True,
+        "full": False,
+    }
+    assert validator.get_validation_commands("client") == get_validation_commands(
+        "client", "type_only"
+    )
+
+    validator.analyze_changes = lambda: {
+        "doc_only": False,
+        "test_only": False,
+        "type_only": False,
+        "full": True,
+    }
+    assert validator.get_validation_commands("backend") == get_validation_commands(
+        "backend", "full"
+    )
 
 
 def test_workflow_agent_run_command_delegates_to_side_effect_adapter(tmp_path):

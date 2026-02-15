@@ -11,6 +11,8 @@ from pathlib import Path
 import time
 from typing import Any, Dict, Protocol
 
+from agents.validation_profiles import get_validation_commands
+
 
 def _detect_validation_repo_type(agent: Any) -> str:
     """Resolve validation repo type using cross-repo context when available."""
@@ -277,14 +279,7 @@ class TestingPhaseService:
             agent.log(
                 "⚠️  No validation commands determined, using defaults", "warning"
             )
-            if repo_type == "client":
-                validation_commands = ["npm run lint", "npm test", "npm run build"]
-            else:
-                validation_commands = [
-                    "python -m black apps/api/",
-                    "python -m flake8 apps/api/",
-                    "pytest",
-                ]
+            validation_commands = get_validation_commands(repo_type, "full")
         else:
             agent.log(
                 f"📋 Smart validation determined {len(validation_commands)} commands:",

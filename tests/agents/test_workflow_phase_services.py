@@ -17,6 +17,7 @@ from agents.workflow_phase_services import (
     _detect_validation_repo_type,
     build_default_phase_services,
 )
+from agents.validation_profiles import get_validation_commands
 
 
 class _BoolAgent:
@@ -260,3 +261,19 @@ def test_context_phase_service_prompts_when_interactive_mode_enabled(monkeypatch
 
     assert result.success is True
     assert prompts == ["Press Enter when ready to continue to Planning phase..."]
+
+
+def test_testing_phase_service_fallback_uses_canonical_backend_defaults():
+    class _EmptySmartValidationStub(_SmartValidationStub):
+        def get_validation_commands(self, repo_type: str):
+            self.repo_type = repo_type
+            return []
+
+    service = TestingPhaseService()
+    agent = _AgentStub("backend")
+    agent.smart_validation = _EmptySmartValidationStub()
+
+    result = service.execute(agent, 297)
+
+    assert result.success is True
+    assert result.output["commands"] == get_validation_commands("backend", "full")
