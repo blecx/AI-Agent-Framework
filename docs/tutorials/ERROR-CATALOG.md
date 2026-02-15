@@ -141,7 +141,7 @@ Details: Project 'TEST-123' not found
 **Diagnostic Steps**:
 ```bash
 # List all projects
-docker compose exec api python /app/apps/tui/cli.py list-projects
+python apps/tui/main.py projects list
 
 # Check projectDocs directory
 ls -la projectDocs/
@@ -150,7 +150,7 @@ ls -la projectDocs/
 **Solution**:
 ```bash
 # Option 1: Create the project
-docker compose exec api python /app/apps/tui/cli.py create-project TEST-123 "My Project"
+python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 
 # Option 2: Use correct project key
 # Verify key from list-projects output
@@ -177,13 +177,13 @@ Details: Project 'TEST-001' already exists
 **Diagnostic Steps**:
 ```bash
 # List existing projects
-docker compose exec api python /app/apps/tui/cli.py list-projects
+python apps/tui/main.py projects list
 ```
 
 **Solution**:
 ```bash
 # Use different project key
-docker compose exec api python /app/apps/tui/cli.py create-project TEST-002 "My Project"
+python apps/tui/main.py projects create --key TEST-002 --name "My Project"
 
 # Or delete existing project first (caution: destructive)
 rm -rf projectDocs/TEST-001
@@ -264,7 +264,7 @@ open http://localhost:8000/docs
 **Solution**:
 ```bash
 # Use correct command name
-# Valid commands: create_charter, create_plan, add_risk, etc.
+# Valid commands: assess_gaps, generate_artifact, generate_plan
 # Check API docs for complete list
 ```
 
@@ -325,7 +325,7 @@ bash: python: command not found
 **Solution (Use Docker - Recommended)**:
 ```bash
 # Run TUI via Docker (no local Python needed)
-docker compose exec api python /app/apps/tui/cli.py --help
+python apps/tui/main.py --help
 ```
 
 **Solution (Local Setup)**:
@@ -439,7 +439,7 @@ Details: Proposal 'proposal-123' not found
 **Diagnostic Steps**:
 ```bash
 # List proposals for project
-docker compose exec api python /app/apps/tui/cli.py list-proposals TEST-001
+ls -la projectDocs/TEST-001/.proposals/
 
 # Check proposal file exists
 ls -la projectDocs/TEST-001/.proposals/
@@ -448,14 +448,14 @@ ls -la projectDocs/TEST-001/.proposals/
 **Solution**:
 ```bash
 # Option 1: Use correct proposal ID from list
-docker compose exec api python /app/apps/tui/cli.py list-proposals TEST-001
+ls -la projectDocs/TEST-001/.proposals/
 
 # Option 2: Create proposal first
-docker compose exec api python /app/apps/tui/cli.py propose TEST-001 create_charter
+python apps/tui/main.py commands propose --project TEST-001 --command generate_plan
 ```
 
 **Prevention**:
-- Always list proposals before applying
+- Always verify proposal IDs from `.proposals/` metadata before applying
 - Copy proposal ID exactly from list output
 
 **Related Errors**: Proposal already applied, Target artifact not found
@@ -475,7 +475,7 @@ Details: Proposal 'proposal-123' is already applied: cannot apply twice
 **Diagnostic Steps**:
 ```bash
 # Check proposal status
-docker compose exec api python /app/apps/tui/cli.py list-proposals TEST-001
+ls -la projectDocs/TEST-001/.proposals/
 
 # Status should be "applied" or "pending"
 ```
@@ -786,7 +786,7 @@ git reset --hard HEAD
 # Or recreate project (nuclear option)
 cd ../..
 rm -rf projectDocs/TEST-001
-docker compose exec api python /app/apps/tui/cli.py create-project TEST-001 "Test"
+python apps/tui/main.py projects create --key TEST-001 --name "Test"
 ```
 
 **Prevention**:
@@ -1026,7 +1026,7 @@ View logs: `docker compose logs -f api`
 **TUI Commands:**
 ```bash
 # Add --verbose flag (if supported)
-docker compose exec api python /app/apps/tui/cli.py create-project TEST-001 "Test" --verbose
+python apps/tui/main.py projects create --key TEST-001 --name "Test"
 ```
 
 ### Interactive Container Shell
@@ -1157,11 +1157,11 @@ open http://localhost:8080
 # ✅ Page loads
 
 # TUI works
-docker compose exec api python /app/apps/tui/cli.py --help
+python apps/tui/main.py --help
 # ✅ Shows help text
 
 # Can create project
-docker compose exec api python /app/apps/tui/cli.py create-project TEST999 "Test"
+python apps/tui/main.py projects create --key TEST999 --name "Test"
 # ✅ Returns project info
 
 # No errors in logs

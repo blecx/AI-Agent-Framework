@@ -192,7 +192,7 @@ The web interface follows a standard three-panel layout optimized for project ma
 **Dynamic Content Sections (vary based on selected project):**
 
 1. **Command Panel** (When project selected)
-   - Command dropdown (e.g., "create_charter", "assess_gaps")
+   - Command dropdown (e.g., "generate_artifact", "assess_gaps")
    - Description textarea for command context
    - "Propose" button to execute command
    - Recent proposals list below
