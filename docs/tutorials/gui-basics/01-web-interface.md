@@ -2,6 +2,101 @@
 
 **Duration:** 10 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
+## Goal / Context
+
+This tutorial now documents the shipped behavior in `apps/web` and `apps/api` only.
+
+## Prerequisites
+
+- Docker stack is running (`docker compose up -d`)
+- Web UI reachable at <http://localhost:8080>
+- API reachable at <http://localhost:8000>
+
+Canonical setup instructions: [Setup Guide](../shared/00-setup-guide.md).
+
+## Current UI (Shipped)
+
+At `http://localhost:8080`, the current app renders:
+
+- Header: `ISO 21500 Project Management AI Agent`
+- Workflow indicator section
+- Project selection / creation screen (when no project selected)
+- Project view with `Commands` and `Artifacts` tabs (after selecting a project)
+
+## Future Scope (Not Shipped Yet)
+
+- Sidebar-first layout described in earlier drafts
+- Header API status indicator
+- Global shortcuts/help overlay
+
+## Steps
+
+### 1) Open the web app
+
+Open <http://localhost:8080>.
+
+Expected: header text and the `Select or Create Project` screen are visible.
+
+### 2) Open API docs
+
+Open <http://localhost:8000/docs>.
+
+Check these endpoints:
+
+- `GET /health`
+- `GET /projects`
+- `POST /projects`
+- `GET /projects/{project_key}/state`
+- `GET /projects/{project_key}/artifacts`
+
+### 3) Verify health response
+
+Use Swagger or:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Expected fields:
+
+```json
+{
+   "status": "healthy",
+   "docs_path": "/projectDocs",
+   "docs_exists": true,
+   "docs_is_git": true,
+   "message": "API is running"
+}
+```
+
+## API Route Mapping (Important)
+
+- Frontend uses `/api/*` calls (`apps/web/src/services/api.js`)
+- Vite dev proxy rewrites `/api` to backend root
+- Docker Nginx proxies `/api/` to backend
+
+Example mapping:
+
+- Browser request: `/api/projects`
+- Backend endpoint: `/projects`
+
+## Visual Coverage Report
+
+### 01-web-interface.md
+
+- Existing asset: `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
+- Missing asset: current app header + create/select project screen
+- Missing asset: Swagger `/health` execution result screen
+
+## Next
+
+- Continue with [02 - Project Creation](02-project-creation.md)
+
+<!-- Legacy content retained below for history; excluded from tutorial flow. -->
+<!--
+
+**Duration:** 10 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
+
 ## Overview
 
 Get familiar with the AI-Agent Framework's web interface. This comprehensive guide walks you through accessing the web UI, understanding its layout and components, using browser developer tools, and navigating the API documentation. You'll learn the fundamentals needed for all subsequent GUI tutorials.
@@ -50,10 +145,6 @@ docker ps | grep -E "ai-agent.*-(web|api)"
 
 **Expected Output:**
 ```
-CONTAINER ID   IMAGE                STATUS        PORTS
-abc123...      ai-agent-web:latest  Up 2 minutes  0.0.0.0:8080->80/tcp
-def456...      ai-agent-api:latest  Up 2 minutes  0.0.0.0:8000->8000/tcp
-```
 
 ✅ **Pre-flight Checkpoint:** Both containers running, ports accessible
 
@@ -84,7 +175,7 @@ http://localhost:8080
 
 ✅ **Checkpoint 1.1:** Web UI loads without errors, header visible
 
-**Screenshot Reference:** `docs/screenshots/gui-01-homepage.png` (main interface on first load)
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png` (main interface on first load)
 
 ### Step 1.1: Verify Page Load Completion
 
@@ -94,8 +185,6 @@ Check browser for complete page load:
 - No spinner/loading animation
 - "AI-Agent Framework" header fully rendered
 - Sidebar content visible
-- No "Loading..." placeholder text
-
 **Browser Developer Console Check (Optional but Recommended):**
 1. Press `F12` (Windows/Linux) or `Cmd+Option+I` (Mac)
 2. Open "Console" tab
@@ -104,11 +193,6 @@ Check browser for complete page load:
 **Expected Console Output:**
 ```
 [Vite] connected.
-React app initialized
-API health check: OK
-```
-
-**Common Console Warnings (Safe to Ignore):**
 ```
 Download the React DevTools for a better development experience
 ```
@@ -129,31 +213,19 @@ Download the React DevTools for a better development experience
   - **Fix:** Verify API container: `docker ps | grep api`, then navigate to Step 2
 
 ### Step 2: UI Layout Deep Dive
-
-The web interface follows a standard three-panel layout optimized for project management workflows:
-
 **Visual Layout:**
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Header: AI-Agent Framework        [API Status] [Settings]   │
 ├──────────────┬──────────────────────────────────────────────┤
 │   Sidebar    │          Main Content Area                   │
 │   (Left)     │                                               │
-│              │                                               │
-│ □ Projects   │   [Command Panel]                            │
-│   List       │   [Proposal Viewer]                          │
 │              │   [Artifacts Browser]                        │
 │ + Create     │   [RAID Register]                            │
 │   New        │   [Workflow State]                           │
 │              │                                               │
 │ [Selected:]  │                                               │
-│ TODO-001     │                                               │
-│              │                                               │
-├──────────────┴──────────────────────────────────────────────┤
 │ Footer: Version 1.0 | Docs | Support                        │
 └─────────────────────────────────────────────────────────────┘
 ```
-
 #### 2.1: Sidebar (Left Panel - 25% width)
 
 **Purpose:** Project selection and quick navigation
@@ -181,7 +253,7 @@ The web interface follows a standard three-panel layout optimized for project ma
 - `Enter` to select project
 - `Ctrl+N` to create new project (if focus in sidebar)
 
-**Screenshot Reference:** `docs/screenshots/gui-01-sidebar.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
 
 ✅ **Checkpoint 2.1:** Sidebar visible, understand project selection
 
@@ -232,7 +304,7 @@ The web interface follows a standard three-panel layout optimized for project ma
 - **Proposal Active:** Shows proposal modal overlay
 - **Loading:** Shows spinner with "Loading project..." message
 
-**Screenshot Reference:** `docs/screenshots/gui-01-main-content.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/02-project-commands-tab.png`
 
 ✅ **Checkpoint 2.2:** Main content area visible, understand dynamic sections
 
@@ -270,7 +342,7 @@ The web interface follows a standard three-panel layout optimized for project ma
 ●  API Slow           (Yellow - Response time: 3.2s)
 ```
 
-**Screenshot Reference:** `docs/screenshots/gui-01-header-status.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
 
 ✅ **Checkpoint 2.3:** Header visible, API status indicator working
 
@@ -360,7 +432,7 @@ http://localhost:8000/docs
 
 ✅ **Checkpoint 3.1:** API documentation loads in Swagger UI
 
-**Screenshot Reference:** `docs/screenshots/gui-01-swagger-overview.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
 
 #### 3.2: Explore Endpoint Categories
 
@@ -473,7 +545,7 @@ http://localhost:8000/health
 
 ✅ **Checkpoint 4.2:** Health check executed successfully, received 200 OK response
 
-**Screenshot Reference:** `docs/screenshots/gui-01-health-check-response.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
 
 #### 4.3: Interpret Health Response Fields
 
@@ -575,7 +647,7 @@ Name                    Status  Type    Size    Time
 
 ✅ **Checkpoint 5.2:** DevTools open, console shows no errors
 
-**Screenshot Reference:** `docs/screenshots/gui-01-devtools-console.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/01-home-overview.png`
 
 #### 5.3: Test API Connection from DevTools Console
 
@@ -898,3 +970,5 @@ Before proceeding to Tutorial 02, verify you can:
 - [Web UI Component Guide](../../architecture/web-ui-components.md) - Detailed React component docs
 - [Docker Deployment Guide](../../deployment/docker-deployment.md) - Container architecture
 - [Troubleshooting Guide](../ERROR-CATALOG.md) - Comprehensive error solutions
+
+-->
