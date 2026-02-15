@@ -28,6 +28,7 @@ These prompts are automatically referenced by agents when running in their respe
 - **[resolve-issue-dev.md](resolve-issue-dev.md)** - Implement solutions following DDD architecture
 - **[pr-merge.md](pr-merge.md)** - Merge PRs, close linked issues, clean workspace
 - **[close-issue.md](close-issue.md)** - Close GitHub issues with traceability
+- **[tutorial.md](tutorial.md)** - Produce best-in-class Markdown tutorials with screenshots, draw.io schematics, gap detection, and duplicate-content control
 
 ## Design Principles
 

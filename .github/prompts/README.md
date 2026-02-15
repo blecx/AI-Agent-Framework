@@ -100,6 +100,56 @@ This directory contains reusable prompt templates to help standardize GitHub Cop
 
 ---
 
+### 6. [tutorial-invocation.md](./tutorial-invocation.md)
+
+**Purpose:** Ready-to-use invocation prompts for the custom `tutorial` agent to generate best-in-class Markdown tutorials.
+
+**When to use:**
+
+- Creating UX or TUI tutorials with strict quality rails
+- Enforcing screenshot + draw.io diagram coverage
+- Detecting feature gaps and logical breaks for developer follow-up
+- Preventing duplicate tutorial content across UX/TUI tracks
+
+**Output:**
+
+- Copy-pasteable prompts for generic, UX-only, and TUI-only tutorial generation
+- Built-in requirements for Markdown-only output, gap list, and duplication audit
+
+---
+
+### 7. [tutorial-default-prompt.md](./tutorial-default-prompt.md)
+
+**Purpose:** Ultra-short default prompt for the custom `tutorial` agent (team baseline).
+
+**When to use:**
+
+- You need one standard, quick invocation without extra setup
+- You want consistent UX/TUI-separated tutorial outcomes across contributors
+
+**Output:**
+
+- Minimal copy-paste prompt enforcing Markdown-only output, visual assets, feature-gap reporting, and duplicate-content control
+
+---
+
+### 8. [tutorial-audit-strict.md](./tutorial-audit-strict.md)
+
+**Purpose:** Strict audit-mode prompt for the `tutorial` agent to assess existing tutorials without drafting new tutorial flows.
+
+**When to use:**
+
+- Auditing tutorial quality and consistency at scale
+- Identifying logical breaks and feature/behavior gaps
+- Enforcing no-duplication and canonical content structure
+- Verifying visual coverage (screenshots, schema pictures, workflow pictures)
+
+**Output:**
+
+- Markdown-only audit package with summary, defect list, feature gap list, duplicate-content audit, visual coverage report, and prioritized fix plan
+
+---
+
 ## How to Use These Templates
 
 ### Method 1: Direct Copy-Paste
