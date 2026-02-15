@@ -36,6 +36,9 @@ from agents.workflow_side_effect_adapters import (  # noqa: E402
     WorkflowSideEffectAdapter,
     WorkflowSideEffectError,
 )
+from agents.validation_profiles import (  # noqa: E402
+    get_validation_commands as get_profile_validation_commands,
+)
 
 
 # ===== Phase 1 Improvements (Issues #159-#163) =====
@@ -88,13 +91,11 @@ class CrossRepoContext:
 
     def get_validation_commands(self) -> List[str]:
         """Return correct validation commands for current repo."""
-        if self.current_repo == "client":
-            return ["npm install", "npm run lint", "npm test", "npm run build"]
-        elif self.current_repo == "backend":
-            return ["python -m black apps/api/", "python -m flake8 apps/api/", "pytest"]
-        else:
-            # Unknown repo, return safe defaults
-            return []
+        if self.current_repo in {"client", "backend"}:
+            return get_profile_validation_commands(self.current_repo, "full")
+
+        # Unknown repo, return safe defaults
+        return []
 
     def get_fixes_format(
         self, issue_number: int, target_repo: Optional[str] = None
@@ -532,47 +533,26 @@ class SmartValidation:
             List of validation commands to run
         """
         changes = self.analyze_changes()
-        commands = []
 
         if changes["doc_only"]:
             # Only markdown linting for doc changes
-            if repo_type == "client":
-                commands = ["npx markdownlint '**/*.md' --ignore node_modules"]
-            else:
-                commands = []  # Backend doesn't have markdown linting
+            commands = get_profile_validation_commands(repo_type, "doc_only")
             self.metrics["unnecessary_test_runs_avoided"] += 1
             self.metrics["validation_time_saved_per_issue"] += 120  # 2 minutes saved
 
         elif changes["test_only"]:
             # Lint + tests only (no build)
-            if repo_type == "client":
-                commands = ["npm run lint", "npm test"]
-            else:
-                commands = [
-                    "python -m black apps/api/",
-                    "python -m flake8 apps/api/",
-                    "pytest",
-                ]
+            commands = get_profile_validation_commands(repo_type, "test_only")
             self.metrics["validation_time_saved_per_issue"] += 60  # 1 minute saved
 
         elif changes["type_only"]:
             # Type check + lint only
-            if repo_type == "client":
-                commands = ["npx tsc --noEmit", "npm run lint"]
-            else:
-                commands = ["python -m mypy apps/api/"]
+            commands = get_profile_validation_commands(repo_type, "type_only")
             self.metrics["validation_time_saved_per_issue"] += 90  # 1.5 minutes saved
 
         else:
             # Full validation
-            if repo_type == "client":
-                commands = ["npm run lint", "npm test", "npm run build"]
-            else:
-                commands = [
-                    "python -m black apps/api/",
-                    "python -m flake8 apps/api/",
-                    "pytest",
-                ]
+            commands = get_profile_validation_commands(repo_type, "full")
 
         return commands
 
