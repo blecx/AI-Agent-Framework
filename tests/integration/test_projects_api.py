@@ -87,7 +87,9 @@ class TestProjectsDescriptionAPI:
         list_response = client.get("/projects")
         assert list_response.status_code == 200
         listed = list_response.json()
-        listed_project = next((item for item in listed if item["key"] == "TEST002"), None)
+        listed_project = next(
+            (item for item in listed if item["key"] == "TEST002"), None
+        )
         assert listed_project is not None
         assert listed_project["description"] == "A richer project context"
 
