@@ -1,7 +1,9 @@
 # GUI Workflow States (via API)
 
-Current Web UI focuses on **Commands** and **Artifacts** tabs.
-For workflow-state operations, use REST API endpoints.
+Current web app shows a **visual workflow indicator** in the header area.
+That control is local UI state.
+
+For persisted workflow-state operations (source of truth), use REST API endpoints below.
 
 ## Read workflow state
 
@@ -24,6 +26,7 @@ curl -s -X PATCH http://localhost:8000/projects/TODO-001/workflow/state \
 ```
 
 ## Supported states and transitions
+
 - initiating → planning
 - planning → executing | initiating
 - executing → monitoring | planning
@@ -31,6 +34,7 @@ curl -s -X PATCH http://localhost:8000/projects/TODO-001/workflow/state \
 - closing → closed
 
 ## Versioned equivalents
+
 - `/api/v1/projects/{project_key}/workflow/state`
 - `/api/v1/projects/{project_key}/workflow/allowed-transitions`
 
