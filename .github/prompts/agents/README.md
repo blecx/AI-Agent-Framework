@@ -9,7 +9,7 @@ These prompts are automatically referenced by agents when running in their respe
 1. **VS Code Copilot Integration**: Agents are invoked via `chat.tools.subagent.autoApprove` settings
    - Configuration: See `docs/VSCODE-GLOBAL-SETTINGS.md`
    - Settings file: `.vscode/settings.json`
-   - Auto-approved agents: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
+   - Auto-approved agents: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`, `tutorial`
 
 2. **Copilot Instructions**: These workflows are referenced in `.github/copilot-instructions.md`
    - Agents automatically follow these patterns when in their respective modes

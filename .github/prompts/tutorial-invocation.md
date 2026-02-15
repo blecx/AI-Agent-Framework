@@ -19,9 +19,9 @@ Mandatory requirements:
 2) Include screenshots for major user transitions (required).
 3) Include schema picture(s) with draw.io source + exported SVG references (required).
 4) Include workflow picture(s) visualizing end-to-end step flow (required).
-4) Detect logical breaks/functional gaps and add a "Feature Gap List" section for developers.
-5) Prevent duplicate content with existing tutorials.
-6) Keep UX and TUI content fully separated (self-contained learning path per track).
+5) Detect logical breaks/functional gaps and add a "Feature Gap List" section for developers.
+6) Prevent duplicate content with existing tutorials.
+7) Keep UX and TUI content fully separated (self-contained learning path per track).
 
 Deliverables (all Markdown):
 - Main tutorial document
@@ -127,4 +127,6 @@ Result format (Markdown only):
 4) Duplicate Content Audit (canonicalization plan)
 5) Visual Coverage Report (missing/available screenshots/schema/workflow pictures)
 6) Recommended Fix Plan (prioritized)
+
+Do not return alternate output structures in strict mode.
 ```

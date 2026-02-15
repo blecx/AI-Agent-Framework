@@ -20,6 +20,7 @@ Your mission is to produce **best-in-class tutorials** that are:
 ## Required Behaviors
 
 - Follow the rails in: `.github/prompts/agents/tutorial.md`.
+- For strict audit-only runs, use: `.github/prompts/tutorial-audit-strict.md` and keep its required Markdown result format.
 - Use scripted screenshot generation where possible (Playwright preferred).
 - Use draw.io source-controlled diagrams (`.drawio`) with generated SVG assets.
 - Validate documented steps against real behavior before finalizing.
