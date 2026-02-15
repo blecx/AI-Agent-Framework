@@ -7,6 +7,8 @@
 **Issues Created:** 18 (9 backend + 7 UX + 2 E2E tests)  
 **Requirements Coverage:** 100% (9/9 requirements fully scoped)
 
+**Reconciliation Note (2026-02-15):** GitHub issue states were re-verified; #77 and #78 are closed and reflected below.
+
 ---
 
 ## Summary
@@ -33,8 +35,8 @@ Step 2 planning is **complete and ready for implementation**. All requirements h
 - [x] #74 - Step 2.06 — Artifact REST API endpoints (✅ MERGED PR #101)
 - [x] #75 - Step 2.07 — Proposal domain models (✅ MERGED PR #99)
 - [x] #76 - Step 2.08 — Proposal service (propose, apply, reject) (✅ MERGED PR #100)
-- [ ] #77 - Step 2.09 — Proposal REST API endpoints
-- [ ] #78 - Step 2.17 — End-to-end tests for complete Step 2 workflow (backend)
+- [x] #77 - Step 2.09 — Proposal REST API endpoints (✅ CLOSED)
+- [x] #78 - Step 2.17 — End-to-end tests for complete Step 2 workflow (backend) (✅ CLOSED)
 
 ### UX (blecx/AI-Agent-Framework-Client)
 
@@ -198,7 +200,7 @@ Step 2 is **COMPLETE** when:
 
 ### Functional
 
-- [ ] All 18 issues closed
+- [x] All 18 issues closed
 - [ ] All acceptance criteria met
 - [ ] All E2E tests pass (backend + client)
 - [ ] No critical bugs
