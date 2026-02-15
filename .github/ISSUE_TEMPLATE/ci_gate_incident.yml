@@ -1,0 +1,103 @@
+name: CI Gate Incident
+description: Report a failing CI gate with evidence-first triage details
+title: "ci: "
+labels: ["ci", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when CI is failing or when an older CI issue needs re-scoping.
+
+        **Evidence-first rule:**
+        A CI incident issue must include a failing run URL, failing job/step, and a local reproduction attempt.
+
+  - type: input
+    id: failing-run-url
+    attributes:
+      label: Failing Workflow Run URL
+      description: Link to the exact failed GitHub Actions run
+      placeholder: https://github.com/blecx/AI-Agent-Framework/actions/runs/...
+    validations:
+      required: true
+
+  - type: input
+    id: failing-workflow
+    attributes:
+      label: Failing Workflow / Job / Step
+      description: Name the workflow and failing job/step precisely
+      placeholder: "Backend CI Quality Gates / Gate 6: Linting / Run flake8"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducible-command
+    attributes:
+      label: Local Reproduction Command(s)
+      description: Exact command(s) run locally to reproduce
+      placeholder: |
+        source .venv/bin/activate
+        python -m flake8 apps/api/
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-output
+    attributes:
+      label: Reproduction Output
+      description: Paste relevant local output and/or CI logs
+      placeholder: Paste error output here
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: Expected vs Actual
+      description: Describe what should happen and what happened instead
+      value: |
+        **Expected**
+        -
+
+        **Actual**
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope Proposal
+      description: Define precise in-scope and out-of-scope work
+      value: |
+        ## In Scope
+        -
+
+        ## Out of Scope
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Use testable, checkable completion criteria
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: hygiene
+    attributes:
+      label: Repo Hygiene / Safety
+      value: |
+        - [ ] No changes to `projectDocs/`.
+        - [ ] No changes to `configs/llm.json`.
+        - [ ] No secrets added.
+    validations:
+      required: true
