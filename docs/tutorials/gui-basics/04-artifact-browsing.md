@@ -2,6 +2,64 @@
 
 **Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
+## Goal / Context
+
+This page now reflects the shipped artifact browsing experience in:
+
+- `apps/web/src/components/ProjectView.jsx`
+- `apps/web/src/components/ArtifactsList.jsx`
+- `apps/web/src/services/api.js`
+
+## Prerequisites
+
+- Complete [02 - Project Creation](02-project-creation.md)
+- Have a selected project with at least one generated artifact
+- Open the app at <http://localhost:8080>
+
+## Current Artifact Browsing (Shipped)
+
+1. Open a project card.
+2. In `ProjectView`, click the **Artifacts** tab.
+3. You will see:
+    - `Project Artifacts` header
+    - `Refresh` button
+    - Artifact cards with icon, name, path, and type
+4. Click an artifact card to open a modal viewer.
+5. Viewer displays content in a `<pre>` block and can be closed with `✕` or background click.
+
+## Current API Contract for Artifact View
+
+- List comes from project state (`GET /api/projects/{projectKey}/state`)
+- Artifact content fetch (frontend): `GET /api/projects/{projectKey}/artifacts/{artifactPath}`
+- Artifact content fetch (backend): `GET /projects/{project_key}/artifacts/{artifact_path}`
+
+## Future Scope (Explicit)
+
+The following UX is not currently implemented in this app and is considered future scope:
+
+- Tree view / nested folder explorer
+- Search/filter box
+- Per-file download button
+- ZIP export button
+- Tree/list mode toggle
+
+## Visual Coverage Report
+
+### 04-artifact-browsing.md
+
+- Existing asset: `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
+- Missing asset: current artifact card grid (with name/path/type)
+- Missing asset: artifact modal content viewer (`<pre>` rendering)
+
+## Next
+
+- Continue with [05 - Workflow States](05-workflow-states.md)
+
+<!-- Legacy content retained below for history; excluded from tutorial flow. -->
+<!--
+
+**Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
+
 ## Overview
 
 Master artifact browsing in the AI-Agent Framework web interface. This comprehensive guide walks you through navigating the artifact tree structure, viewing file content with various renderers, downloading individual files, searching artifacts, understanding file metadata, and exporting complete artifact collections. You'll learn to efficiently manage and review all project-generated documents.
@@ -120,7 +178,7 @@ The artifacts browser may appear in different locations depending on UI layout:
 
 ✅ **Checkpoint 1.2:** Artifacts tab is visible and loaded
 
-**Screenshot Reference:** `docs/screenshots/gui-04-artifacts-overview.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 1.3: Understand Artifacts Tab Layout
 
@@ -186,7 +244,7 @@ Explore the hierarchical folder structure containing all project artifacts.
 
 ✅ **Checkpoint 2.1:** See root artifact folder structure
 
-**Screenshot Reference:** `docs/screenshots/gui-04-tree-root.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 2.2: Expand Charters Folder
 
@@ -251,7 +309,7 @@ Practice navigation by expanding and collapsing folders:
 
 ✅ **Checkpoint 2.3:** Successfully expanded and collapsed multiple folders
 
-**Screenshot Reference:** `docs/screenshots/gui-04-tree-expanded.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 2.4: Understand Nested Folder Structure
 
@@ -315,7 +373,7 @@ Open and read artifact files directly in the browser.
 
 ✅ **Checkpoint 3.1:** File viewer opened, header information visible
 
-**Screenshot Reference:** `docs/screenshots/gui-04-file-viewer-modal.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 3.2: View Markdown Rendering
 
@@ -415,7 +473,7 @@ Close the charter file and open different file types to see rendering difference
 
 ✅ **Checkpoint 3.4:** Viewed multiple file types, understand different renderers
 
-**Screenshot Reference:** `docs/screenshots/gui-04-markdown-rendered.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 3.5: Close File Viewer
 
@@ -462,7 +520,7 @@ Save artifact files to your local computer.
 
 ✅ **Checkpoint 4.1:** File downloaded to local system
 
-**Screenshot Reference:** `docs/screenshots/gui-04-download-action.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 4.2: Verify Downloaded File
 
@@ -555,7 +613,7 @@ Find specific artifacts quickly using search functionality.
 
 ✅ **Checkpoint 5.1:** Search filters artifact list, see only matching items
 
-**Screenshot Reference:** `docs/screenshots/gui-04-search-filter.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 5.2: Test Different Search Queries
 
@@ -642,7 +700,7 @@ Download entire artifact collection in one archive file.
 
 ✅ **Checkpoint 6.2:** ZIP export initiated, download in progress
 
-**Screenshot Reference:** `docs/screenshots/gui-04-export-zip.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 6.3: Extract and Verify ZIP Contents
 
@@ -782,7 +840,7 @@ Some UIs offer alternative view modes for artifacts.
 
 ✅ **Checkpoint 7.1:** List view displayed (if feature available)
 
-**Screenshot Reference:** `docs/screenshots/gui-04-list-view.png`
+**Screenshot Reference:** `docs/tutorials/assets/screenshots/workflow/04-artifacts-tab.png`
 
 #### 7.2: Return to Tree View
 
@@ -1236,3 +1294,5 @@ Before proceeding to Tutorial 05, verify you can:
 - [ISO 21500 Artifacts Guide](../../spec/iso21500-artifacts.md) - Complete artifact reference
 - [Git Artifact Storage](../../architecture/git-storage.md) - How artifacts are stored
 - [Error Catalog](../ERROR-CATALOG.md) - Comprehensive error solutions
+
+-->

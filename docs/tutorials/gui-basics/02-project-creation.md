@@ -2,6 +2,74 @@
 
 **Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
 
+## Goal / Context
+
+This tutorial matches the current create-project flow implemented in:
+
+- `apps/web/src/components/ProjectSelector.jsx`
+- `apps/web/src/services/api.js`
+
+## Prerequisites
+
+- Complete [01 - Web Interface](01-web-interface.md)
+- Open <http://localhost:8080>
+- API healthy at <http://localhost:8000/health>
+
+## Current Create Flow (Shipped)
+
+1. In `Select or Create Project`, click **+ Create New Project**.
+2. Fill:
+   - `Project Key`
+   - `Project Name`
+3. Click **Create Project**.
+
+### Important current behavior
+
+- The UI currently submits **key + name** only.
+- A description field is **not currently present** in this form.
+- Valid key pattern in the form: `[a-zA-Z0-9_-]+`
+
+## Verification Steps
+
+1. Create project `TODO_001` (or any unused key matching the pattern).
+2. Confirm the project appears under **Existing Projects**.
+3. Click the project card.
+4. Confirm you enter `ProjectView` and can see `Commands` and `Artifacts` tabs.
+
+## API Contract Reference
+
+Frontend call:
+
+- `POST /api/projects` with body `{ "key": "...", "name": "..." }`
+
+Backend route:
+
+- `POST /projects`
+
+## Future Scope (Explicit)
+
+- Richer project metadata fields in the create form (e.g., description)
+- Sidebar-specific project list patterns documented in older drafts
+
+## Visual Coverage Report
+
+### 02-project-creation.md
+
+- Existing asset(s):
+  - `docs/tutorials/assets/screenshots/workflow/02-project-commands-tab.png`
+- Missing asset(s) to capture later:
+  - Current create form (`Project Key`, `Project Name`)
+  - Existing Projects card list after successful creation
+
+## Next
+
+- Continue with [03 - Commands and Proposals](03-commands-and-proposals.md)
+
+<!-- Legacy content retained below for history; excluded from tutorial flow. -->
+<!--
+
+**Duration:** 15 minutes | **Difficulty:** Beginner | **Interface:** Web GUI
+
 ## Overview
 
 Create your first ISO 21500 project using the web interface. This comprehensive tutorial walks you through the project creation form with detailed field explanations, validation rules, form submission, and verification steps. You'll learn about project key naming conventions, form best practices, and how to troubleshoot common creation issues.
@@ -185,3 +253,5 @@ See [TUI First Project](../tui-basics/02-first-project.md)
 ---
 
 **Tutorial Series:** [GUI Basics](../README.md#gui-basics) | **Previous:** [01 - Web Interface](01-web-interface.md) | **Next:** [03 - Commands and Proposals](03-commands-and-proposals.md)
+
+-->
