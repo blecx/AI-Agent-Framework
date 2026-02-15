@@ -210,7 +210,8 @@
     "resolve-issue-dev": true,
     "close-issue": true,
     "pr-merge": true,
-    "Plan": true
+    "Plan": true,
+    "tutorial": true
   },
   "git.ignoredRepositories": [
     "${workspaceFolder}/projectDocs"
