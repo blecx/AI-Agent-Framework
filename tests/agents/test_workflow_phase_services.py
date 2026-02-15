@@ -6,8 +6,14 @@ from pathlib import Path
 from agents.base_agent import AgentPhase
 from agents.workflow_agent import WorkflowAgent
 from agents.workflow_phase_services import (
+    ContextPhaseService,
+    ImplementationPhaseService,
     MethodDelegatingPhaseService,
+    PlanningPhaseService,
+    PrMergePhaseService,
     PhaseExecutionResult,
+    ReviewPhaseService,
+    TestingPhaseService,
     build_default_phase_services,
 )
 
@@ -52,6 +58,13 @@ def test_build_default_phase_services_contains_all_six_phases():
         "Phase 6",
     }
 
+    assert isinstance(services["Phase 1"], ContextPhaseService)
+    assert isinstance(services["Phase 2"], PlanningPhaseService)
+    assert isinstance(services["Phase 3"], ImplementationPhaseService)
+    assert isinstance(services["Phase 4"], TestingPhaseService)
+    assert isinstance(services["Phase 5"], ReviewPhaseService)
+    assert isinstance(services["Phase 6"], PrMergePhaseService)
+
 
 def test_workflow_agent_executes_phase_using_phase_service(tmp_path):
     kb_dir = Path(tmp_path) / "kb"
@@ -70,3 +83,38 @@ def test_workflow_agent_executes_phase_using_phase_service(tmp_path):
 
     assert success is True
     assert phase.completed is True
+
+
+def test_workflow_agent_default_phase_delegation_no_longer_uses_phase_methods(tmp_path):
+    agent = WorkflowAgent(kb_dir=Path(tmp_path) / "kb")
+
+    assert not hasattr(agent, "_phase1_context")
+    assert not hasattr(agent, "_phase2_planning")
+    assert not hasattr(agent, "_phase3_implementation")
+    assert not hasattr(agent, "_phase4_testing")
+    assert not hasattr(agent, "_phase5_review")
+    assert not hasattr(agent, "_phase6_merge")
+
+
+def test_workflow_agent_execute_regression_with_stubbed_phase_services(tmp_path):
+    kb_dir = Path(tmp_path) / "kb"
+    agent = WorkflowAgent(kb_dir=kb_dir)
+    agent.dry_run = True
+
+    class SuccessService:
+        def execute(self, workflow_agent: WorkflowAgent, issue_num: int):
+            return PhaseExecutionResult(True, {"issue": issue_num})
+
+    agent.phase_services = {
+        "Phase 1": SuccessService(),
+        "Phase 2": SuccessService(),
+        "Phase 3": SuccessService(),
+        "Phase 4": SuccessService(),
+        "Phase 5": SuccessService(),
+        "Phase 6": SuccessService(),
+    }
+
+    success = agent.execute(275)
+
+    assert success is True
+    assert all(phase.completed for phase in agent.phases)
