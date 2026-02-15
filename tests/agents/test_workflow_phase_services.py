@@ -164,6 +164,33 @@ class _AgentStub:
         return None
 
 
+class _IssuePreflightStub:
+    def fetch_issue_data(self, _issue_num):
+        return None
+
+    def validate_issue(self, _issue_data):
+        return True, []
+
+
+class _ContextAgentStub:
+    def __init__(self, interactive=False):
+        self.dry_run = False
+        self.interactive = interactive
+        self.issue_preflight = _IssuePreflightStub()
+        self.prompt_count = 0
+
+    def log(self, _message, _level):
+        return None
+
+    def run_command(self, _command, _description):
+        class _Result:
+            returncode = 0
+            stdout = "Issue title\nIssue body"
+            stderr = ""
+
+        return _Result()
+
+
 def test_detect_validation_repo_type_uses_cross_repo_context_when_client():
     agent = _AgentStub("client")
 
@@ -202,3 +229,34 @@ def test_testing_phase_service_uses_backend_repo_context_for_validation_scope():
         not command.startswith("cd _external/AI-Agent-Framework-Client &&")
         for command in agent.commands
     )
+
+
+def test_context_phase_service_skips_prompts_in_non_interactive_mode(monkeypatch):
+    service = ContextPhaseService()
+    agent = _ContextAgentStub(interactive=False)
+
+    def _failing_input(_message):
+        raise AssertionError("input() should not be called in non-interactive mode")
+
+    monkeypatch.setattr("builtins.input", _failing_input)
+
+    result = service.execute(agent, 295)
+
+    assert result.success is True
+
+
+def test_context_phase_service_prompts_when_interactive_mode_enabled(monkeypatch):
+    service = ContextPhaseService()
+    agent = _ContextAgentStub(interactive=True)
+    prompts = []
+
+    def _recording_input(message):
+        prompts.append(message)
+        return ""
+
+    monkeypatch.setattr("builtins.input", _recording_input)
+
+    result = service.execute(agent, 295)
+
+    assert result.success is True
+    assert prompts == ["Press Enter when ready to continue to Planning phase..."]
