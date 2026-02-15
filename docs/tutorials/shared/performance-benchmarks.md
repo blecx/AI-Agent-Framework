@@ -46,7 +46,7 @@ All benchmarks were collected in a controlled environment:
 | `projects list` | 0.4s | 0.3-0.6s | Queries projectDocs directory |
 | `projects get <key>` | 0.5s | 0.4-0.7s | Reads metadata + git log |
 | Project deletion (legacy benchmark) | 1.8s | 1.5-2.2s | Git cleanup + directory removal |
-| `projects switch_phase` | 1.2s | 1.0-1.5s | Updates state + git commit |
+| Workflow state transition (API) | 1.2s | 1.0-1.5s | `PATCH /projects/{key}/workflow/state` + git commit |
 
 **Performance Factors:**
 - **Storage speed**: SSD vs HDD impacts git operations (2-5x difference)
@@ -60,10 +60,8 @@ All benchmarks were collected in a controlled environment:
 | `commands propose assess_gaps` | 6.5s | 5.8-8.2s | 4.5s | 800-1000 token output |
 | `commands propose generate_artifact` | 5.2s | 4.7-6.5s | 3.5s | 600-800 token output |
 | `commands propose generate_plan` | 7.8s | 7.0-9.5s | 6.0s | 1200-1500 token output |
-| `commands apply <proposal-id>` | 6.0s | 5.5-7.2s | 4.2s | Proposal resolution + commit |
+| `commands apply --project <key> --proposal <id>` | 1.5s | 1.2-1.9s | 0s | Proposal apply + git commit |
 | `artifacts get` | 5.8s | 5.2-7.0s | 4.0s | Content fetch + render path |
-| `apply <proposal-id>` | 1.5s | 1.2-1.9s | 0s | Git commit only |
-| `reject <proposal-id>` | 0.8s | 0.6-1.1s | 0s | Metadata update |
 
 **LLM Backend Impact:**
 - **LM Studio (local)**: 4-6s inference (shown above)
@@ -77,20 +75,14 @@ All benchmarks were collected in a controlled environment:
 - **Context length**: Larger prompts add 0.5-1s per 1000 tokens
 - **GPU availability**: CUDA/ROCm acceleration reduces LLM time by 50-70%
 
-### RAID Management (TUI)
+### RAID Management (API)
 
-| Command | Median Time | Min-Max | Notes |
-|---------|-------------|---------|-------|
-| `raid add risk` | 1.8s | 1.5-2.3s | Writes JSON + git commit |
-| `raid add assumption` | 1.7s | 1.4-2.2s | Writes JSON + git commit |
-| `raid add issue` | 1.9s | 1.6-2.4s | Writes JSON + git commit |
-| `raid add dependency` | 1.8s | 1.5-2.3s | Writes JSON + git commit |
-| `raid list risks` | 0.6s | 0.5-0.9s | Reads JSON file |
-| `raid list assumptions` | 0.6s | 0.5-0.8s | Reads JSON file |
-| `raid list issues` | 0.7s | 0.5-1.0s | Reads JSON file |
-| `raid list dependencies` | 0.6s | 0.5-0.9s | Reads JSON file |
-| `raid update <id>` | 1.6s | 1.3-2.0s | Updates JSON + git commit |
-| `raid delete <id>` | 1.5s | 1.2-1.9s | Updates JSON + git commit |
+| Operation | Median Time | Min-Max | Notes |
+|-----------|-------------|---------|-------|
+| `POST /projects/{key}/raid` (create) | 1.8s | 1.5-2.3s | Writes JSON + git commit |
+| `GET /projects/{key}/raid` (list) | 0.6s | 0.5-0.9s | Reads JSON file |
+| `PUT /projects/{key}/raid/{id}` (update) | 1.6s | 1.3-2.0s | Updates JSON + git commit |
+| `DELETE /projects/{key}/raid/{id}` (delete) | 1.5s | 1.2-1.9s | Updates JSON + git commit |
 
 **Performance Factors:**
 - **RAID entry count**: 100+ entries may slow list to 1-2s
@@ -202,7 +194,7 @@ All benchmarks were collected in a controlled environment:
 | **Project create** | 15-20% | 40% | 2s | Git operations |
 | **Propose (LLM)** | 5-10% | 15% | 6s | API processing (LLM on separate process) |
 | **Apply** | 10-15% | 35% | 1.5s | Git commit |
-| **RAID add** | 10-15% | 30% | 1.8s | JSON write + git commit |
+| **RAID create (API)** | 10-15% | 30% | 1.8s | JSON write + git commit |
 | **Full lifecycle** | 12-18% | 45% | 161s | Mixed operations |
 
 **LLM Inference (LM Studio):**
