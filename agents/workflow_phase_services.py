@@ -12,6 +12,18 @@ import time
 from typing import Any, Dict, Protocol
 
 
+def _detect_validation_repo_type(agent: Any) -> str:
+    """Resolve validation repo type using cross-repo context when available."""
+
+    context = getattr(agent, "cross_repo_context", None)
+    current_repo = getattr(context, "current_repo", None)
+
+    if current_repo in {"backend", "client"}:
+        return current_repo
+
+    return "backend"
+
+
 @dataclass
 class PhaseExecutionResult:
     """Normalized result for a workflow phase execution."""
@@ -27,6 +39,7 @@ class WorkflowPhaseService(Protocol):
 
     def execute(self, agent: Any, issue_num: int) -> PhaseExecutionResult:
         """Execute a phase using the provided agent and issue number."""
+        ...
 
 
 class MethodDelegatingPhaseService:
@@ -227,7 +240,7 @@ class TestingPhaseService:
         start_time = time.time()
 
         client_dir = Path("_external/AI-Agent-Framework-Client")
-        repo_type = "client" if client_dir.exists() else "backend"
+        repo_type = _detect_validation_repo_type(agent)
 
         agent.log("🔍 Analyzing changes for smart validation...", "progress")
         validation_commands = agent.smart_validation.get_validation_commands(repo_type)
