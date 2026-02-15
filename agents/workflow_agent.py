@@ -31,6 +31,7 @@ from agents.workflow_phase_services import (  # noqa: E402
     build_default_phase_services,
 )
 from agents.workflow_side_effect_adapters import (  # noqa: E402
+    CommandExecutionResult,
     SubprocessWorkflowSideEffectAdapter,
     WorkflowSideEffectAdapter,
     WorkflowSideEffectError,
@@ -1018,6 +1019,45 @@ class WorkflowAgent(BaseAgent):
         if issue_num < self.MIN_ISSUE_NUMBER or issue_num > self.MAX_ISSUE_NUMBER:
             raise ValueError(
                 f"Issue number must be between {self.MIN_ISSUE_NUMBER} and {self.MAX_ISSUE_NUMBER}"
+            )
+
+    def run_command(
+        self, command: str, description: Optional[str] = None, check: bool = True
+    ) -> CommandExecutionResult:
+        """Run command via workflow side-effect adapter.
+
+        This override ensures workflow phases access subprocess/CLI side effects
+        through adapter interfaces with standardized error handling.
+        """
+        if description:
+            self.log(description, "progress")
+
+        self.log(f"Command: {command}", "info")
+
+        if self.dry_run:
+            self.log("(Dry run - command not executed)", "info")
+            return CommandExecutionResult(returncode=0, stdout="", stderr="")
+
+        try:
+            result = self.side_effects.run(command, shell=True, check=check)
+
+            if result.stdout:
+                self.log(f"Output: {result.stdout.strip()}", "info")
+
+            return result
+
+        except WorkflowSideEffectError as exc:
+            self.log(f"Command failed: {exc}", "error")
+            if exc.stderr:
+                self.log(f"Error: {exc.stderr.strip()}", "error")
+
+            if check:
+                raise
+
+            return CommandExecutionResult(
+                returncode=exc.returncode or 1,
+                stdout="",
+                stderr=exc.stderr or str(exc),
             )
 
     def execute(self, issue_num: int, **kwargs) -> bool:
