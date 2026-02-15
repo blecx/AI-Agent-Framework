@@ -60,7 +60,7 @@ START: Something's not working
 │  └─ CORS error in browser? → Verify origin in API config
 │
 ├─ TUI command fails?
-│  ├─ Command not found (python)? → Use: docker compose exec api python ...
+│  ├─ Command not found (python)? → Use: docker compose run tui ...
 │  ├─ "Project not found"? → Check key with: list-projects
 │  ├─ "Unknown command"? → Check spelling, see API docs
 │  ├─ Git error? → Configure git user.name and user.email
@@ -161,6 +161,17 @@ python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 - Project keys must be 3-10 characters, uppercase, alphanumeric
 
 **Related Errors**: Template not found, Blueprint not found, RAID item not found
+
+**RAID / Workflow REST Endpoint Reference**:
+
+When diagnosing RAID or workflow-related 404 errors, use the current REST endpoints:
+
+- `GET /projects/{project_key}/raid`
+- `GET /projects/{project_key}/raid/{id}`
+- `GET /projects/{project_key}/workflow/state`
+- `GET /projects/{project_key}/workflow/allowed-transitions`
+
+Check live routes in Swagger at <http://localhost:8000/docs>.
 
 ---
 
@@ -325,7 +336,7 @@ bash: python: command not found
 **Solution (Use Docker - Recommended)**:
 ```bash
 # Run TUI via Docker (no local Python needed)
-python apps/tui/main.py --help
+docker compose run tui --help
 ```
 
 **Solution (Local Setup)**:
@@ -335,7 +346,7 @@ python apps/tui/main.py --help
 source .venv/bin/activate
 
 # Use python3 instead of python
-python3 apps/tui/cli.py --help
+python3 apps/tui/main.py --help
 ```
 
 **Prevention**:
@@ -1157,11 +1168,11 @@ open http://localhost:8080
 # ✅ Page loads
 
 # TUI works
-python apps/tui/main.py --help
+docker compose run tui --help
 # ✅ Shows help text
 
 # Can create project
-python apps/tui/main.py projects create --key TEST999 --name "Test"
+docker compose run tui projects create --key TEST999 --name "Test"
 # ✅ Returns project info
 
 # No errors in logs
@@ -1183,6 +1194,6 @@ If all checks pass: **System healthy!** 🎉
 
 ---
 
-**Last Updated**: 2026-02-06 | **Version**: 1.0.0
+**Last Updated**: 2026-02-15 | **Version**: 1.0.0
 
 **Found an error not listed here?** [Open an issue](https://github.com/blecx/AI-Agent-Framework/issues/new) or [contribute a fix](../CONTRIBUTING.md)!
