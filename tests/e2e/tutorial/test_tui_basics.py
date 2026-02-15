@@ -97,9 +97,10 @@ class TestTutorial02FirstProject:
         result = tui.execute_command(["projects", "list"])
 
         assert result.success
-        # Output is a Rich table; long keys may be truncated with an ellipsis.
-        assert "TEST-TUT02-" in result.stdout
+        # Output is a Rich table; long keys are often truncated with an ellipsis.
+        # Validate by project name and table summary instead of full key text.
         assert project_name in result.stdout
+        assert "Total:" in result.stdout
 
     def test_show_project(self, tui):
         """Test: python apps/tui/main.py projects get"""
