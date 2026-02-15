@@ -88,6 +88,19 @@ class TestProjectOperations:
         assert "created_at" in result
         assert "updated_at" in result
 
+    def test_create_project_with_description(self, git_manager):
+        """Test creating a project with optional description."""
+        project_data = {
+            "key": "TEST001",
+            "name": "Test Project",
+            "description": "Optional context for project",
+        }
+        result = git_manager.create_project("TEST001", project_data)
+
+        assert result["key"] == "TEST001"
+        assert result["name"] == "Test Project"
+        assert result["description"] == "Optional context for project"
+
     def test_create_project_creates_directory(self, git_manager):
         """Test that create_project creates project directory."""
         git_manager.create_project("TEST001", {"key": "TEST001", "name": "Test"})
@@ -120,6 +133,20 @@ class TestProjectOperations:
         result = git_manager.read_project_json("TEST001")
         assert result["key"] == "TEST001"
         assert result["name"] == "Test Project"
+
+    def test_read_project_json_with_description(self, git_manager):
+        """Test reading project data that includes description."""
+        project_data = {
+            "key": "TEST001",
+            "name": "Test Project",
+            "description": "Detailed description",
+        }
+        git_manager.create_project("TEST001", project_data)
+
+        result = git_manager.read_project_json("TEST001")
+        assert result["key"] == "TEST001"
+        assert result["name"] == "Test Project"
+        assert result["description"] == "Detailed description"
 
     def test_read_nonexistent_project_returns_none(self, git_manager):
         """Test reading nonexistent project returns None."""
