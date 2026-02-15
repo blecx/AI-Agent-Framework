@@ -426,21 +426,26 @@ Changed files (2):
 
 ## Best Practices
 
+### CI Incident Governance (Open/Re-scope Policy)
+
+When opening a new CI issue or re-scoping an older one, require concrete evidence first:
+
+1. **Failed run URL** (exact GitHub Actions run)
+2. **Failing workflow/job/step** (precise name)
+3. **Local reproduction command** and output
+4. **Expected vs actual behavior**
+5. **Narrow scope** (clear In Scope / Out of Scope)
+
+Use the dedicated issue form: `.github/ISSUE_TEMPLATE/ci_gate_incident.yml`.
+
+If the original acceptance criteria are already satisfied, close the old issue with validation evidence and open a new, narrowly scoped CI incident issue only when a new failure is reproducible.
+
 ### When Adding New Code
 
 1. **Write tests first** (TDD approach)
-2. **Run tests locally** before pushing:
-   ```bash
-   pytest tests/
-   ```
-3. **Check coverage** for your changes:
-   ```bash
-   pytest tests/ --cov=apps/api --cov-report=term-missing
-   ```
-4. **Run full CI simulation**:
-   ```bash
-   ./scripts/ci_backend.sh
-   ```
+2. **Run tests locally** before pushing: `pytest tests/`
+3. **Check coverage** for your changes: `pytest tests/ --cov=apps/api --cov-report=term-missing`
+4. **Run full CI simulation**: `./scripts/ci_backend.sh`
 5. **Push to PR** and wait for CI to pass
 
 ### When CI Fails
@@ -490,9 +495,11 @@ A: Yes, use `./scripts/ci_backend.sh` which runs all gates except Gate 9 (flaky 
 **CI Status**: Check the [Actions tab](https://github.com/blecx/AI-Agent-Framework/actions) for recent runs.
 
 **Badges**: README.md shows CI status badges:
+
 - [![Backend Quality Gates](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml)
 
 **Key Metrics**:
+
 - Test execution time (target: <10 min)
 - Test coverage (target: 80%+)
 - Security scan results (target: 0 high-severity issues)
@@ -500,6 +507,6 @@ A: Yes, use `./scripts/ci_backend.sh` which runs all gates except Gate 9 (flaky 
 
 ---
 
-**Last Updated**: February 1, 2026  
+**Last Updated**: February 15, 2026  
 **CI Workflow Version**: 1.0  
 **Maintained By**: Backend Team
