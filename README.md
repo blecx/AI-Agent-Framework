@@ -22,6 +22,7 @@ This system provides intelligent project management following ISO 21500 standard
 **New to the project?** Start here:
 
 - 🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 10 minutes
+- 🧰 **[Install & LLM Setup Guide](docs/howto/install-and-llm-setup.md)** - Docker images, local setup, and provider configuration examples
 - 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels
 - � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run autonomous agent from VS Code chat
 - 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
@@ -231,137 +232,24 @@ After running, reload VS Code (`Ctrl+Shift+P` → `Developer: Reload Window`) to
 
 **Benefits**: No manual approval prompts when using Copilot agents, significantly faster workflow.
 
-## Local Development Setup
+## Installation & Setup
 
-For local development without Docker, follow these steps:
+To avoid duplicated setup instructions across docs, this repository uses:
 
-### Prerequisites
+- **Quick path:** [QUICKSTART.md](QUICKSTART.md)
+- **Canonical install + LLM guide:** [docs/howto/install-and-llm-setup.md](docs/howto/install-and-llm-setup.md)
 
-- **Python 3.12** (matches GitHub Actions CI)
-- **Git**
-- (Optional) LM Studio or OpenAI-compatible LLM endpoint
-- **Desktop browser** for Web UI: Chrome, Firefox, Edge, or Safari (latest versions)
-  - Minimum screen resolution: 1280x720
-  - ⚠️ Mobile/tablet support limited - see [Mobile Compatibility](docs/clients/README.md#mobile-browser-compatibility)
-
-### Step-by-Step Setup
-
-1. **Clone the repository:**
-
-```bash
-git clone https://github.com/blecx/AI-Agent-Framework.git
-cd AI-Agent-Framework
-```
-
-2. **Run the setup script:**
-
-The setup script requires Python 3.12 and will create a virtual environment using it.
-
-**Linux/macOS:**
+### Local quick reference
 
 ```bash
 ./setup.sh
-```
-
-**Windows (PowerShell):**
-
-```powershell
-.\setup.ps1
-```
-
-**Windows (Command Prompt):**
-
-```cmd
-setup.bat
-```
-
-**What the script does:**
-
-- 🔍 Detects Python 3.12 on your system
-- 🔒 Fails fast with install instructions if Python 3.12 is missing
-- 📦 Creates a Python virtual environment in `.venv/` using Python 3.12
-- ⬆️ Upgrades pip to the latest version
-- 📥 Installs all required dependencies from `requirements.txt`
-- ✨ Displays next steps for running the application
-
-If Python 3.12 is not found, the script will display install instructions.
-
-3. **Activate the virtual environment:**
-
-**Linux/macOS:**
-
-```bash
 source .venv/bin/activate
+mkdir -p projectDocs
+cp configs/llm.default.json configs/llm.json  # optional
+cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 ```
 
-**Windows (PowerShell):**
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-**Windows (Command Prompt):**
-
-```cmd
-.venv\Scripts\activate.bat
-```
-
-4. **Create project documents directory:**
-
-```bash
-mkdir projectDocs
-```
-
-5. **Configure LLM settings (optional):**
-
-```bash
-cp configs/llm.default.json configs/llm.json
-# Edit configs/llm.json with your LLM endpoint details
-```
-
-6. **Run the API server:**
-
-```bash
-cd apps/api
-PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
-```
-
-7. **Access the application:**
-
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-
-**Note:** For the web UI, you'll need to run it separately (see Web UI section below) or use Docker.
-
-### Manual Setup (Alternative)
-
-If you prefer not to use the setup script, you can set up manually:
-
-1. **Check Python version:**
-
-   ```bash
-   python3 --version  # Should be 3.10 or higher
-   ```
-
-2. **Create virtual environment:**
-
-   ```bash
-   python3 -m venv .venv
-   ```
-
-3. **Activate and install dependencies:**
-
-   ```bash
-   source .venv/bin/activate  # Linux/macOS
-   # or .venv\Scripts\activate.bat on Windows
-
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-### Running the Web UI (Optional)
-
-If you want to run the React frontend locally:
+In another terminal (optional web dev UI):
 
 ```bash
 cd apps/web
@@ -369,60 +257,18 @@ npm install
 npm run dev
 ```
 
-The web UI will be available at http://localhost:5173 (or the port shown in the terminal).
-
-### Docker Deployment Setup
-
-For production or simplified deployment using Docker:
-
-### Prerequisites
-
-- Docker and Docker Compose
-- (Optional) LM Studio or OpenAI-compatible LLM endpoint
-
-### Setup
-
-1. Clone this repository:
-
-```bash
-git clone https://github.com/blecx/AI-Agent-Framework.git
-cd AI-Agent-Framework
-```
-
-2. Create project documents directory:
-
-```bash
-mkdir projectDocs
-```
-
-3. (Optional) Configure LLM settings:
-
-```bash
-# Copy and edit the LLM config
-cp configs/llm.default.json configs/llm.json
-# Edit configs/llm.json with your LLM endpoint details
-```
-
-The default configuration uses LM Studio on `http://host.docker.internal:1234/v1`.
-
-4. Start the services:
+### Docker quick reference
 
 ```bash
 docker compose up --build
 ```
 
-This will start all three services:
+Endpoints:
 
-- API server (backend)
-- Web UI (frontend)
-- Client (CLI tool - optional)
-
-5. Access the application:
-
-- Web UI: http://localhost:8080
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Client: `docker compose run client <command>` (see Client Usage below)
+- Web UI: <http://localhost:8080>
+- API: <http://localhost:8000>
+- API Docs: <http://localhost:8000/docs>
+- Client CLI/TUI: `docker compose run client <command>`
 
 ## Client Usage
 
@@ -549,30 +395,15 @@ AI-Agent-Framework/
 
 ## LLM Configuration
 
-The system uses a JSON configuration file for LLM settings. Create `configs/llm.json` to override defaults:
+LLM configuration examples are maintained in one place:
 
-```json
-{
-  "provider": "lmstudio",
-  "base_url": "http://host.docker.internal:1234/v1",
-  "api_key": "lm-studio",
-  "model": "local-model",
-  "temperature": 0.7,
-  "max_tokens": 4096,
-  "timeout": 120
-}
-```
+- [docs/howto/install-and-llm-setup.md#llm-connection-configuration](docs/howto/install-and-llm-setup.md#llm-connection-configuration)
 
-### Supported LLM Providers
+Supported examples include:
 
-Any OpenAI-compatible endpoint works:
-
-- LM Studio (default)
-- OpenAI API
-- Azure OpenAI
-- Ollama with OpenAI compatibility
-- LocalAI
-- Text Generation WebUI (with OpenAI extension)
+- GitHub Models (Copilot/GitHub)
+- OpenAI
+- Local LLMs (LM Studio, Ollama via OpenAI-compatible endpoint)
 
 ## Project Documents Storage
 
