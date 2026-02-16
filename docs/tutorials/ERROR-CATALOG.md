@@ -175,7 +175,7 @@ python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 When diagnosing RAID or workflow-related 404 errors, use the current REST endpoints:
 
 - `GET /projects/{project_key}/raid`
-- `GET /projects/{project_key}/raid/{id}`
+- `GET /projects/{project_key}/raid/{raid_id}`
 - `GET /projects/{project_key}/workflow/state`
 - `GET /projects/{project_key}/workflow/allowed-transitions`
 

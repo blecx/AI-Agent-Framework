@@ -40,13 +40,13 @@ All benchmarks were collected in a controlled environment:
 
 ### Project Management Commands
 
-| Command                             | Median Time | Min-Max  | Notes                                               |
-| ----------------------------------- | ----------- | -------- | --------------------------------------------------- |
-| `projects create`                   | 2.3s        | 2.1-2.8s | Includes git init + metadata write                  |
-| `projects list`                     | 0.4s        | 0.3-0.6s | Queries projectDocs directory                       |
-| `projects get <key>`                | 0.5s        | 0.4-0.7s | Reads metadata + git log                            |
-| Project deletion (legacy benchmark) | 1.8s        | 1.5-2.2s | Git cleanup + directory removal                     |
-| Workflow state transition (API)     | 1.2s        | 1.0-1.5s | `PATCH /projects/{key}/workflow/state` + git commit |
+| Command | Median Time | Min-Max | Notes |
+| --- | --- | --- | --- |
+| `projects create` | 2.3s | 2.1-2.8s | Includes git init + metadata write |
+| `projects list` | 0.4s | 0.3-0.6s | Queries projectDocs directory |
+| `projects get <key>` | 0.5s | 0.4-0.7s | Reads metadata + git log |
+| Project deletion (legacy benchmark) | 1.8s | 1.5-2.2s | Git cleanup + directory removal |
+| Workflow state transition (API) | 1.2s | 1.0-1.5s | `PATCH /projects/{project_key}/workflow/state` + git commit |
 
 **Performance Factors:**
 
@@ -181,14 +181,14 @@ All benchmarks were collected in a controlled environment:
 | --- | --- | --- | --- | --- |
 | `GET /health` | 8ms | 15ms | 25ms | No DB queries |
 | `GET /projects` | 45ms | 85ms | 120ms | 10 projects |
-| `GET /projects/{key}` | 55ms | 95ms | 140ms | Git log parsing |
+| `GET /projects/{project_key}` | 55ms | 95ms | 140ms | Git log parsing |
 | `POST /projects` | 2.3s | 2.8s | 3.5s | Git init + metadata |
-| `POST /projects/{key}/commands/propose` | 6.5s | 8.2s | 10.5s | LLM inference |
-| `POST /projects/{key}/commands/apply` | 1.5s | 1.9s | 2.4s | Git commit |
-| `GET /projects/{key}/artifacts` | 65ms | 110ms | 160ms | File listing |
-| `GET /projects/{key}/artifacts/{name}` | 90ms | 150ms | 220ms | File read + markdown |
-| `POST /projects/{key}/raid` | 1.8s | 2.3s | 2.9s | JSON write + git commit |
-| `GET /projects/{key}/raid` | 55ms | 95ms | 140ms | JSON read |
+| `POST /projects/{project_key}/commands/propose` | 6.5s | 8.2s | 10.5s | LLM inference |
+| `POST /projects/{project_key}/commands/apply` | 1.5s | 1.9s | 2.4s | Git commit |
+| `GET /projects/{project_key}/artifacts` | 65ms | 110ms | 160ms | File listing |
+| `GET /projects/{project_key}/artifacts/{artifact_path}` | 90ms | 150ms | 220ms | File read + markdown |
+| `POST /projects/{project_key}/raid` | 1.8s | 2.3s | 2.9s | JSON write + git commit |
+| `GET /projects/{project_key}/raid` | 55ms | 95ms | 140ms | JSON read |
 
 **Performance Factors:**
 
