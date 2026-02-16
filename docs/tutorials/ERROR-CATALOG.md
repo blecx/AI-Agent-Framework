@@ -166,7 +166,7 @@ python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 **Prevention**:
 
 - Always verify project key with `list-projects` before other commands
-- Project keys must be 3-10 characters, uppercase, alphanumeric
+- Project keys must match `^[a-zA-Z0-9_-]+$` (letters, numbers, `_`, `-`)
 
 **Related Errors**: Template not found, Blueprint not found, RAID item not found
 
@@ -286,7 +286,12 @@ ValueError: Unknown command: invalid_command
 
 ```bash
 # Check available commands in API docs
+# Linux:
+xdg-open http://localhost:8000/docs
+# macOS:
 open http://localhost:8000/docs
+# Windows (PowerShell):
+start http://localhost:8000/docs
 
 # Or check domain/commands/validators.py for valid commands
 ```
@@ -441,36 +446,36 @@ docker compose restart api
 ValueError: Invalid project key format
 ```
 
-**Root Cause**: Project key doesn't match requirements (3-10 chars, uppercase, alphanumeric)
+**Root Cause**: Project key contains unsupported characters (must match `^[a-zA-Z0-9_-]+$`)
 
 **Diagnostic Steps**:
 
 ```bash
 # Check project key requirements:
-# - Length: 3-10 characters
-# - Case: UPPERCASE only
-# - Characters: A-Z, 0-9 only (no special chars)
+# - Allowed characters: letters (a-z, A-Z), digits (0-9), underscore (_), hyphen (-)
+# - No spaces
 ```
 
 **Solution**:
 
 ```bash
 # ❌ Invalid examples
-TEST-123    # Contains hyphen
-test001     # Lowercase
-AB          # Too short
-VERYLONGKEY # Too long (11 chars)
+TEST 123    # Contains space
+TEST@123    # Contains unsupported symbol
 
 # ✅ Valid examples
+test001
 TEST001
+TEST-123
+TEST_123
 PROJECT1
 ABC123
 ```
 
 **Prevention**:
 
-- Use 3-10 uppercase alphanumeric characters only
-- No hyphens, underscores, or special characters
+- Use only letters, numbers, underscores, and hyphens
+- Avoid spaces and other special characters
 
 **Related Errors**: Invalid artifact_type, Invalid schema
 
@@ -969,7 +974,12 @@ docker compose restart web
 sleep 5
 
 # Open in browser
+# Linux:
+xdg-open http://localhost:8080
+# macOS:
 open http://localhost:8080
+# Windows (PowerShell):
+start http://localhost:8080
 ```
 
 **Prevention**:
@@ -1274,7 +1284,12 @@ curl http://localhost:8000/health
 # ✅ Returns {"status":"healthy"}
 
 # Web UI accessible
+# Linux:
+xdg-open http://localhost:8080
+# macOS:
 open http://localhost:8080
+# Windows (PowerShell):
+start http://localhost:8080
 # ✅ Page loads
 
 # TUI works
