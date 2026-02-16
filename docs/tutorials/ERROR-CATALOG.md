@@ -10,33 +10,33 @@ This catalog provides comprehensive error messages, root causes, solutions, and 
 
 ## 📊 Quick Reference Table
 
-| Error Pattern | Category | Severity | Quick Fix |
-|---------------|----------|----------|-----------|
-| `Connection refused` (port 8000) | API | 🔴 Critical | `docker compose restart api` |
-| `Connection refused` (port 8080) | GUI | 🔴 Critical | `docker compose restart web` |
-| `Port already in use` | Docker | 🔴 Critical | `lsof -ti :8000 \| xargs kill -9` |
-| `Project X not found` | API/TUI | 🟡 Medium | Check project key, run `list-projects` |
-| `Unknown command: X` | API | 🟡 Medium | Check command name spelling |
-| `HTTP 404 error` | API/TUI | 🟡 Medium | Verify resource exists |
-| `HTTP 409 error` | API | 🟡 Medium | Resource already exists |
-| `HTTP 500 error` | API | 🔴 Critical | Check API logs |
-| `CORS policy` error | GUI | 🟡 Medium | Verify API running, check CORS config |
-| `Git command failed` | TUI | 🟡 Medium | Configure git user.name/email |
-| `Permission denied` | Docker | 🟡 Medium | Fix projectDocs ownership |
-| `docker compose: command not found` | Docker | 🔴 Critical | Update Docker to 28+ |
-| `Docker daemon not running` | Docker | 🔴 Critical | Start Docker Desktop |
-| `Container exited with code 1` | Docker | 🔴 Critical | Check container logs |
-| `Proposal X not found` | API/TUI | 🟡 Medium | Verify proposal ID |
-| `Template X not found` | API | 🟡 Medium | Check template ID |
-| `Blueprint X not found` | API | 🟡 Medium | Check blueprint ID |
-| `RAID item X not found` | API | 🟡 Medium | Check RAID ID |
-| `Invalid artifact_type` | API | 🟡 Medium | Use valid artifact type |
-| `Proposal already applied` | API/TUI | 🟡 Medium | Cannot apply same proposal twice |
-| `Failed to fetch` | GUI | 🔴 Critical | API not responding |
-| `Blank page` | GUI | 🟡 Medium | Check browser console, API health |
-| `React hydration error` | GUI | 🟡 Medium | Clear cache, rebuild |
-| `not a git repository` | Git | 🟡 Medium | Don't init git in projectDocs/ |
-| `Git merge conflict` | Git | 🟠 High | Reset to HEAD or recreate project |
+| Error Pattern                       | Category | Severity    | Quick Fix                              |
+| ----------------------------------- | -------- | ----------- | -------------------------------------- |
+| `Connection refused` (port 8000)    | API      | 🔴 Critical | `docker compose restart api`           |
+| `Connection refused` (port 8080)    | GUI      | 🔴 Critical | `docker compose restart web`           |
+| `Port already in use`               | Docker   | 🔴 Critical | `lsof -ti :8000 \| xargs kill -9`      |
+| `Project X not found`               | API/TUI  | 🟡 Medium   | Check project key, run `list-projects` |
+| `Unknown command: X`                | API      | 🟡 Medium   | Check command name spelling            |
+| `HTTP 404 error`                    | API/TUI  | 🟡 Medium   | Verify resource exists                 |
+| `HTTP 409 error`                    | API      | 🟡 Medium   | Resource already exists                |
+| `HTTP 500 error`                    | API      | 🔴 Critical | Check API logs                         |
+| `CORS policy` error                 | GUI      | 🟡 Medium   | Verify API running, check CORS config  |
+| `Git command failed`                | TUI      | 🟡 Medium   | Configure git user.name/email          |
+| `Permission denied`                 | Docker   | 🟡 Medium   | Fix projectDocs ownership              |
+| `docker compose: command not found` | Docker   | 🔴 Critical | Update Docker to 28+                   |
+| `Docker daemon not running`         | Docker   | 🔴 Critical | Start Docker Desktop                   |
+| `Container exited with code 1`      | Docker   | 🔴 Critical | Check container logs                   |
+| `Proposal X not found`              | API/TUI  | 🟡 Medium   | Verify proposal ID                     |
+| `Template X not found`              | API      | 🟡 Medium   | Check template ID                      |
+| `Blueprint X not found`             | API      | 🟡 Medium   | Check blueprint ID                     |
+| `RAID item X not found`             | API      | 🟡 Medium   | Check RAID ID                          |
+| `Invalid artifact_type`             | API      | 🟡 Medium   | Use valid artifact type                |
+| `Proposal already applied`          | API/TUI  | 🟡 Medium   | Cannot apply same proposal twice       |
+| `Failed to fetch`                   | GUI      | 🔴 Critical | API not responding                     |
+| `Blank page`                        | GUI      | 🟡 Medium   | Check browser console, API health      |
+| `React hydration error`             | GUI      | 🟡 Medium   | Clear cache, rebuild                   |
+| `not a git repository`              | Git      | 🟡 Medium   | Don't init git in projectDocs/         |
+| `Git merge conflict`                | Git      | 🟠 High     | Reset to HEAD or recreate project      |
 
 **Legend**: 🔴 Critical (blocks all work) | 🟠 High (blocks specific feature) | 🟡 Medium (workaround available)
 
@@ -91,6 +91,7 @@ START: Something's not working
 #### Error: Connection refused (port 8000)
 
 **Message Pattern**:
+
 ```
 curl: (7) Failed to connect to localhost port 8000: Connection refused
 ```
@@ -98,6 +99,7 @@ curl: (7) Failed to connect to localhost port 8000: Connection refused
 **Root Cause**: API container not running or not binding to port 8000
 
 **Diagnostic Steps**:
+
 ```bash
 # Check if API container is running
 docker compose ps
@@ -109,6 +111,7 @@ docker compose logs api --tail=50
 ```
 
 **Solution**:
+
 ```bash
 # Restart API service
 docker compose restart api
@@ -121,6 +124,7 @@ curl http://localhost:8000/health
 ```
 
 **Prevention**:
+
 - Always wait 10-15 seconds after `docker compose up` before accessing API
 - Check `docker compose ps` before running TUI/API commands
 
@@ -131,6 +135,7 @@ curl http://localhost:8000/health
 #### Error: HTTP 404 - Project not found
 
 **Message Pattern**:
+
 ```
 HTTP 404 error
 Details: Project 'TEST-123' not found
@@ -139,6 +144,7 @@ Details: Project 'TEST-123' not found
 **Root Cause**: Project key doesn't exist in projectDocs
 
 **Diagnostic Steps**:
+
 ```bash
 # List all projects
 python apps/tui/main.py projects list
@@ -148,6 +154,7 @@ ls -la projectDocs/
 ```
 
 **Solution**:
+
 ```bash
 # Option 1: Create the project
 python apps/tui/main.py projects create --key TEST-123 --name "My Project"
@@ -157,6 +164,7 @@ python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 ```
 
 **Prevention**:
+
 - Always verify project key with `list-projects` before other commands
 - Project keys must be 3-10 characters, uppercase, alphanumeric
 
@@ -178,6 +186,7 @@ Check live routes in Swagger at <http://localhost:8000/docs>.
 #### Error: HTTP 409 - Project already exists
 
 **Message Pattern**:
+
 ```
 HTTP 409 error
 Details: Project 'TEST-001' already exists
@@ -186,12 +195,14 @@ Details: Project 'TEST-001' already exists
 **Root Cause**: Attempting to create project with duplicate key
 
 **Diagnostic Steps**:
+
 ```bash
 # List existing projects
 python apps/tui/main.py projects list
 ```
 
 **Solution**:
+
 ```bash
 # Use different project key
 python apps/tui/main.py projects create --key TEST-002 --name "My Project"
@@ -201,6 +212,7 @@ rm -rf projectDocs/TEST-001
 ```
 
 **Prevention**:
+
 - Check existing projects before creating
 - Use unique, descriptive project keys
 
@@ -211,6 +223,7 @@ rm -rf projectDocs/TEST-001
 #### Error: HTTP 500 - Internal Server Error
 
 **Message Pattern**:
+
 ```
 HTTP 500 error
 Details: Internal Server Error
@@ -219,6 +232,7 @@ Details: Internal Server Error
 **Root Cause**: Various backend errors (missing projectDocs, git config, etc.)
 
 **Diagnostic Steps**:
+
 ```bash
 # View detailed API logs
 docker compose logs api --tail=100
@@ -230,6 +244,7 @@ docker compose logs api --tail=100
 ```
 
 **Solution (Missing projectDocs)**:
+
 ```bash
 # Create and fix permissions
 mkdir -p projectDocs
@@ -238,6 +253,7 @@ docker compose restart api
 ```
 
 **Solution (Git not configured)**:
+
 ```bash
 # Configure git
 git config --global user.name "Tutorial User"
@@ -248,6 +264,7 @@ docker compose restart api
 ```
 
 **Prevention**:
+
 - Always create projectDocs directory before starting services
 - Configure git user identity in setup
 
@@ -258,6 +275,7 @@ docker compose restart api
 #### Error: Unknown command
 
 **Message Pattern**:
+
 ```
 ValueError: Unknown command: invalid_command
 ```
@@ -265,6 +283,7 @@ ValueError: Unknown command: invalid_command
 **Root Cause**: Command name not recognized by API
 
 **Diagnostic Steps**:
+
 ```bash
 # Check available commands in API docs
 open http://localhost:8000/docs
@@ -273,6 +292,7 @@ open http://localhost:8000/docs
 ```
 
 **Solution**:
+
 ```bash
 # Use correct command name
 # Valid commands: assess_gaps, generate_artifact, generate_plan
@@ -280,6 +300,7 @@ open http://localhost:8000/docs
 ```
 
 **Prevention**:
+
 - Reference API documentation for command names
 - Use code completion/autocomplete if available
 
@@ -290,14 +311,16 @@ open http://localhost:8000/docs
 #### Error: CORS policy blocked
 
 **Message Pattern (Browser Console)**:
+
 ```
-Access to fetch at 'http://localhost:8000/projects' from origin 'http://localhost:8080' 
+Access to fetch at 'http://localhost:8000/projects' from origin 'http://localhost:8080'
 has been blocked by CORS policy
 ```
 
 **Root Cause**: API not configured to allow Web UI origin
 
 **Diagnostic Steps**:
+
 ```bash
 # Check if API is running
 curl http://localhost:8000/health
@@ -307,6 +330,7 @@ docker compose logs api | grep -i cors
 ```
 
 **Solution**:
+
 ```bash
 # CORS should be pre-configured in docker-compose.yml
 # If error persists, rebuild services
@@ -315,6 +339,7 @@ docker compose up -d --build
 ```
 
 **Prevention**:
+
 - Use provided docker-compose.yml (CORS pre-configured)
 - Don't modify CORS settings unless deploying to production
 
@@ -327,6 +352,7 @@ docker compose up -d --build
 #### Error: Command not found (python)
 
 **Message Pattern**:
+
 ```bash
 bash: python: command not found
 ```
@@ -334,12 +360,14 @@ bash: python: command not found
 **Root Cause**: Python not installed or not in PATH
 
 **Solution (Use Docker - Recommended)**:
+
 ```bash
 # Run TUI via Docker (no local Python needed)
 docker compose run tui --help
 ```
 
 **Solution (Local Setup)**:
+
 ```bash
 # Install Python 3.10+ and dependencies
 ./setup.sh
@@ -350,6 +378,7 @@ python3 apps/tui/main.py --help
 ```
 
 **Prevention**:
+
 - Use Docker for consistent environment
 - If running locally, always activate venv first
 
@@ -360,10 +389,13 @@ python3 apps/tui/main.py --help
 #### Error: Git command failed
 
 **Message Pattern**:
+
 ```
 Git command failed: fatal: not a git repository
 ```
+
 OR
+
 ```
 *** Please tell me who you are.
 Run: git config --global user.email "you@example.com"
@@ -372,6 +404,7 @@ Run: git config --global user.email "you@example.com"
 **Root Cause**: Git user identity not configured
 
 **Diagnostic Steps**:
+
 ```bash
 # Check git configuration
 git config --global user.name
@@ -381,6 +414,7 @@ git config --global user.email
 ```
 
 **Solution**:
+
 ```bash
 # Configure git globally
 git config --global user.name "Tutorial User"
@@ -391,6 +425,7 @@ docker compose restart api
 ```
 
 **Prevention**:
+
 - Configure git as part of initial setup
 - Add to setup.sh script if automating
 
@@ -401,6 +436,7 @@ docker compose restart api
 #### Error: Invalid project key format
 
 **Message Pattern**:
+
 ```
 ValueError: Invalid project key format
 ```
@@ -408,6 +444,7 @@ ValueError: Invalid project key format
 **Root Cause**: Project key doesn't match requirements (3-10 chars, uppercase, alphanumeric)
 
 **Diagnostic Steps**:
+
 ```bash
 # Check project key requirements:
 # - Length: 3-10 characters
@@ -416,6 +453,7 @@ ValueError: Invalid project key format
 ```
 
 **Solution**:
+
 ```bash
 # ❌ Invalid examples
 TEST-123    # Contains hyphen
@@ -430,6 +468,7 @@ ABC123
 ```
 
 **Prevention**:
+
 - Use 3-10 uppercase alphanumeric characters only
 - No hyphens, underscores, or special characters
 
@@ -440,6 +479,7 @@ ABC123
 #### Error: Proposal not found
 
 **Message Pattern**:
+
 ```
 HTTP 404 error
 Details: Proposal 'proposal-123' not found
@@ -448,6 +488,7 @@ Details: Proposal 'proposal-123' not found
 **Root Cause**: Proposal ID doesn't exist for the project
 
 **Diagnostic Steps**:
+
 ```bash
 # List proposals for project
 ls -la projectDocs/TEST-001/.proposals/
@@ -457,6 +498,7 @@ ls -la projectDocs/TEST-001/.proposals/
 ```
 
 **Solution**:
+
 ```bash
 # Option 1: Use correct proposal ID from list
 ls -la projectDocs/TEST-001/.proposals/
@@ -466,6 +508,7 @@ python apps/tui/main.py commands propose --project TEST-001 --command generate_p
 ```
 
 **Prevention**:
+
 - Always verify proposal IDs from `.proposals/` metadata before applying
 - Copy proposal ID exactly from list output
 
@@ -476,6 +519,7 @@ python apps/tui/main.py commands propose --project TEST-001 --command generate_p
 #### Error: Proposal already applied
 
 **Message Pattern**:
+
 ```
 HTTP 400 error
 Details: Proposal 'proposal-123' is already applied: cannot apply twice
@@ -484,6 +528,7 @@ Details: Proposal 'proposal-123' is already applied: cannot apply twice
 **Root Cause**: Attempting to apply proposal that's already been applied
 
 **Diagnostic Steps**:
+
 ```bash
 # Check proposal status
 ls -la projectDocs/TEST-001/.proposals/
@@ -492,6 +537,7 @@ ls -la projectDocs/TEST-001/.proposals/
 ```
 
 **Solution**:
+
 ```bash
 # Cannot re-apply proposals
 # Options:
@@ -500,6 +546,7 @@ ls -la projectDocs/TEST-001/.proposals/
 ```
 
 **Prevention**:
+
 - Review proposal before applying
 - Check status before running apply command
 
@@ -512,15 +559,17 @@ ls -la projectDocs/TEST-001/.proposals/
 #### Error: Port already in use
 
 **Message Pattern**:
+
 ```
-Error response from daemon: driver failed programming external connectivity 
-on endpoint ai-agent-framework-api-1: Bind for 0.0.0.0:8000 failed: 
+Error response from daemon: driver failed programming external connectivity
+on endpoint ai-agent-framework-api-1: Bind for 0.0.0.0:8000 failed:
 port is already allocated
 ```
 
 **Root Cause**: Another process using port 8000 (API) or 8080 (Web)
 
 **Diagnostic Steps**:
+
 ```bash
 # macOS/Linux: Find process using port
 lsof -i :8000
@@ -530,6 +579,7 @@ netstat -ano | findstr :8000
 ```
 
 **Solution (macOS/Linux)**:
+
 ```bash
 # Kill process on port 8000
 lsof -ti :8000 | xargs kill -9
@@ -539,6 +589,7 @@ docker compose up -d
 ```
 
 **Solution (Windows)**:
+
 ```powershell
 # Find PID from netstat output
 netstat -ano | findstr :8000
@@ -551,18 +602,20 @@ docker compose up -d
 ```
 
 **Solution (Change Ports)**:
+
 ```yaml
 # Edit docker-compose.yml
 services:
   api:
     ports:
-      - "8001:8000"  # Changed port
+      - "8001:8000" # Changed port
   web:
     ports:
-      - "8081:80"    # Changed port
+      - "8081:80" # Changed port
 ```
 
 **Prevention**:
+
 - Stop services before starting new ones
 - Use non-standard ports if 8000/8080 conflict
 
@@ -573,6 +626,7 @@ services:
 #### Error: docker compose command not found
 
 **Message Pattern**:
+
 ```
 docker compose: command not found
 ```
@@ -580,6 +634,7 @@ docker compose: command not found
 **Root Cause**: Using old Docker version (< 28.0) without built-in compose plugin
 
 **Diagnostic Steps**:
+
 ```bash
 # Check Docker version
 docker --version
@@ -588,12 +643,14 @@ docker --version
 ```
 
 **Solution (Update Docker)**:
+
 ```bash
 # See Setup Guide for Docker 28+ installation
 # https://docs.docker.com/engine/install/
 ```
 
 **Solution (Temporary Workaround)**:
+
 ```bash
 # Use docker-compose v1 (deprecated, hyphenated)
 docker-compose up -d
@@ -602,6 +659,7 @@ docker-compose up -d
 ```
 
 **Prevention**:
+
 - Use Docker 28+ for best compatibility
 - Update Docker regularly
 
@@ -612,14 +670,16 @@ docker-compose up -d
 #### Error: Docker daemon not running
 
 **Message Pattern**:
+
 ```
-Cannot connect to the Docker daemon at unix:///var/run/docker.sock. 
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock.
 Is the docker daemon running?
 ```
 
 **Root Cause**: Docker Desktop/service not started
 
 **Solution (Linux)**:
+
 ```bash
 # Start Docker service
 sudo systemctl start docker
@@ -632,6 +692,7 @@ sudo systemctl status docker
 ```
 
 **Solution (macOS/Windows)**:
+
 ```
 1. Open Docker Desktop from Applications/Start Menu
 2. Wait for whale icon to appear in menu bar/system tray
@@ -639,6 +700,7 @@ sudo systemctl status docker
 ```
 
 **Prevention**:
+
 - Configure Docker Desktop to start automatically on login
 - Check whale icon before running docker commands
 
@@ -649,6 +711,7 @@ sudo systemctl status docker
 #### Error: Volume permission errors
 
 **Message Pattern**:
+
 ```
 PermissionError: [Errno 13] Permission denied: '/app/projectDocs'
 ```
@@ -656,6 +719,7 @@ PermissionError: [Errno 13] Permission denied: '/app/projectDocs'
 **Root Cause**: Docker container doesn't have write permissions to projectDocs
 
 **Diagnostic Steps**:
+
 ```bash
 # Check directory ownership
 ls -la projectDocs/
@@ -664,6 +728,7 @@ ls -la projectDocs/
 ```
 
 **Solution (Linux)**:
+
 ```bash
 # Fix ownership
 sudo chown -R $USER:$USER projectDocs/
@@ -674,6 +739,7 @@ docker compose restart api
 ```
 
 **Solution (macOS/Windows)**:
+
 ```bash
 # Usually not an issue
 # If occurs, recreate directory
@@ -683,6 +749,7 @@ docker compose restart api
 ```
 
 **Prevention**:
+
 - Create projectDocs before starting Docker services
 - Don't run docker with sudo (adds to docker group instead)
 
@@ -693,6 +760,7 @@ docker compose restart api
 #### Error: Container exits immediately
 
 **Message Pattern**:
+
 ```
 ai-agent-framework-api-1 exited with code 1
 ```
@@ -700,6 +768,7 @@ ai-agent-framework-api-1 exited with code 1
 **Root Cause**: Various startup errors (env vars, imports, config)
 
 **Diagnostic Steps**:
+
 ```bash
 # View container logs for error details
 docker compose logs api --tail=100
@@ -712,6 +781,7 @@ docker compose logs api --tail=100
 ```
 
 **Solution (Rebuild from scratch)**:
+
 ```bash
 # Nuclear option: clean rebuild
 docker compose down -v
@@ -723,6 +793,7 @@ docker compose logs api --tail=50
 ```
 
 **Prevention**:
+
 - Check logs immediately after `docker compose up`
 - Ensure all prerequisites met (git config, projectDocs, etc.)
 
@@ -735,6 +806,7 @@ docker compose logs api --tail=50
 #### Error: Not a git repository
 
 **Message Pattern**:
+
 ```
 fatal: not a git repository (or any of the parent directories): .git
 ```
@@ -742,6 +814,7 @@ fatal: not a git repository (or any of the parent directories): .git
 **Root Cause**: Running git command in wrong directory OR projectDocs itself initialized as repo
 
 **Diagnostic Steps**:
+
 ```bash
 # Check if projectDocs has .git (SHOULD NOT)
 ls -la projectDocs/.git
@@ -751,6 +824,7 @@ ls -la projectDocs/TEST-001/.git
 ```
 
 **Solution**:
+
 ```bash
 # If projectDocs/.git exists, remove it
 rm -rf projectDocs/.git
@@ -763,6 +837,7 @@ docker compose restart api
 ```
 
 **Prevention**:
+
 - Never run `git init` in projectDocs directory
 - Individual project dirs (TEST-001/) are auto-initialized
 
@@ -773,6 +848,7 @@ docker compose restart api
 #### Error: Git merge conflict
 
 **Message Pattern**:
+
 ```
 Git merge conflict in projectDocs/TEST-001/.raid-register.md
 CONFLICT (content): Merge conflict in .raid-register.md
@@ -781,6 +857,7 @@ CONFLICT (content): Merge conflict in .raid-register.md
 **Root Cause**: Rare, caused by simultaneous commands or manual editing
 
 **Diagnostic Steps**:
+
 ```bash
 # Check git status in project
 cd projectDocs/TEST-001
@@ -790,6 +867,7 @@ git status
 ```
 
 **Solution (Reset to clean state)**:
+
 ```bash
 cd projectDocs/TEST-001
 git reset --hard HEAD
@@ -801,6 +879,7 @@ python apps/tui/main.py projects create --key TEST-001 --name "Test"
 ```
 
 **Prevention**:
+
 - Never manually edit files in projectDocs
 - Don't run multiple commands simultaneously on same project
 
@@ -811,6 +890,7 @@ python apps/tui/main.py projects create --key TEST-001 --name "Test"
 #### Error: Permission denied (Git operations)
 
 **Message Pattern**:
+
 ```
 fatal: unable to write file: Permission denied
 ```
@@ -818,6 +898,7 @@ fatal: unable to write file: Permission denied
 **Root Cause**: Git operations can't write to projectDocs files
 
 **Diagnostic Steps**:
+
 ```bash
 # Check file permissions
 ls -la projectDocs/TEST-001/
@@ -827,6 +908,7 @@ ls -ld projectDocs/
 ```
 
 **Solution (Linux)**:
+
 ```bash
 # Fix ownership recursively
 sudo chown -R $USER:$USER projectDocs/
@@ -837,6 +919,7 @@ docker compose restart api
 ```
 
 **Solution (macOS/Windows)**:
+
 ```bash
 # Recreate with correct permissions
 rm -rf projectDocs
@@ -845,6 +928,7 @@ docker compose restart api
 ```
 
 **Prevention**:
+
 - Don't use sudo when creating projectDocs
 - Ensure user has write permissions
 
@@ -857,6 +941,7 @@ docker compose restart api
 #### Error: Web UI not loading (Connection refused)
 
 **Message Pattern (Browser)**:
+
 ```
 This site can't be reached
 localhost refused to connect
@@ -865,6 +950,7 @@ localhost refused to connect
 **Root Cause**: Web container not running
 
 **Diagnostic Steps**:
+
 ```bash
 # Check if web container is running
 docker compose ps
@@ -876,6 +962,7 @@ docker compose logs web --tail=50
 ```
 
 **Solution**:
+
 ```bash
 # Restart web service
 docker compose restart web
@@ -886,6 +973,7 @@ open http://localhost:8080
 ```
 
 **Prevention**:
+
 - Verify `docker compose ps` shows all services "Up"
 - Wait 10-15 seconds after starting services
 
@@ -900,6 +988,7 @@ open http://localhost:8080
 **Root Cause**: JavaScript errors, API not responding, or build issues
 
 **Diagnostic Steps**:
+
 ```bash
 # Open browser DevTools (F12)
 # Check Console tab for errors:
@@ -913,6 +1002,7 @@ curl http://localhost:8000/health
 ```
 
 **Solution (API not responding)**:
+
 ```bash
 # Restart API
 docker compose restart api
@@ -924,6 +1014,7 @@ sleep 10
 ```
 
 **Solution (Rebuild web container)**:
+
 ```bash
 docker compose down
 docker compose build --no-cache web
@@ -931,6 +1022,7 @@ docker compose up -d
 ```
 
 **Prevention**:
+
 - Check browser console immediately if page blank
 - Verify API health before accessing web UI
 
@@ -941,6 +1033,7 @@ docker compose up -d
 #### Error: Failed to fetch
 
 **Message Pattern (Browser Console)**:
+
 ```
 GET http://localhost:8000/health net::ERR_FAILED
 Failed to fetch
@@ -949,6 +1042,7 @@ Failed to fetch
 **Root Cause**: API not running or not accessible from browser
 
 **Diagnostic Steps**:
+
 ```bash
 # Verify API is running
 docker compose ps
@@ -960,6 +1054,7 @@ curl http://localhost:8000/health
 ```
 
 **Solution**:
+
 ```bash
 # Restart both services
 docker compose restart api web
@@ -969,6 +1064,7 @@ sleep 10
 ```
 
 **Prevention**:
+
 - Ensure API starts before web UI
 - Check `docker compose logs` for startup errors
 
@@ -979,6 +1075,7 @@ sleep 10
 #### Error: React hydration error
 
 **Message Pattern (Browser Console)**:
+
 ```
 Uncaught Error: Minified React error #130
 Warning: Expected server HTML to contain a matching <div>
@@ -987,6 +1084,7 @@ Warning: Expected server HTML to contain a matching <div>
 **Root Cause**: React hydration mismatch or version incompatibility
 
 **Diagnostic Steps**:
+
 ```bash
 # Check web container build logs
 docker compose logs web --tail=100
@@ -998,6 +1096,7 @@ docker compose logs web --tail=100
 ```
 
 **Solution**:
+
 ```bash
 # Rebuild web container with fresh dependencies
 docker compose down
@@ -1009,6 +1108,7 @@ docker compose up -d web
 ```
 
 **Prevention**:
+
 - Don't modify package.json without testing
 - Use provided docker-compose.yml
 
@@ -1023,11 +1123,12 @@ docker compose up -d web
 **API Container:**
 
 Edit `docker-compose.yml`:
+
 ```yaml
 services:
   api:
     environment:
-      - LOG_LEVEL=DEBUG  # Changed from INFO
+      - LOG_LEVEL=DEBUG # Changed from INFO
 ```
 
 Restart: `docker compose up -d`
@@ -1035,6 +1136,7 @@ Restart: `docker compose up -d`
 View logs: `docker compose logs -f api`
 
 **TUI Commands:**
+
 ```bash
 # Add --verbose flag (if supported)
 python apps/tui/main.py projects create --key TEST-001 --name "Test"
@@ -1043,6 +1145,7 @@ python apps/tui/main.py projects create --key TEST-001 --name "Test"
 ### Interactive Container Shell
 
 **API Container:**
+
 ```bash
 # Start bash shell
 docker compose exec api bash
@@ -1056,6 +1159,7 @@ exit
 ```
 
 **Web Container:**
+
 ```bash
 # Alpine Linux uses sh, not bash
 docker compose exec web sh
@@ -1070,6 +1174,7 @@ exit
 ### Network Debugging
 
 **Test API from Web Container:**
+
 ```bash
 # Access web container
 docker compose exec web sh
@@ -1082,6 +1187,7 @@ exit
 ```
 
 **Inspect Docker Network:**
+
 ```bash
 # List networks
 docker network ls
@@ -1109,6 +1215,7 @@ docker network inspect ai-agent-framework_default
 
 ```markdown
 **Environment:**
+
 - OS: [e.g., Ubuntu 22.04, macOS 13.0, Windows 11]
 - Docker version: [output of `docker --version`]
 - Docker Compose version: [output of `docker compose version`]
@@ -1120,6 +1227,7 @@ docker network inspect ai-agent-framework_default
 [Clear description of issue]
 
 **Steps to Reproduce:**
+
 1. Run `docker compose up -d`
 2. Navigate to tutorial XYZ
 3. Execute command ABC
@@ -1127,7 +1235,9 @@ docker network inspect ai-agent-framework_default
 
 **Logs:**
 ```
+
 [Output of `docker compose logs --tail=100`]
+
 ```
 
 **Diagnostic Steps Tried:**

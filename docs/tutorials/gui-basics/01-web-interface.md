@@ -21,7 +21,6 @@ By the end of this tutorial, you will:
 
 - Docker or local dev setup is running
 - Web UI reachable at:
-
   - Docker: `http://localhost:8080`
   - Local dev: `http://localhost:5173`
 
@@ -88,7 +87,6 @@ You receive a successful response from API health endpoint(s).
 
 - The top phase indicator is a **local visual control** in the web app.
 - Authoritative workflow state transitions are handled by API endpoints:
-
   - `GET/PATCH /projects/{project_key}/workflow/state`
   - `GET /projects/{project_key}/workflow/allowed-transitions`
   - and `/api/v1/...` equivalents

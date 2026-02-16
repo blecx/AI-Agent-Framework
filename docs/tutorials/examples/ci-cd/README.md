@@ -29,13 +29,13 @@ These examples demonstrate how to:
 
 Each platform requires these secrets to be set:
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `PROJECT_DOCS_PATH` | Path to project docs repo | `/workspace/projectDocs` |
-| `GIT_USER_NAME` | Git commit author name | `CI Bot` |
-| `GIT_USER_EMAIL` | Git commit author email | `ci-bot@example.com` |
-| `LLM_API_KEY` | Optional: LLM API key for AI features | `sk-...` (OpenAI) or `gsk_...` (Groq) |
-| `LLM_BASE_URL` | Optional: Custom LLM endpoint | `https://api.groq.com/v1` |
+| Secret Name         | Description                           | Example                               |
+| ------------------- | ------------------------------------- | ------------------------------------- |
+| `PROJECT_DOCS_PATH` | Path to project docs repo             | `/workspace/projectDocs`              |
+| `GIT_USER_NAME`     | Git commit author name                | `CI Bot`                              |
+| `GIT_USER_EMAIL`    | Git commit author email               | `ci-bot@example.com`                  |
+| `LLM_API_KEY`       | Optional: LLM API key for AI features | `sk-...` (OpenAI) or `gsk_...` (Groq) |
+| `LLM_BASE_URL`      | Optional: Custom LLM endpoint         | `https://api.groq.com/v1`             |
 
 #### GitHub Actions - Setting Secrets
 
@@ -56,13 +56,13 @@ Each platform requires these secrets to be set:
 ```yaml
 on:
   push:
-    branches: [main, develop]  # Run on push to these branches
+    branches: [main, develop] # Run on push to these branches
   schedule:
-    - cron: '0 9 * * 1-5'      # Weekdays at 9 AM UTC
-  workflow_dispatch:           # Manual trigger
+    - cron: "0 9 * * 1-5" # Weekdays at 9 AM UTC
+  workflow_dispatch: # Manual trigger
     inputs:
       project_key:
-        description: 'Project key to process'
+        description: "Project key to process"
         required: true
 ```
 
@@ -71,14 +71,15 @@ on:
 ```yaml
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'       # On push
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'   # On schedule
-    - if: '$CI_PIPELINE_SOURCE == "web"'        # Manual trigger
+    - if: '$CI_PIPELINE_SOURCE == "push"' # On push
+    - if: '$CI_PIPELINE_SOURCE == "schedule"' # On schedule
+    - if: '$CI_PIPELINE_SOURCE == "web"' # Manual trigger
 ```
 
 ### 4. Test Your Workflow
 
 **GitHub Actions:**
+
 ```bash
 # Manual trigger via CLI
 gh workflow run project-management.yml -f project_key=TEST-12345
@@ -88,6 +89,7 @@ gh run list --workflow=project-management.yml
 ```
 
 **GitLab CI:**
+
 ```bash
 # Trigger manual pipeline
 curl -X POST "https://gitlab.com/api/v4/projects/$PROJECT_ID/pipeline" \
@@ -104,11 +106,13 @@ curl "https://gitlab.com/api/v4/projects/$PROJECT_ID/pipelines" \
 
 **Trigger:** Repository creation or push to `main`  
 **Actions:**
+
 1. Create project in framework
 2. Generate project charter artifact
 3. Commit charter to `docs/PROJECT_CHARTER.md`
 
 **GitHub Actions Snippet:**
+
 ```yaml
 - name: Generate Project Charter
   run: |
@@ -122,11 +126,13 @@ curl "https://gitlab.com/api/v4/projects/$PROJECT_ID/pipelines" \
 
 **Trigger:** Scheduled (daily at 2 AM)  
 **Actions:**
+
 1. Generate RAID register for all active projects
 2. Filter high-priority items
 3. Send email or Slack notification
 
 **GitLab CI Snippet:**
+
 ```yaml
 nightly-raid-report:
   stage: report
@@ -142,11 +148,13 @@ nightly-raid-report:
 
 **Trigger:** Merge to `main` branch  
 **Actions:**
+
 1. Update project status
 2. Regenerate all artifacts
 3. Commit changes back to docs repo
 
 **GitHub Actions Snippet:**
+
 ```yaml
 - name: Update Artifacts
   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -164,12 +172,14 @@ nightly-raid-report:
 
 **Trigger:** Scheduled (every Monday at 8 AM)  
 **Actions:**
+
 1. Validate all required artifacts exist
 2. Check RAID register completeness
 3. Generate compliance report
 4. Fail pipeline if non-compliant
 
 **GitLab CI Snippet:**
+
 ```yaml
 weekly-compliance:
   stage: validate
@@ -211,12 +221,14 @@ git config --global user.email "$GIT_USER_EMAIL"
 ### Project Docs Repository
 
 **Option 1: Submodule (Recommended)**
+
 ```bash
 git submodule add https://github.com/yourorg/project-docs.git projectDocs
 git submodule update --init --recursive
 ```
 
 **Option 2: Separate Clone**
+
 ```bash
 git clone https://github.com/yourorg/project-docs.git projectDocs
 ```
@@ -252,10 +264,11 @@ git clone https://github.com/yourorg/project-docs.git projectDocs
 ### Issue: "Command not found: python"
 
 **Solution:** Specify Python version in workflow:
+
 ```yaml
 - uses: actions/setup-python@v5
   with:
-    python-version: '3.12'
+    python-version: "3.12"
 ```
 
 ### Issue: "Permission denied" on git push
@@ -263,17 +276,20 @@ git clone https://github.com/yourorg/project-docs.git projectDocs
 **Solution:** Ensure CI has write access to repository:
 
 **GitHub Actions:**
+
 ```yaml
 permissions:
   contents: write
 ```
 
 **GitLab CI:**
+
 - Use Deploy Token or Project Access Token with `write_repository` scope
 
 ### Issue: "projectDocs directory not found"
 
 **Solution:** Create directory or initialize as submodule:
+
 ```bash
 mkdir -p projectDocs
 # OR
@@ -283,6 +299,7 @@ git submodule update --init --recursive
 ### Issue: "LLM service unavailable"
 
 **Solution:** The framework falls back to templates when LLM is unavailable. To enable LLM:
+
 1. Set `LLM_API_KEY` secret
 2. Set `LLM_BASE_URL` (if using custom endpoint)
 3. Verify API connectivity from CI environment
@@ -290,6 +307,7 @@ git submodule update --init --recursive
 ### Issue: Build timeout
 
 **Solution:** Optimize workflow:
+
 - Cache dependencies (pip, npm)
 - Run only necessary steps
 - Increase timeout limits
@@ -301,6 +319,7 @@ git submodule update --init --recursive
 Process multiple projects simultaneously:
 
 **GitHub Actions:**
+
 ```yaml
 strategy:
   matrix:
@@ -311,6 +330,7 @@ steps:
 ```
 
 **GitLab CI:**
+
 ```yaml
 process-projects:
   parallel:
@@ -325,17 +345,19 @@ process-projects:
 Run different steps based on conditions:
 
 **GitHub Actions:**
+
 ```yaml
 - name: Generate Charter (new projects only)
   if: github.event.action == 'created'
   run: cd apps/tui && python main.py commands propose --project $PROJECT_KEY --command generate_artifact --artifact-name "project-charter.md" --artifact-type "project_charter"
-  
+
 - name: Update RAID (existing projects)
   if: github.event.action != 'created'
   run: curl -s "http://localhost:8000/api/v1/projects/$PROJECT_KEY/raid" | jq .
 ```
 
 **GitLab CI:**
+
 ```yaml
 generate-charter:
   rules:
@@ -349,6 +371,7 @@ generate-charter:
 Save generated artifacts for review:
 
 **GitHub Actions:**
+
 ```yaml
 - uses: actions/upload-artifact@v4
   with:
@@ -358,6 +381,7 @@ Save generated artifacts for review:
 ```
 
 **GitLab CI:**
+
 ```yaml
 artifacts:
   paths:
@@ -370,6 +394,7 @@ artifacts:
 ### 1. Dependency Caching
 
 **GitHub Actions:**
+
 ```yaml
 - uses: actions/cache@v4
   with:
@@ -378,6 +403,7 @@ artifacts:
 ```
 
 **GitLab CI:**
+
 ```yaml
 cache:
   key: $CI_COMMIT_REF_SLUG
@@ -390,6 +416,7 @@ cache:
 Build Docker images faster:
 
 **GitHub Actions:**
+
 ```yaml
 - uses: docker/build-push-action@v5
   with:
@@ -398,6 +425,7 @@ Build Docker images faster:
 ```
 
 **GitLab CI:**
+
 ```yaml
 image: docker:latest
 services:
@@ -410,6 +438,7 @@ variables:
 ### 3. Skip Unnecessary Steps
 
 Use `[skip ci]` in commit messages:
+
 ```bash
 git commit -m "docs: update README [skip ci]"
 ```
@@ -419,11 +448,12 @@ git commit -m "docs: update README [skip ci]"
 ### Add to Existing GitHub Actions
 
 Merge into existing workflows:
+
 ```yaml
 jobs:
   test:
     # ... existing test job ...
-  
+
   project-management:
     needs: test
     runs-on: ubuntu-latest
@@ -435,11 +465,12 @@ jobs:
 ### Add to Existing GitLab CI
 
 Extend existing stages:
+
 ```yaml
 stages:
   - test
   - build
-  - project-management  # New stage
+  - project-management # New stage
   - deploy
 
 # ... existing jobs ...
