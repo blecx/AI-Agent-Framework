@@ -1300,7 +1300,7 @@ If all checks pass: **System healthy!** 🎉
 - **[Setup Guide](shared/00-setup-guide.md)**: Initial environment setup
 - **[Tutorial Index](README.md)**: All available tutorials
 - **[Development Guide](../development.md)**: Contributing and development
-- **[API Error Messages](../api/domain/errors.py)**: Backend error definitions
+- **[API Error Messages Source](../../apps/api/domain/errors.py)**: Backend error definitions
 
 ---
 

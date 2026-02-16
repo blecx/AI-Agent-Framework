@@ -494,8 +494,8 @@ generate-artifacts:
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
 - [Tutorial: Automation & Scripting](../../advanced/03-automation-scripting.md)
-- [TUI Command Reference](../../tui-basics/03-tui-command-cheatsheet.md)
-- [API Documentation](/docs/api/)
+- [TUI Artifact Workflow](../../tui-basics/03-artifact-workflow.md)
+- [API Documentation](http://localhost:8000/docs)
 
 ## Contributing
 
