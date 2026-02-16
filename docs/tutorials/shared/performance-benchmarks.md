@@ -34,7 +34,7 @@ All benchmarks were collected in a controlled environment:
 - Cold start excluded (first run after container restart)
 - Measurements include full round-trip (request → processing → response)
 - LLM inference times measured separately where applicable
-- Resource usage measured with `docker stats` and `/api/health` endpoint
+- Resource usage measured with `docker stats` and `/health` endpoint
 
 ## Command Timing Benchmarks
 
@@ -80,12 +80,12 @@ All benchmarks were collected in a controlled environment:
 
 ### RAID Management (API)
 
-| Operation                                   | Median Time | Min-Max  | Notes                     |
-| ------------------------------------------- | ----------- | -------- | ------------------------- |
-| `POST /projects/{key}/raid` (create)        | 1.8s        | 1.5-2.3s | Writes JSON + git commit  |
-| `GET /projects/{key}/raid` (list)           | 0.6s        | 0.5-0.9s | Reads JSON file           |
-| `PUT /projects/{key}/raid/{id}` (update)    | 1.6s        | 1.3-2.0s | Updates JSON + git commit |
-| `DELETE /projects/{key}/raid/{id}` (delete) | 1.5s        | 1.2-1.9s | Updates JSON + git commit |
+| Operation | Median Time | Min-Max | Notes |
+| --- | --- | --- | --- |
+| RAID create (API) | 1.8s | 1.5-2.3s | `POST /projects/{project_key}/raid` + git commit |
+| RAID list (API) | 0.6s | 0.5-0.9s | `GET /projects/{project_key}/raid` |
+| RAID update (API) | 1.6s | 1.3-2.0s | `PUT /projects/{project_key}/raid/{raid_id}` + git commit |
+| RAID delete (API) | 1.5s | 1.2-1.9s | `DELETE /projects/{project_key}/raid/{raid_id}` + git commit |
 
 **Performance Factors:**
 
@@ -177,18 +177,18 @@ All benchmarks were collected in a controlled environment:
 
 ### API Response Times
 
-| Endpoint                 | Median | P95   | P99   | Notes                   |
-| ------------------------ | ------ | ----- | ----- | ----------------------- |
-| `GET /health`            | 8ms    | 15ms  | 25ms  | No DB queries           |
-| `GET /projects`          | 45ms   | 85ms  | 120ms | 10 projects             |
-| `GET /projects/{key}`    | 55ms   | 95ms  | 140ms | Git log parsing         |
-| `POST /projects`         | 2.3s   | 2.8s  | 3.5s  | Git init + metadata     |
-| `POST /commands/propose` | 6.5s   | 8.2s  | 10.5s | LLM inference           |
-| `POST /commands/apply`   | 1.5s   | 1.9s  | 2.4s  | Git commit              |
-| `GET /artifacts`         | 65ms   | 110ms | 160ms | File listing            |
-| `GET /artifacts/{name}`  | 90ms   | 150ms | 220ms | File read + markdown    |
-| `POST /raid`             | 1.8s   | 2.3s  | 2.9s  | JSON write + git commit |
-| `GET /raid`              | 55ms   | 95ms  | 140ms | JSON read               |
+| Endpoint | Median | P95 | P99 | Notes |
+| --- | --- | --- | --- | --- |
+| `GET /health` | 8ms | 15ms | 25ms | No DB queries |
+| `GET /projects` | 45ms | 85ms | 120ms | 10 projects |
+| `GET /projects/{key}` | 55ms | 95ms | 140ms | Git log parsing |
+| `POST /projects` | 2.3s | 2.8s | 3.5s | Git init + metadata |
+| `POST /projects/{key}/commands/propose` | 6.5s | 8.2s | 10.5s | LLM inference |
+| `POST /projects/{key}/commands/apply` | 1.5s | 1.9s | 2.4s | Git commit |
+| `GET /projects/{key}/artifacts` | 65ms | 110ms | 160ms | File listing |
+| `GET /projects/{key}/artifacts/{name}` | 90ms | 150ms | 220ms | File read + markdown |
+| `POST /projects/{key}/raid` | 1.8s | 2.3s | 2.9s | JSON write + git commit |
+| `GET /projects/{key}/raid` | 55ms | 95ms | 140ms | JSON read |
 
 **Performance Factors:**
 
@@ -491,7 +491,7 @@ cat ~/.local/share/LMStudio/logs/app.log | tail -50  # Linux
 curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/health
 
 # Check network latency (browser console)
-fetch('/api/health').then(r => console.log(r.headers.get('X-Response-Time')))
+fetch('/health').then(r => console.log(r.headers.get('X-Response-Time')))
 ```
 
 ## Comparison to Similar Tools
