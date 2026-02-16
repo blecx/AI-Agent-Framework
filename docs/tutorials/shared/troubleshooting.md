@@ -14,8 +14,9 @@ python apps/tui/main.py health
 Expected: current TUI has no `raid` command group.
 
 Use REST instead:
-- `GET/POST/PUT/DELETE /projects/{project_key}/raid`
-- or `/api/v1/projects/{project_key}/raid`
+- `GET/POST /projects/{project_key}/raid`
+- `PUT/DELETE /projects/{project_key}/raid/{raid_id}`
+- or `/api/v1/projects/{project_key}/raid` and `/api/v1/projects/{project_key}/raid/{raid_id}`
 
 ### “`main.py workflow` not found”
 Expected: current TUI has no workflow command group.
