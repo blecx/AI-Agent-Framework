@@ -21,5 +21,3 @@ When using `tutorial`, reference these prompt templates:
 ## Auto-Approve Wiring
 
 `tutorial` is enabled for subagent auto-approval in `.vscode/settings.json` under `chat.tools.subagent.autoApprove`.
-
-````

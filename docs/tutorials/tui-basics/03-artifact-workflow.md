@@ -3,6 +3,7 @@
 This workflow uses the current `commands propose/apply` model.
 
 ## Supported propose commands
+
 - `assess_gaps`
 - `generate_artifact` (requires `--artifact-name` and `--artifact-type`)
 - `generate_plan`

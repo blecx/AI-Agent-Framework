@@ -17,6 +17,7 @@ python apps/tui/main.py --help
 ```
 
 Current groups:
+
 - `projects` (`create`, `list`, `get`)
 - `commands` (`propose`, `apply`)
 - `artifacts` (`list`, `get`)
