@@ -15,7 +15,7 @@ This catalog provides comprehensive error messages, root causes, solutions, and 
 | `Connection refused` (port 8000)    | API      | 🔴 Critical | `docker compose restart api`           |
 | `Connection refused` (port 8080)    | GUI      | 🔴 Critical | `docker compose restart web`           |
 | `Port already in use`               | Docker   | 🔴 Critical | `lsof -ti :8000 \| xargs kill -9`      |
-| `Project X not found`               | API/TUI  | 🟡 Medium   | Check project key, run `list-projects` |
+| `Project X not found`               | API/TUI  | 🟡 Medium   | Check project key, run `projects list` |
 | `Unknown command: X`                | API      | 🟡 Medium   | Check command name spelling            |
 | `HTTP 404 error`                    | API/TUI  | 🟡 Medium   | Verify resource exists                 |
 | `HTTP 409 error`                    | API      | 🟡 Medium   | Resource already exists                |
@@ -61,7 +61,7 @@ START: Something's not working
 │
 ├─ TUI command fails?
 │  ├─ Command not found (python)? → Use: docker compose run tui ...
-│  ├─ "Project not found"? → Check key with: list-projects
+│  ├─ "Project not found"? → Check key with: projects list
 │  ├─ "Unknown command"? → Check spelling, see API docs
 │  ├─ Git error? → Configure git user.name and user.email
 │  └─ HTTP error? → See status code in table above
@@ -160,12 +160,12 @@ ls -la projectDocs/
 python apps/tui/main.py projects create --key TEST-123 --name "My Project"
 
 # Option 2: Use correct project key
-# Verify key from list-projects output
+# Verify key from projects list output
 ```
 
 **Prevention**:
 
-- Always verify project key with `list-projects` before other commands
+- Always verify project key with `projects list` before other commands
 - Project keys must match `^[a-zA-Z0-9_-]+$` (letters, numbers, `_`, `-`)
 
 **Related Errors**: Template not found, Blueprint not found, RAID item not found
