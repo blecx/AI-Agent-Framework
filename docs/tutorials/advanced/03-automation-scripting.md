@@ -3,6 +3,7 @@
 Build scripts around the currently supported surfaces.
 
 ## Supported automation targets
+
 - TUI: `projects create/list/get`, `commands propose/apply`, `artifacts list/get`, `health`
 - REST: RAID CRUD + workflow state/allowed-transitions
 
@@ -23,9 +24,21 @@ python apps/tui/main.py artifacts list --project AUTO-001
 curl -s -X PATCH http://localhost:8000/projects/AUTO-001/workflow/state \
   -H "Content-Type: application/json" \
   -d '{"to_state":"executing","actor":"bot","reason":"pipeline gate passed"}' | jq .
+
+# Execute command via global commands API (versioned)
+curl -s -X POST http://localhost:8000/api/v1/commands \
+  -H "Content-Type: application/json" \
+  -d '{"project_key":"AUTO-001","command":"generate_plan","params":{}}' | jq .
+
+# List command history for a project
+curl -s "http://localhost:8000/api/v1/commands?projectKey=AUTO-001" | jq .
+
+# Get command details by ID
+curl -s http://localhost:8000/api/v1/commands/<command-id> | jq .
 ```
 
 ## CI note
+
 For new integrations, prefer `/api/v1/*` endpoints in scripts.
 
 ---

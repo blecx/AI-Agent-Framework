@@ -36,7 +36,27 @@ curl -s -X PATCH http://localhost:8000/projects/TODO-002/workflow/state \
   -d '{"to_state":"planning","actor":"pm","reason":"charter approved"}' | jq .
 ```
 
+## 6) Run workflow audits (REST)
+
+```bash
+# Run audit rules for the project
+curl -s -X POST http://localhost:8000/projects/TODO-002/audit | jq .
+
+# Read recent audit events
+curl -s "http://localhost:8000/projects/TODO-002/audit-events?limit=10" | jq .
+
+# Read audit history snapshots
+curl -s "http://localhost:8000/projects/TODO-002/audit/history?limit=5" | jq .
+```
+
+## 7) Optional: run bulk audits
+
+```bash
+curl -s -X POST http://localhost:8000/projects/audit/bulk | jq .
+```
+
 ## Notes
+
 - Versioned route equivalents exist under `/api/v1/projects/...`.
 
 ---
