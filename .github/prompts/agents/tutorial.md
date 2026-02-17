@@ -165,13 +165,21 @@ For each remediation batch:
 # <Tutorial Title>
 
 ## Audience and Outcomes
+
 ## Prerequisites
+
 ## Learning Path Overview
+
 ## Step-by-Step Walkthrough
+
 ## Verification Checklist
+
 ## Troubleshooting
+
 ## Feature Gap List (for Developers)
+
 ## Duplicate Content Audit
+
 ## Asset Regeneration
 ```
 
