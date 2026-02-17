@@ -34,6 +34,7 @@ This tutorial set reflects the **current** command surface as of 2026-02-16.
 1. [Setup Guide](shared/00-setup-guide.md)
 2. [TUI Quick Start](tui-basics/01-quick-start.md)
 3. [GUI Commands and Proposals](gui-basics/03-commands-and-proposals.md)
+4. [Documentation Quality Backlog](DOCUMENTATION-QUALITY-BACKLOG.md)
 
 ## Visual learning assets (screenshots + diagrams)
 
