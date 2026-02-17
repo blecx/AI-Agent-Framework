@@ -36,6 +36,11 @@ This tutorial set reflects the **current** command surface as of 2026-02-16.
 3. [GUI Commands and Proposals](gui-basics/03-commands-and-proposals.md)
 4. [Documentation Quality Backlog](DOCUMENTATION-QUALITY-BACKLOG.md)
 
+## Advanced API tutorials
+
+1. [Templates API](advanced/04-templates-api.md)
+2. [Blueprints API](advanced/05-blueprints-api.md)
+
 ## Visual learning assets (screenshots + diagrams)
 
 - Guide: [Visual Learning Guide](visual-learning-guide.md)
