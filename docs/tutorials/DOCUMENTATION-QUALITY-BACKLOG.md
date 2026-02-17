@@ -154,28 +154,35 @@
 
 ## Prioritized mitigation batches (Plan → Issue → PR → Merge)
 
-1. **Batch A (High impact, small):** `DOC-001`, `DOC-008`
-   - Goal: Remove known stale command drift and align validation report language.
-2. **Batch B (Medium impact, additive):** `DOC-006`, `DOC-007`
-   - Goal: Close audit/history coverage gaps in existing tutorials.
-3. **Batch C (Medium impact, additive):** `DOC-002`, `DOC-003`
-   - Goal: Add templates/blueprints capability tutorials.
-4. **Batch D (Medium impact, additive):** `DOC-004`, `DOC-005`
-   - Goal: Add skills + governance tutorials for complete API capability coverage.
+- **Batch A (High impact, small):** `DOC-001`, `DOC-008`
+- Goal: Remove known stale command drift and align validation report language.
+- Status: ✅ Merged via PR #321
 
-## Traceability map (initial)
+- **Batch B (Medium impact, additive):** `DOC-006`, `DOC-007`
+- Goal: Close audit/history coverage gaps in existing tutorials.
+- Status: ✅ Merged via PR #322
+
+- **Batch C (Medium impact, additive):** `DOC-002`, `DOC-003`
+- Goal: Add templates/blueprints capability tutorials.
+- Status: ✅ Merged via PR #323
+
+- **Batch D (Medium impact, additive):** `DOC-004`, `DOC-005`
+- Goal: Add skills + governance tutorials for complete API capability coverage.
+- Status: ✅ Merged via PR #324
+
+## Traceability map
 
 | Finding ID | Plan Item | Issue | PR Scope |
 | --- | --- | --- | --- |
-| DOC-001 | P1 | TBD | validation expected outputs fix |
-| DOC-008 | P8 | TBD | validation report wording/alignment |
-| DOC-006 | P6 | TBD | workflow tutorials extension |
-| DOC-007 | P7 | TBD | automation tutorial extension |
-| DOC-002 | P2 | TBD | templates tutorial |
-| DOC-003 | P3 | TBD | blueprints tutorial |
-| DOC-004 | P4 | TBD | skills tutorial |
-| DOC-005 | P5 | TBD | governance tutorial |
+| DOC-001 | P1 | Backlog item | #321 |
+| DOC-008 | P8 | Backlog item | #321 |
+| DOC-006 | P6 | Backlog item | #322 |
+| DOC-007 | P7 | Backlog item | #322 |
+| DOC-002 | P2 | Backlog item | #323 |
+| DOC-003 | P3 | Backlog item | #323 |
+| DOC-004 | P4 | Backlog item | #324 |
+| DOC-005 | P5 | Backlog item | #324 |
 
 ---
 
-**Status:** Open backlog (first formal quality report)
+**Status:** ✅ All current findings remediated (2026-02-17)
