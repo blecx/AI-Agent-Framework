@@ -38,6 +38,32 @@ curl -s -X PATCH http://localhost:8000/projects/TODO-001/workflow/state \
 - `/api/v1/projects/{project_key}/workflow/state`
 - `/api/v1/projects/{project_key}/workflow/allowed-transitions`
 
+## Audit operations (workflow assurance)
+
+### List audit events
+
+```bash
+curl -s "http://localhost:8000/projects/TODO-001/audit-events?limit=20" | jq .
+```
+
+### Run project audit rules
+
+```bash
+curl -s -X POST http://localhost:8000/projects/TODO-001/audit | jq .
+```
+
+### Read audit history
+
+```bash
+curl -s "http://localhost:8000/projects/TODO-001/audit/history?limit=10" | jq .
+```
+
+### Run bulk audit (all projects)
+
+```bash
+curl -s -X POST http://localhost:8000/projects/audit/bulk | jq .
+```
+
 ---
 
 **Last Updated:** 2026-02-16
