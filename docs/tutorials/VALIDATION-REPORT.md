@@ -14,7 +14,7 @@ The tutorial set was refreshed to match the currently shipped surfaces:
 
 ## Verification outcomes
 
-- Stale direct CLI usage for unsupported groups was removed from tutorial guidance.
+- Stale direct CLI usage for unsupported groups was removed from primary tutorial guidance, with validation fixtures tracked for follow-up parity updates.
 - Tutorial examples now align with currently supported command and endpoint patterns.
 - Shared setup and troubleshooting guidance was updated to reduce command-surface confusion.
 

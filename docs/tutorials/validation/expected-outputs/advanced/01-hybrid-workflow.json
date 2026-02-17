@@ -15,9 +15,9 @@
       },
       {
         "step": 3,
-        "interface": "TUI",
+        "interface": "REST",
         "action": "Add RAID entry",
-        "command": "python main.py raid add --project TEST ..."
+        "command": "curl -s -X POST http://localhost:8000/projects/TEST/raid -H 'Content-Type: application/json' -d '{\"type\":\"risk\",\"title\":\"Sample risk\",\"description\":\"Initial risk entry\",\"owner\":\"PM\"}'"
       },
       {
         "step": 4,
