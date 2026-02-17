@@ -40,6 +40,8 @@ This tutorial set reflects the **current** command surface as of 2026-02-16.
 
 1. [Templates API](advanced/04-templates-api.md)
 2. [Blueprints API](advanced/05-blueprints-api.md)
+3. [Agent Skills API](advanced/06-agent-skills-api.md)
+4. [Governance API](advanced/07-governance-api.md)
 
 ## Visual learning assets (screenshots + diagrams)
 
