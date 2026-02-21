@@ -66,6 +66,32 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Validate deploy configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
+          DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required environment configuration: ${missing[*]}"
+            echo "::error::Required vars: DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL"
+            echo "::error::Required secrets: DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN"
+            exit 1
+          fi
+
       - name: Configure SSH
         shell: bash
         run: |
@@ -104,6 +130,32 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Validate deploy configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
+          DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required environment configuration: ${missing[*]}"
+            echo "::error::Required vars: DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL"
+            echo "::error::Required secrets: DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN"
+            exit 1
+          fi
+
       - name: Configure SSH
         shell: bash
         run: |
