@@ -6,6 +6,28 @@ on:
   pull_request:
 
 jobs:
+  process-quality:
+    name: "Process quality (prompts + issue specs)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install minimal validator dependency
+        run: python -m pip install --quiet pyyaml==6.0.1
+
+      - name: Validate prompt quality (strict)
+        run: ./scripts/validate_prompts.sh
+
+      - name: Validate planning issue specs
+        run: ./scripts/validate_issue_specs.sh
+
   backend-ci:
     runs-on: ubuntu-latest
 

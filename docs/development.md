@@ -95,6 +95,7 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
    ```
 
 4. **Configure LLM (optional):**
+
    ```bash
    cp configs/llm.default.json configs/llm.json
    # Edit configs/llm.json with your settings
@@ -247,6 +248,7 @@ See **[../.github/copilot-instructions.md](../.github/copilot-instructions.md)**
 #### 2. Issue Creation
 
 - Create focused issues using [issue template](../.github/prompts/drafting-issue.md)
+- Author planning specs using [planning/issues/README.md](../planning/issues/README.md)
 - Include specific acceptance criteria and validation steps
 - Link related issues across repositories for cross-repo work
 - One issue = one PR
@@ -289,6 +291,10 @@ npm run build
 
 # Verify git status
 git status  # Ensure no unwanted files staged
+
+# Process quality gates (prompts + planning issue specs)
+./scripts/validate_prompts.sh
+./scripts/validate_issue_specs.sh
 ```
 
 #### 5. Pull Request
@@ -303,6 +309,13 @@ git status  # Ensure no unwanted files staged
 
 Backend CI enforces a PR description contract (required sections + checked acceptance criteria + checked validation evidence + hygiene checklist).
 If backend code changes under `apps/api/` and tests are not modified, CI requires explicit evidence that `pytest` was run (checked checkbox in the PR).
+CI also enforces prompt quality and planning issue-spec validation for `planning/issues/*.yml`.
+
+#### Deterministic issue publishing
+
+- Dry run: `./scripts/publish_issues.py --paths "planning/issues/*.yml"`
+- Apply: `./scripts/publish_issues.py --paths "planning/issues/*.yml" --apply`
+- Mapping output: `planning/issues/.published-map.json`
 
 #### 6. Review & Merge
 
