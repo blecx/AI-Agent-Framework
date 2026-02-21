@@ -112,7 +112,11 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
     # Read artifact (binary-safe)
     project_path = git_manager.get_project_path(project_key)
     resolved_path = project_path / artifact_path
-    if ".." in Path(artifact_path).parts or not resolved_path.exists() or not resolved_path.is_file():
+    if (
+        ".." in Path(artifact_path).parts
+        or not resolved_path.exists()
+        or not resolved_path.is_file()
+    ):
         raise HTTPException(
             status_code=404, detail=f"Artifact '{artifact_path}' not found"
         )
