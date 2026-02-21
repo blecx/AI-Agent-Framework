@@ -242,9 +242,13 @@ class TestTutorial03ArtifactWorkflow:
                 "assess_gaps",
             ]
         )
-        assert propose_result.success, f"Propose command failed: {propose_result.stderr}"
+        assert (
+            propose_result.success
+        ), f"Propose command failed: {propose_result.stderr}"
 
-        result = tui.execute_command(["proposals", "list", "--project", self.PROJECT_KEY])
+        result = tui.execute_command(
+            ["proposals", "list", "--project", self.PROJECT_KEY]
+        )
 
         assert result.success, f"List proposals failed: {result.stderr}"
         assert "proposal" in result.stdout.lower() or "total" in result.stdout.lower()
