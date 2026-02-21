@@ -252,18 +252,12 @@ class TestTutorial03ArtifactWorkflow:
 class TestTutorial04RAIDManagement:
     """Validate Tutorial 04: RAID Management commands."""
 
-    pytestmark = pytest.mark.skip(
-        reason="DOCUMENTATION GAP: TUI does not implement RAID commands; RAID is managed via API propose/apply workflow."
-    )
-
     PROJECT_KEY = "TEST-TUT04"
 
     @pytest.fixture(autouse=True)
     def setup_project(self, tui):
         """Set up test project."""
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
+        self.PROJECT_KEY = _unique_project_key("TEST-TUT04")
         tui.execute_command(
             [
                 "projects",
@@ -275,9 +269,6 @@ class TestTutorial04RAIDManagement:
             ]
         )
         yield
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
 
     def test_add_risk(self, tui):
         """Test: python apps/tui/main.py raid add --type risk"""
@@ -303,8 +294,8 @@ class TestTutorial04RAIDManagement:
         assert result.success, f"Add risk failed: {result.stderr}"
         assert "success" in result.stdout.lower() or "added" in result.stdout.lower()
 
-    def test_add_action(self, tui):
-        """Test: python apps/tui/main.py raid add --type action"""
+    def test_add_assumption(self, tui):
+        """Test: python apps/tui/main.py raid add --type assumption"""
         result = tui.execute_command(
             [
                 "raid",
@@ -312,11 +303,11 @@ class TestTutorial04RAIDManagement:
                 "--project",
                 self.PROJECT_KEY,
                 "--type",
-                "action",
+                "assumption",
                 "--title",
-                "Test action",
+                "Test assumption",
                 "--description",
-                "Test action description",
+                "Test assumption description",
                 "--priority",
                 "medium",
                 "--owner",
@@ -351,8 +342,8 @@ class TestTutorial04RAIDManagement:
         assert result.success
         assert "success" in result.stdout.lower() or "added" in result.stdout.lower()
 
-    def test_add_decision(self, tui):
-        """Test: python apps/tui/main.py raid add --type decision"""
+    def test_add_dependency(self, tui):
+        """Test: python apps/tui/main.py raid add --type dependency"""
         result = tui.execute_command(
             [
                 "raid",
@@ -360,11 +351,11 @@ class TestTutorial04RAIDManagement:
                 "--project",
                 self.PROJECT_KEY,
                 "--type",
-                "decision",
+                "dependency",
                 "--title",
-                "Test decision",
+                "Test dependency",
                 "--description",
-                "Test decision description",
+                "Test dependency description",
                 "--owner",
                 "Test Owner",
             ]
@@ -386,6 +377,8 @@ class TestTutorial04RAIDManagement:
                 "risk",
                 "--title",
                 "Test risk",
+                "--description",
+                "Test risk description",
                 "--priority",
                 "high",
                 "--owner",
@@ -534,12 +527,34 @@ def test_tutorial_sequence(tui):
     )
     assert result.success, "Tutorial 03: Command proposal failed"
 
-    # Tutorial 04: RAID Management (not implemented in TUI)
-    pytest.skip(
-        "DOCUMENTATION GAP: RAID commands are not implemented in TUI; skipping full tutorial sequence."
+    # Tutorial 04: RAID Management
+    result = tui.execute_command(
+        [
+            "raid",
+            "add",
+            "--project",
+            test_key,
+            "--type",
+            "risk",
+            "--title",
+            "Sequence risk",
+            "--description",
+            "Sequence risk description",
+            "--owner",
+            "PM",
+            "--priority",
+            "high",
+        ]
     )
+    assert result.success, "Tutorial 04: RAID add failed"
 
-    # Tutorial 05: Full Lifecycle (not implemented in TUI)
+    result = tui.execute_command(["raid", "list", "--project", test_key])
+    assert result.success, "Tutorial 04: RAID list failed"
+
+    # Tutorial 05: Full Lifecycle (workflow commands still not implemented)
+    pytest.skip(
+        "DOCUMENTATION GAP: TUI does not implement workflow commands; skipping tutorial 05 sequence."
+    )
 
 
 if __name__ == "__main__":
