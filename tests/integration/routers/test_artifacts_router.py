@@ -268,3 +268,123 @@ def test_generate_from_blueprint_invalid_request_body(client, test_project):
     )
 
     assert response.status_code == 422  # Pydantic validation error
+
+
+# ============================================================================
+# GET /artifacts/{artifact_path} and POST /artifacts/upload
+# ============================================================================
+
+
+def test_upload_artifact_success_default_path(client, test_project):
+    """Upload should store file under artifacts/<filename> when path is omitted."""
+    response = client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        files={"file": ("notes.txt", b"hello world", "text/plain")},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["path"] == "artifacts/notes.txt"
+    assert data["name"] == "notes.txt"
+    assert data["type"] == "txt"
+    assert data["media_type"] == "text/plain"
+    assert data["size"] == 11
+
+
+def test_upload_artifact_success_with_relative_path(client, test_project):
+    """Upload should normalize non-prefixed path into artifacts/ namespace."""
+    response = client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        data={"artifact_path": "docs/plan.csv"},
+        files={"file": ("ignored-name.csv", b"a,b\n1,2\n", "text/csv")},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["path"] == "artifacts/docs/plan.csv"
+    assert data["name"] == "plan.csv"
+    assert data["type"] == "csv"
+    assert data["media_type"] == "text/csv"
+
+
+def test_upload_artifact_rejects_path_traversal(client, test_project):
+    """Upload should reject traversal attempts in artifact path."""
+    response = client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        data={"artifact_path": "../escape.md"},
+        files={"file": ("escape.md", b"# bad", "text/markdown")},
+    )
+
+    assert response.status_code == 400
+    assert "invalid artifact path" in response.json()["detail"].lower()
+
+
+def test_upload_artifact_project_not_found(client):
+    """Upload should fail for unknown project."""
+    response = client.post(
+        "/api/v1/projects/NOPE/artifacts/upload",
+        files={"file": ("notes.txt", b"hello", "text/plain")},
+    )
+
+    assert response.status_code == 404
+    assert "project" in response.json()["detail"].lower()
+
+
+def test_get_artifact_markdown_content_type(client, test_project):
+    """GET artifact should return markdown with inferred content type."""
+    client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        files={"file": ("readme.md", b"# Title\n\n- item", "text/markdown")},
+    )
+
+    response = client.get(
+        f"/api/v1/projects/{test_project['key']}/artifacts/artifacts/readme.md"
+    )
+    assert response.status_code == 200
+    assert response.content.startswith(b"# Title")
+    assert response.headers["content-type"].startswith("text/markdown")
+
+
+def test_get_artifact_csv_content_type(client, test_project):
+    """GET artifact should return CSV content type for csv path."""
+    client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        files={"file": ("data.csv", b"col1,col2\n1,2\n", "text/csv")},
+    )
+
+    response = client.get(
+        f"/api/v1/projects/{test_project['key']}/artifacts/artifacts/data.csv"
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+
+
+def test_get_artifact_image_content_type(client, test_project):
+    """GET artifact should return image content type for binary image."""
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+    client.post(
+        f"/api/v1/projects/{test_project['key']}/artifacts/upload",
+        files={"file": ("image", png_bytes, "application/octet-stream")},
+    )
+
+    response = client.get(
+        f"/api/v1/projects/{test_project['key']}/artifacts/artifacts/image"
+    )
+    assert response.status_code == 200
+    assert response.content.startswith(b"\x89PNG")
+    assert response.headers["content-type"].startswith("image/png")
+
+
+def test_get_artifact_not_found(client, test_project):
+    """GET artifact should return 404 when artifact is absent."""
+    response = client.get(
+        f"/api/v1/projects/{test_project['key']}/artifacts/missing.txt"
+    )
+    assert response.status_code == 404
+
+
+def test_get_artifact_project_not_found(client):
+    """GET artifact should return 404 when project is absent."""
+    response = client.get("/api/v1/projects/NOPE/artifacts/readme.md")
+    assert response.status_code == 404
+    assert "project" in response.json()["detail"].lower()

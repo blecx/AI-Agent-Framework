@@ -110,11 +110,13 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
         )
 
     # Read artifact (binary-safe)
-    content = git_manager.read_file_binary(project_key, artifact_path)
-    if content is None:
+    project_path = git_manager.get_project_path(project_key)
+    resolved_path = project_path / artifact_path
+    if ".." in Path(artifact_path).parts or not resolved_path.exists() or not resolved_path.is_file():
         raise HTTPException(
             status_code=404, detail=f"Artifact '{artifact_path}' not found"
         )
+    content = resolved_path.read_bytes()
 
     # Return with inferred media type
     media_type = _infer_media_type(artifact_path, content)
@@ -152,7 +154,10 @@ async def upload_artifact(
         raise HTTPException(status_code=400, detail="Invalid artifact path")
 
     content = await file.read()
-    git_manager.write_file_binary(project_key, str(normalized), content)
+    project_path = git_manager.get_project_path(project_key)
+    target_path = project_path / normalized
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_bytes(content)
     git_manager.commit_changes(
         project_key,
         f"[{project_key}] Upload artifact: {Path(final_path).name}",
