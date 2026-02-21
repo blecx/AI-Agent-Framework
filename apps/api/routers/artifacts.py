@@ -2,7 +2,10 @@
 Artifacts router for listing, retrieving, and generating artifacts.
 """
 
-from fastapi import APIRouter, HTTPException, Request, Response
+import mimetypes
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, Request, Response, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import List, Dict, Any
 
@@ -63,16 +66,64 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
             status_code=404, detail=f"Project '{project_key}' not found"
         )
 
-    # Read artifact
-    content = git_manager.read_file(project_key, artifact_path)
+    # Read artifact (binary-safe)
+    content = git_manager.read_file_binary(project_key, artifact_path)
     if content is None:
         raise HTTPException(
             status_code=404, detail=f"Artifact '{artifact_path}' not found"
         )
 
-    # Return as markdown or plain text
-    media_type = "text/markdown" if artifact_path.endswith(".md") else "text/plain"
+    # Return with inferred media type
+    media_type, _ = mimetypes.guess_type(artifact_path)
+    if not media_type:
+        media_type = "application/octet-stream"
     return Response(content=content, media_type=media_type)
+
+
+@router.post("/upload", status_code=201)
+async def upload_artifact(
+    project_key: str,
+    request: Request,
+    file: UploadFile = File(...),
+    artifact_path: str = Form(default=""),
+):
+    """Upload artifact file (text, markdown, csv, image) into project artifacts folder."""
+    git_manager = request.app.state.git_manager
+
+    # Verify project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+
+    safe_name = Path(file.filename).name
+    final_path = artifact_path.strip() if artifact_path else f"artifacts/{safe_name}"
+    if not final_path.startswith("artifacts/"):
+        final_path = f"artifacts/{final_path}"
+
+    # Avoid path traversal
+    normalized = Path(final_path)
+    if ".." in normalized.parts:
+        raise HTTPException(status_code=400, detail="Invalid artifact path")
+
+    content = await file.read()
+    git_manager.write_file_binary(project_key, str(normalized), content)
+    git_manager.commit_changes(
+        project_key,
+        f"[{project_key}] Upload artifact: {Path(final_path).name}",
+        [str(normalized)],
+    )
+
+    return {
+        "path": str(normalized),
+        "name": Path(final_path).name,
+        "type": Path(final_path).suffix.lstrip(".").lower() or "unknown",
+        "size": len(content),
+    }
 
 
 # ============================================================================

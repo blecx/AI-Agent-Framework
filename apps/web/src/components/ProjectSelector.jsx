@@ -1,24 +1,85 @@
-import { useState } from 'react';
-import './ProjectSelector.css';
+import { useState } from "react";
+import "./ProjectSelector.css";
 
 function ProjectSelector({ projects, onSelect, onCreate, loading }) {
   const [showCreate, setShowCreate] = useState(false);
-  const [newKey, setNewKey] = useState('');
-  const [newName, setNewName] = useState('');
+  const [newKey, setNewKey] = useState("");
+  const [newName, setNewName] = useState("");
 
   const handleCreate = (e) => {
     e.preventDefault();
     if (newKey && newName) {
       onCreate(newKey, newName);
-      setNewKey('');
-      setNewName('');
+      setNewKey("");
+      setNewName("");
       setShowCreate(false);
     }
   };
 
   return (
     <div className="project-selector">
-      <h2>Select or Create Project</h2>
+      <section className="landing-hero" aria-label="Hybrid workflow overview">
+        <div className="hero-copy">
+          <p className="hero-eyebrow">Hybrid Project Delivery</p>
+          <h2>AI Chat First. Visual Control When You Need It.</h2>
+          <p>
+            Use chat for guided ISO 21500 execution, then use UI for quick
+            project selection, transitions, and artifact review.
+          </p>
+          <div className="hero-badges">
+            <span>Chat-first</span>
+            <span>ISO 21500 workflow</span>
+            <span>Propose → Review → Apply</span>
+          </div>
+        </div>
+
+        <div className="hero-loop" aria-label="Delivery loop">
+          <h3>Design Loop</h3>
+          <ol>
+            <li>
+              <strong>Plan</strong> - Define UX objective + acceptance criteria
+            </li>
+            <li>
+              <strong>Issue</strong> - Keep scope small and testable
+            </li>
+            <li>
+              <strong>PR</strong> - Implement responsive changes with evidence
+            </li>
+            <li>
+              <strong>Merge</strong> - CI green, feedback integrated
+            </li>
+            <li>
+              <strong>Loop</strong> - Repeat with next visual improvement
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section className="start-guide" aria-label="How to start">
+        <h3>How to start</h3>
+        <div className="start-grid">
+          <article>
+            <h4>1) Pick or create project</h4>
+            <p>
+              Start by opening an existing project or creating one with key +
+              name.
+            </p>
+          </article>
+          <article>
+            <h4>2) Move workflow state</h4>
+            <p>
+              Use guided chat first, then optional UI transitions where allowed.
+            </p>
+          </article>
+          <article>
+            <h4>3) Run command proposals</h4>
+            <p>
+              Generate artifacts as proposals, review results, then apply
+              safely.
+            </p>
+          </article>
+        </div>
+      </section>
 
       {projects.length > 0 && (
         <div className="projects-list">

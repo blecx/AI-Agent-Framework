@@ -1,39 +1,71 @@
-import { useState } from 'react';
-import './CommandPanel.css';
-import { api } from '../services/api';
+import { useState } from "react";
+import "./CommandPanel.css";
+import { api } from "../services/api";
 
 const COMMANDS = [
   {
-    id: 'assess_gaps',
-    name: 'Assess Gaps',
-    description: 'Analyze missing ISO 21500 artifacts and identify gaps in project documentation',
-    icon: '📊',
+    id: "assess_gaps",
+    name: "Assess Gaps",
+    description:
+      "Analyze missing ISO 21500 artifacts and identify gaps in project documentation",
+    icon: "📊",
+    recommendedStates: ["monitoring", "planning"],
   },
   {
-    id: 'generate_artifact',
-    name: 'Generate Artifact',
-    description: 'Create or update a specific project management artifact',
-    icon: '📄',
+    id: "generate_artifact",
+    name: "Generate Artifact",
+    description: "Create or update a specific project management artifact",
+    icon: "📄",
+    recommendedStates: ["planning", "executing", "monitoring"],
     params: [
-      { name: 'artifact_name', label: 'Artifact Name', type: 'text', placeholder: 'e.g., project_charter.md' },
-      { name: 'artifact_type', label: 'Artifact Type', type: 'text', placeholder: 'e.g., project_charter' },
+      {
+        name: "artifact_name",
+        label: "Artifact Name",
+        type: "text",
+        placeholder: "e.g., project_charter.md",
+      },
+      {
+        name: "artifact_type",
+        label: "Artifact Type",
+        type: "text",
+        placeholder: "e.g., project_charter",
+      },
     ],
   },
   {
-    id: 'generate_plan',
-    name: 'Generate Plan',
-    description: 'Create a project schedule with timeline and milestones',
-    icon: '📅',
+    id: "generate_plan",
+    name: "Generate Plan",
+    description: "Create a project schedule with timeline and milestones",
+    icon: "📅",
+    recommendedStates: ["initiating", "planning"],
   },
 ];
 
-function CommandPanel({ projectKey, onProposalGenerated }) {
+function labelize(value) {
+  if (!value) return "Unknown";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function CommandPanel({
+  projectKey,
+  onProposalGenerated,
+  currentWorkflowState = "initiating",
+}) {
   const [selectedCommand, setSelectedCommand] = useState(null);
   const [params, setParams] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleCommandSelect = (command) => {
+    const isRecommended =
+      command.recommendedStates.includes(currentWorkflowState);
+    if (!isRecommended) {
+      setError(
+        `"${command.name}" is not recommended in ${labelize(currentWorkflowState)}. Move workflow phase or use AI chat guidance.`,
+      );
+      return;
+    }
+
     setSelectedCommand(command);
     setParams({});
     setError(null);
@@ -49,7 +81,11 @@ function CommandPanel({ projectKey, onProposalGenerated }) {
     try {
       setLoading(true);
       setError(null);
-      const proposal = await api.proposeCommand(projectKey, selectedCommand.id, params);
+      const proposal = await api.proposeCommand(
+        projectKey,
+        selectedCommand.id,
+        params,
+      );
       onProposalGenerated(proposal);
       setSelectedCommand(null);
       setParams({});
@@ -62,9 +98,15 @@ function CommandPanel({ projectKey, onProposalGenerated }) {
 
   return (
     <div className="command-panel">
-      <h3>Available Commands</h3>
+      <div className="command-header">
+        <h3>Available Commands</h3>
+        <span className="workflow-state-pill">
+          Workflow: {labelize(currentWorkflowState)}
+        </span>
+      </div>
       <p className="command-help">
-        Select a command to propose changes to your project. You'll review the changes before they're applied.
+        Use chat for guided creation, or run a quick UI command below. All
+        changes follow propose → review → apply.
       </p>
 
       {error && (
@@ -77,12 +119,33 @@ function CommandPanel({ projectKey, onProposalGenerated }) {
         {COMMANDS.map((command) => (
           <div
             key={command.id}
-            className={`command-card ${selectedCommand?.id === command.id ? 'selected' : ''}`}
+            className={`command-card ${selectedCommand?.id === command.id ? "selected" : ""}`}
             onClick={() => handleCommandSelect(command)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleCommandSelect(command);
+              }
+            }}
           >
             <div className="command-icon">{command.icon}</div>
             <div className="command-details">
-              <h4>{command.name}</h4>
+              <div className="command-title-row">
+                <h4>{command.name}</h4>
+                <span
+                  className={`command-fit ${
+                    command.recommendedStates.includes(currentWorkflowState)
+                      ? "fit-yes"
+                      : "fit-no"
+                  }`}
+                >
+                  {command.recommendedStates.includes(currentWorkflowState)
+                    ? "Recommended now"
+                    : `Best in: ${command.recommendedStates.map(labelize).join(", ")}`}
+                </span>
+              </div>
               <p>{command.description}</p>
             </div>
           </div>
@@ -100,8 +163,10 @@ function CommandPanel({ projectKey, onProposalGenerated }) {
                   <label>{param.label}:</label>
                   <input
                     type={param.type}
-                    value={params[param.name] || ''}
-                    onChange={(e) => handleParamChange(param.name, e.target.value)}
+                    value={params[param.name] || ""}
+                    onChange={(e) =>
+                      handleParamChange(param.name, e.target.value)
+                    }
                     placeholder={param.placeholder}
                   />
                 </div>
@@ -115,7 +180,7 @@ function CommandPanel({ projectKey, onProposalGenerated }) {
               onClick={handlePropose}
               disabled={loading}
             >
-              {loading ? 'Generating Proposal...' : 'Propose Changes'}
+              {loading ? "Generating Proposal..." : "Propose Changes"}
             </button>
             <button
               className="btn-secondary"

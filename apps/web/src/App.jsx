@@ -1,16 +1,14 @@
-import { useState, useEffect } from 'react';
-import './App.css';
-import ProjectSelector from './components/ProjectSelector';
-import ProjectView from './components/ProjectView';
-import WorkflowIndicator from './components/WorkflowIndicator';
-import { api } from './services/api';
+import { useState, useEffect } from "react";
+import "./App.css";
+import ProjectSelector from "./components/ProjectSelector";
+import ProjectView from "./components/ProjectView";
+import { api } from "./services/api";
 
 function App() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [workflowPhase, setWorkflowPhase] = useState('initiation');
 
   useEffect(() => {
     loadProjects();
@@ -62,11 +60,6 @@ function App() {
       )}
 
       <main className="app-main">
-        <WorkflowIndicator 
-          currentPhase={workflowPhase}
-          onPhaseChange={setWorkflowPhase}
-        />
-        
         {!selectedProject ? (
           <ProjectSelector
             projects={projects}

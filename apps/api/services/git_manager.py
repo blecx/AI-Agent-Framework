@@ -210,6 +210,20 @@ class GitManager:
             return None
         return file_path.read_text()
 
+    def write_file_binary(self, project_key: str, relative_path: str, content: bytes):
+        """Write binary file content within a project."""
+        project_path = self.get_project_path(project_key)
+        file_path = project_path / relative_path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(content)
+
+    def read_file_binary(self, project_key: str, relative_path: str) -> Optional[bytes]:
+        """Read binary file content within a project."""
+        file_path = self.get_project_path(project_key) / relative_path
+        if not file_path.exists():
+            return None
+        return file_path.read_bytes()
+
     def commit_changes(self, project_key: str, message: str, files: List[str]) -> str:
         """Stage and commit changes for a project."""
         start_time = time.time()
