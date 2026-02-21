@@ -29,6 +29,7 @@ variables:
   PYTHON_VERSION: "3.12"
   PROJECT_DOCS_PATH: "$CI_PROJECT_DIR/projectDocs"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  API_BASE_URL: "${API_BASE_URL:-http://localhost:8000}"
   # Override with CI/CD variable: PROJECT_KEY
   PROJECT_KEY: "${PROJECT_KEY:-AUTO-DETECT}"
 
@@ -124,8 +125,7 @@ create-project:
         echo "Creating new project: $PROJECT_KEY"
         python main.py projects create \
           --key "$PROJECT_KEY" \
-          --name "$CI_PROJECT_NAME" \
-          --description "GitLab project: $CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME"
+          --name "$CI_PROJECT_NAME"
         echo "✅ Project created successfully"
       fi
   environment:
@@ -146,19 +146,23 @@ generate-artifacts:
   script:
     - source project.env
     - echo "Generating artifacts for: $PROJECT_KEY"
-    - cd apps/tui
     - |
-      echo "Generating project charter..."
-      python main.py artifacts generate --project "$PROJECT_KEY" --type charter || echo "Charter skipped"
-      
-      echo "Generating project plan..."
-      python main.py artifacts generate --project "$PROJECT_KEY" --type plan || echo "Plan skipped"
-      
-      echo "Generating WBS..."
-      python main.py artifacts generate --project "$PROJECT_KEY" --type wbs || echo "WBS skipped"
-      
-      echo "Generating RAID register..."
-      python main.py artifacts generate --project "$PROJECT_KEY" --type raid || echo "RAID skipped"
+      # Use supported propose/apply workflow (no direct TUI artifacts generate command)
+      echo "Generating project plan via propose/apply..."
+      PROPOSAL_PLAN=$(curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/propose" \
+        -H "Content-Type: application/json" \
+        -d '{"command":"generate_plan"}' | jq -r '.proposal_id')
+      curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/apply" \
+        -H "Content-Type: application/json" \
+        -d "{\"proposal_id\":\"$PROPOSAL_PLAN\"}" >/dev/null
+
+      echo "Generating project charter via propose/apply..."
+      PROPOSAL_CHARTER=$(curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/propose" \
+        -H "Content-Type: application/json" \
+        -d '{"command":"generate_artifact","params":{"artifact_name":"PROJECT_CHARTER.md","artifact_type":"project_charter"}}' | jq -r '.proposal_id')
+      curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/apply" \
+        -H "Content-Type: application/json" \
+        -d "{\"proposal_id\":\"$PROPOSAL_CHARTER\"}" >/dev/null
       
       echo "✅ Artifact generation completed"
   artifacts:
@@ -183,24 +187,25 @@ raid-report:
   script:
     - source project.env
     - echo "Generating RAID report..."
-    - cd apps/tui
     - |
-      # Get all projects
-      PROJECTS=$(python main.py projects list --format json | jq -r '.[].key' 2>/dev/null || echo "$PROJECT_KEY")
-      
-      echo "=== RAID Report $(date +'%Y-%m-%d %H:%M:%S') ===" > /tmp/raid-report.txt
+      mkdir -p .tmp
+
+      # Use API endpoints for RAID reporting (no TUI `raid` command group exists)
+      PROJECTS=$(curl -fsS "$API_BASE_URL/projects" | jq -r '.[].key' 2>/dev/null || echo "$PROJECT_KEY")
+
+      echo "=== RAID Report $(date +'%Y-%m-%d %H:%M:%S') ===" > .tmp/raid-report.txt
       
       for PROJECT in $PROJECTS; do
-        echo "" >> /tmp/raid-report.txt
-        echo "--- Project: $PROJECT ---" >> /tmp/raid-report.txt
-        python main.py raid list --project "$PROJECT" --filter severity=High >> /tmp/raid-report.txt 2>&1 || echo "No RAID entries" >> /tmp/raid-report.txt
+        echo "" >> .tmp/raid-report.txt
+        echo "--- Project: $PROJECT ---" >> .tmp/raid-report.txt
+        curl -fsS "$API_BASE_URL/api/v1/projects/$PROJECT/raid?priority=critical" | jq '.' >> .tmp/raid-report.txt 2>&1 || echo "No RAID entries" >> .tmp/raid-report.txt
       done
       
-      cat /tmp/raid-report.txt
+      cat .tmp/raid-report.txt
   artifacts:
     name: "raid-report-$CI_PIPELINE_ID"
     paths:
-      - /tmp/raid-report.txt
+      - .tmp/raid-report.txt
     expire_in: 30 days
   only:
     - schedules
@@ -282,8 +287,14 @@ full-regenerate:
   script:
     - source project.env
     - echo "Starting FULL regeneration for: $PROJECT_KEY"
-    - cd apps/tui
-    - python main.py artifacts regenerate --project "$PROJECT_KEY" --force
+    - |
+      # No direct TUI regenerate command exists; use propose/apply workflow
+      PROPOSAL_PLAN=$(curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/propose" \
+        -H "Content-Type: application/json" \
+        -d '{"command":"generate_plan"}' | jq -r '.proposal_id')
+      curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/apply" \
+        -H "Content-Type: application/json" \
+        -d "{\"proposal_id\":\"$PROPOSAL_PLAN\"}" >/dev/null
     - echo "✅ Full regeneration completed"
   artifacts:
     name: "regenerated-artifacts-$PROJECT_KEY"
@@ -380,8 +391,14 @@ dependency-scanning:
 .parallel-template:
   stage: generate
   script:
-    - cd apps/tui
-    - python main.py artifacts generate --project "$PROJECT" --type all
+    - |
+      # Use workflow endpoint pattern for each matrix project
+      PROPOSAL_PLAN=$(curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT/commands/propose" \
+        -H "Content-Type: application/json" \
+        -d '{"command":"generate_plan"}' | jq -r '.proposal_id')
+      curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT/commands/apply" \
+        -H "Content-Type: application/json" \
+        -d "{\"proposal_id\":\"$PROPOSAL_PLAN\"}" >/dev/null
   parallel:
     matrix:
       - PROJECT: ["PROJ-A", "PROJ-B", "PROJ-C"]
