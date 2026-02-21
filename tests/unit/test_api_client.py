@@ -164,6 +164,45 @@ def test_command_and_artifact_methods_use_expected_payloads():
     )
 
 
+def test_proposal_methods_use_expected_paths_payloads_and_filters():
+    client, dummy = _client()
+
+    client.list_proposals(
+        project_key="P1",
+        status_filter="pending",
+        change_type="update",
+    )
+    client.list_proposals(project_key="P1")
+    client.get_proposal("P1", "prop-1")
+    client.apply_proposal("P1", "prop-1")
+    client.reject_proposal("P1", "prop-1", "Not aligned")
+
+    assert dummy.calls[0] == (
+        "get",
+        "http://api.local/projects/P1/proposals",
+        {
+            "status_filter": "pending",
+            "change_type": "update",
+        },
+    )
+    assert dummy.calls[1] == ("get", "http://api.local/projects/P1/proposals", None)
+    assert dummy.calls[2] == (
+        "get",
+        "http://api.local/projects/P1/proposals/prop-1",
+        None,
+    )
+    assert dummy.calls[3] == (
+        "post",
+        "http://api.local/projects/P1/proposals/prop-1/apply",
+        None,
+    )
+    assert dummy.calls[4] == (
+        "post",
+        "http://api.local/projects/P1/proposals/prop-1/reject",
+        {"reason": "Not aligned"},
+    )
+
+
 def test_raid_crud_methods_use_expected_payloads_and_paths():
     client, dummy = _client()
 

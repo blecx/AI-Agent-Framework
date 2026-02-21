@@ -152,6 +152,52 @@ class APIClient:
         )
         return self._handle_response(response)
 
+    def list_proposals(
+        self,
+        project_key: str,
+        status_filter: Optional[str] = None,
+        change_type: Optional[str] = None,
+    ) -> list:
+        """List proposals for a project with optional filters."""
+        params: Dict[str, str] = {}
+        if status_filter:
+            params["status_filter"] = status_filter
+        if change_type:
+            params["change_type"] = change_type
+
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/proposals",
+            params=params or None,
+        )
+        return self._handle_response(response)
+
+    def get_proposal(self, project_key: str, proposal_id: str) -> Dict[str, Any]:
+        """Get a proposal by ID."""
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/proposals/{proposal_id}"
+        )
+        return self._handle_response(response)
+
+    def apply_proposal(self, project_key: str, proposal_id: str) -> Dict[str, Any]:
+        """Apply a proposal by ID."""
+        response = self.client.post(
+            f"{self.base_url}/projects/{project_key}/proposals/{proposal_id}/apply"
+        )
+        return self._handle_response(response)
+
+    def reject_proposal(
+        self,
+        project_key: str,
+        proposal_id: str,
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Reject a proposal by ID with reason."""
+        response = self.client.post(
+            f"{self.base_url}/projects/{project_key}/proposals/{proposal_id}/reject",
+            json={"reason": reason},
+        )
+        return self._handle_response(response)
+
     def list_artifacts(self, project_key: str) -> list:
         """List project artifacts.
 

@@ -23,6 +23,7 @@ def test_cli_help_includes_registered_groups():
     assert result.exit_code == 0
     assert "projects" in result.output
     assert "commands" in result.output
+    assert "proposals" in result.output
     assert "artifacts" in result.output
     assert "raid" in result.output
     assert "workflow" in result.output
