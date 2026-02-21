@@ -32,6 +32,14 @@ class DummyHTTPClient:
         self.calls.append(("put", url, json))
         return httpx.Response(200, request=httpx.Request("PUT", url), json={"ok": True})
 
+    def patch(self, url, json=None):
+        self.calls.append(("patch", url, json))
+        return httpx.Response(
+            200,
+            request=httpx.Request("PATCH", url),
+            json={"ok": True},
+        )
+
     def delete(self, url):
         self.calls.append(("delete", url, None))
         if "/raid/" in url:
@@ -210,6 +218,79 @@ def test_raid_crud_methods_use_expected_payloads_and_paths():
     assert dummy.calls[4] == (
         "delete",
         "http://api.local/projects/P1/raid/RISK001",
+        None,
+    )
+
+
+def test_workflow_methods_use_expected_paths_and_payloads():
+    client, dummy = _client()
+
+    client.get_workflow_state("P1")
+    client.transition_workflow_state(
+        project_key="P1",
+        to_state="planning",
+        actor="PM",
+        reason="Kickoff approved",
+    )
+    client.transition_workflow_state(
+        project_key="P1",
+        to_state="executing",
+        actor="PM",
+    )
+    client.get_allowed_workflow_transitions("P1")
+    client.get_audit_events(
+        project_key="P1",
+        event_type="workflow_state_changed",
+        actor="PM",
+        since="2026-01-01T00:00:00Z",
+        until="2026-12-31T23:59:59Z",
+        limit=10,
+        offset=5,
+    )
+    client.get_audit_events(project_key="P1")
+
+    assert dummy.calls[0] == (
+        "get",
+        "http://api.local/projects/P1/workflow/state",
+        None,
+    )
+    assert dummy.calls[1] == (
+        "patch",
+        "http://api.local/projects/P1/workflow/state",
+        {
+            "to_state": "planning",
+            "actor": "PM",
+            "reason": "Kickoff approved",
+        },
+    )
+    assert dummy.calls[2] == (
+        "patch",
+        "http://api.local/projects/P1/workflow/state",
+        {
+            "to_state": "executing",
+            "actor": "PM",
+        },
+    )
+    assert dummy.calls[3] == (
+        "get",
+        "http://api.local/projects/P1/workflow/allowed-transitions",
+        None,
+    )
+    assert dummy.calls[4] == (
+        "get",
+        "http://api.local/projects/P1/audit-events",
+        {
+            "event_type": "workflow_state_changed",
+            "actor": "PM",
+            "since": "2026-01-01T00:00:00Z",
+            "until": "2026-12-31T23:59:59Z",
+            "limit": 10,
+            "offset": 5,
+        },
+    )
+    assert dummy.calls[5] == (
+        "get",
+        "http://api.local/projects/P1/audit-events",
         None,
     )
 

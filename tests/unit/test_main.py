@@ -25,6 +25,7 @@ def test_cli_help_includes_registered_groups():
     assert "commands" in result.output
     assert "artifacts" in result.output
     assert "raid" in result.output
+    assert "workflow" in result.output
     assert "config" in result.output
 
 

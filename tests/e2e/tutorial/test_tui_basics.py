@@ -399,18 +399,12 @@ class TestTutorial04RAIDManagement:
 class TestTutorial05FullLifecycle:
     """Validate Tutorial 05: Full Lifecycle commands."""
 
-    pytestmark = pytest.mark.skip(
-        reason="DOCUMENTATION GAP: TUI does not implement workflow commands; lifecycle updates require API workflows/proposals."
-    )
-
     PROJECT_KEY = "TEST-TUT05"
 
     @pytest.fixture(autouse=True)
     def setup_project(self, tui):
         """Set up test project."""
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
-        )
+        self.PROJECT_KEY = _unique_project_key("TEST-TUT05")
         tui.execute_command(
             [
                 "projects",
@@ -422,38 +416,72 @@ class TestTutorial05FullLifecycle:
             ]
         )
         yield
-        tui.execute_command(
-            ["projects", "delete", "--key", self.PROJECT_KEY], check=False
+
+    def test_workflow_state_and_transition(self, tui):
+        """Test: python apps/tui/main.py workflow state/transition."""
+        state_result = tui.execute_command(
+            ["workflow", "state", "--project", self.PROJECT_KEY]
         )
 
-    def test_workflow_update_phase(self, tui):
-        """Test: python apps/tui/main.py workflow update --phase"""
+        assert state_result.success
+        assert "initiating" in state_result.stdout.lower()
+
         result = tui.execute_command(
             [
                 "workflow",
-                "update",
+                "transition",
                 "--project",
                 self.PROJECT_KEY,
-                "--phase",
+                "--to-state",
                 "planning",
+                "--actor",
+                "TestUser",
                 "--reason",
                 "Test phase transition",
             ]
         )
 
-        # Workflow commands might not be fully implemented yet
-        # So we check for success OR for a clear "not implemented" message
-        if result.success:
-            assert (
-                "planning" in result.stdout.lower()
-                or "updated" in result.stdout.lower()
-            )
-        else:
-            # Command might not exist yet - that's OK for tutorials
-            assert (
-                "not found" in result.stderr.lower()
-                or "not implemented" in result.stderr.lower()
-            )
+        assert result.success
+        assert "planning" in result.stdout.lower()
+
+    def test_workflow_allowed_transitions_and_audit(self, tui):
+        """Test: python apps/tui/main.py workflow allowed-transitions/audit-events."""
+        transition_result = tui.execute_command(
+            [
+                "workflow",
+                "transition",
+                "--project",
+                self.PROJECT_KEY,
+                "--to-state",
+                "planning",
+                "--actor",
+                "TestUser",
+            ]
+        )
+        assert transition_result.success
+
+        allowed_result = tui.execute_command(
+            ["workflow", "allowed-transitions", "--project", self.PROJECT_KEY]
+        )
+        assert allowed_result.success
+        assert (
+            "allowed" in allowed_result.stdout.lower()
+            or "executing" in allowed_result.stdout.lower()
+        )
+
+        audit_result = tui.execute_command(
+            [
+                "workflow",
+                "audit-events",
+                "--project",
+                self.PROJECT_KEY,
+                "--event-type",
+                "workflow_state_changed",
+                "--actor",
+                "TestUser",
+            ]
+        )
+        assert audit_result.success
 
     def test_complete_lifecycle_scenario(self, tui):
         """Test: Complete lifecycle scenario from tutorial."""
@@ -472,6 +500,8 @@ class TestTutorial05FullLifecycle:
                 "risk",
                 "--title",
                 "Initial risk",
+                "--description",
+                "Initial lifecycle risk",
                 "--priority",
                 "high",
                 "--owner",
@@ -482,19 +512,17 @@ class TestTutorial05FullLifecycle:
         # 3. Propose a command
         tui.execute_command(
             [
-                "propose",
+                "commands",
                 "propose",
                 "--project",
                 self.PROJECT_KEY,
                 "--command",
-                "create_charter",
+                "assess_gaps",
             ]
         )
 
         # 4. Check project state
-        result = tui.execute_command(
-            ["projects", "state", "--project", self.PROJECT_KEY]
-        )
+        result = tui.execute_command(["projects", "get", "--key", self.PROJECT_KEY])
         assert result.success
 
         # Project created and has RAID entries - basic lifecycle demonstrated
@@ -551,10 +579,30 @@ def test_tutorial_sequence(tui):
     result = tui.execute_command(["raid", "list", "--project", test_key])
     assert result.success, "Tutorial 04: RAID list failed"
 
-    # Tutorial 05: Full Lifecycle (workflow commands still not implemented)
-    pytest.skip(
-        "DOCUMENTATION GAP: TUI does not implement workflow commands; skipping tutorial 05 sequence."
+    # Tutorial 05: Full Lifecycle (workflow commands)
+    result = tui.execute_command(["workflow", "state", "--project", test_key])
+    assert result.success, "Tutorial 05: Workflow state failed"
+
+    result = tui.execute_command(
+        [
+            "workflow",
+            "transition",
+            "--project",
+            test_key,
+            "--to-state",
+            "planning",
+            "--actor",
+            "PM",
+            "--reason",
+            "Sequence transition",
+        ]
     )
+    assert result.success, "Tutorial 05: Workflow transition failed"
+
+    result = tui.execute_command(
+        ["workflow", "allowed-transitions", "--project", test_key]
+    )
+    assert result.success, "Tutorial 05: Workflow allowed transitions failed"
 
 
 if __name__ == "__main__":

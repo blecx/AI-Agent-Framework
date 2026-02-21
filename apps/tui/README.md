@@ -187,6 +187,34 @@ python main.py raid update --project PROJ001 --id RISK001 --status in_progress
 python main.py raid delete --project PROJ001 --id RISK001
 ```
 
+#### Workflow Management
+
+```bash
+# Get current workflow state
+python main.py workflow state --project PROJ001
+
+# Transition workflow state
+python main.py workflow transition \
+  --project PROJ001 \
+  --to-state planning \
+  --actor "PM" \
+  --reason "Charter approved"
+
+# Show allowed transitions from current state
+python main.py workflow allowed-transitions --project PROJ001
+
+# List workflow audit events
+python main.py workflow audit-events --project PROJ001
+
+# Filter workflow audit events
+python main.py workflow audit-events \
+  --project PROJ001 \
+  --event-type workflow_state_changed \
+  --actor "PM" \
+  --limit 20 \
+  --offset 0
+```
+
 #### Configuration Management
 
 ```bash
@@ -240,6 +268,15 @@ docker compose run tui commands apply --project TEST001 --proposal <id>
 
 # List artifacts
 docker compose run tui artifacts list --project TEST001
+
+# Get workflow state
+docker compose run tui workflow state --project TEST001
+
+# Transition workflow state
+docker compose run tui workflow transition --project TEST001 --to-state planning --actor PM
+
+# List audit events
+docker compose run tui workflow audit-events --project TEST001
 ```
 
 ## Example Workflows

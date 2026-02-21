@@ -12,6 +12,7 @@ from commands.projects import projects_group
 from commands.propose import propose_group
 from commands.artifacts import artifacts_group
 from commands.raid import raid_group
+from commands.workflow import workflow_group
 from commands.config import config_group
 
 
@@ -63,6 +64,7 @@ cli.add_command(projects_group)
 cli.add_command(propose_group)
 cli.add_command(artifacts_group)
 cli.add_command(raid_group)
+cli.add_command(workflow_group)
 cli.add_command(config_group)
 
 
