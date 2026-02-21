@@ -13,9 +13,7 @@ from utils import print_error
 class APIClient:
     """HTTP client for AI Agent REST API."""
 
-    def __init__(
-        self, base_url: Optional[str] = None, timeout: Optional[int] = None
-    ):
+    def __init__(self, base_url: Optional[str] = None, timeout: Optional[int] = None):
         """Initialize API client.
 
         Args:
