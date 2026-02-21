@@ -1,0 +1,129 @@
+name: Backend CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'docker/api/**'
+      - 'docker/web/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/cd-backend.yml'
+      - '.github/workflows/reusable-ghcr-publish.yml'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        default: both
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: backend-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-api:
+    name: Publish API image
+    timeout-minutes: 20
+    uses: ./.github/workflows/reusable-ghcr-publish.yml
+    secrets: inherit
+    with:
+      image_name: ai-agent-framework-api
+      dockerfile: docker/api/Dockerfile
+      context: .
+      push_latest: false
+
+  publish-web:
+    name: Publish Web image
+    timeout-minutes: 20
+    uses: ./.github/workflows/reusable-ghcr-publish.yml
+    secrets: inherit
+    with:
+      image_name: ai-agent-framework-web
+      dockerfile: docker/web/Dockerfile
+      context: .
+      push_latest: false
+
+  deploy-staging:
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [publish-api, publish-web]
+    if: |
+      github.event_name == 'push' ||
+      github.event.inputs.target == 'staging' ||
+      github.event.inputs.target == 'both'
+    environment: staging
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ vars.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Execute remote deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
+            "GHCR_USERNAME='${{ secrets.DEPLOY_GHCR_USERNAME }}' GHCR_TOKEN='${{ secrets.DEPLOY_GHCR_TOKEN }}' API_IMAGE='${{ needs.publish-api.outputs.image_sha_tag }}' WEB_IMAGE='${{ needs.publish-web.outputs.image_sha_tag }}' bash -lc '${{ vars.DEPLOY_COMMAND }}'"
+
+      - name: Health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}"
+
+  deploy-production:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [publish-api, publish-web, deploy-staging]
+    if: |
+      (github.event_name == 'push' ||
+      github.event.inputs.target == 'production' ||
+      github.event.inputs.target == 'both') &&
+      (needs.deploy-staging.result == 'success' ||
+      github.event.inputs.target == 'production')
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ vars.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Execute remote deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
+            "GHCR_USERNAME='${{ secrets.DEPLOY_GHCR_USERNAME }}' GHCR_TOKEN='${{ secrets.DEPLOY_GHCR_TOKEN }}' API_IMAGE='${{ needs.publish-api.outputs.image_sha_tag }}' WEB_IMAGE='${{ needs.publish-web.outputs.image_sha_tag }}' bash -lc '${{ vars.DEPLOY_COMMAND }}'"
+
+      - name: Health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}"

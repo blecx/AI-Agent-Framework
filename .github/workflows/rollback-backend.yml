@@ -1,0 +1,64 @@
+name: Backend Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Rollback target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      api_image:
+        description: Full immutable API image tag (for example ghcr.io/org/ai-agent-framework-api:sha-<sha>)
+        required: true
+        type: string
+      web_image:
+        description: Full immutable Web image tag (for example ghcr.io/org/ai-agent-framework-web:sha-<sha>)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: backend-rollback-${{ github.event.inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Rollback backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ github.event.inputs.target }}
+    steps:
+      - name: Validate immutable image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${{ github.event.inputs.api_image }}" == ghcr.io/*:sha-* ]]
+          [[ "${{ github.event.inputs.web_image }}" == ghcr.io/*:sha-* ]]
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ vars.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Execute remote rollback deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
+            "GHCR_USERNAME='${{ secrets.DEPLOY_GHCR_USERNAME }}' GHCR_TOKEN='${{ secrets.DEPLOY_GHCR_TOKEN }}' API_IMAGE='${{ github.event.inputs.api_image }}' WEB_IMAGE='${{ github.event.inputs.web_image }}' bash -lc '${{ vars.DEPLOY_COMMAND }}'"
+
+      - name: Health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}"
