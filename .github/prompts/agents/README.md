@@ -1,6 +1,14 @@
 # Agent Workflow Prompts
 
-This directory contains optimized workflow prompts for AI agents that resolve issues, merge PRs, and plan implementations.
+This directory contains concise workflow prompts for issue lifecycle agents.
+
+## When to Use
+
+Use these prompts when running specialized agents for issue creation, implementation, merge, closure, or tutorial work.
+
+## When Not to Use
+
+Do not use these as general user documentation; they are operational rails for agent execution.
 
 ## How to Use
 
@@ -115,8 +123,11 @@ Example:
 
 When updating agent workflows:
 
-1. Keep prompts concise (< 100 lines)
-2. Maintain early-exit conditions
-3. Document optimizations
-4. Test with real issues before committing
-5. Update README when adding new agents
+1. Keep prompts concise (target <= 100 lines)
+2. Include explicit output format and completion criteria
+3. Maintain early-exit conditions
+4. Validate with prompt checker
+
+Validation command:
+
+- `./.venv/bin/python scripts/check_prompt_quality.py`

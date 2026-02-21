@@ -148,6 +148,23 @@ This directory contains reusable prompt templates to help standardize GitHub Cop
 
 - Markdown-only audit package with summary, defect list, feature gap list, duplicate-content audit, visual coverage report, and prioritized fix plan
 
+### 9. [multi-step-planning.md](./multi-step-planning.md)
+
+**Purpose:** Concise orchestrator for large planning flows using modular references.
+
+**When to use:**
+
+- Multi-week initiatives or cross-domain changes
+- Requirements-to-issues decomposition with traceability
+
+**When not to use:**
+
+- Single small feature that fits one issue
+
+### 10. Prompt Modules (`./modules/*.md`)
+
+**Purpose:** Reusable building blocks to avoid oversized prompt files.
+
 ---
 
 ## How to Use These Templates
@@ -213,3 +230,13 @@ When adding new templates:
 3. Add repo-specific validation steps
 4. Update this README with the new template
 5. Test with GitHub Copilot to ensure clarity
+
+## Prompt Quality Validation
+
+Run:
+
+- `./.venv/bin/python scripts/check_prompt_quality.py`
+
+Use strict mode for CI gating:
+
+- `./.venv/bin/python scripts/check_prompt_quality.py --strict`
