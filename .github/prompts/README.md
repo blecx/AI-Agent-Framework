@@ -27,6 +27,12 @@ See `agents/README.md` for specialized agent workflows.
 ## Shared Modules
 
 - `modules/prompt-quality-baseline.md`
+- `modules/issue-creation-workflow.md`
+- `modules/resolve-issue-workflow.md`
+- `modules/pr-merge-workflow.md`
+- `modules/tutorial-review-workflow.md`
+- `modules/cross-repo-coordination-checklist.md`
+- `modules/multi-step-planning-checklist.md`
 
 Additional modules can be introduced incrementally during prompt refactor slices.
 
