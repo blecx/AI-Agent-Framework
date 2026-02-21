@@ -3,7 +3,9 @@
 # Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
 
 AI-Agent-Framework:
-  - title: "Step 2 — Implement artifact templates + blueprint system (backend)"
+  - number: "S2-BE-01"
+    size_estimate: "M"
+    title: "Step 2 — Implement artifact templates + blueprint system (backend)"
     body: |
       ## Goal
       Provide a template and blueprint system that drives artifact generation and validation for PMP and RAID.
@@ -43,7 +45,9 @@ AI-Agent-Framework:
       - step:2
       - backend/api/tui
 
-  - title: "Step 2 — Implement proposal system for artifact changes (backend)"
+  - number: "S2-BE-02"
+    size_estimate: "M"
+    title: "Step 2 — Implement proposal system for artifact changes (backend)"
     body: |
       ## Goal
       Enable structured, auditable changes to artifacts via a proposal workflow (AI-generated or human-authored).
@@ -88,7 +92,9 @@ AI-Agent-Framework:
       - step:2
       - backend/api/tui
 
-  - title: "Step 2 — Implement cross-artifact audit system (backend)"
+  - number: "S2-BE-03"
+    size_estimate: "M"
+    title: "Step 2 — Implement cross-artifact audit system (backend)"
     body: |
       ## Goal
       Provide automated validation and consistency checks across artifacts to ensure completeness and compliance.
@@ -130,7 +136,9 @@ AI-Agent-Framework:
       - backend/api/tui
 
 AI-Agent-Framework-Client:
-  - title: "Step 2 — Web UI: Artifact editor with template-driven forms (client)"
+  - number: "S2-UX-01"
+    size_estimate: "M"
+    title: "Step 2 — Web UI: Artifact editor with template-driven forms (client)"
     body: |
       ## Goal
       Provide a structured, template-driven artifact editor for PMP and RAID in the Web UI.
@@ -171,7 +179,9 @@ AI-Agent-Framework-Client:
       - step:2
       - webui/ux
 
-  - title: "Step 2 — Web UI: Proposal creation, review, and apply workflow (client)"
+  - number: "S2-UX-02"
+    size_estimate: "M"
+    title: "Step 2 — Web UI: Proposal creation, review, and apply workflow (client)"
     body: |
       ## Goal
       Enable users to create, review, and apply proposals in the Web UI with clear diff visualization.
@@ -213,7 +223,9 @@ AI-Agent-Framework-Client:
       - step:2
       - webui/ux
 
-  - title: "Step 2 — Web UI: Audit results viewer with actionable links (client)"
+  - number: "S2-UX-03"
+    size_estimate: "M"
+    title: "Step 2 — Web UI: Audit results viewer with actionable links (client)"
     body: |
       ## Goal
       Display audit results in the Web UI with clear errors, warnings, and links back to artifacts for fixing.
