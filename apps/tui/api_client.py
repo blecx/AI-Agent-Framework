@@ -258,6 +258,72 @@ class APIClient:
         )
         return self._handle_response(response)
 
+    def get_workflow_state(self, project_key: str) -> Dict[str, Any]:
+        """Get workflow state for a project."""
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/workflow/state"
+        )
+        return self._handle_response(response)
+
+    def transition_workflow_state(
+        self,
+        project_key: str,
+        to_state: str,
+        actor: str,
+        reason: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Transition workflow state for a project."""
+        payload: Dict[str, Any] = {
+            "to_state": to_state,
+            "actor": actor,
+        }
+        if reason:
+            payload["reason"] = reason
+
+        response = self.client.patch(
+            f"{self.base_url}/projects/{project_key}/workflow/state",
+            json=payload,
+        )
+        return self._handle_response(response)
+
+    def get_allowed_workflow_transitions(self, project_key: str) -> Dict[str, Any]:
+        """Get allowed workflow transitions for current project state."""
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/workflow/allowed-transitions"
+        )
+        return self._handle_response(response)
+
+    def get_audit_events(
+        self,
+        project_key: str,
+        event_type: Optional[str] = None,
+        actor: Optional[str] = None,
+        since: Optional[str] = None,
+        until: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Get audit events for a project with optional filters."""
+        params: Dict[str, Any] = {}
+        if event_type:
+            params["event_type"] = event_type
+        if actor:
+            params["actor"] = actor
+        if since:
+            params["since"] = since
+        if until:
+            params["until"] = until
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/audit-events",
+            params=params or None,
+        )
+        return self._handle_response(response)
+
     def close(self):
         """Close the HTTP client."""
         self.client.close()
