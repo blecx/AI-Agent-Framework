@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -9,7 +10,11 @@ TUI_DIR = ROOT_DIR / "apps" / "tui"
 if str(TUI_DIR) not in sys.path:
     sys.path.insert(0, str(TUI_DIR))
 
-import main as tui_main
+spec = importlib.util.spec_from_file_location("tui_main_module", TUI_DIR / "main.py")
+assert spec is not None
+assert spec.loader is not None
+tui_main = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tui_main)
 
 
 def test_cli_help_includes_registered_groups():
