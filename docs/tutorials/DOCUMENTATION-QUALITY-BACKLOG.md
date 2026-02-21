@@ -28,7 +28,7 @@
 - **Severity:** `high`
 - **Location:** `docs/tutorials/validation/expected-outputs/advanced/01-hybrid-workflow.json` (step 3 command)
 - **Evidence:**
-  - Stale expected output uses `python main.py raid add --project TEST ...`
+  - Stale expected output previously used non-existent `python main.py raid add --project TEST ...`; current fixture uses REST RAID create via `POST /projects/TEST/raid`.
   - TUI command groups in `apps/tui/main.py` include `projects|commands|artifacts|config|health` only.
   - Tutorial baseline explicitly states no `raid` or `workflow` TUI groups: `docs/tutorials/tui-basics/01-quick-start.md` line 29.
 - **User impact:** Validation artifacts can mislead users into trying unsupported TUI commands.
