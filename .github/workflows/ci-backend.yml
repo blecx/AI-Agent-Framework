@@ -102,7 +102,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          pytest tests/ --cov=apps/api --cov=apps/tui --cov-report=term-missing --cov-report=json
+          bash scripts/run_pytest_coverage.sh --ci
       
       - name: Check coverage diff
         run: |

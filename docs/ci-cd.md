@@ -167,12 +167,11 @@ bash scripts/run_pytest_coverage.sh --ci
 python scripts/coverage_diff.py origin/main HEAD
 ```
 
-For local troubleshooting (when GUI/perf environment is not available), use:
+For local troubleshooting (deterministic core suites), use:
 
 ```bash
 bash scripts/run_pytest_coverage.sh --local-stable
 ```
-
 **Failure remediation**:
 - Identify uncovered lines in coverage report
 - Add tests to cover new/changed code
