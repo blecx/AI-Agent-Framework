@@ -46,6 +46,26 @@ Select the active LLM config via `LLM_CONFIG_PATH` (preferred) or `configs/llm.j
 
 Secrets should be provided via env vars when possible (e.g. `GITHUB_TOKEN` or `GH_TOKEN`) to avoid writing credentials into files.
 
+## Goal Archive Behavior (`.tmp`)
+
+`scripts/work-issue.py` now archives issue goals from `.tmp/*.md` automatically:
+
+- **Pre-run archive**: before prerequisites/agent execution
+- **Post-run archive**: in a `finally` block (runs even if the workflow fails)
+
+Archive outputs are written under `.tmp/archive/`:
+
+- `goals-<timestamp>.md` (consolidated Goal sections)
+- `goals-<timestamp>.json` (manifest with counters and paths)
+- `snapshots/<timestamp>/` (source file snapshots)
+
+Controls:
+
+- Disable for one run: `./scripts/work-issue.py --issue <n> --no-goal-archive`
+- Disable by environment: `WORK_ISSUE_GOAL_ARCHIVE=0`
+- Manual run: `bash scripts/archive-goals.sh`
+- Manual run with source move: `bash scripts/archive-goals.sh --move`
+
 ## Phase 1: Selection & Setup
 
 **Goal:** Select next issue and prepare workspace
@@ -101,6 +121,9 @@ Secrets should be provided via env vars when possible (e.g. `GITHUB_TOKEN` or `G
 ./scripts/next-issue.py
 gh issue view <number> --repo <repo>
 git checkout -b issue/<number>-<description>
+
+# Optional: archive goals from .tmp before starting manual work
+bash scripts/archive-goals.sh
 ```
 
 ## Phase 2: Context & Planning
