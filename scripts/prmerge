@@ -806,8 +806,9 @@ info "Detecting issue type..."
 ISSUE_TYPE=$(detect_issue_type "$PR_TITLE" "$PR_BODY" "$PR_FILES_LIST")
 success "Detected type: $ISSUE_TYPE"
 
-# Create closing message using appropriate template
-CLOSING_MESSAGE_FILE=$(mktemp)
+# Create closing message using workspace-scoped temp file
+mkdir -p .tmp
+CLOSING_MESSAGE_FILE=".tmp/close-issue-${ISSUE_NUMBER}-pr-${PR_NUMBER}-$$.md"
 
 case "$ISSUE_TYPE" in
     infrastructure)

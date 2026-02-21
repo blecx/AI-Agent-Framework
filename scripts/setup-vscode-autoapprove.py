@@ -120,6 +120,26 @@ AUTO_APPROVE_SETTINGS = {
         "act": True,
         "pre-commit": True,
         "uv": True,
+
+        # Repo workflow scripts
+        "./scripts/work-issue.py": True,
+        "./scripts/next-issue.py": True,
+        "./scripts/next-issue-both.py": True,
+        "./scripts/next-pr.py": True,
+        "./scripts/prmerge": True,
+        "./scripts/close-issue.sh": True,
+        "./scripts/validate-pr-template.sh": True,
+        "./scripts/check_issue_specs.py": True,
+        "./scripts/validate_issue_specs.sh": True,
+        "./next-issue": True,
+        "./next-pr": True,
+
+        # Allow command lines with optional leading VAR=... prefixes
+        "/^([A-Za-z_][A-Za-z0-9_]*=[^\\s]+\\s+)*(git|gh|npm|python|pytest|docker|curl|uvicorn|ssh-add|cd|ls|cat|rg|fd|find|awk|sed|grep|jq|xargs|head|tail|wc|echo|sleep|mkdir|rm|cp|mv|chmod|source|env|\\./setup\\.sh|\\./scripts/[^\\s]+|\\./next-issue|\\./next-pr)(\\s+.*)?$/": {
+            "approve": True,
+            "matchCommandLine": True,
+            "description": "Allow safe commands with optional env var prefixes"
+        },
     }
 }
 

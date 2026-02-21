@@ -44,10 +44,10 @@ You are done only when all are true:
 - Do not bypass repo PR-review gates (required sections, checked checkboxes, no placeholders in evidence).
 - Never commit or stage `projectDocs/` or `configs/llm.json` (backend hygiene). Never commit any secrets (either repo).
 - Do not “fix” unrelated issues. Keep scope to the PR merge + close workflow.
-- If branch protection blocks merging and requires human action (approval/admin), stop and ask for approval or instructions.- **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
+- If branch protection blocks merging and requires human action (approval/admin), stop and ask for approval or instructions.
+- **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
   - `/tmp` is world-readable and insecure
   - Use `.tmp/pr-<number>-metrics.json`, `.tmp/close-<issue>.json`, etc.
-  - Scripts may output to `/tmp` but agent must copy/move to `.tmp/` immediately
 ## Repo Detection
 
 Determine the target repo from the PR URL or by querying with `gh pr view`.
@@ -103,7 +103,7 @@ If CI still appears to validate the _old_ PR description after updating it:
 When `./scripts/prmerge` closes the issue, it posts an internal template message.
 If the issue remains open (or the closing message is insufficient), close using the standardized template system:
 
-- Use `./scripts/close-issue.sh --template <feature|bugfix|docs|infrastructure|generic> --issue <N> --pr <PR_NUMBER> --repo blecx/AI-Agent-Framework-Client --data-json <json>`
+- Use `./scripts/close-issue.sh --template <feature|bugfix|docs|infrastructure|generic> --issue <N> --pr <PR_NUMBER> --data <json>`
 - Run `--dry-run` first.
 - The close script has a placeholder guard; do not bypass unless explicitly instructed (`--allow-placeholders`).
 
@@ -115,7 +115,7 @@ If `actual_hours` provided and not already recorded, run:
 
 - `./scripts/record-completion.py <issue_number> <actual_hours> "notes"`
 
-Include metrics JSON if available (the prmerge script may store metrics in `/tmp/prmerge-metrics-<PR>.json` but you MUST copy it to `.tmp/` immediately for security: `cp /tmp/prmerge-metrics-<PR>.json .tmp/ && rm /tmp/prmerge-metrics-<PR>.json`).
+Include metrics JSON if available from `.tmp/prmerge-metrics-<PR>.json`.
 
 ### A5) Verify
 

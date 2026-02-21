@@ -27,14 +27,15 @@ Examples:
   ./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --dry-run
 
   # Close issue with a custom filled message
-  cat > /tmp/close.json <<'JSON'
+  mkdir -p .tmp
+  cat > .tmp/close.json <<'JSON'
   {
     "summary": "- Added init-only dry-run and plan-only modes",
     "how_to_validate": "- ./scripts/work-issue.py --issue 42 --dry-run\n- ./scripts/work-issue.py --issue 42 --plan-only",
     "notes": "- Requires reachable LLM base_url for --plan-only"
   }
 JSON
-  ./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data /tmp/close.json
+  ./scripts/close-issue.sh --issue 42 --pr 43 --template infrastructure --data .tmp/close.json
 USAGE
 }
 
@@ -139,7 +140,8 @@ if [[ -n "$pr" ]]; then
 fi
 
 # Render the message with Jinja2
-msg_file="$(mktemp)"
+mkdir -p .tmp
+msg_file=".tmp/close-issue-${issue}-$$.md"
 trap 'rm -f "$msg_file"' EXIT
 
 "$py" - "$template_path" "$issue_json" "$pr_json" "$data_json" "$merge_commit" >"$msg_file" <<'PY'
