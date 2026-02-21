@@ -46,6 +46,24 @@ function labelize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function inferArtifactType(artifactName = "") {
+  const file = artifactName.trim().toLowerCase();
+  if (!file) return "artifact";
+
+  if (file.endsWith(".md") || file.endsWith(".markdown")) return "markdown";
+  if (file.endsWith(".txt")) return "text";
+  if (file.endsWith(".csv")) return "csv";
+  if (file.endsWith(".json")) return "json";
+  if (file.match(/\.(png|jpe?g|gif|webp|svg)$/)) return "image";
+
+  const lastDot = file.lastIndexOf(".");
+  if (lastDot > 0 && lastDot < file.length - 1) {
+    return file.slice(lastDot + 1);
+  }
+
+  return file.replace(/\s+/g, "_");
+}
+
 function CommandPanel({
   projectKey,
   onProposalGenerated,
@@ -81,10 +99,19 @@ function CommandPanel({
     try {
       setLoading(true);
       setError(null);
+
+      const payloadParams = { ...params };
+      if (selectedCommand.id === "generate_artifact") {
+        const inferred = inferArtifactType(payloadParams.artifact_name || "");
+        if (!payloadParams.artifact_type || payloadParams.artifact_type.trim() === "") {
+          payloadParams.artifact_type = inferred;
+        }
+      }
+
       const proposal = await api.proposeCommand(
         projectKey,
         selectedCommand.id,
-        params,
+        payloadParams,
       );
       onProposalGenerated(proposal);
       setSelectedCommand(null);
@@ -167,7 +194,12 @@ function CommandPanel({
                     onChange={(e) =>
                       handleParamChange(param.name, e.target.value)
                     }
-                    placeholder={param.placeholder}
+                    placeholder={
+                      selectedCommand.id === "generate_artifact" &&
+                      param.name === "artifact_type"
+                        ? `auto-detected, e.g. ${inferArtifactType(params.artifact_name || "project_charter.md")}`
+                        : param.placeholder
+                    }
                   />
                 </div>
               ))}

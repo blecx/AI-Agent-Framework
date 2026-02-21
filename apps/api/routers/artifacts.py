@@ -2,6 +2,7 @@
 Artifacts router for listing, retrieving, and generating artifacts.
 """
 
+import csv
 import mimetypes
 from pathlib import Path
 
@@ -10,6 +11,48 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 
 router = APIRouter()
+
+
+def _infer_media_type(path: str, content: bytes) -> str:
+    """Infer media type using filename guess first, then content sniffing."""
+    guessed, _ = mimetypes.guess_type(path)
+    if guessed:
+        return guessed
+
+    # Image signatures
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if content.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if content.startswith(b"RIFF") and b"WEBP" in content[:16]:
+        return "image/webp"
+
+    # Text-like content
+    try:
+        text = content.decode("utf-8")
+        if "\x00" in text:
+            return "application/octet-stream"
+
+        # CSV heuristic
+        sample = "\n".join(text.splitlines()[:5])
+        if sample.strip():
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+                if dialect and any(d in sample for d in [",", ";", "\t"]):
+                    return "text/csv"
+            except csv.Error:
+                pass
+
+        # Markdown heuristic
+        markdown_markers = ("# ", "## ", "```", "- ", "* ", "[", "](")
+        if any(marker in text for marker in markdown_markers):
+            return "text/markdown"
+
+        return "text/plain"
+    except UnicodeDecodeError:
+        return "application/octet-stream"
 
 
 # ============================================================================
@@ -74,9 +117,7 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
         )
 
     # Return with inferred media type
-    media_type, _ = mimetypes.guess_type(artifact_path)
-    if not media_type:
-        media_type = "application/octet-stream"
+    media_type = _infer_media_type(artifact_path, content)
     return Response(content=content, media_type=media_type)
 
 
@@ -118,10 +159,13 @@ async def upload_artifact(
         [str(normalized)],
     )
 
+    media_type = _infer_media_type(str(normalized), content)
+
     return {
         "path": str(normalized),
         "name": Path(final_path).name,
         "type": Path(final_path).suffix.lstrip(".").lower() or "unknown",
+        "media_type": media_type,
         "size": len(content),
     }
 
