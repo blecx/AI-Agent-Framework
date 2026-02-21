@@ -14,6 +14,7 @@ without manual copy-paste.
 import json
 import os
 import sys
+import argparse
 from pathlib import Path
 from typing import Dict, Any
 
@@ -24,10 +25,12 @@ AUTO_APPROVE_SETTINGS = {
     "chat.checkpoints.showFileChanges": True,
     "chat.customAgentInSubagent.enabled": True,
     "chat.tools.subagent.autoApprove": {
+        "create-issue": True,
         "resolve-issue-dev": True,
         "close-issue": True,
         "pr-merge": True,
-        "Plan": True
+        "Plan": True,
+        "tutorial": True
     },
     "chat.tools.terminal.autoApprove": {
         # Core executables
@@ -134,11 +137,21 @@ AUTO_APPROVE_SETTINGS = {
         "./next-issue": True,
         "./next-pr": True,
 
-        # Allow command lines with optional leading VAR=... prefixes
-        "/^([A-Za-z_][A-Za-z0-9_]*=[^\\s]+\\s+)*(git|gh|npm|python|pytest|docker|curl|uvicorn|ssh-add|cd|ls|cat|rg|fd|find|awk|sed|grep|jq|xargs|head|tail|wc|echo|sleep|mkdir|rm|cp|mv|chmod|source|env|\\./setup\\.sh|\\./scripts/[^\\s]+|\\./next-issue|\\./next-pr)(\\s+.*)?$/": {
+        # Allow command lines with optional leading whitespace, env, and VAR=... prefixes
+        "/^\\s*(?:env\\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+\\s+)*(git|gh|npm|python|pytest|docker|curl|uvicorn|ssh-add|cd|ls|cat|rg|fd|find|awk|sed|grep|jq|xargs|head|tail|wc|echo|sleep|mkdir|rm|cp|mv|chmod|source|env|\\./setup\\.sh|\\./scripts\\/[^\\s]+|\\./next-issue|\\./next-pr)(\\s+.*)?$/": {
             "approve": True,
             "matchCommandLine": True,
-            "description": "Allow safe commands with optional env var prefixes"
+            "description": "Allow safe commands with optional leading whitespace, env, and VAR=... prefixes"
+        },
+        "/^\\s*for\\s+.+;\\s*do\\s+.+;\\s*done(?:;\\s*exit\\s+\\d+)?\\s*$/": {
+            "approve": True,
+            "matchCommandLine": True,
+            "description": "Allow polling loops used in issue/pr/merge workflows"
+        },
+        "/^\\s*cd\\s+.*\\s+&&\\s+.*$/": {
+            "approve": True,
+            "matchCommandLine": True,
+            "description": "Allow cd with command chaining"
         },
     }
 }
@@ -236,50 +249,134 @@ def update_settings(path: Path, name: str) -> bool:
         return False
 
 
+def _collect_drift(expected: Any, actual: Any, path: str = "") -> list[str]:
+    """Collect deterministic drift messages between expected and actual values."""
+    drifts: list[str] = []
+
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            drifts.append(f"{path or '<root>'}: expected object, found {type(actual).__name__}")
+            return drifts
+
+        for key, value in expected.items():
+            child_path = f"{path}.{key}" if path else key
+            if key not in actual:
+                drifts.append(f"{child_path}: missing")
+                continue
+            drifts.extend(_collect_drift(value, actual[key], child_path))
+        return drifts
+
+    if expected != actual:
+        drifts.append(f"{path}: expected={expected!r} actual={actual!r}")
+
+    return drifts
+
+
+def verify_settings(path: Path, name: str) -> bool:
+    """Verify managed settings keys exactly match source-of-truth values."""
+    print(f"\n🔎 Verifying {name}...")
+    print(f"   Path: {path}")
+
+    existing = read_json_file(path)
+    drifts = _collect_drift(AUTO_APPROVE_SETTINGS, existing)
+
+    if not drifts:
+        print(f"   ✅ No drift detected in {name}")
+        return True
+
+    print(f"   ❌ Drift detected in {name} ({len(drifts)} differences):")
+    for diff in drifts[:20]:
+        print(f"      - {diff}")
+    if len(drifts) > 20:
+        print(f"      - ... and {len(drifts) - 20} more")
+    return False
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Configure or verify VS Code Copilot auto-approve settings."
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check for drift without modifying files (non-zero exit on mismatch).",
+    )
+    parser.add_argument(
+        "--workspace-only",
+        action="store_true",
+        help="Operate only on backend/client workspace settings (skip global user settings).",
+    )
+    return parser.parse_args()
+
+
 def main():
     """Main entry point."""
+    args = parse_args()
+
     print("🚀 VS Code Auto-Approve Setup")
     print("=" * 60)
     
     success_count = 0
     total_count = 0
     
-    # 1. Update global VS Code settings
-    try:
-        global_settings = get_vscode_settings_path()
-        total_count += 1
-        if update_settings(global_settings, "Global VS Code settings"):
-            success_count += 1
-    except Exception as e:
-        print(f"\n❌ Could not update global settings: {e}")
+    # 1. Global VS Code settings (optional)
+    if not args.workspace_only:
+        try:
+            global_settings = get_vscode_settings_path()
+            total_count += 1
+            if args.check:
+                if verify_settings(global_settings, "Global VS Code settings"):
+                    success_count += 1
+            else:
+                if update_settings(global_settings, "Global VS Code settings"):
+                    success_count += 1
+        except Exception as e:
+            mode = "verify" if args.check else "update"
+            print(f"\n❌ Could not {mode} global settings: {e}")
     
     # 2. Update backend workspace settings
     backend_workspace = Path(__file__).parent.parent / ".vscode/settings.json"
     total_count += 1
-    if update_settings(backend_workspace, "Backend workspace"):
-        success_count += 1
+    if args.check:
+        if verify_settings(backend_workspace, "Backend workspace"):
+            success_count += 1
+    else:
+        if update_settings(backend_workspace, "Backend workspace"):
+            success_count += 1
     
     # 3. Update client workspace settings
     client_workspace = Path(__file__).parent.parent / "_external/AI-Agent-Framework-Client/.vscode/settings.json"
     total_count += 1
-    if update_settings(client_workspace, "Client workspace"):
-        success_count += 1
+    if args.check:
+        if verify_settings(client_workspace, "Client workspace"):
+            success_count += 1
+    else:
+        if update_settings(client_workspace, "Client workspace"):
+            success_count += 1
     
     # Summary
     print("\n" + "=" * 60)
     print(f"📊 Summary: {success_count}/{total_count} settings files updated")
     
     if success_count == total_count:
+        if args.check:
+            print("\n✅ No drift detected for selected settings files")
+            return 0
+
         print("\n✅ All settings configured successfully!")
         print("\n📝 Next steps:")
         print("   1. Reload VS Code window: Ctrl+Shift+P → 'Developer: Reload Window'")
         print("   2. Start a fresh chat - commands should auto-approve")
-        print("   3. Test with: @workspace run git status")
+        print("   3. Verify drift with: ./scripts/setup-autoapprove.sh --check --workspace-only")
         return 0
+
+    if args.check:
+        print("\n⚠️  Drift detected. Run ./scripts/setup-autoapprove.sh --workspace-only to reconcile.")
     else:
         print("\n⚠️  Some settings could not be updated")
         print("   Check the errors above and try again")
-        return 1
+    return 1
 
 
 if __name__ == "__main__":
