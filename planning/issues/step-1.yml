@@ -3,7 +3,9 @@
 # Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
 
 AI-Agent-Framework:
-  - title: "Step 1 — Establish ISO 21500/21502 project governance + RAID register (backend)"
+  - number: "S1-BE-01"
+    size_estimate: "M"
+    title: "Step 1 — Establish ISO 21500/21502 project governance + RAID register (backend)"
     body: |
       ## Goal
       Add a minimal, standards-aligned project governance backbone in the backend to support PMP-style planning and RAID tracking.
@@ -38,7 +40,9 @@ AI-Agent-Framework:
       - step:1
       - backend/api/tui
 
-  - title: "Step 1 — Implement ISO workflow states + audit/events (backend)"
+  - number: "S1-BE-02"
+    size_estimate: "M"
+    title: "Step 1 — Implement ISO workflow states + audit/events (backend)"
     body: |
       ## Goal
       Provide an execution-control backbone aligned to ISO 21500/21502 by modeling workflow stages and capturing auditable state transitions.
@@ -68,7 +72,9 @@ AI-Agent-Framework:
       - step:1
       - backend/api/tui
 
-  - title: "Step 1 — End-to-end smoke for RAID + workflow spine (tests/e2e)"
+  - number: "S1-BE-03"
+    size_estimate: "S"
+    title: "Step 1 — End-to-end smoke for RAID + workflow spine (tests/e2e)"
     body: |
       ## Goal
       Establish an E2E baseline that proves the ISO workflow spine and RAID register can be exercised through the exposed interfaces.
@@ -84,6 +90,9 @@ AI-Agent-Framework:
       - Ensure `tests/README.md` documents E2E setup and commands.
       - Labels: `step:1`, `tests/e2e`
 
+      ## Testing Requirements
+      - `pytest tests/e2e -q`
+
       ## Acceptance criteria
       - E2E suite runnable locally + CI.
       - Tests are stable (no sleep-based flakiness; use retries/awaits).
@@ -93,7 +102,9 @@ AI-Agent-Framework:
       - tests/e2e
 
 AI-Agent-Framework-Client:
-  - title: "Step 1 — Web UI: RAID register views (list + detail + filters)"
+  - number: "S1-UX-01"
+    size_estimate: "M"
+    title: "Step 1 — Web UI: RAID register views (list + detail + filters)"
     body: |
       ## Goal
       Build the first client-facing surface for PMP + RAID by exposing the RAID register in the Web UI.
@@ -121,7 +132,9 @@ AI-Agent-Framework-Client:
       - step:1
       - webui/ux
 
-  - title: "Step 1 — Client workflow spine UI (project stage indicator + transitions)"
+  - number: "S1-UX-02"
+    size_estimate: "M"
+    title: "Step 1 — Client workflow spine UI (project stage indicator + transitions)"
     body: |
       ## Goal
       Provide a visible ISO 21500/21502 workflow spine in the client so users can see and drive project/work-package stages.
@@ -148,7 +161,9 @@ AI-Agent-Framework-Client:
       - step:1
       - webui/ux
 
-  - title: "Step 1 — Client E2E: RAID + workflow happy path (tests/e2e)"
+  - number: "S1-UX-03"
+    size_estimate: "S"
+    title: "Step 1 — Client E2E: RAID + workflow happy path (tests/e2e)"
     body: |
       ## Goal
       Ensure the client can execute the core Step 1 PMP+RAID workflow end-to-end.
@@ -164,6 +179,9 @@ AI-Agent-Framework-Client:
       - Add tests under `tests/e2e`.
       - Update `tests/README.md` with environment variables, headless mode, and CI commands.
       - Labels: `step:1`, `tests/e2e`
+
+      ## Testing Requirements
+      - `npm run test:e2e`
 
       ## Acceptance criteria
       - Client E2E suite runs reliably.
