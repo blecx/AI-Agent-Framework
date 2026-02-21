@@ -52,15 +52,100 @@ jobs:
       context: .
       push_latest: false
 
-  deploy-staging:
-    name: Deploy staging
+  check-staging-config:
+    name: Check staging config
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     needs: [publish-api, publish-web]
     if: |
       github.event_name == 'push' ||
       github.event.inputs.target == 'staging' ||
       github.event.inputs.target == 'both'
+    environment: staging
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      missing: ${{ steps.check.outputs.missing }}
+    steps:
+      - name: Check staging deploy configuration
+        id: check
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
+          DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "missing=${missing[*]}" >> "$GITHUB_OUTPUT"
+            echo "Staging deploy config missing: ${missing[*]}"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "missing=" >> "$GITHUB_OUTPUT"
+          fi
+
+  check-production-config:
+    name: Check production config
+    runs-on: ubuntu-latest
+    needs: [publish-api, publish-web]
+    if: |
+      github.event_name == 'push' ||
+      github.event.inputs.target == 'production' ||
+      github.event.inputs.target == 'both'
+    environment: production
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      missing: ${{ steps.check.outputs.missing }}
+    steps:
+      - name: Check production deploy configuration
+        id: check
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
+          DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "missing=${missing[*]}" >> "$GITHUB_OUTPUT"
+            echo "Production deploy config missing: ${missing[*]}"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "missing=" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-staging:
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [publish-api, publish-web, check-staging-config]
+    if: |
+      (github.event_name == 'push' ||
+      github.event.inputs.target == 'staging' ||
+      github.event.inputs.target == 'both') &&
+      needs.check-staging-config.outputs.ready == 'true'
     environment: staging
     permissions:
       contents: read
@@ -118,13 +203,14 @@ jobs:
     name: Deploy production
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [publish-api, publish-web, deploy-staging]
+    needs: [publish-api, publish-web, check-production-config, deploy-staging]
     if: |
       (github.event_name == 'push' ||
       github.event.inputs.target == 'production' ||
       github.event.inputs.target == 'both') &&
       (needs.deploy-staging.result == 'success' ||
-      github.event.inputs.target == 'production')
+      github.event.inputs.target == 'production') &&
+      needs.check-production-config.outputs.ready == 'true'
     environment: production
     permissions:
       contents: read
@@ -177,3 +263,35 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}"
+
+  staging-config-missing:
+    name: Staging config missing
+    runs-on: ubuntu-latest
+    needs: [check-staging-config]
+    if: |
+      (github.event_name == 'push' ||
+      github.event.inputs.target == 'staging' ||
+      github.event.inputs.target == 'both') &&
+      needs.check-staging-config.outputs.ready != 'true'
+    steps:
+      - name: Report missing staging configuration
+        shell: bash
+        run: |
+          echo "::warning::Staging deploy skipped. Missing configuration: ${{ needs.check-staging-config.outputs.missing }}"
+          echo "::warning::Set vars DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL and secrets DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN in environment 'staging'."
+
+  production-config-missing:
+    name: Production config missing
+    runs-on: ubuntu-latest
+    needs: [check-production-config]
+    if: |
+      (github.event_name == 'push' ||
+      github.event.inputs.target == 'production' ||
+      github.event.inputs.target == 'both') &&
+      needs.check-production-config.outputs.ready != 'true'
+    steps:
+      - name: Report missing production configuration
+        shell: bash
+        run: |
+          echo "::warning::Production deploy skipped. Missing configuration: ${{ needs.check-production-config.outputs.missing }}"
+          echo "::warning::Set vars DEPLOY_HOST DEPLOY_USER DEPLOY_COMMAND HEALTHCHECK_URL and secrets DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN in environment 'production'."
