@@ -50,6 +50,7 @@ permissions:
 env:
   PYTHON_VERSION: '3.12'
   PROJECT_KEY: ${{ github.event.inputs.project_key || 'AUTO-DETECT' }}
+  API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://localhost:8000' }}
 
 jobs:
   # Job 1: Generate project artifacts
@@ -111,8 +112,7 @@ jobs:
             echo "Creating new project: ${{ steps.project.outputs.PROJECT_KEY }}"
             python main.py projects create \
               --key "${{ steps.project.outputs.PROJECT_KEY }}" \
-              --name "${{ github.repository }}" \
-              --description "Automated project for ${{ github.repository }}"
+              --name "${{ github.repository }}"
           }
         env:
           PROJECT_DOCS_PATH: ../../projectDocs
@@ -121,13 +121,22 @@ jobs:
       
       - name: Generate project artifacts
         run: |
-          cd apps/tui
           echo "Generating artifacts for project: ${{ steps.project.outputs.PROJECT_KEY }}"
-          
-          # Generate all standard artifacts
-          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type charter || echo "Charter generation skipped"
-          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type plan || echo "Plan generation skipped"
-          python main.py artifacts generate --project "${{ steps.project.outputs.PROJECT_KEY }}" --type wbs || echo "WBS generation skipped"
+
+          # Use supported propose/apply workflow (no direct TUI artifacts generate command)
+          PROPOSAL_PLAN=$(curl -fsS -X POST "$API_BASE_URL/projects/${{ steps.project.outputs.PROJECT_KEY }}/commands/propose" \
+            -H "Content-Type: application/json" \
+            -d '{"command":"generate_plan"}' | jq -r '.proposal_id')
+          curl -fsS -X POST "$API_BASE_URL/projects/${{ steps.project.outputs.PROJECT_KEY }}/commands/apply" \
+            -H "Content-Type: application/json" \
+            -d "{\"proposal_id\":\"$PROPOSAL_PLAN\"}" >/dev/null
+
+          PROPOSAL_CHARTER=$(curl -fsS -X POST "$API_BASE_URL/projects/${{ steps.project.outputs.PROJECT_KEY }}/commands/propose" \
+            -H "Content-Type: application/json" \
+            -d '{"command":"generate_artifact","params":{"artifact_name":"PROJECT_CHARTER.md","artifact_type":"project_charter"}}' | jq -r '.proposal_id')
+          curl -fsS -X POST "$API_BASE_URL/projects/${{ steps.project.outputs.PROJECT_KEY }}/commands/apply" \
+            -H "Content-Type: application/json" \
+            -d "{\"proposal_id\":\"$PROPOSAL_CHARTER\"}" >/dev/null
           
           echo "Artifact generation completed"
         env:
@@ -184,10 +193,10 @@ jobs:
       
       - name: Generate RAID report
         run: |
-          cd apps/tui
-          
-          # List all projects
-          PROJECTS=$(python main.py projects list --format json | jq -r '.[].key' || echo "")
+          mkdir -p .tmp
+
+          # Use API endpoints for RAID reporting (no TUI `raid` command group exists)
+          PROJECTS=$(curl -fsS "$API_BASE_URL/projects" | jq -r '.[].key' || echo "")
           
           if [ -z "$PROJECTS" ]; then
             echo "No projects found"
@@ -196,24 +205,25 @@ jobs:
           
           # Generate report for each project
           for PROJECT in $PROJECTS; do
-            echo "=== RAID Report for $PROJECT ===" | tee -a /tmp/raid-report.txt
-            python main.py raid list --project "$PROJECT" --filter severity=High | tee -a /tmp/raid-report.txt || echo "No high-severity items"
-            echo "" | tee -a /tmp/raid-report.txt
+            echo "=== RAID Report for $PROJECT ===" | tee -a .tmp/raid-report.txt
+            curl -fsS "$API_BASE_URL/api/v1/projects/$PROJECT/raid?priority=critical" | jq '.' | tee -a .tmp/raid-report.txt || echo "No critical-priority RAID items" | tee -a .tmp/raid-report.txt
+            echo "" | tee -a .tmp/raid-report.txt
           done
         env:
           PROJECT_DOCS_PATH: ../../projectDocs
+          API_BASE_URL: ${{ env.API_BASE_URL }}
       
       - name: Upload RAID report
         uses: actions/upload-artifact@v4
         with:
           name: raid-report-${{ github.run_id }}
-          path: /tmp/raid-report.txt
+          path: .tmp/raid-report.txt
           retention-days: 30
       
       - name: Send notification (optional)
         if: secrets.SLACK_WEBHOOK_URL != ''
         run: |
-          REPORT_CONTENT=$(cat /tmp/raid-report.txt | head -100)
+          REPORT_CONTENT=$(cat .tmp/raid-report.txt | head -100)
           
           curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
@@ -313,22 +323,26 @@ jobs:
           git config --global user.name "${{ secrets.GIT_USER_NAME || 'GitHub Actions Bot' }}"
           git config --global user.email "${{ secrets.GIT_USER_EMAIL || 'actions@github.com' }}"
       
-      - name: Full artifact regeneration
+      - name: Full workflow-based regeneration
         run: |
-          cd apps/tui
-          
           PROJECT_KEY="${{ github.event.inputs.project_key }}"
           
           echo "Starting full regeneration for: $PROJECT_KEY"
-          
-          # Regenerate all artifacts
-          python main.py artifacts regenerate --project "$PROJECT_KEY" --force
+
+          # No direct TUI regenerate command exists; use propose/apply workflow
+          PROPOSAL_PLAN=$(curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/propose" \
+            -H "Content-Type: application/json" \
+            -d '{"command":"generate_plan"}' | jq -r '.proposal_id')
+          curl -fsS -X POST "$API_BASE_URL/projects/$PROJECT_KEY/commands/apply" \
+            -H "Content-Type: application/json" \
+            -d "{\"proposal_id\":\"$PROPOSAL_PLAN\"}" >/dev/null
           
           echo "✅ Full regeneration completed"
         env:
           PROJECT_DOCS_PATH: ../../projectDocs
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          API_BASE_URL: ${{ env.API_BASE_URL }}
       
       - name: Commit regenerated artifacts
         run: |
