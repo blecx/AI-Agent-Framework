@@ -199,7 +199,7 @@ class TestTutorial01HybridWorkflow:
         assert result.returncode == 0, f"Project get failed: {result.stderr}"
         assert clean_project in result.stdout
         assert "Test" in result.stdout
-        print(f"✅ Project details retrieved via TUI")
+        print("✅ Project details retrieved via TUI")
 
     @pytest.mark.skipif(not check_api_running(), reason="API not running")
     def test_raid_operations_supported(self, tui_path, clean_project):
