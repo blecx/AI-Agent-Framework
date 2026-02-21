@@ -52,7 +52,7 @@ run_gate 1 "All Tests Pass" "pytest tests/ -v --tb=short -q"
 # Gate 2: Coverage Threshold
 run_gate 2 "Coverage Threshold (80%+)" "
     pip install -q pytest-cov > /dev/null 2>&1 &&
-    pytest tests/ --cov=apps/api --cov=apps/tui --cov-report=term-missing -q &&
+    bash scripts/run_pytest_coverage.sh --ci -q &&
     python scripts/coverage_diff.py origin/main HEAD
 "
 

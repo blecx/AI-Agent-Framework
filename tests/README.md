@@ -74,8 +74,14 @@ pytest tests/e2e -k step2
 ### Coverage
 
 ```bash
-pytest tests/ --cov=apps/api --cov=apps/tui --cov-report=term-missing --cov-report=json
+bash scripts/run_pytest_coverage.sh --ci
 python scripts/coverage_diff.py origin/main HEAD
+```
+
+Local stable run (deterministic core suites only):
+
+```bash
+bash scripts/run_pytest_coverage.sh --local-stable
 ```
 
 ## CI notes
