@@ -587,7 +587,7 @@ def analyze_coverage_impact(
             return json.dumps(
                 {
                     "error": "Failed to generate coverage report",
-                    "suggestion": "Run: pytest tests/ --cov=apps/api --cov=apps/tui --cov-report=json",
+                    "suggestion": "Run: bash scripts/run_pytest_coverage.sh --local-stable",
                 },
                 indent=2,
             )
