@@ -219,9 +219,10 @@ class TestTutorial01HybridWorkflow:
             capture_output=True,
             text=True,
         )
-        assert create_result.returncode == 0 or "already exists" in (
-            create_result.stdout + create_result.stderr
-        ).lower()
+        assert (
+            create_result.returncode == 0
+            or "already exists" in (create_result.stdout + create_result.stderr).lower()
+        )
 
         add_result = subprocess.run(
             [
