@@ -3,7 +3,7 @@ Utility functions for TUI client.
 """
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from rich.console import Console
 from rich.table import Table
 from rich.syntax import Syntax
@@ -33,7 +33,7 @@ def print_warning(message: str):
     console.print(f"[yellow]⚠[/yellow] {message}")
 
 
-def print_json(data: Any, title: str = None):
+def print_json(data: Any, title: Optional[str] = None):
     """Pretty print JSON data."""
     json_str = json.dumps(data, indent=2)
     syntax = Syntax(json_str, "json", theme="monokai", line_numbers=False)
@@ -43,7 +43,7 @@ def print_json(data: Any, title: str = None):
         console.print(syntax)
 
 
-def print_table(data: list, title: str = None):
+def print_table(data: list, title: Optional[str] = None):
     """Print data as a formatted table."""
     if not data:
         print_warning("No data to display")
@@ -72,9 +72,11 @@ def print_table(data: list, title: str = None):
 
 def format_project_info(project: Dict[str, Any]) -> str:
     """Format project information for display."""
+    description = project.get("description") or "N/A"
     return (
         f"[bold]Project:[/bold] {project['name']}\n"
         f"[bold]Key:[/bold] {project['key']}\n"
+        f"[bold]Description:[/bold] {description}\n"
         f"[bold]Methodology:[/bold] {project.get('methodology', 'ISO21500')}\n"
         f"[bold]Created:[/bold] {project.get('created_at', 'N/A')}\n"
         f"[bold]Updated:[/bold] {project.get('updated_at', 'N/A')}"

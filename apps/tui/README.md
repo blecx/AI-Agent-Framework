@@ -110,11 +110,20 @@ python main.py health
 # Create a project
 python main.py projects create --key PROJ001 --name "My Project"
 
+# Create a project with optional description
+python main.py projects create --key PROJ001 --name "My Project" --description "Initial project context"
+
 # List all projects
 python main.py projects list
 
+# List projects as JSON (for scripting)
+python main.py projects list --format json
+
 # Get project details and state
 python main.py projects get --key PROJ001
+
+# Soft-delete project
+python main.py projects delete --key PROJ001
 ```
 
 #### Command Workflow (Propose/Apply)
@@ -180,11 +189,20 @@ docker compose run tui health
 # Create project
 docker compose run tui projects create --key TEST001 --name "Test Project"
 
+# Create project with description
+docker compose run tui projects create --key TEST001 --name "Test Project" --description "Smoke test project"
+
 # List projects
 docker compose run tui projects list
 
+# List projects as JSON
+docker compose run tui projects list --format json
+
 # Get project state
 docker compose run tui projects get --key TEST001
+
+# Delete project
+docker compose run tui projects delete --key TEST001
 
 # Propose command
 docker compose run tui commands propose --project TEST001 --command assess_gaps

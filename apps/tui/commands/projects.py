@@ -2,6 +2,7 @@
 Project management commands.
 """
 
+import json
 import click
 from api_client import APIClient
 from utils import (
@@ -29,12 +30,13 @@ def projects_group():
     help="Unique project key (alphanumeric, dashes, underscores)",
 )
 @click.option("--name", required=True, help="Project name")
-def create_project(key: str, name: str):
+@click.option("--description", help="Optional project description")
+def create_project(key: str, name: str, description: str):
     """Create a new project."""
     client = APIClient()
 
     try:
-        result = client.create_project(key, name)
+        result = client.create_project(key, name, description)
         print_success(f"Project '{name}' created successfully!")
         print_json(result, title="Project Details")
     finally:
@@ -42,7 +44,15 @@ def create_project(key: str, name: str):
 
 
 @projects_group.command(name="list")
-def list_projects():
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    show_default=True,
+    help="Output format",
+)
+def list_projects(output_format: str):
     """List all projects."""
     client = APIClient()
 
@@ -50,11 +60,17 @@ def list_projects():
         projects = client.list_projects()
 
         if not projects:
-            print_error("No projects found")
+            if output_format == "json":
+                click.echo("[]")
+            else:
+                print_error("No projects found")
             return
 
-        print_table(projects, title="Projects")
-        console.print(f"\n[bold]Total:[/bold] {len(projects)} project(s)")
+        if output_format == "json":
+            click.echo(json.dumps(projects))
+        else:
+            print_table(projects, title="Projects")
+            console.print(f"\n[bold]Total:[/bold] {len(projects)} project(s)")
     finally:
         client.close()
 
@@ -85,5 +101,18 @@ def get_project(key: str):
             print_json(state["last_commit"])
         else:
             console.print("[dim]No commits yet[/dim]")
+    finally:
+        client.close()
+
+
+@projects_group.command(name="delete")
+@click.option("--key", required=True, help="Project key")
+def delete_project(key: str):
+    """Delete (soft-delete) a project."""
+    client = APIClient()
+
+    try:
+        client.delete_project(key)
+        print_success(f"Project '{key}' deleted successfully!")
     finally:
         client.close()
