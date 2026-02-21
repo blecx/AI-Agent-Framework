@@ -34,7 +34,6 @@ concurrency:
 jobs:
   publish-api:
     name: Publish API image
-    timeout-minutes: 20
     uses: ./.github/workflows/reusable-ghcr-publish.yml
     secrets: inherit
     with:
@@ -45,7 +44,6 @@ jobs:
 
   publish-web:
     name: Publish Web image
-    timeout-minutes: 20
     uses: ./.github/workflows/reusable-ghcr-publish.yml
     secrets: inherit
     with:
