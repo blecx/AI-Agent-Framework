@@ -3,7 +3,9 @@
 # Keep 3 issues for AI-Agent-Framework and 3 issues for AI-Agent-Framework-Client.
 
 AI-Agent-Framework:
-  - title: "Step 3 — TUI-driven deterministic E2E test suite (backend)"
+  - number: "S3-BE-01"
+    size_estimate: "M"
+    title: "Step 3 — TUI-driven deterministic E2E test suite (backend)"
     body: |
       ## Goal
       Establish a comprehensive, deterministic, non-interactive E2E test suite using the TUI that covers the complete workflow spine.
@@ -49,7 +51,9 @@ AI-Agent-Framework:
       - tests/e2e
       - backend/tui
 
-  - title: "Step 3 — Enhanced cross-artifact audit rules + diff stability (backend)"
+  - number: "S3-BE-02"
+    size_estimate: "M"
+    title: "Step 3 — Enhanced cross-artifact audit rules + diff stability (backend)"
     body: |
       ## Goal
       Harden audit system with comprehensive cross-artifact validation and ensure proposal diffs are stable and correct.
@@ -95,7 +99,9 @@ AI-Agent-Framework:
       - step:3
       - backend/api/tui
 
-  - title: "Step 3 — CI quality gates + documentation enforcement (backend)"
+  - number: "S3-BE-03"
+    size_estimate: "M"
+    title: "Step 3 — CI quality gates + documentation enforcement (backend)"
     body: |
       ## Goal
       Implement comprehensive CI quality gates that enforce testing, documentation, and code quality standards.
@@ -142,7 +148,9 @@ AI-Agent-Framework:
       - docs
 
 AI-Agent-Framework-Client:
-  - title: "Step 3 — TUI-driven client E2E test suite (client)"
+  - number: "S3-UX-01"
+    size_estimate: "M"
+    title: "Step 3 — TUI-driven client E2E test suite (client)"
     body: |
       ## Goal
       Establish deterministic E2E tests for the Web UI that cover the complete user workflow using automation tools.
@@ -185,7 +193,9 @@ AI-Agent-Framework-Client:
       - tests/e2e
       - webui/ux
 
-  - title: "Step 3 — Client-side validation and error handling hardening (client)"
+  - number: "S3-UX-02"
+    size_estimate: "M"
+    title: "Step 3 — Client-side validation and error handling hardening (client)"
     body: |
       ## Goal
       Harden the Web UI with comprehensive validation, error handling, and resilience patterns.
@@ -231,7 +241,9 @@ AI-Agent-Framework-Client:
       - step:3
       - webui/ux
 
-  - title: "Step 3 — Client CI quality gates + documentation (client)"
+  - number: "S3-UX-03"
+    size_estimate: "M"
+    title: "Step 3 — Client CI quality gates + documentation (client)"
     body: |
       ## Goal
       Implement CI quality gates for the client that enforce testing, documentation, and code quality standards.
