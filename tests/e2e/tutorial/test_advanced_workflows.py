@@ -1,33 +1,13 @@
 """
 E2E validation tests for Advanced Workflows tutorials.
 
-**IMPORTANT NOTE - DOCUMENTATION GAP:**
-The Advanced Workflows tutorials (01-tui-gui-hybrid, 02-complete-iso21500, 
-03-automation-scripting) document TUI commands that don't match the current 
-implementation:
+Tests validate shipped TUI behavior used in advanced tutorials.
 
-Tutorial Documentation vs Reality:
-- Tutorial: `python main.py raid add --type risk ...`
-  Reality: No 'raid' command - use API directly or propose/apply workflow
-
-- Tutorial: `python main.py artifacts create --type charter ...`
-  Reality: No 'artifacts create' - artifacts are generated via API commands
-
-- Tutorial: `python main.py projects create --description "..."`
-  Reality: No --description flag - only --key and --name supported
-
-- Tutorial: `python main.py workflow update --state Planning`
-  Reality: No 'workflow' command - use propose/apply workflow
-
-These tests validate what the system ACTUALLY does, highlighting the documentation gap.
-This should be fixed by either:
-  A) Updating tutorials to match current TUI API, OR
-  B) Implementing the missing TUI commands
-
-Tests cover:
-- Tutorial 01: TUI + GUI hybrid workflows (actual capabilities)
-- Tutorial 02: Complete ISO 21500 lifecycle (propose/apply workflow)
-- Tutorial 03: Automation scripting (scriptable TUI commands)
+Notes:
+- RAID commands are now available directly in TUI.
+- Workflow commands are now available directly in TUI.
+- Artifact creation still uses propose/apply workflows (no direct
+    `artifacts create` command).
 """
 
 import pytest
@@ -221,20 +201,65 @@ class TestTutorial01HybridWorkflow:
         assert "Test" in result.stdout
         print(f"✅ Project details retrieved via TUI")
 
-    def test_raid_operations_not_supported(self):
-        """Document that RAID operations from Tutorial 01 don't exist in TUI.
-
-        Tutorial shows: python main.py raid add --type risk ... (Tutorial 01, Step 4)
-        Reality: No 'raid' command exists - RAID operations are via API propose/apply
-        """
-        pytest.skip(
-            "DOCUMENTATION GAP: Tutorial documents 'raid add' command which doesn't exist. "
-            "RAID operations require API propose/apply workflow, not direct TUI commands. "
-            "Tutorials need updating to match actual TUI capabilities."
+    @pytest.mark.skipif(not check_api_running(), reason="API not running")
+    def test_raid_operations_supported(self, tui_path, clean_project):
+        """Validate RAID add/list commands used by advanced tutorials."""
+        create_result = subprocess.run(
+            [
+                "python",
+                "main.py",
+                "projects",
+                "create",
+                "--key",
+                clean_project,
+                "--name",
+                "Advanced RAID Test",
+            ],
+            cwd=tui_path,
+            capture_output=True,
+            text=True,
         )
+        assert create_result.returncode == 0 or "already exists" in (
+            create_result.stdout + create_result.stderr
+        ).lower()
+
+        add_result = subprocess.run(
+            [
+                "python",
+                "main.py",
+                "raid",
+                "add",
+                "--project",
+                clean_project,
+                "--type",
+                "risk",
+                "--title",
+                "Schedule risk",
+                "--description",
+                "Supplier lead time variance",
+                "--owner",
+                "PM",
+                "--priority",
+                "high",
+            ],
+            cwd=tui_path,
+            capture_output=True,
+            text=True,
+        )
+        assert add_result.returncode == 0, f"RAID add failed: {add_result.stderr}"
+
+        list_result = subprocess.run(
+            ["python", "main.py", "raid", "list", "--project", clean_project],
+            cwd=tui_path,
+            capture_output=True,
+            text=True,
+        )
+        assert list_result.returncode == 0, f"RAID list failed: {list_result.stderr}"
+        assert "Schedule risk" in list_result.stdout or "RAID" in list_result.stdout
+        print("✅ RAID add/list commands validated")
 
     def test_artifacts_create_not_supported(self):
-        """Document that artifacts create from Tutorial 02 doesn't exist in TUI.
+        """Document remaining unrelated gap: no direct artifacts create in TUI.
 
         Tutorial shows: python main.py artifacts create --type charter ...
         Reality: No 'artifacts create' - use commands propose with generate_artifact
