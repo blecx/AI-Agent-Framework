@@ -62,7 +62,11 @@ AI-Agent-Framework:
     monkeypatch.setattr(
         mod,
         "_find_existing_by_title",
-        lambda repo, title: {"number": 999, "title": title, "url": f"https://example.com/{repo}/999"},
+        lambda repo, title: {
+            "number": 999,
+            "title": title,
+            "url": f"https://example.com/{repo}/999",
+        },
     )
 
     mapping = {"version": 1, "entries": {}}
@@ -116,7 +120,14 @@ AI-Agent-Framework-Client:
 
     specs = mod._load_specs([spec_file])
     monkeypatch.setattr(mod, "_find_existing_by_title", lambda repo, title: None)
-    monkeypatch.setattr(mod, "_create_issue", lambda spec: (123, "https://github.com/blecx/AI-Agent-Framework-Client/issues/123"))
+    monkeypatch.setattr(
+        mod,
+        "_create_issue",
+        lambda spec: (
+            123,
+            "https://github.com/blecx/AI-Agent-Framework-Client/issues/123",
+        ),
+    )
 
     mapping = {"version": 1, "entries": {}}
     logs, out = mod.publish(specs, mapping, apply=True, repo_filter=None)
