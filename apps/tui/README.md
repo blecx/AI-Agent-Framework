@@ -149,6 +149,25 @@ python main.py commands apply --project PROJ001 --proposal <proposal-id>
 python main.py commands apply --project PROJ001 --proposal <proposal-id> -y
 ```
 
+#### Proposals Management
+
+```bash
+# List proposals for a project
+python main.py proposals list --project PROJ001
+
+# List filtered proposals
+python main.py proposals list --project PROJ001 --status pending --change-type update
+
+# Get proposal details
+python main.py proposals get --project PROJ001 --id <proposal-id>
+
+# Apply a proposal
+python main.py proposals apply --project PROJ001 --id <proposal-id>
+
+# Reject a proposal with reason
+python main.py proposals reject --project PROJ001 --id <proposal-id> --reason "Insufficient rationale"
+```
+
 #### Artifact Management
 
 ```bash
@@ -265,6 +284,12 @@ docker compose run tui commands propose --project TEST001 --command assess_gaps
 
 # Apply proposal
 docker compose run tui commands apply --project TEST001 --proposal <id>
+
+# List proposals
+docker compose run tui proposals list --project TEST001
+
+# Apply proposal
+docker compose run tui proposals apply --project TEST001 --id <id>
 
 # List artifacts
 docker compose run tui artifacts list --project TEST001

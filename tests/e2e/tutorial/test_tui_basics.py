@@ -231,10 +231,23 @@ class TestTutorial03ArtifactWorkflow:
         )
 
     def test_list_proposals(self, tui):
-        """Test: python apps/tui/main.py propose list"""
-        pytest.skip(
-            "DOCUMENTATION GAP: TUI has no 'proposals list' command; proposals are shown in the output of 'commands propose'."
+        """Test: python apps/tui/main.py proposals list"""
+        propose_result = tui.execute_command(
+            [
+                "commands",
+                "propose",
+                "--project",
+                self.PROJECT_KEY,
+                "--command",
+                "assess_gaps",
+            ]
         )
+        assert propose_result.success, f"Propose command failed: {propose_result.stderr}"
+
+        result = tui.execute_command(["proposals", "list", "--project", self.PROJECT_KEY])
+
+        assert result.success, f"List proposals failed: {result.stderr}"
+        assert "proposal" in result.stdout.lower() or "total" in result.stdout.lower()
 
     def test_list_artifacts(self, tui):
         """Test: python apps/tui/main.py artifacts list"""
