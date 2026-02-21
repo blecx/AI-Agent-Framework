@@ -49,7 +49,9 @@ def policy() -> BashGatewayPolicy:
     )
 
 
-def test_list_project_scripts_returns_profiles(temp_repo: Path, policy: BashGatewayPolicy):
+def test_list_project_scripts_returns_profiles(
+    temp_repo: Path, policy: BashGatewayPolicy
+):
     """Server lists scripts for all profiles."""
     server = BashGatewayServer(repo_root=temp_repo, policy=policy)
     result = server.list_project_scripts()
@@ -58,7 +60,9 @@ def test_list_project_scripts_returns_profiles(temp_repo: Path, policy: BashGate
     assert "scripts/ok.sh" in result["profiles"]["issue"]
 
 
-def test_describe_script_validates_allowlist(temp_repo: Path, policy: BashGatewayPolicy):
+def test_describe_script_validates_allowlist(
+    temp_repo: Path, policy: BashGatewayPolicy
+):
     """Describe should fail for non-allowlisted script."""
     server = BashGatewayServer(repo_root=temp_repo, policy=policy)
 

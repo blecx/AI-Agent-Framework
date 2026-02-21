@@ -64,7 +64,9 @@ class BashGatewayPolicy:
             raise PolicyViolationError(f"Unknown profile: {profile}")
         return value
 
-    def validate_script(self, *, profile: str, script_path: str, repo_root: Path) -> Path:
+    def validate_script(
+        self, *, profile: str, script_path: str, repo_root: Path
+    ) -> Path:
         """Validate script path against allowlist and traversal policy."""
         profile_policy = self.get_profile(profile)
 

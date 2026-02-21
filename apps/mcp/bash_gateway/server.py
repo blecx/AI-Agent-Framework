@@ -26,8 +26,12 @@ class BashGatewayServer:
     ):
         self.repo_root = repo_root
         self.policy = policy
-        self.audit_store = AuditStore(audit_dir or repo_root / ".tmp" / "agent-script-runs")
-        self.executor = ScriptExecutor(repo_root=repo_root, audit_store=self.audit_store)
+        self.audit_store = AuditStore(
+            audit_dir or repo_root / ".tmp" / "agent-script-runs"
+        )
+        self.executor = ScriptExecutor(
+            repo_root=repo_root, audit_store=self.audit_store
+        )
 
     def list_project_scripts(self, profile: Optional[str] = None) -> Dict:
         """Return allowlisted scripts for all profiles or one profile."""
