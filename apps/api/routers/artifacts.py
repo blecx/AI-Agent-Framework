@@ -2,11 +2,57 @@
 Artifacts router for listing, retrieving, and generating artifacts.
 """
 
-from fastapi import APIRouter, HTTPException, Request, Response
+import csv
+import mimetypes
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, Request, Response, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import List, Dict, Any
 
 router = APIRouter()
+
+
+def _infer_media_type(path: str, content: bytes) -> str:
+    """Infer media type using filename guess first, then content sniffing."""
+    guessed, _ = mimetypes.guess_type(path)
+    if guessed:
+        return guessed
+
+    # Image signatures
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if content.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if content.startswith(b"RIFF") and b"WEBP" in content[:16]:
+        return "image/webp"
+
+    # Text-like content
+    try:
+        text = content.decode("utf-8")
+        if "\x00" in text:
+            return "application/octet-stream"
+
+        # CSV heuristic
+        sample = "\n".join(text.splitlines()[:5])
+        if sample.strip():
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+                if dialect and any(d in sample for d in [",", ";", "\t"]):
+                    return "text/csv"
+            except csv.Error:
+                pass
+
+        # Markdown heuristic
+        markdown_markers = ("# ", "## ", "```", "- ", "* ", "[", "](")
+        if any(marker in text for marker in markdown_markers):
+            return "text/markdown"
+
+        return "text/plain"
+    except UnicodeDecodeError:
+        return "application/octet-stream"
 
 
 # ============================================================================
@@ -63,16 +109,74 @@ async def get_artifact(project_key: str, artifact_path: str, request: Request):
             status_code=404, detail=f"Project '{project_key}' not found"
         )
 
-    # Read artifact
-    content = git_manager.read_file(project_key, artifact_path)
-    if content is None:
+    # Read artifact (binary-safe)
+    project_path = git_manager.get_project_path(project_key)
+    resolved_path = project_path / artifact_path
+    if (
+        ".." in Path(artifact_path).parts
+        or not resolved_path.exists()
+        or not resolved_path.is_file()
+    ):
         raise HTTPException(
             status_code=404, detail=f"Artifact '{artifact_path}' not found"
         )
+    content = resolved_path.read_bytes()
 
-    # Return as markdown or plain text
-    media_type = "text/markdown" if artifact_path.endswith(".md") else "text/plain"
+    # Return with inferred media type
+    media_type = _infer_media_type(artifact_path, content)
     return Response(content=content, media_type=media_type)
+
+
+@router.post("/upload", status_code=201)
+async def upload_artifact(
+    project_key: str,
+    request: Request,
+    file: UploadFile = File(...),
+    artifact_path: str = Form(default=""),
+):
+    """Upload artifact file (text, markdown, csv, image) into project artifacts folder."""
+    git_manager = request.app.state.git_manager
+
+    # Verify project exists
+    project_info = git_manager.read_project_json(project_key)
+    if not project_info:
+        raise HTTPException(
+            status_code=404, detail=f"Project '{project_key}' not found"
+        )
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+
+    safe_name = Path(file.filename).name
+    final_path = artifact_path.strip() if artifact_path else f"artifacts/{safe_name}"
+    if not final_path.startswith("artifacts/"):
+        final_path = f"artifacts/{final_path}"
+
+    # Avoid path traversal
+    normalized = Path(final_path)
+    if ".." in normalized.parts:
+        raise HTTPException(status_code=400, detail="Invalid artifact path")
+
+    content = await file.read()
+    project_path = git_manager.get_project_path(project_key)
+    target_path = project_path / normalized
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_bytes(content)
+    git_manager.commit_changes(
+        project_key,
+        f"[{project_key}] Upload artifact: {Path(final_path).name}",
+        [str(normalized)],
+    )
+
+    media_type = _infer_media_type(str(normalized), content)
+
+    return {
+        "path": str(normalized),
+        "name": Path(final_path).name,
+        "type": Path(final_path).suffix.lstrip(".").lower() or "unknown",
+        "media_type": media_type,
+        "size": len(content),
+    }
 
 
 # ============================================================================
