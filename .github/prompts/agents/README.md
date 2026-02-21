@@ -24,6 +24,7 @@ Do not use these files as generic end-user docs; they are operator rails for age
 - Keep prompts concise (target <= 100 lines for `agents/*.md`).
 - Include explicit output format and completion criteria.
 - Delegate out-of-scope actions to the correct agent.
+- Keep detailed procedural content in shared modules under `../modules/`.
 
 ## Validation
 
