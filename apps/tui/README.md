@@ -159,6 +159,34 @@ python main.py artifacts list --project PROJ001
 python main.py artifacts get --project PROJ001 --path artifacts/gap_assessment.md
 ```
 
+#### RAID Management
+
+```bash
+# Add a RAID risk item
+python main.py raid add \
+  --project PROJ001 \
+  --type risk \
+  --title "Schedule risk" \
+  --description "Vendor delivery may slip" \
+  --owner "PM" \
+  --priority high
+
+# List RAID items
+python main.py raid list --project PROJ001
+
+# Filter RAID items
+python main.py raid list --project PROJ001 --type risk --status open --priority high
+
+# Get a RAID item by ID
+python main.py raid get --project PROJ001 --id RISK001
+
+# Update a RAID item
+python main.py raid update --project PROJ001 --id RISK001 --status in_progress
+
+# Delete a RAID item
+python main.py raid delete --project PROJ001 --id RISK001
+```
+
 #### Configuration Management
 
 ```bash

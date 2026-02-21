@@ -8,7 +8,125 @@ The backend uses a **9-gate CI pipeline** that runs on every pull request to `ma
 
 **CI Workflow**: `.github/workflows/ci-backend.yml`
 
+**CD Workflows**:
+
+- `.github/workflows/reusable-ghcr-publish.yml`
+- `.github/workflows/cd-backend.yml`
+- `.github/workflows/rollback-backend.yml`
+- `.github/workflows/cd-smoke.yml`
+
 **Local Simulation**: `./scripts/ci_backend.sh`
+
+## CD Baseline (Staging + Production)
+
+The repository now includes a baseline backend CD pipeline that:
+
+1. Publishes immutable API and Web images to GHCR on pushes to `main`
+2. Deploys to `staging`
+3. Runs environment health checks
+4. Deploys to `production`
+
+The deploy mechanism is intentionally host-agnostic through a remote command contract (`DEPLOY_COMMAND`) so it can be used with mixed hosting.
+
+### GitHub Environments Required
+
+Create two GitHub Environments:
+
+- `staging`
+- `production`
+
+Configure environment protection rules as needed (reviewers, wait timers, branch restrictions).
+
+### Environment Variables and Secrets
+
+Add these values to each environment (`staging` and `production`):
+
+#### Variables
+
+- `DEPLOY_HOST` - SSH host or IP for the target environment
+- `DEPLOY_USER` - SSH user on the target host
+- `DEPLOY_COMMAND` - Remote shell command that performs deployment
+- `HEALTHCHECK_URL` - URL checked after deployment (for example `https://staging.example.com/api/health`)
+
+#### Secrets
+
+- `DEPLOY_SSH_PRIVATE_KEY` - Private key used for SSH deployment
+- `DEPLOY_GHCR_USERNAME` - GHCR username with package read access
+- `DEPLOY_GHCR_TOKEN` - GHCR token (PAT) with package read access
+
+### Remote Deploy Command Contract
+
+`DEPLOY_COMMAND` runs on the remote host and receives these environment variables from GitHub Actions:
+
+- `API_IMAGE` - Exact API image reference (SHA tag)
+- `WEB_IMAGE` - Exact Web image reference (SHA tag)
+- `GHCR_USERNAME` - Username for GHCR login
+- `GHCR_TOKEN` - Token for GHCR login
+
+Example command for a Docker Compose target host:
+
+```bash
+cd /opt/ai-agent-framework && \
+echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin && \
+export API_IMAGE WEB_IMAGE && \
+docker compose pull api web && \
+docker compose up -d api web
+```
+
+### Manual Execution
+
+You can manually trigger `.github/workflows/cd-backend.yml` via `workflow_dispatch` with target:
+
+- `staging`
+- `production`
+- `both`
+
+### Rollback (Automated)
+
+Rollback is automated via workflow dispatch with immutable GHCR SHA tags:
+
+- Backend rollback workflow: `.github/workflows/rollback-backend.yml`
+- Client rollback workflow (client repo): `.github/workflows/rollback.yml`
+
+Both rollback workflows:
+
+- Require full immutable image tags (`ghcr.io/...:sha-...`)
+- Reuse the same environment-scoped deploy variables/secrets as CD
+- Execute the same remote deployment command contract
+- Run post-deploy health checks before finishing
+
+### CD Best Practices (Recommended)
+
+To keep production standards high, apply these controls in both repositories:
+
+1. Enable environment protection on `production`:
+   - Required reviewers
+   - Branch restrictions (`main` only)
+   - Optional wait timer for controlled rollout windows
+2. Keep immutable deployment history:
+   - Deploy only SHA image tags for rollback-safe releases
+   - Store deployed API/WEB/CLIENT SHA tags in release notes or ops log
+3. Keep remote deploy commands idempotent:
+   - `docker login` + `docker compose pull` + `docker compose up -d`
+   - No destructive operations outside explicit migration steps
+4. Validate rollback path periodically:
+   - Run rollback drill from latest known-good SHA at least once per sprint
+5. Apply least privilege:
+   - Use environment secrets (not repository-wide secrets)
+   - Use a GHCR token with package read-only permissions for deploy hosts
+
+### Smoke Tests (Automated)
+
+The backend repository includes a dedicated smoke workflow:
+
+- `.github/workflows/cd-smoke.yml`
+
+Trigger modes:
+
+- Automatic after successful completion of `Backend CD` and `Backend Rollback`
+- Manual via `workflow_dispatch` with `target=staging|production|both`
+
+The smoke workflow uses each environment's `HEALTHCHECK_URL` and retries before failing.
 
 ## The 9 Quality Gates
 

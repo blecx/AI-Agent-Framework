@@ -1,0 +1,77 @@
+name: Backend CD Smoke Tests
+
+on:
+  workflow_run:
+    workflows: ["Backend CD", "Backend Rollback"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Smoke test target
+        required: true
+        default: both
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-cd-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke-staging:
+    name: Smoke staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main') ||
+      github.event.inputs.target == 'staging' ||
+      github.event.inputs.target == 'both'
+    environment: staging
+    steps:
+      - name: Smoke check (staging)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..10}; do
+            if curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}" > /dev/null; then
+              echo "Staging smoke check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Staging smoke check failed after retries"
+          exit 1
+
+  smoke-production:
+    name: Smoke production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main') ||
+      github.event.inputs.target == 'production' ||
+      github.event.inputs.target == 'both'
+    environment: production
+    steps:
+      - name: Smoke check (production)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..10}; do
+            if curl --fail --silent --show-error "${{ vars.HEALTHCHECK_URL }}" > /dev/null; then
+              echo "Production smoke check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Production smoke check failed after retries"
+          exit 1

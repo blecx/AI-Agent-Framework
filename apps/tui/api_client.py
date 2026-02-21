@@ -179,6 +179,85 @@ class APIClient:
         )
         return self._handle_response(response)
 
+    def list_raid_items(
+        self,
+        project_key: str,
+        raid_type: Optional[str] = None,
+        status: Optional[str] = None,
+        owner: Optional[str] = None,
+        priority: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """List RAID items for a project with optional filters."""
+        params: Dict[str, str] = {}
+        if raid_type:
+            params["type"] = raid_type
+        if status:
+            params["status"] = status
+        if owner:
+            params["owner"] = owner
+        if priority:
+            params["priority"] = priority
+
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/raid",
+            params=params or None,
+        )
+        return self._handle_response(response)
+
+    def get_raid_item(self, project_key: str, raid_id: str) -> Dict[str, Any]:
+        """Get a RAID item by ID."""
+        response = self.client.get(
+            f"{self.base_url}/projects/{project_key}/raid/{raid_id}"
+        )
+        return self._handle_response(response)
+
+    def create_raid_item(
+        self,
+        project_key: str,
+        raid_type: str,
+        title: str,
+        description: str,
+        owner: str,
+        priority: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a RAID item."""
+        payload: Dict[str, Any] = {
+            "type": raid_type,
+            "title": title,
+            "description": description,
+            "owner": owner,
+        }
+        if priority:
+            payload["priority"] = priority
+        if status:
+            payload["status"] = status
+
+        response = self.client.post(
+            f"{self.base_url}/projects/{project_key}/raid", json=payload
+        )
+        return self._handle_response(response)
+
+    def update_raid_item(
+        self,
+        project_key: str,
+        raid_id: str,
+        updates: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Update a RAID item."""
+        response = self.client.put(
+            f"{self.base_url}/projects/{project_key}/raid/{raid_id}",
+            json=updates,
+        )
+        return self._handle_response(response)
+
+    def delete_raid_item(self, project_key: str, raid_id: str) -> Dict[str, Any]:
+        """Delete a RAID item."""
+        response = self.client.delete(
+            f"{self.base_url}/projects/{project_key}/raid/{raid_id}"
+        )
+        return self._handle_response(response)
+
     def close(self):
         """Close the HTTP client."""
         self.client.close()
