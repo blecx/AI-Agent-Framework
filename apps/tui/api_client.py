@@ -13,7 +13,7 @@ from utils import print_error
 class APIClient:
     """HTTP client for AI Agent REST API."""
 
-    def __init__(self, base_url: str = None, timeout: int = None):
+    def __init__(self, base_url: Optional[str] = None, timeout: Optional[int] = None):
         """Initialize API client.
 
         Args:
@@ -62,7 +62,9 @@ class APIClient:
         response = self.client.get(f"{self.base_url}/health")
         return self._handle_response(response)
 
-    def create_project(self, key: str, name: str) -> Dict[str, Any]:
+    def create_project(
+        self, key: str, name: str, description: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Create a new project.
 
         Args:
@@ -72,9 +74,11 @@ class APIClient:
         Returns:
             Created project information
         """
-        response = self.client.post(
-            f"{self.base_url}/projects", json={"key": key, "name": name}
-        )
+        payload = {"key": key, "name": name}
+        if description:
+            payload["description"] = description
+
+        response = self.client.post(f"{self.base_url}/projects", json=payload)
         return self._handle_response(response)
 
     def list_projects(self) -> list:
@@ -98,6 +102,18 @@ class APIClient:
         response = self.client.get(f"{self.base_url}/projects/{project_key}/state")
         return self._handle_response(response)
 
+    def delete_project(self, project_key: str) -> Dict[str, Any]:
+        """Delete (soft-delete) a project.
+
+        Args:
+            project_key: Project key
+
+        Returns:
+            Empty response object for 204/200 style responses
+        """
+        response = self.client.delete(f"{self.base_url}/projects/{project_key}")
+        return self._handle_response(response) if response.content else {}
+
     def propose_command(
         self, project_key: str, command: str, params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -111,7 +127,7 @@ class APIClient:
         Returns:
             Command proposal with changes preview
         """
-        payload = {"command": command}
+        payload: Dict[str, Any] = {"command": command}
         if params:
             payload["params"] = params
 

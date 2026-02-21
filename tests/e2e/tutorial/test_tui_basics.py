@@ -85,6 +85,31 @@ class TestTutorial02FirstProject:
         assert project_key in result.stdout
         assert "created" in result.stdout.lower() or "success" in result.stdout.lower()
 
+    def test_create_project_with_description(self, tui):
+        """Test: python apps/tui/main.py projects create --description"""
+        project_key = _unique_project_key("TEST-TUT02")
+        project_name = "Tutorial Test Project with Description"
+        project_description = "Project description for tutorial validation"
+
+        create_result = tui.execute_command(
+            [
+                "projects",
+                "create",
+                "--key",
+                project_key,
+                "--name",
+                project_name,
+                "--description",
+                project_description,
+            ]
+        )
+
+        assert create_result.success, f"Project creation failed: {create_result.stderr}"
+
+        get_result = tui.execute_command(["projects", "get", "--key", project_key])
+        assert get_result.success
+        assert project_description in get_result.stdout
+
     def test_list_projects(self, tui):
         """Test: python apps/tui/main.py projects list"""
         project_key = _unique_project_key("TEST-TUT02")
@@ -101,6 +126,21 @@ class TestTutorial02FirstProject:
         # Validate by project name and table summary instead of full key text.
         assert project_name in result.stdout
         assert "Total:" in result.stdout
+
+    def test_list_projects_json_format(self, tui):
+        """Test: python apps/tui/main.py projects list --format json"""
+        project_key = _unique_project_key("TEST-TUT02")
+        project_name = "List Json Test"
+        tui.execute_command(
+            ["projects", "create", "--key", project_key, "--name", project_name]
+        )
+
+        result = tui.execute_command(["projects", "list", "--format", "json"])
+
+        assert result.success
+        parsed = json.loads(result.stdout)
+        assert isinstance(parsed, list)
+        assert any(p.get("key") == project_key for p in parsed)
 
     def test_show_project(self, tui):
         """Test: python apps/tui/main.py projects get"""
@@ -133,9 +173,15 @@ class TestTutorial02FirstProject:
 
     def test_delete_project(self, tui):
         """Test: python apps/tui/main.py projects delete"""
-        pytest.skip(
-            "DOCUMENTATION GAP: TUI does not implement 'projects delete' (API is git-backed and deletion is not exposed)."
+        project_key = _unique_project_key("TEST-TUT02")
+        tui.execute_command(
+            ["projects", "create", "--key", project_key, "--name", "Delete Test"]
         )
+
+        result = tui.execute_command(["projects", "delete", "--key", project_key])
+
+        assert result.success
+        assert "deleted" in result.stdout.lower() or "success" in result.stdout.lower()
 
 
 @pytest.mark.tutorial
