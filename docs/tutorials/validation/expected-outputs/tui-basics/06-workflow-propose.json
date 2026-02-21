@@ -1,6 +1,6 @@
 {
   "proposal_id": "workflow-update-20260203-100000",
-  "command": "workflow update",
+  "command": "workflow transition",
   "project": "TEST-001",
   "changes": {
     "workflow.state": {
