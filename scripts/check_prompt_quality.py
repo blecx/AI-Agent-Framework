@@ -9,7 +9,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROMPTS_DIR = ROOT / ".github" / "prompts"
-
 AGENTS_DIR = PROMPTS_DIR / "agents"
 
 KEY_PROMPTS = [
@@ -36,6 +35,10 @@ def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _is_strict_mode() -> bool:
+    return "--strict" in sys.argv
+
+
 def _check_agent_line_limits(errors: list[str]) -> None:
     for file in sorted(AGENTS_DIR.glob("*.md")):
         if file.name == "README.md":
@@ -54,8 +57,7 @@ def _check_required_sections(errors: list[str]) -> None:
 
 
 def _check_broken_local_links(errors: list[str]) -> None:
-    all_prompt_files = list(PROMPTS_DIR.rglob("*.md"))
-    for file in all_prompt_files:
+    for file in PROMPTS_DIR.rglob("*.md"):
         text = _read_text(file)
         for target in LINK_RE.findall(text):
             if target.startswith(("http://", "https://", "mailto:", "#")):
@@ -69,12 +71,8 @@ def _check_broken_local_links(errors: list[str]) -> None:
                 (file.parent / target_path).resolve(),
                 (ROOT / target_path).resolve(),
             ]
-            if not any(candidate.exists() for candidate in candidates):
+            if not any(c.exists() for c in candidates):
                 errors.append(f"{file}: broken link -> {target}")
-
-
-def _is_strict_mode() -> bool:
-    return "--strict" in sys.argv
 
 
 def main() -> int:

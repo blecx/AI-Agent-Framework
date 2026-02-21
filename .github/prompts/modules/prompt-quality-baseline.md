@@ -2,7 +2,7 @@
 
 ## Required Sections
 
-Each operational prompt (non-README) should include:
+Each operational prompt should include:
 
 - Objective
 - When to Use
@@ -15,17 +15,17 @@ Each operational prompt (non-README) should include:
 ## Size Guidance
 
 - `agents/*.md`: target <= 100 lines
-- Non-agent prompts: keep concise; split if > 200 lines
-- Exceptions must include a short justification in-file
+- Non-agent prompts: split when > 200 lines
+- Exceptions require explicit justification
 
 ## Anti-Patterns
 
-- Monolithic prompts with duplicated instructions
-- Missing output contract
-- Vague completion criteria ("done when done")
-- Cross-repo instructions without merge/deploy order
+- Monolithic prompts with duplicated guidance
+- Missing output/completion contracts
+- Vague acceptance of "done"
+- Unclear cross-repo sequencing
 
 ## Validation
 
-- Run: `python scripts/check_prompt_quality.py`
-- Verify links: `rg -n "\]\(.*\)" .github/prompts --glob '*.md'`
+- `./.venv/bin/python scripts/check_prompt_quality.py`
+- `rg -n "\]\(.*\)" .github/prompts --glob '*.md'`
