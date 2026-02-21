@@ -6,3 +6,4 @@
 - [Chat Context in Repo](chat-context-in-repo.md)
 - [Issue Authoring for Planning Specs](issue-authoring.md)
 - [Publish Planning Issues](publish-issues.md)
+- [Local Token Setup for Agent Workflows](local-agent-token-setup.md)

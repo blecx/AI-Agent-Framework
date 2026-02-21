@@ -128,12 +128,12 @@ docker compose up --build
 **Step 3: Run TUI Client (Optional)**
 
 ```bash
-# Interactive TUI mode
-docker compose run tui python main.py tui
+# Show available TUI commands
+docker compose run tui python main.py --help
 
 # Direct command execution
-docker compose run tui python main.py list-projects
-docker compose run tui python main.py create-project PROJECT001 "My Project"
+docker compose run tui python main.py projects list
+docker compose run tui python main.py projects create --key PROJECT001 --name "My Project"
 ```
 
 **Step 4: Run CLI Client (Optional)**
