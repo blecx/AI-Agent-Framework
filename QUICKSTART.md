@@ -21,7 +21,7 @@ For the full installation + LLM guide (Docker images, local setup, troubleshooti
 
 ---
 
-## 2) Fastest path: Docker (recommended)
+## 2) Fastest path: Docker images (recommended)
 
 1. Clone and enter the repo:
 
@@ -36,10 +36,25 @@ cd AI-Agent-Framework
 cp configs/llm.default.json configs/llm.json
 ```
 
-1. Start services:
+1. Pull and start prebuilt API/Web images:
 
 ```bash
-docker compose up --build
+docker compose pull api web
+docker compose up -d api web
+```
+
+1. (Optional) Pin immutable image tags from CI/CD:
+
+```bash
+API_IMAGE=ghcr.io/blecx/ai-agent-framework-api:sha-<commit-sha> \
+WEB_IMAGE=ghcr.io/blecx/ai-agent-framework-web:sha-<commit-sha> \
+docker compose up -d api web
+```
+
+1. (Optional) Run terminal clients when needed:
+
+```bash
+docker compose --profile tools up -d client tui
 ```
 
 1. Open:
@@ -47,6 +62,8 @@ docker compose up --build
 - Web UI: <http://localhost:8080>
 - API: <http://localhost:8000>
 - API docs: <http://localhost:8000/docs>
+
+> If you want to build containers from local source code instead of pulling images, use `docker compose up --build`.
 
 ---
 
