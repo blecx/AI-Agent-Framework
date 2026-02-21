@@ -7,6 +7,7 @@ This folder contains the backend test suite for the AI-Agent-Framework.
 These are the test directories that contain Python test files (used by CI Gate 4's docs sync checker):
 
 - `tests/unit/` (unit tests)
+- `tests/unit/test_commands/` (TUI command unit tests)
 - `tests/unit/domain/templates/`
 - `tests/unit/domain/blueprints/`
 - `tests/unit/domain/proposals/`
