@@ -9,7 +9,7 @@ echo "🔧 Setting up VS Code auto-approve for Copilot..."
 echo ""
 
 # Run the Python script
-python3 "$SCRIPT_DIR/setup-vscode-autoapprove.py"
+python3 "$SCRIPT_DIR/setup-vscode-autoapprove.py" "$@"
 
 echo ""
 echo "🎯 To apply changes immediately:"

@@ -223,6 +223,13 @@ If you're using VS Code with GitHub Copilot, run this script to enable auto-appr
 ./scripts/setup-autoapprove.sh
 ```
 
+To regenerate only workspace settings (backend + client) and verify no drift:
+
+```bash
+./scripts/setup-autoapprove.sh --workspace-only
+./scripts/setup-autoapprove.sh --check --workspace-only
+```
+
 This configures auto-approve for:
 - **Subagents**: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
 - **Terminal commands**: Git, npm, Python, Docker, and 60+ common commands

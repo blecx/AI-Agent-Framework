@@ -104,6 +104,16 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
    For provider-specific examples (GitHub Models, OpenAI, LM Studio, Ollama), use:
    [docs/howto/install-and-llm-setup.md](howto/install-and-llm-setup.md)
 
+5. **(Optional) Sync VS Code auto-approve rules:**
+
+   ```bash
+   ./scripts/setup-autoapprove.sh --workspace-only
+   ./scripts/setup-autoapprove.sh --check --workspace-only
+   ```
+
+   - First command regenerates backend/client workspace auto-approve settings.
+   - Second command verifies no drift (non-zero exit if mismatches exist).
+
 ---
 
 ## Project Structure
