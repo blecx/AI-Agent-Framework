@@ -12,6 +12,7 @@ Usage:
 
 import asyncio
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -65,6 +66,11 @@ Requirements:
   - GitHub CLI (gh) authenticated
   - Git configured
     - GitHub Models token provided via config or env vars (e.g. GITHUB_TOKEN or GH_TOKEN)
+
+Goal Archiving:
+    - Enabled by default (pre + post run): archives Goal sections from `.tmp/*.md`
+    - Disable per run: `--no-goal-archive`
+    - Disable via environment: `WORK_ISSUE_GOAL_ARCHIVE=0`
         """
     )
     
@@ -103,11 +109,19 @@ Requirements:
         action="store_true",
         help="Pause for approval between phases"
     )
+
+    parser.add_argument(
+        "--no-goal-archive",
+        action="store_true",
+        help="Disable automatic pre/post goal archiving from .tmp"
+    )
     
     args = parser.parse_args()
 
     if args.llm_config:
         os.environ["LLM_CONFIG_PATH"] = args.llm_config
+
+    archive_enabled = not args.no_goal_archive and os.environ.get("WORK_ISSUE_GOAL_ARCHIVE", "1") != "0"
     
     print("""
 ╔══════════════════════════════════════════════════════════════════╗
@@ -116,12 +130,20 @@ Requirements:
 ╚══════════════════════════════════════════════════════════════════╝
 """)
     
+    exit_code = 0
+
+    if archive_enabled:
+        _archive_goals(stage="pre", issue_number=args.issue)
+
     # Check prerequisites
     if not _check_prerequisites():
-        sys.exit(1)
-    
+        exit_code = 1
+
     # Create and run agent
     try:
+        if exit_code != 0:
+            return
+
         agent = AutonomousWorkflowAgent(
             issue_number=args.issue,
             # plan-only should also behave as read-only inside the agent
@@ -132,12 +154,12 @@ Requirements:
 
         if args.dry_run:
             print("✅ Dry run complete: initialization succeeded (no LLM calls executed).")
-            sys.exit(0)
+            return
 
         if args.plan_only:
             _ = await agent.plan_only()
             print("✅ Plan-only complete: planning finished (no repo changes executed).")
-            sys.exit(0)
+            return
 
         success = await agent.execute()
         
@@ -145,16 +167,21 @@ Requirements:
         if args.interactive and success:
             await _interactive_mode(agent)
         
-        sys.exit(0 if success else 1)
+        exit_code = 0 if success else 1
         
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
-        sys.exit(130)
+        exit_code = 130
     except Exception as e:
         print(f"\n❌ Fatal error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        exit_code = 1
+    finally:
+        if archive_enabled:
+            _archive_goals(stage="post", issue_number=args.issue)
+
+    sys.exit(exit_code)
 
 
 def _check_prerequisites() -> bool:
@@ -281,6 +308,41 @@ def _ensure_venv_and_reexec() -> None:
         print(f"🔁 Re-executing under .venv Python: {venv_python}")
         os.environ["WORK_ISSUE_REEXEC"] = "1"
         os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+
+
+def _archive_goals(stage: str, issue_number: int) -> None:
+    """Archive Goal sections from .tmp markdown files.
+
+    Non-fatal: failures only emit a warning.
+    """
+    project_root = Path(__file__).parent.parent
+    script_path = project_root / "scripts" / "archive-goals.sh"
+
+    if not script_path.exists():
+        print(f"⚠️  Goal archive script not found: {script_path}")
+        return
+
+    try:
+        print(f"🗄️  Goal archive ({stage}) for issue #{issue_number} ...")
+        result = subprocess.run(
+            ["bash", str(script_path)],
+            cwd=str(project_root),
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            for line in result.stdout.strip().splitlines():
+                print(f"   {line}")
+        else:
+            print(f"⚠️  Goal archive ({stage}) failed with exit code {result.returncode}")
+            if result.stdout:
+                print(result.stdout.strip())
+            if result.stderr:
+                print(result.stderr.strip())
+    except Exception as exc:
+        print(f"⚠️  Goal archive ({stage}) error: {exc}")
 
 
 async def _interactive_mode(agent):

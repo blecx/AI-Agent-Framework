@@ -697,6 +697,27 @@ Records completion data for learning system to improve future estimates:
 
 **📖 See [Development Guide](docs/development.md) for more workflow automation.**
 
+#### Goal Archiving (`scripts/archive-goals.sh`)
+
+Archive all `## Goal...` sections from `.tmp/*.md` into timestamped artifacts under `.tmp/archive/`.
+
+```bash
+# Archive goals and keep source files in .tmp
+bash scripts/archive-goals.sh
+
+# Archive and move matched source files into the timestamped snapshot folder
+bash scripts/archive-goals.sh --move
+```
+
+Outputs per run:
+
+- `goals-<timestamp>.md` (consolidated goal archive)
+- `goals-<timestamp>.json` (manifest)
+- `snapshots/<timestamp>/` (source snapshots)
+
+`scripts/work-issue.py` runs goal archiving automatically before and after execution.
+Disable with `--no-goal-archive` (per-run) or `WORK_ISSUE_GOAL_ARCHIVE=0` (environment).
+
 ### Adding New Templates
 
 **Prompt Template** (`templates/prompts/iso21500/my_command.j2`):
