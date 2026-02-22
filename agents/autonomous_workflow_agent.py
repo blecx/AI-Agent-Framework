@@ -452,9 +452,10 @@ HANDOFF_TO_CODING:
 
 Begin now."""
 
+            planning_thread = self.planning_agent.get_new_thread()
             plan_text = await self._run_agent_stream(
                 self.planning_agent,
-                self.planning_thread,
+                planning_thread,
                 planning_prompt,
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
@@ -490,9 +491,10 @@ CODING_SUMMARY:
 - Notes for review:
 """
 
+            coding_thread = self.coding_agent.get_new_thread()
             _ = await self._run_agent_stream(
                 self.coding_agent,
-                self.coding_thread,
+                coding_thread,
                 coding_prompt,
                 "Phase 3-4: Coding (GitHub models recommended)",
             )
@@ -516,9 +518,10 @@ If CHANGES:
 - Provide a short, explicit task list for the coding agent to apply.
 """
 
+                review_thread = self.review_agent.get_new_thread()
                 review_text = await self._run_agent_stream(
                     self.review_agent,
-                    self.review_thread,
+                    review_thread,
                     review_prompt,
                     f"Review loop {i + 1}/{iteration_budget}: Review (Copilot/GitHub Models)",
                 )
@@ -546,9 +549,10 @@ Requirements:
 - Re-run the relevant validation.
 - Do NOT create the PR yet.
 """
+                fix_thread = self.coding_agent.get_new_thread()
                 _ = await self._run_agent_stream(
                     self.coding_agent,
-                    self.coding_thread,
+                    fix_thread,
                     fix_prompt,
                     f"Review loop {i + 1}/{iteration_budget}: Apply fixes (GitHub models recommended)",
                 )

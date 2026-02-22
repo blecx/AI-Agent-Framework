@@ -2,7 +2,7 @@
   "provider": "github",
   "base_url": "https://models.github.ai/inference",
   "api_key": "your-api-key-here",
-  "model": "openai/gpt-5.1-codex",
+  "model": "openai/gpt-4o",
   "temperature": 0.2,
   "max_tokens": 16384,
   "timeout": 300

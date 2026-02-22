@@ -42,7 +42,10 @@ SECTION_ALIASES = {
 
 KNOWN_REPO_KEYS = {"AI-Agent-Framework", "AI-Agent-Framework-Client"}
 
-COMMAND_HINT_RE = re.compile(r"(pytest|python\s+-m|npm\s+run|uvicorn|curl|gh\s+issue)", re.IGNORECASE)
+COMMAND_HINT_RE = re.compile(
+    r"(pytest|python\s+-m|npm\s+run|npm\s+--prefix\s+\S+\s+run|uvicorn|curl|gh\s+issue)",
+    re.IGNORECASE,
+)
 CHECKBOX_RE = re.compile(r"^- \[[ xX]\]\s+", re.MULTILINE)
 
 
@@ -76,11 +79,20 @@ def _validate_body(
     file: Path,
     idx: int,
     strict_sections: bool,
+    max_body_chars: int | None,
 ) -> None:
     body = issue.get("body")
     if not isinstance(body, str) or not body.strip():
         findings.append(Finding(file, f"entry #{idx}: missing non-empty body"))
         return
+
+    if isinstance(max_body_chars, int) and max_body_chars > 0 and len(body) > max_body_chars:
+        findings.append(
+            Finding(
+                file,
+                f"entry #{idx}: body too large ({len(body)} chars > max {max_body_chars})",
+            )
+        )
 
     if strict_sections:
         for section in REQUIRED_BODY_SECTIONS:
@@ -127,7 +139,12 @@ def _validate_legacy(issue: dict[str, Any], findings: list[Finding], file: Path,
         findings.append(Finding(file, f"entry #{idx}: legacy issue_template missing validation command list"))
 
 
-def validate_file(file: Path, allow_legacy: bool, strict_sections: bool = False) -> list[Finding]:
+def validate_file(
+    file: Path,
+    allow_legacy: bool,
+    strict_sections: bool = False,
+    max_body_chars: int | None = None,
+) -> list[Finding]:
     findings: list[Finding] = []
 
     try:
@@ -166,7 +183,14 @@ def validate_file(file: Path, allow_legacy: bool, strict_sections: bool = False)
                 )
 
             if "body" in entry:
-                _validate_body(entry, findings, file, idx, strict_sections=strict_sections)
+                _validate_body(
+                    entry,
+                    findings,
+                    file,
+                    idx,
+                    strict_sections=strict_sections,
+                    max_body_chars=max_body_chars,
+                )
             elif allow_legacy:
                 _validate_legacy(entry, findings, file, idx)
             else:
@@ -204,6 +228,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Require exact canonical markdown section headers in body entries",
     )
+    parser.add_argument(
+        "--max-body-chars",
+        type=int,
+        default=0,
+        help="Optional max allowed markdown body size per issue (0 disables check)",
+    )
     args = parser.parse_args(argv)
 
     files = collect_files(args.paths)
@@ -218,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
                 file,
                 allow_legacy=not args.no_legacy,
                 strict_sections=args.strict_sections,
+                max_body_chars=(args.max_body_chars or None),
             )
         )
 
