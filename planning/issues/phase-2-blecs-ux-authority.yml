@@ -1,0 +1,244 @@
+AI-Agent-Framework:
+  - id: "P2-BE-01"
+    title: "Phase 2 — Enforce speckit/blecs command contract validation"
+    labels: ["enhancement"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Prevent command-domain drift by validating that `speckit.*` and `blecs.*` prompts keep their contract boundaries and remain non-conflicting.
+
+      ## Scope
+      ### In Scope
+      - Add validator checks for command naming, namespace collisions, and required contract markers.
+      - Integrate validator in existing validation workflow.
+      - Fail fast on invalid command prompt structure.
+      ### Out of Scope
+      - Rewriting existing command implementations.
+      - Expanding agent behavior beyond contract validation.
+      ### Dependencies
+      - None.
+
+      ## Acceptance Criteria
+      - [ ] Validation fails when a `blecs.*` command shadows a `speckit.*` command.
+      - [ ] Validation fails when required contract markers are missing.
+      - [ ] Validation passes for current `speckit.*` and `blecs.*` command files.
+      - [ ] CI includes the validator.
+
+      ## Technical Approach
+      - Extend existing prompt/contract validation scripts.
+      - Add deterministic checks for namespace ownership and required sections.
+      - Keep implementation script-level and non-invasive to runtime logic.
+
+      ## Testing Requirements
+      - `python -m pytest tests/ -k "prompt or contract" -q`
+      - `python -m scripts.check_issue_specs --paths "planning/issues/*.yml" --no-legacy --strict-sections`
+
+      ## Documentation Updates
+      - [ ] Update `docs/skills.md` with command contract validation notes.
+      - [ ] Update `docs/WORK-ISSUE-WORKFLOW.md` with validation placement.
+
+      ## Cross-Repository Coordination
+      No direct client change required.
+
+  - id: "P2-BE-02"
+    title: "Phase 2 — Wire operational scripts to explicit speckit flow"
+    labels: ["enhancement"]
+    size_estimate: "M"
+    body: |
+      ## Goal / Problem Statement
+      Ensure issue execution scripts explicitly invoke the Spec Kit-compatible workflow stages (`specify`, `plan`, `tasks`, `implement`) before coding and review.
+
+      ## Scope
+      ### In Scope
+      - Update operational scripts to call explicit `speckit.*` stages in deterministic order.
+      - Preserve `blecs` extensions as additive overlays.
+      - Record stage outputs in `.tmp/` for traceability.
+      ### Out of Scope
+      - New workflow stages.
+      - Changes to issue selection policy.
+      ### Dependencies
+      - P2-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] `work-issue` flow executes the defined stage sequence for eligible issues.
+      - [ ] Stage failure aborts downstream stages with actionable errors.
+      - [ ] `.tmp/` artifacts capture stage outputs per issue run.
+      - [ ] Existing dry-run behavior remains functional.
+
+      ## Technical Approach
+      - Refactor script orchestration to centralize stage invocation.
+      - Add minimal adapters around current workflow entrypoints.
+      - Keep backward-compatible script flags.
+
+      ## Testing Requirements
+      - `python -m pytest tests/ -k "work_issue or workflow" -q`
+      - `gh issue list --repo blecx/AI-Agent-Framework --limit 1`
+      - `curl http://localhost:8000/health`
+
+      ## Documentation Updates
+      - [ ] Update `docs/WORK-ISSUE-WORKFLOW.md` with explicit stage sequence.
+      - [ ] Update `docs/NEXT-ISSUE-COMMAND.md` if behavior changes are user-visible.
+
+      ## Cross-Repository Coordination
+      No direct client change required.
+
+  - id: "P2-BE-03"
+    title: "Phase 2 — Add anti-bypass tests for mandatory UX authority consultation"
+    labels: ["enhancement"]
+    size_estimate: "M"
+    body: |
+      ## Goal / Problem Statement
+      Prevent regressions where UI-affecting work bypasses mandatory consultation with `blecs-ux-authority`.
+
+      ## Scope
+      ### In Scope
+      - Add positive/negative tests for runtime UX gate behavior.
+      - Add CI-gate tests for PR-body UX evidence enforcement.
+      - Add fixtures covering UI-touching and non-UI changes.
+      ### Out of Scope
+      - Expanding UX decision model content.
+      - Replacing existing CI workflow architecture.
+      ### Dependencies
+      - P2-BE-02.
+
+      ## Acceptance Criteria
+      - [ ] Runtime tests fail when UI work omits required UX consultation evidence.
+      - [ ] Runtime tests pass when evidence is present.
+      - [ ] CI-gate tests cover both pass/fail PR-body paths.
+      - [ ] Tests are deterministic and CI-friendly.
+
+      ## Technical Approach
+      - Add focused tests adjacent to workflow and CI gate scripts.
+      - Reuse current UI-impact detection rules.
+      - Keep fixture set minimal but representative.
+
+      ## Testing Requirements
+      - `./.venv/bin/python -m pytest tests/ -k "ux or workflow or ci" -q`
+      - `./scripts/validate_prompts.sh`
+
+      ## Documentation Updates
+      - [ ] Update `tests/README.md` with UX gate test commands.
+
+      ## Cross-Repository Coordination
+      No direct client change required.
+
+  - id: "P2-BE-04"
+    title: "Phase 2 — Publish migration playbook for blecs UX authority operations"
+    labels: ["documentation"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Provide a concise operational playbook so contributors can execute and verify the `blecs` UX-governed workflow without ambiguity.
+
+      ## Scope
+      ### In Scope
+      - Document required sequence for planning, issue work, review, and merge under `blecs` governance.
+      - Include command references and expected artifacts.
+      - Include failure triage for common policy/gate violations.
+      ### Out of Scope
+      - New automation scripts.
+      - UI feature design itself.
+      ### Dependencies
+      - P2-BE-03.
+
+      ## Acceptance Criteria
+      - [ ] Playbook exists in docs and is discoverable from top-level docs.
+      - [ ] Workflow sequence includes `speckit` + `blecs` interaction points.
+      - [ ] Troubleshooting section covers at least 3 common failure modes.
+      - [ ] Commands in the playbook are validated locally.
+
+      ## Technical Approach
+      - Add one authoritative document and link from existing workflow docs.
+      - Reuse terminology already present in agent and prompt contracts.
+
+      ## Testing Requirements
+      - `python -m pytest tests/ -k "docs or workflow" -q`
+      - `python -m scripts.check_issue_specs --paths "planning/issues/*.yml" --no-legacy --strict-sections`
+
+      ## Documentation Updates
+      - [ ] Add `docs/agents/blecs-phase-2-playbook.md`.
+      - [ ] Update `docs/README.md` with playbook link.
+
+      ## Cross-Repository Coordination
+      Yes - client repo should align consumption workflow documentation after backend playbook lands.
+
+AI-Agent-Framework-Client:
+  - id: "P2-UX-01"
+    title: "Phase 2 — Consume blecs UX packet in client issue workflow"
+    labels: ["enhancement", "webui/ux", "agents", "size:S", "step:2"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Ensure client-side issue workflows consume the UX packet produced by backend governance so UX decisions remain consistent across repositories.
+
+      ## Scope
+      ### In Scope
+      - Add client workflow hook to read and apply UX packet guidance.
+      - Enforce packet presence for UI-affecting tasks.
+      - Keep behavior backward compatible for non-UI tasks.
+      ### Out of Scope
+      - Redesign of client components.
+      - New backend APIs.
+      ### Dependencies
+      - AI-Agent-Framework P2-BE-04.
+
+      ## Acceptance Criteria
+      - [ ] UI-affecting client tasks fail fast without UX packet.
+      - [ ] UI-affecting client tasks proceed with packet present.
+      - [ ] Non-UI client tasks remain unaffected.
+      - [ ] Evidence is visible in PR body for UX review.
+
+      ## Technical Approach
+      - Extend existing client issue workflow script/prompt adapters.
+      - Read packet artifact from agreed path and map it to review checklist entries.
+
+      ## Testing Requirements
+      - `npm run lint`
+      - `npm run build`
+      - client workflow dry-run command with and without packet
+
+      ## Documentation Updates
+      - [ ] Update client workflow docs with packet requirement.
+
+      ## Cross-Repository Coordination
+      Yes - depends on backend playbook and packet contract.
+
+  - id: "P2-UX-02"
+    title: "Phase 2 — Add client PR UX evidence gate aligned with blecs authority"
+    labels: ["enhancement", "ci/cd", "webui/ux", "size:S", "step:2"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Align client CI gates with backend UX governance by requiring explicit UX evidence on UI-affecting PRs.
+
+      ## Scope
+      ### In Scope
+      - Add PR-body validation for mandatory UX evidence fields on UI-impacting changes.
+      - Reuse same evidence structure used by backend gate.
+      - Add clear remediation text in CI output.
+      ### Out of Scope
+      - Non-PR workflows.
+      - Broader CI redesign.
+      ### Dependencies
+      - P2-UX-01.
+
+      ## Acceptance Criteria
+      - [ ] Client CI fails when required UX evidence is missing for UI changes.
+      - [ ] Client CI passes when UX evidence is complete.
+      - [ ] Non-UI PRs are not blocked by UX-specific fields.
+      - [ ] Validation messaging is actionable.
+
+      ## Technical Approach
+      - Add a focused validation script and wire it to existing client CI.
+      - Mirror backend UX evidence schema to reduce drift.
+
+      ## Testing Requirements
+      - `npm run lint`
+      - `npm run build`
+      - CI validation script unit tests (pass/fail fixtures)
+
+      ## Documentation Updates
+      - [ ] Update client contributing docs with UX evidence requirements.
+
+      ## Cross-Repository Coordination
+      Yes - keep evidence schema synchronized with backend gate implementation.

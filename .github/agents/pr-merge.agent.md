@@ -45,6 +45,7 @@ You are done only when all are true:
 - Never commit or stage `projectDocs/` or `configs/llm.json` (backend hygiene). Never commit any secrets (either repo).
 - Do not “fix” unrelated issues. Keep scope to the PR merge + close workflow.
 - If branch protection blocks merging and requires human action (approval/admin), stop and ask for approval or instructions.
+- For UI/UX-affecting PRs, require evidence that `blecs-ux-authority` was consulted and that required UX changes were resolved before merge.
 - **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
   - `/tmp` is world-readable and insecure
   - Use `.tmp/pr-<number>-metrics.json`, `.tmp/close-<issue>.json`, etc.

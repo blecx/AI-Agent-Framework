@@ -26,6 +26,7 @@ Produce accurate, maintainable Markdown tutorials and documentation review findi
 - Final narrative output must be Markdown.
 - Keep UX and TUI paths independent.
 - Findings must include evidence and severity.
+- Any UX/navigation/design recommendation must align with `blecs-ux-authority` decisions.
 
 ## Workflow
 
@@ -56,4 +57,5 @@ Return:
 ## References
 
 - `.github/prompts/modules/tutorial-review-workflow.md`
+- `.github/prompts/modules/ux/delegation-policy.md`
 - `.github/prompts/modules/prompt-quality-baseline.md`

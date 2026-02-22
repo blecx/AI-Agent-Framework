@@ -88,6 +88,12 @@ Your **first** assistant message in a run must be short and action-oriented:
 - Don’t commit or modify `projectDocs/` (separate repo).
 - Don’t commit `configs/llm.json`.
 - Don’t do unrelated refactors outside the chosen issue scope.
+
+## UX Design Authority Delegation (mandatory)
+
+- For any work that affects graphical design, navigation, responsive behavior, or UX flow, you must consult `blecs-ux-authority` before finalizing implementation.
+- Treat UX decisions as blocked until the authority returns `UX_DECISION: PASS`.
+- If `UX_DECISION: CHANGES`, apply required changes and re-consult before review/PR completion.
 ## Temporary file storage (MANDATORY)
 
 **CRITICAL: NEVER use `/tmp` for ANY temporary files, scripts, or data.**

@@ -1,0 +1,71 @@
+{
+  "entries": {
+    "blecx/AI-Agent-Framework-Client|P2-UX-01": {
+      "issue_number": 216,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/216",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-UX-01",
+      "status": "created",
+      "title": "Phase 2 \u2014 Consume blecs UX packet in client issue workflow",
+      "title_hash": "6f7f3e37d6e0"
+    },
+    "blecx/AI-Agent-Framework-Client|P2-UX-02": {
+      "issue_number": 217,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/217",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-UX-02",
+      "status": "created",
+      "title": "Phase 2 \u2014 Add client PR UX evidence gate aligned with blecs authority",
+      "title_hash": "c864d733a443"
+    },
+    "blecx/AI-Agent-Framework|P2-BE-01": {
+      "issue_number": 375,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/375",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-BE-01",
+      "status": "created",
+      "title": "Phase 2 \u2014 Enforce speckit/blecs command contract validation",
+      "title_hash": "a46d5e7f5299"
+    },
+    "blecx/AI-Agent-Framework|P2-BE-02": {
+      "issue_number": 376,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/376",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-BE-02",
+      "status": "created",
+      "title": "Phase 2 \u2014 Wire operational scripts to explicit speckit flow",
+      "title_hash": "975b79746933"
+    },
+    "blecx/AI-Agent-Framework|P2-BE-03": {
+      "issue_number": 377,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/377",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-BE-03",
+      "status": "created",
+      "title": "Phase 2 \u2014 Add anti-bypass tests for mandatory UX authority consultation",
+      "title_hash": "9d8aab8c913f"
+    },
+    "blecx/AI-Agent-Framework|P2-BE-04": {
+      "issue_number": 378,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/378",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-2-blecs-ux-authority.yml",
+      "source_id": "P2-BE-04",
+      "status": "created",
+      "title": "Phase 2 \u2014 Publish migration playbook for blecs UX authority operations",
+      "title_hash": "d8a153ff317e"
+    }
+  },
+  "version": 1
+}

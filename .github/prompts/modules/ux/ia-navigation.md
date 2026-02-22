@@ -1,0 +1,6 @@
+# UX Skill: IA & Navigation
+
+- Always define navigation before component-level layout.
+- Output IA with: primary nav, secondary nav, route grouping, and cross-object flows.
+- Group interacting artifacts into workflow-oriented sections; avoid flat tile spam.
+- Include a desktop and mobile navigation model.

@@ -25,6 +25,7 @@ Implement one issue into a small, reviewable PR with DDD-compliant changes and l
 - Priority order: backend first, then client; lowest issue number first.
 - Follow DDD boundaries and keep diffs focused.
 - Use `.tmp/` for PR body and temporary artifacts.
+- If scope affects UI/UX/navigation/responsive behavior, consult `blecs-ux-authority` and block completion until `UX_DECISION: PASS`.
 
 ## Workflow
 
@@ -57,5 +58,6 @@ Return:
 ## References
 
 - `.github/prompts/modules/resolve-issue-workflow.md`
+- `.github/prompts/modules/ux/delegation-policy.md`
 - `.github/prompts/pr-review-rubric.md`
 - `.github/prompts/modules/prompt-quality-baseline.md`

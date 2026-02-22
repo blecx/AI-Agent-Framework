@@ -23,9 +23,13 @@ Use this rubric for both human and agent-based PR reviews.
    - potential bugs, error handling, status codes
 5. Tests
    - tests updated/added? gaps?
-6. Breaking Changes / Client Impact
+6. UX / Navigation Compliance (for UI-affecting diffs)
+   - `blecs-ux-authority` consulted: pass/fail + evidence
+   - responsive/mobile checks included: pass/fail + evidence
+   - navigation/grouping quality: pass/fail + notes
+7. Breaking Changes / Client Impact
    - requires client repo change? yes/no + details
-7. Recommendation
+8. Recommendation
    - APPROVE / REQUEST CHANGES
    - required changes (max 5), ordered by severity
 
