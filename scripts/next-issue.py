@@ -436,6 +436,20 @@ class GitHubClient:
             progress.finish(f"Queried {len(issues)}/{len(issue_numbers)} issues")
         
         return issues
+
+    def get_open_issues(self, limit: int = 100) -> List[Dict]:
+        """Get open issues in the repository, sorted by issue number."""
+        data = self._run_gh_command([
+            "issue", "list",
+            "--state", "open",
+            "--limit", str(limit),
+            "--json", "number,title,state,labels,closedAt"
+        ], timeout=20)
+
+        if not data:
+            return []
+
+        return sorted(data, key=lambda issue: issue.get("number", 10**9))
     
     def is_issue_closed(self, issue_number: int) -> bool:
         """Check if an issue is closed on GitHub (with caching)"""
@@ -575,6 +589,15 @@ class IssueSelector:
         
         # Get issues from GitHub by specific numbers (no label assumptions!)
         github_issues = self.github.get_issues_by_numbers(issue_numbers)
+
+        # Fallback for post-Step-1 phases:
+        # if no configured Step-1 issues are open, consider current open issues
+        # so selection does not hard-stop once legacy range is complete.
+        if not any(issue.get("state") == "OPEN" for issue in github_issues):
+            configured_numbers = {issue["number"] for issue in github_issues}
+            for open_issue in self.github.get_open_issues(limit=100):
+                if open_issue.get("number") not in configured_numbers:
+                    github_issues.append(open_issue)
         
         # Parse tracking file for metadata
         tracking_metadata = self._parse_tracking_file()
