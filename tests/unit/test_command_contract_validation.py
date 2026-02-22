@@ -1,4 +1,7 @@
-from agents.validation_profiles import validate_contract_markers, validate_namespace_collision
+from agents.validation_profiles import (
+    validate_contract_markers,
+    validate_namespace_collision,
+)
 
 
 def test_namespace_shadowing_detected_for_same_suffix():
