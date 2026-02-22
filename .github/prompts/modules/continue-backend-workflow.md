@@ -9,7 +9,8 @@ Entry command:
 Limit policy:
 
 - Default `max-issues` per run is `25`.
-- Values above `25` require explicit runtime confirmation.
+- Values below `25` are forbidden.
+- Values above `25` require explicit runtime override confirmation.
 
 ## Loop
 

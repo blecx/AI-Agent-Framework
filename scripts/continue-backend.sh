@@ -39,10 +39,25 @@ Notes:
 EOF
 }
 
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+  if [[ -z "$value" || "$value" =~ ^-- ]]; then
+    echo "$option requires a value" >&2
+    exit 1
+  fi
+}
+
+is_valid_issue_number() {
+  local value="$1"
+  [[ "$value" =~ ^[1-9][0-9]*$ ]]
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --issue)
-      ISSUE_OVERRIDE="${2:-}"
+      require_option_value "--issue" "${2:-}"
+      ISSUE_OVERRIDE="$2"
       shift 2
       ;;
     --paths)
@@ -58,11 +73,13 @@ while [[ $# -gt 0 ]]; do
       fi
       ;;
     --label)
-      ISSUE_LABEL="${2:-}"
+      require_option_value "--label" "${2:-}"
+      ISSUE_LABEL="$2"
       shift 2
       ;;
     --max-issues)
-      MAX_ISSUES="${2:-0}"
+      require_option_value "--max-issues" "${2:-}"
+      MAX_ISSUES="$2"
       shift 2
       ;;
     --dry-run)
@@ -90,11 +107,22 @@ if ! [[ "$MAX_ISSUES" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+if [[ "$MAX_ISSUES" -lt "$MAX_ISSUES_CAP" ]]; then
+  echo "--max-issues values below $MAX_ISSUES_CAP are forbidden." >&2
+  echo "Use --max-issues $MAX_ISSUES_CAP (default), or set a value above it and confirm override." >&2
+  exit 1
+fi
+
+if [[ -n "$ISSUE_OVERRIDE" ]] && ! is_valid_issue_number "$ISSUE_OVERRIDE"; then
+  echo "Invalid --issue value: $ISSUE_OVERRIDE" >&2
+  exit 1
+fi
+
 if [[ "$MAX_ISSUES" -gt "$MAX_ISSUES_CAP" ]]; then
-  echo "Requested --max-issues=$MAX_ISSUES exceeds default cap ($MAX_ISSUES_CAP)."
-  read -r -p "Override cap and continue? (y/N): " override_cap
+  echo "Requested --max-issues=$MAX_ISSUES exceeds hard baseline ($MAX_ISSUES_CAP)."
+  read -r -p "Override baseline and continue with $MAX_ISSUES issues? (y/N): " override_cap
   if [[ ! "$override_cap" =~ ^[Yy]$ ]]; then
-    echo "Cancelled. Re-run with --max-issues <= $MAX_ISSUES_CAP or confirm override."
+    echo "Cancelled. Re-run with --max-issues $MAX_ISSUES_CAP or confirm override."
     exit 1
   fi
 fi
@@ -326,12 +354,17 @@ while true; do
     ISSUE_OVERRIDE=""
   else
     publish_backend_roadmap_issues
-    issue="$(select_next_backend_issue || true)"
+    issue="$(select_next_backend_issue | tr -d '[:space:]' || true)"
   fi
 
   if [[ -z "$issue" ]]; then
     echo "No open scoped backend issues available; stopping backend loop."
     break
+  fi
+
+  if ! is_valid_issue_number "$issue"; then
+    echo "Resolved issue id is invalid: '$issue'" >&2
+    exit 1
   fi
 
   echo "============================================================"
@@ -349,6 +382,9 @@ while true; do
   count=$((count + 1))
   if [[ "$count" -ge "$MAX_ISSUES" ]]; then
     echo "Reached --max-issues=$MAX_ISSUES; stopping."
+    if [[ "$MAX_ISSUES" -eq "$MAX_ISSUES_CAP" ]]; then
+      echo "If more backend issues remain, re-run with --max-issues > $MAX_ISSUES_CAP and confirm override."
+    fi
     break
   fi
 done

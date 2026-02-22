@@ -67,11 +67,17 @@ if ! [[ "$MAX_ISSUES" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+if [[ "$MAX_ISSUES" -lt "$MAX_ISSUES_CAP" ]]; then
+  echo "--max-issues values below $MAX_ISSUES_CAP are forbidden." >&2
+  echo "Use --max-issues $MAX_ISSUES_CAP (default), or set a value above it and confirm override." >&2
+  exit 1
+fi
+
 if [[ "$MAX_ISSUES" -gt "$MAX_ISSUES_CAP" ]]; then
-  echo "Requested --max-issues=$MAX_ISSUES exceeds default cap ($MAX_ISSUES_CAP)."
-  read -r -p "Override cap and continue? (y/N): " override_cap
+  echo "Requested --max-issues=$MAX_ISSUES exceeds hard baseline ($MAX_ISSUES_CAP)."
+  read -r -p "Override baseline and continue with $MAX_ISSUES issues? (y/N): " override_cap
   if [[ ! "$override_cap" =~ ^[Yy]$ ]]; then
-    echo "Cancelled. Re-run with --max-issues <= $MAX_ISSUES_CAP or confirm override."
+    echo "Cancelled. Re-run with --max-issues $MAX_ISSUES_CAP or confirm override."
     exit 1
   fi
 fi
@@ -143,6 +149,9 @@ while true; do
   count=$((count + 1))
   if [[ "$count" -ge "$MAX_ISSUES" ]]; then
     echo "Reached --max-issues=$MAX_ISSUES; stopping."
+    if [[ "$MAX_ISSUES" -eq "$MAX_ISSUES_CAP" ]]; then
+      echo "If more backend issues remain, re-run with --max-issues > $MAX_ISSUES_CAP and confirm override."
+    fi
     break
   fi
 done

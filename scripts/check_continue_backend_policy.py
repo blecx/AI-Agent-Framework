@@ -4,7 +4,8 @@
 Enforces:
 - default max issues is 25
 - cap is 25
-- values above cap require explicit override confirmation
+- values below 25 are forbidden
+- values above baseline require explicit override confirmation
 """
 
 from __future__ import annotations
@@ -32,8 +33,9 @@ def _check_loop_file(path: Path, errors: list[str]) -> None:
 
     _must_contain(path, "MAX_ISSUES=25", errors)
     _must_contain(path, "MAX_ISSUES_CAP=25", errors)
+    _must_contain(path, 'if [[ "$MAX_ISSUES" -lt "$MAX_ISSUES_CAP" ]]', errors)
     _must_contain(path, 'if [[ "$MAX_ISSUES" -gt "$MAX_ISSUES_CAP" ]]', errors)
-    _must_contain(path, "Override cap and continue? (y/N):", errors)
+    _must_contain(path, "Override baseline and continue", errors)
 
 
 def main() -> int:
