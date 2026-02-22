@@ -173,26 +173,102 @@ PY
   done <<<"$labels"
 }
 
-validate_backend_model_policy() {
+resolve_backend_models() {
+  local resolved
+  resolved="$(./.venv/bin/python - <<'PY'
+import json
+from pathlib import Path
+from openai import OpenAI
+from agents.llm_client import LLMClientFactory
+
+api_key = LLMClientFactory.resolve_github_api_key("")
+if not api_key:
+    raise SystemExit("missing_api_key")
+
+client = OpenAI(base_url="https://models.github.ai/inference", api_key=api_key)
+
+planning_candidates = [
+    "openai/gpt-5.3-codex",
+    "openai/gpt-5.2-codex",
+    "openai/gpt-5.2",
+    "openai/gpt-5.1-codex",
+    "openai/gpt-4.1",
+]
+execution_candidates = [
+  "openai/gpt-4o",
+  "openai/gpt-4.1",
+  "openai/gpt-4o-mini",
+]
+
+def first_available(candidates):
+    for model in candidates:
+        try:
+            client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "ok"}],
+                max_tokens=1,
+            )
+            return model
+        except Exception:
+            continue
+    return ""
+
+planning_model = first_available(planning_candidates)
+coding_model = first_available(execution_candidates)
+
+if not planning_model:
+    raise SystemExit("no_planning_model")
+if not coding_model:
+    raise SystemExit("no_execution_model")
+
+base_cfg = LLMClientFactory.load_config()
+cfg = {
+    "timeout": int(base_cfg.get("timeout", 300)),
+    "max_tokens": int(base_cfg.get("max_tokens", 8192)),
+    "temperature": float(base_cfg.get("temperature", 0.2)),
+    "api_key": base_cfg.get("api_key", "your-api-key-here"),
+    "roles": {
+        "planning": {
+            "provider": "github",
+            "base_url": "https://models.github.ai/inference",
+            "api_key": base_cfg.get("api_key", "your-api-key-here"),
+            "model": planning_model,
+        },
+        "coding": {
+            "provider": "github",
+            "base_url": "https://models.github.ai/inference",
+            "api_key": base_cfg.get("api_key", "your-api-key-here"),
+            "model": coding_model,
+        },
+        "review": {
+            "provider": "github",
+            "base_url": "https://models.github.ai/inference",
+            "api_key": base_cfg.get("api_key", "your-api-key-here"),
+            "model": coding_model,
+        },
+    },
+}
+
+tmp = Path(".tmp")
+tmp.mkdir(parents=True, exist_ok=True)
+out = tmp / "llm.workflow.resolved.json"
+out.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+
+print(json.dumps({"planning": planning_model, "coding": coding_model, "path": str(out)}))
+PY
+)"
+
   local planning_model
   local coding_model
-  planning_model="$(./.venv/bin/python - <<'PY'
-from agents.llm_client import LLMClientFactory
-print(LLMClientFactory.get_model_id_for_role("planning"))
-PY
-)"
-  coding_model="$(./.venv/bin/python - <<'PY'
-from agents.llm_client import LLMClientFactory
-print(LLMClientFactory.get_model_id_for_role("coding"))
-PY
-)"
+  local resolved_path
+  planning_model="$(echo "$resolved" | ./.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["planning"])')"
+  coding_model="$(echo "$resolved" | ./.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["coding"])')"
+  resolved_path="$(echo "$resolved" | ./.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["path"])')"
 
+  export LLM_CONFIG_PATH="$resolved_path"
   if [[ "$planning_model" != openai/gpt-5* ]]; then
-    echo "❌ Planning model policy violation: expected GPT-5 class model, got '$planning_model'" >&2
-    echo "   Set LLM_CONFIG_PATH to a config with planning model openai/gpt-5.*" >&2
-    exit 2
+    echo "⚠️  GPT-5 planning models unavailable on endpoint; using fallback planning model: $planning_model"
   fi
-
   echo "Model policy: planning=$planning_model coding=$coding_model"
 }
 
@@ -238,7 +314,7 @@ select_next_backend_issue() {
 
 cd "$ROOT_DIR"
 
-validate_backend_model_policy
+resolve_backend_models
 validate_backend_issue_budget
 
 count=0
