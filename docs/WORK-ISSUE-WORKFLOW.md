@@ -46,6 +46,20 @@ Select the active LLM config via `LLM_CONFIG_PATH` (preferred) or `configs/llm.j
 
 Secrets should be provided via env vars when possible (e.g. `GITHUB_TOKEN` or `GH_TOKEN`) to avoid writing credentials into files.
 
+## Token Budget Mode (Default)
+
+To keep autonomous runs stable on model endpoints with strict request-size limits, the workflow uses compact context by default.
+
+- `WORK_ISSUE_COMPACT=1` enables compact tools + bounded prompt context.
+- `WORK_ISSUE_MAX_PROMPT_CHARS=3200` caps injected dynamic text blocks (plan/review/workflow packet).
+- `/continue-phase-2` exports these defaults automatically unless overridden.
+
+Recommended practice:
+
+- Keep issue slices small (`S`/`M`, one issue per PR).
+- Use retrieval-on-demand instead of embedding long docs in prompts.
+- Keep planning/review packets concise and scoped to touched files.
+
 ## Goal Archive Behavior (`.tmp`)
 
 `scripts/work-issue.py` now archives issue goals from `.tmp/*.md` automatically:

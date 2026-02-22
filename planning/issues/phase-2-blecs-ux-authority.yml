@@ -29,6 +29,10 @@ AI-Agent-Framework:
       - Add deterministic checks for namespace ownership and required sections.
       - Keep implementation script-level and non-invasive to runtime logic.
 
+      ## Token Budget Constraints
+      - [ ] Planning/review prompt inputs stay within compact context limits.
+      - [ ] Validation relies on targeted file reads (no full-doc embedding).
+
       ## Testing Requirements
       - `python -m pytest tests/ -k "prompt or contract" -q`
       - `python -m scripts.check_issue_specs --paths "planning/issues/*.yml" --no-legacy --strict-sections`
@@ -69,6 +73,10 @@ AI-Agent-Framework:
       - Refactor script orchestration to centralize stage invocation.
       - Add minimal adapters around current workflow entrypoints.
       - Keep backward-compatible script flags.
+
+      ## Token Budget Constraints
+      - [ ] Workflow packet generation remains compact and deterministic.
+      - [ ] Dynamic prompt inserts are truncated under configured budget.
 
       ## Testing Requirements
       - `python -m pytest tests/ -k "work_issue or workflow" -q`
@@ -112,6 +120,10 @@ AI-Agent-Framework:
       - Reuse current UI-impact detection rules.
       - Keep fixture set minimal but representative.
 
+      ## Token Budget Constraints
+      - [ ] Test fixtures avoid large inline payloads.
+      - [ ] Prompt test cases include compact-mode behavior checks.
+
       ## Testing Requirements
       - `./.venv/bin/python -m pytest tests/ -k "ux or workflow or ci" -q`
       - `./scripts/validate_prompts.sh`
@@ -150,6 +162,10 @@ AI-Agent-Framework:
       ## Technical Approach
       - Add one authoritative document and link from existing workflow docs.
       - Reuse terminology already present in agent and prompt contracts.
+
+      ## Token Budget Constraints
+      - [ ] Playbook includes compact-mode defaults and overrides.
+      - [ ] Examples use bounded context packet patterns.
 
       ## Testing Requirements
       - `python -m pytest tests/ -k "docs or workflow" -q`

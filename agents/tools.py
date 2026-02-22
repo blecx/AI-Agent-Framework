@@ -657,3 +657,19 @@ def get_all_tools():
         get_knowledge_base_patterns,
         update_knowledge_base,
     ]
+
+
+def get_compact_tools():
+    """Get a compact tool subset for constrained token budgets."""
+    return [
+        fetch_github_issue,
+        create_github_pr,
+        list_github_issues,
+        read_file_content,
+        write_file_content,
+        list_directory_contents,
+        git_commit,
+        get_changed_files,
+        create_feature_branch,
+        run_command,
+    ]
