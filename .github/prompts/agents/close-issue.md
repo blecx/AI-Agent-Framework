@@ -24,6 +24,8 @@
    gh issue close <issue-number> --comment "<resolution-comment>"
    ```
 
+   - For UI/UX-affecting issues, ensure closure comment references completed `blecs-ux-authority` consultation outcome.
+
 4. **Verify closure**
    ```bash
    gh issue view <issue-number> --json state | grep -q "CLOSED" && echo "✓ Issue closed" || echo "✗ Failed"
@@ -35,3 +37,4 @@
 - Single state check (no polling)
 - Early exit for already-closed issues
 - No redundant validations
+- Use `.github/prompts/modules/ux/delegation-policy.md` for UX ownership rules

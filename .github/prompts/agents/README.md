@@ -14,6 +14,7 @@ Do not use these files as generic end-user docs; they are operator rails for age
 
 - `create-issue.md`
 - `Plan.md`
+- `continue-phase-2.md`
 - `resolve-issue-dev.md`
 - `pr-merge.md`
 - `close-issue.md`

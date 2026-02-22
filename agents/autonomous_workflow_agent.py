@@ -374,6 +374,113 @@ Start by fetching and analyzing Issue #{self.issue_number}, then proceed through
         print("\n")
         return "".join(chunks)
 
+    @staticmethod
+    def _is_ui_ux_scope(text: str) -> bool:
+        """Best-effort heuristic to detect UI/UX-affecting scope from prompt/output text."""
+        lowered = (text or "").lower()
+        if not lowered:
+            return False
+
+        hints = [
+            "apps/web",
+            "_external/ai-agent-framework-client",
+            "client/src",
+            ".css",
+            ".tsx",
+            ".jsx",
+            "ux",
+            "ui",
+            "navigation",
+            "responsive",
+            "layout",
+            "a11y",
+            "accessibility",
+        ]
+        return any(hint in lowered for hint in hints)
+
+    async def _run_ux_gate(self, context_text: str, stage_label: str) -> str:
+        """Run mandatory UX authority gate and return PASS/CHANGES decision."""
+        ux_prompt = f"""You are acting as the blecs UX authority gate for Issue #{self.issue_number}.
+
+Stage: {stage_label}
+
+Context:
+{context_text}
+
+Rules:
+- Evaluate navigation quality, responsive behavior, artifact grouping, and baseline a11y.
+- If changes are required, block progress.
+
+Output format:
+First line must be exactly one of:
+UX_DECISION: PASS
+UX_DECISION: CHANGES
+
+Then include:
+- Navigation Plan:
+- Responsive Rules:
+- Grouping Decisions:
+- A11y Baseline:
+- Required Changes: (only if CHANGES)
+"""
+
+        ux_text = await self._run_agent_stream(
+            self.review_agent,
+            self.review_thread,
+            ux_prompt,
+            f"{stage_label}: UX authority gate",
+        )
+
+        first_line = (ux_text.strip().splitlines() or [""])[0].strip()
+        decision = "PASS" if first_line == "UX_DECISION: PASS" else "CHANGES"
+
+        if not self.dry_run:
+            self._persist_ux_consultation(stage_label=stage_label, ux_text=ux_text, decision=decision)
+
+        return decision
+
+    async def _build_workflow_packet(self) -> str:
+        """Build a compact workflow packet for phase execution context (phase-2 integration)."""
+        packet_prompt = f"""Create a compact workflow packet for Issue #{self.issue_number}.
+
+Read and normalize process constraints from:
+- docs/WORK-ISSUE-WORKFLOW.md
+- .github/copilot-instructions.md
+- .github/workflows/ci.yml
+
+Return exactly these sections:
+WORKFLOW_PACKET:
+MUST_RULES:
+UX_INPUTS:
+VALIDATION:
+"""
+
+        return await self._run_agent_stream(
+            self.planning_agent,
+            self.planning_thread,
+            packet_prompt,
+            "Phase 1.5: Workflow packet (blecs-workflow-authority)",
+        )
+
+    def _persist_ux_consultation(self, stage_label: str, ux_text: str, decision: str) -> None:
+        """Persist UX consultation evidence for PR/issue traceability."""
+        try:
+            tmp_dir = Path(".tmp")
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+            report_path = tmp_dir / f"ux-consult-issue-{self.issue_number}.md"
+
+            timestamp = datetime.now().isoformat()
+            content = (
+                f"\n## {timestamp} - {stage_label}\n"
+                f"- Decision: {decision}\n\n"
+                f"{ux_text.strip()}\n"
+            )
+
+            with open(report_path, "a", encoding="utf-8") as handle:
+                handle.write(content)
+        except Exception as exc:
+            print(f"⚠️  Could not persist UX consultation artifact: {exc}")
+
     async def execute(self) -> bool:
         """Execute the complete workflow autonomously.
 
@@ -400,12 +507,17 @@ Start by fetching and analyzing Issue #{self.issue_number}, then proceed through
         print()
         
         try:
+            workflow_packet = await self._build_workflow_packet()
+
             planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
 
 You must:
 1) Fetch and analyze the issue.
 2) Read relevant code/docs.
 3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+WORKFLOW_PACKET_FROM_BLECS_WORKFLOW_AUTHORITY:
+{workflow_packet}
 
 Hard rules:
 - If dry-run is enabled, do NOT apply changes, commit, or create a PR.
@@ -425,6 +537,17 @@ Begin now."""
                 planning_prompt,
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
+
+            ui_ux_scope = self._is_ui_ux_scope(plan_text)
+            if ui_ux_scope:
+                ux_decision = await self._run_ux_gate(
+                    context_text=plan_text,
+                    stage_label="Phase 2.5",
+                )
+                if ux_decision != "PASS":
+                    raise RuntimeError(
+                        "UX authority gate blocked implementation after planning (UX_DECISION: CHANGES)"
+                    )
 
             coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
 
@@ -477,6 +600,14 @@ If CHANGES:
                     review_prompt,
                     f"Review loop {i + 1}/{iteration_budget}: Review (Copilot/GitHub Models)",
                 )
+
+                if ui_ux_scope:
+                    ux_decision = await self._run_ux_gate(
+                        context_text=review_text,
+                        stage_label=f"Review loop {i + 1}/{iteration_budget}",
+                    )
+                    if ux_decision != "PASS":
+                        review_text = "REVIEW_DECISION: CHANGES\n- UX authority requested additional design/navigation/responsive updates."
 
                 first_line = (review_text.strip().splitlines() or [""])[0].strip()
                 if first_line == "REVIEW_DECISION: PASS":
@@ -559,6 +690,12 @@ Output requirements:
 - A concise plan with steps.
 - List of files likely to change.
 - Validation commands to run (by repo).
+
+Use a workflow packet section with headings:
+- WORKFLOW_PACKET:
+- MUST_RULES:
+- UX_INPUTS:
+- VALIDATION:
 
 End with a clearly marked block:
 

@@ -30,6 +30,7 @@ Your job is to package an already-decided outcome (completed / not planned / dup
 - Never close issues by guessing; verify issue/PR/commit state with GitHub CLI.
 - Never commit `projectDocs/` or `configs/llm.json`.
 - If the issue is security-sensitive or ambiguous, stop and ask for maintainer confirmation.
+- For UI/UX-affecting issues, ensure closure evidence references completed `blecs-ux-authority` consultation outcomes.
 - **CRITICAL: NEVER use `/tmp` for temporary files** - ALWAYS use `.tmp/` in workspace root for security.
   - `/tmp` is world-readable and insecure
   - Use `.tmp/close-<issue>.json`, `.tmp/issue-<number>-data.json`, etc.

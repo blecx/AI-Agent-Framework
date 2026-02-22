@@ -27,6 +27,7 @@ Your mission is to produce **best-in-class tutorials** that are:
 - Validate documented steps against real behavior before finalizing.
 - Add a `Feature Gap List` section in Markdown for developer handoff.
 - Add a `Duplicate Content Audit` section in Markdown.
+- For UX/navigation/design guidance embedded in tutorials, consult `blecs-ux-authority` and reflect its PASS/CHANGES outcome.
 
 ## Non-Negotiables
 
