@@ -16,6 +16,7 @@ Based on AI Toolkit best practices and Microsoft Agent Framework.
 
 import asyncio
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +29,7 @@ from agent_framework.openai import OpenAIChatClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agents.llm_client import LLMClientFactory
-from agents.tools import get_all_tools
+from agents.tools import get_all_tools, get_compact_tools
 
 
 class AutonomousWorkflowAgent:
@@ -37,6 +38,8 @@ class AutonomousWorkflowAgent:
     def __init__(self, issue_number: int, dry_run: bool = False):
         self.issue_number = issue_number
         self.dry_run = dry_run
+        self.compact_mode = os.environ.get("WORK_ISSUE_COMPACT", "1") != "0"
+        self.max_prompt_chars = int(os.environ.get("WORK_ISSUE_MAX_PROMPT_CHARS", "3200"))
         self.agent: Optional[ChatAgent] = None
         self.thread = None
 
@@ -68,9 +71,9 @@ class AutonomousWorkflowAgent:
         try:
             path = Path("docs/WORK-ISSUE-WORKFLOW.md")
             if path.exists():
-                # Load first 500 lines to avoid token limits
+                # Load a compact excerpt to avoid model token limits.
                 with open(path) as f:
-                    lines = f.readlines()[:500]
+                    lines = f.readlines()[:120]
                 return "".join(lines)
         except Exception as e:
             print(f"⚠️  Could not load workflow guide: {e}")
@@ -83,7 +86,7 @@ class AutonomousWorkflowAgent:
             if kb_path.exists():
                 with open(kb_path) as f:
                     data = json.load(f)
-                    return json.dumps(data, indent=2)
+                    return json.dumps(data)
         except Exception as e:
             print(f"⚠️  Could not load knowledge base: {e}")
         return "[]"
@@ -202,7 +205,8 @@ class AutonomousWorkflowAgent:
         coding_chat = OpenAIChatClient(async_client=coding_client, model_id=coding_model_id)
         review_chat = OpenAIChatClient(async_client=review_client, model_id=review_model_id)
 
-        tools = get_all_tools()
+        tools = get_compact_tools() if self.compact_mode else get_all_tools()
+        print(f"🧱 Prompt mode: {'compact' if self.compact_mode else 'full'}")
 
         self.planning_agent = ChatAgent(
             chat_client=planning_chat,
@@ -234,130 +238,43 @@ class AutonomousWorkflowAgent:
         print("✅ Agent initialized and ready\n")
     
     def _build_system_instructions(self) -> str:
-        """Build comprehensive system instructions for the agent."""
-        return f"""You are an autonomous software development agent that resolves GitHub issues end-to-end.
+        """Build token-budget-safe system instructions for the agent."""
+        project_excerpt = self.project_instructions[:400] if self.project_instructions else "No project context"
+        workflow_excerpt = self.workflow_guide[:400] if self.workflow_guide else "No workflow guide"
+        return f"""You are an autonomous software development agent resolving Issue #{self.issue_number}.
 
-## Your Mission
-Work on Issue #{self.issue_number} following the complete 6-phase workflow:
-1. Context & Analysis
-2. Planning
-3. Implementation
-4. Testing
-5. Review
-6. PR Creation
+Mission:
+- Execute: analysis -> planning -> implementation -> testing -> review -> PR.
+- Keep one-issue-per-PR and keep changes scoped.
+- Never hallucinate file state; read before edit.
 
-## Project Context
-{self.project_instructions[:2000] if self.project_instructions else "No specific project context"}
+Rules:
+- Backend repo root: AI-Agent-Framework; client repo root: _external/AI-Agent-Framework-Client.
+- Run relevant validations for changed scope before review.
+- Enforce UX authority checks for UI/UX-affecting changes.
+- Include Fixes #{self.issue_number} in PR body when creating PR.
+- Never commit projectDocs/ or local secret config files.
 
-## Workflow Guide
-{self.workflow_guide[:3000] if self.workflow_guide else "Follow standard development workflow"}
+Project excerpt:
+{project_excerpt}
 
-## Knowledge from Past Issues
-{self.knowledge_base[:1000] if self.knowledge_base else "No historical patterns available"}
+Workflow excerpt:
+{workflow_excerpt}
 
-## Multi-Repo Scope
-- Primary repo: AI-Agent-Framework (this workspace, Python backend).
-- UX repo: _external/AI-Agent-Framework-Client (React/TypeScript, Node).
-- Some issues touch one repo; some touch both. Plan and execute accordingly.
-
-## UX Repo Context (If Needed)
-{self.client_repo_context if self.client_repo_context else "UX repo not present in this workspace"}
-
-## Environment Parity
-- Backend commands must run with the repo's .venv Python.
-- UX repo commands must run inside _external/AI-Agent-Framework-Client.
-- Never run commands from the wrong repo root.
-
-## Key Principles
-- **Verify everything**: Never hallucinate file contents or states. Always use tools to read files.
-- **Test-first approach**: Write/update tests before implementation
-- **Incremental commits**: Commit after each logical change
-- **Self-review**: Check your work against acceptance criteria
-- **Learn continuously**: Update knowledge base with learnings
-
-## Available Tools
-You have access to tools for:
-- GitHub operations (fetch issue, create PR)
-- File operations (read, write, list)
-- Git operations (commit, branch, status)
-- Command execution (build, test, lint)
-- Knowledge base (read patterns, update learnings)
-
-## Workflow Execution
-
-### Phase 1: Context & Analysis
-1. Use `fetch_github_issue()` to get issue details (pass `repo=` if the issue is not in the current repo)
-2. Use `read_file_content()` to understand relevant code
-3. Use `get_knowledge_base_patterns()` for similar issues
-4. Analyze requirements and constraints
-
-Repo selection rules:
-- Backend repo: `blecx/AI-Agent-Framework` (workspace root)
-- Client repo: `blecx/AI-Agent-Framework-Client` (in `_external/AI-Agent-Framework-Client/`)
-- Always pass the correct `working_directory` to git/gh/file tools when operating in the client repo.
-
-### Phase 2: Planning
-1. Create implementation plan document
-2. Break down into testable steps
-3. Estimate time based on knowledge base
-4. Identify risks and mitigation
-
-### Phase 3: Implementation
-1. Use `create_feature_branch()` to start work (ensure `working_directory` matches the repo you change)
-2. For each step:
-   - Write test first (test-first approach)
-   - Implement functionality
-   - Use `git_commit()` to commit incrementally
-3. Use `write_file_content()` for code changes
-
-### Phase 4: Testing
-1. Run the repo-native test suites for any repo you change.
-2. Backend changes:
-    - `python -m black apps/api/`
-    - `python -m flake8 apps/api/`
-    - `pytest`
-3. apps/web changes:
-    - `npm install`
-    - `npm run lint`
-    - `npm run build`
-4. UX repo changes (_external/AI-Agent-Framework-Client):
-    - `npm install`
-    - `npm run build`
-    - `npm run test`
-5. If tests fail, analyze output and fix
-6. Repeat until all relevant suites pass
-
-### Phase 5: Review
-1. Use `get_changed_files()` to see what changed (in the correct repo)
-2. Review against acceptance criteria
-3. Check for:
-   - No removed functionality without approval
-   - Follows project conventions
-   - All tests pass
-   - No debug code left
-
-### Phase 6: PR Creation
-1. Use `create_github_pr()` with descriptive title and body
-2. Include:
-   - What was changed
-   - Why it was changed
-   - How to test
-   - Fixes #<issue_number>
-3. Use `update_knowledge_base()` to record learnings
-
-## Important Guidelines
-- **Be autonomous**: Make decisions based on issue requirements and project context
-- **Be thorough**: Complete all 6 phases, don't skip steps
-- **Be careful**: Verify file contents before modifying
-- **Be informative**: Explain your reasoning as you work
-- **Ask when unsure**: For architecture decisions or scope changes, explain options and ask
-- **Use correct working directories**: Set the repo root when running commands
-
-## Dry Run Mode
-{"✅ DRY RUN ACTIVE - Use tools to analyze but don't make actual changes" if self.dry_run else ""}
-
-Start by fetching and analyzing Issue #{self.issue_number}, then proceed through each phase systematically.
+Mode:
+{"DRY RUN" if self.dry_run else "NORMAL"}
 """
+
+    def _truncate_for_prompt(self, text: str, limit: Optional[int] = None) -> str:
+        """Truncate text for prompt safety, preserving start and end context."""
+        if not text:
+            return ""
+        max_chars = limit or self.max_prompt_chars
+        if len(text) <= max_chars:
+            return text
+        head = text[: max_chars // 2]
+        tail = text[-(max_chars // 2) :]
+        return f"{head}\n\n...[truncated for token budget]...\n\n{tail}"
     
     async def _run_agent_stream(self, agent: ChatAgent, thread, prompt: str, label: str) -> str:
         """Run a prompt with streaming console output and return the full text."""
@@ -441,26 +358,30 @@ Then include:
 
     async def _build_workflow_packet(self) -> str:
         """Build a compact workflow packet for phase execution context (phase-2 integration)."""
-        packet_prompt = f"""Create a compact workflow packet for Issue #{self.issue_number}.
-
-Read and normalize process constraints from:
-- docs/WORK-ISSUE-WORKFLOW.md
-- .github/copilot-instructions.md
-- .github/workflows/ci.yml
-
-Return exactly these sections:
-WORKFLOW_PACKET:
-MUST_RULES:
-UX_INPUTS:
-VALIDATION:
-"""
-
-        return await self._run_agent_stream(
-            self.planning_agent,
-            self.planning_thread,
-            packet_prompt,
-            "Phase 1.5: Workflow packet (blecs-workflow-authority)",
+        print(f"\n{'=' * 70}")
+        print("🧩 Phase 1.5: Workflow packet (blecs-workflow-authority)")
+        print(f"{'=' * 70}\n")
+        packet = (
+            "WORKFLOW_PACKET:\n"
+            "- One issue per PR; keep slices small and reviewable.\n"
+            "- Preserve backend-first dependency order before client UX tasks.\n"
+            "\n"
+            "MUST_RULES:\n"
+            "- Run required validation commands for touched scope.\n"
+            "- Enforce UX authority consultation for UI-impacting changes.\n"
+            "- Keep forbidden files out of commits.\n"
+            "\n"
+            "UX_INPUTS:\n"
+            "- Prioritize navigation clarity and responsive behavior.\n"
+            "- Maintain baseline accessibility and artifact grouping quality.\n"
+            "\n"
+            "VALIDATION:\n"
+            "- Start with focused tests, then broader checks if needed.\n"
+            "- Ensure prompt and issue-spec validators pass before PR.\n"
         )
+        print("🤖 Agent: generated local workflow packet\n")
+        print(packet)
+        return packet
 
     def _persist_ux_consultation(self, stage_label: str, ux_text: str, decision: str) -> None:
         """Persist UX consultation evidence for PR/issue traceability."""
@@ -507,7 +428,7 @@ VALIDATION:
         print()
         
         try:
-            workflow_packet = await self._build_workflow_packet()
+            workflow_packet = self._truncate_for_prompt(await self._build_workflow_packet(), 1800)
 
             planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
 
@@ -537,11 +458,12 @@ Begin now."""
                 planning_prompt,
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
+            plan_text = self._truncate_for_prompt(plan_text)
 
             ui_ux_scope = self._is_ui_ux_scope(plan_text)
             if ui_ux_scope:
                 ux_decision = await self._run_ux_gate(
-                    context_text=plan_text,
+                    context_text=self._truncate_for_prompt(plan_text, 2200),
                     stage_label="Phase 2.5",
                 )
                 if ux_decision != "PASS":
@@ -559,7 +481,7 @@ Important:
 - If dry-run is enabled, do NOT apply changes, commit, or create a PR.
 
 PLAN_FROM_PLANNING_AGENT:
-{plan_text}
+{self._truncate_for_prompt(plan_text)}
 
 At the end, include:
 CODING_SUMMARY:
@@ -603,7 +525,7 @@ If CHANGES:
 
                 if ui_ux_scope:
                     ux_decision = await self._run_ux_gate(
-                        context_text=review_text,
+                        context_text=self._truncate_for_prompt(review_text, 2200),
                         stage_label=f"Review loop {i + 1}/{iteration_budget}",
                     )
                     if ux_decision != "PASS":
@@ -617,7 +539,7 @@ If CHANGES:
                 fix_prompt = f"""Apply the requested review changes for Issue #{self.issue_number}.
 
 REVIEW_NOTES:
-{review_text}
+{self._truncate_for_prompt(review_text)}
 
 Requirements:
 - Make minimal changes required.

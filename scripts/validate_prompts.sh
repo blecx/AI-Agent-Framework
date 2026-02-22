@@ -10,3 +10,6 @@ fi
 
 echo "[validate_prompts] Running strict prompt quality checks..."
 "${PYTHON_BIN}" "${ROOT_DIR}/scripts/check_prompt_quality.py" --strict
+
+echo "[validate_prompts] Running command contract checks..."
+"${PYTHON_BIN}" "${ROOT_DIR}/scripts/check_command_contracts.py"

@@ -71,6 +71,11 @@ Goal Archiving:
     - Enabled by default (pre + post run): archives Goal sections from `.tmp/*.md`
     - Disable per run: `--no-goal-archive`
     - Disable via environment: `WORK_ISSUE_GOAL_ARCHIVE=0`
+
+Token Budget Mode:
+    - Compact prompt mode is enabled by default via `WORK_ISSUE_COMPACT=1`
+    - Prompt insertion budget can be tuned with `WORK_ISSUE_MAX_PROMPT_CHARS` (default: 3200)
+    - Set `WORK_ISSUE_COMPACT=0` only when your model endpoint supports larger request payloads
         """
     )
     

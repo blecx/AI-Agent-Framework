@@ -7,6 +7,10 @@ DRY_RUN=0
 NO_RECONCILE=0
 MAX_ISSUES_CAP=25
 
+# Token-budget safe defaults for model-constrained environments.
+export WORK_ISSUE_COMPACT="${WORK_ISSUE_COMPACT:-1}"
+export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-3200}"
+
 usage() {
   cat <<'EOF'
 Usage: ./scripts/continue-phase-2.sh [options]

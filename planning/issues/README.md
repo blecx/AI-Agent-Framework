@@ -24,6 +24,17 @@ Each issue entry must include:
   - `## Documentation Updates`
   - `## Cross-Repository Coordination`
 
+### Token-budget compliance (recommended)
+
+For autonomous execution in constrained model environments, include concise issue bodies and avoid long narrative sections.
+
+- Keep issue scope small (`S`/`M`) and one-issue-per-PR.
+- Prefer short, runnable validation command lists.
+- Reference files/paths instead of embedding long document excerpts.
+- Add an optional section:
+  - `## Token Budget Constraints`
+  - checklist items for compact planning/review packets.
+
 ### Example (canonical)
 
 ```yaml
