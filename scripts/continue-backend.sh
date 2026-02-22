@@ -12,7 +12,8 @@ ISSUE_LABEL="step:3"
 BACKEND_REPO="blecx/AI-Agent-Framework"
 
 export WORK_ISSUE_COMPACT="${WORK_ISSUE_COMPACT:-1}"
-export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-3200}"
+export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-1800}"
+export LLM_CONFIG_PATH="${LLM_CONFIG_PATH:-configs/llm.workflow.json}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -172,6 +173,44 @@ PY
   done <<<"$labels"
 }
 
+validate_backend_model_policy() {
+  local planning_model
+  local coding_model
+  planning_model="$(./.venv/bin/python - <<'PY'
+from agents.llm_client import LLMClientFactory
+print(LLMClientFactory.get_model_id_for_role("planning"))
+PY
+)"
+  coding_model="$(./.venv/bin/python - <<'PY'
+from agents.llm_client import LLMClientFactory
+print(LLMClientFactory.get_model_id_for_role("coding"))
+PY
+)"
+
+  if [[ "$planning_model" != openai/gpt-5* ]]; then
+    echo "❌ Planning model policy violation: expected GPT-5 class model, got '$planning_model'" >&2
+    echo "   Set LLM_CONFIG_PATH to a config with planning model openai/gpt-5.*" >&2
+    exit 2
+  fi
+
+  echo "Model policy: planning=$planning_model coding=$coding_model"
+}
+
+validate_backend_issue_budget() {
+  local cmd=(./.venv/bin/python scripts/check_issue_specs.py --no-legacy --strict-sections --max-body-chars 2600 --paths)
+  local p
+  for p in "${ROADMAP_PATHS[@]}"; do
+    cmd+=("$p")
+  done
+
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo "[dry-run] Would run: ${cmd[*]}"
+    return 0
+  fi
+
+  "${cmd[@]}"
+}
+
 select_next_backend_issue() {
   local cmd=(
     gh issue list
@@ -198,6 +237,9 @@ select_next_backend_issue() {
 }
 
 cd "$ROOT_DIR"
+
+validate_backend_model_policy
+validate_backend_issue_budget
 
 count=0
 while true; do

@@ -16,6 +16,11 @@ class LLMClientFactory:
     """Factory for creating LLM clients based on configuration."""
 
     _cached_github_token: Optional[str] = None
+    _default_role_models = {
+        "planning": "openai/gpt-5.2",
+        "coding": "openai/gpt-4o-mini",
+        "review": "openai/gpt-4o-mini",
+    }
 
     @staticmethod
     def _looks_like_placeholder(key: str) -> bool:
@@ -136,9 +141,9 @@ class LLMClientFactory:
             }
         except Exception:
             return {
-                "planning": "openai/gpt-5.1-codex",
-                "coding": "openai/gpt-5.1-codex",
-                "review": "openai/gpt-5.1-codex",
+                "planning": LLMClientFactory._default_role_models["planning"],
+                "coding": LLMClientFactory._default_role_models["coding"],
+                "review": LLMClientFactory._default_role_models["review"],
             }
 
     @staticmethod
@@ -207,7 +212,9 @@ class LLMClientFactory:
     def get_model_id_for_role(role: str) -> str:
         role_config = LLMClientFactory.get_role_config(role)
         model = role_config.get("model", "")
-        return model or "openai/gpt-5.1-codex"
+        if model:
+            return model
+        return LLMClientFactory._default_role_models.get(role, "openai/gpt-4o-mini")
 
     @staticmethod
     def create_client_for_role(role: str) -> AsyncOpenAI:
@@ -272,10 +279,9 @@ class LLMClientFactory:
         """
         Get recommended model for autonomous agent work.
         
-        For code generation and reasoning, we recommend:
-        - gpt-5.1-codex (DEFAULT) - Advanced coding, repo-aware intelligence (Quality: 0.899)
-        - gpt-4.1 - Balanced performance (Quality: 0.844)
-        - gpt-4o - Faster operations (Quality: 0.749)
+        For planning/execution split:
+        - planning: GPT-5 class model (default: openai/gpt-5.2)
+        - coding/review: free-tier capable smaller models (default: openai/gpt-4o-mini)
         
         Returns:
             Model ID string
@@ -289,5 +295,4 @@ class LLMClientFactory:
         except Exception:
             pass
         
-        # Default to gpt-5.1-codex (best free model for coding: 0.899 quality)
-        return "openai/gpt-5.1-codex"
+        return LLMClientFactory._default_role_models["planning"]
