@@ -23,8 +23,9 @@ def test_continue_backend_policy_checker_passes_with_required_snippets(tmp_path:
             [
                 "MAX_ISSUES=25",
                 "MAX_ISSUES_CAP=25",
+                'if [[ "$MAX_ISSUES" -lt "$MAX_ISSUES_CAP" ]]',
                 'if [[ "$MAX_ISSUES" -gt "$MAX_ISSUES_CAP" ]]',
-                "Override cap and continue? (y/N):",
+                "Override baseline and continue",
             ]
         ),
         encoding="utf-8",

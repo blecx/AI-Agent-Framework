@@ -29,7 +29,8 @@ Primary command:
 Default cap policy:
 
 - Default run limit is `25` issues.
-- If `--max-issues` is set above `25`, the script asks for explicit override confirmation.
+- `--max-issues` values below `25` are forbidden.
+- Values above `25` are allowed only with explicit runtime override confirmation.
 
 **Hard Rules:**
 
