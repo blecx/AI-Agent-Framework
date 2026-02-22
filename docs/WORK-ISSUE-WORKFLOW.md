@@ -59,6 +59,7 @@ Recommended practice:
 - Keep issue slices small (`S`/`M`, one issue per PR).
 - Use retrieval-on-demand instead of embedding long docs in prompts.
 - Keep planning/review packets concise and scoped to touched files.
+- Keep workflow-file changes (`.github/workflows/*.yml`) in dedicated PRs with appropriate merge scope.
 
 ## Goal Archive Behavior (`.tmp`)
 
@@ -329,19 +330,24 @@ bash scripts/archive-goals.sh
 
    Fix all linting errors before proceeding.
 
-2. **Test Suite**
+2. **Test Suite (Domain-Specific by Default)**
 
    ```bash
-   # Backend
-   pytest
-   pytest --cov  # Check coverage
+   # Backend (focused to touched domain first)
+   pytest tests/unit/<domain_or_module> -q
+   # Expand only when needed:
+   pytest tests/unit -q
+   pytest tests/integration -q
 
-   # Frontend
-   npm test
-   npm run test:e2e  # if applicable
+   # Frontend (focused)
+   npm run lint
+   npm run build
+   npm test -- <target>
    ```
 
-   - All tests must pass
+   - Domain-focused checks are the default for normal issue loops
+   - Run broader suites only when scope/risk justifies it
+   - All executed tests must pass
    - No regressions
    - New code should be tested
 

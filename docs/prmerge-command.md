@@ -44,6 +44,14 @@ The `prmerge` command automates these steps:
 - Automatically finds PR associated with issue number
 - Verifies PR state (open, merged, closed)
 - Checks CI status (build, lint, tests, type check)
+- **Policy guard:** Blocks PRs that modify `.github/workflows/*.yml` by default
+  - This avoids standard-loop merge failures when elevated workflow token scope is unavailable
+  - Use a dedicated workflow-change merge path, or explicit override for exceptions:
+    - `PRMERGE_ALLOW_WORKFLOW_FILES=1 ./scripts/prmerge <issue_number>`
+- **Domain-specific validation guidance:** prints targeted checks based on changed files
+  - Backend scope: focused `pytest` in touched domain(s)
+  - Frontend scope: `npm run lint` / `npm run build` or focused UI tests
+  - Docs-only scope: lightweight policy/documentation checks
 - **NEW:** Validates PR description follows template requirements
   - Checks for required sections (Summary, Acceptance Criteria, Validation, etc.)
   - Verifies "Fixes: #N" line exists (where N is issue number)
