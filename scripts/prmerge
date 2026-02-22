@@ -35,6 +35,7 @@ PRMERGE_MAX_FILES=${PRMERGE_MAX_FILES:-12}
 PRMERGE_MAX_LINES=${PRMERGE_MAX_LINES:-500}
 PRMERGE_ALLOW_LARGE_SLICE=${PRMERGE_ALLOW_LARGE_SLICE:-0}
 PRMERGE_ALLOW_UNAPPROVED=${PRMERGE_ALLOW_UNAPPROVED:-0}
+PRMERGE_ALLOW_WORKFLOW_FILES=${PRMERGE_ALLOW_WORKFLOW_FILES:-0}
 
 # Helper functions (must be defined before first use)
 info() {
@@ -687,6 +688,33 @@ else
     PR_ADDITIONS_POLICY=$(gh pr view "$PR_NUMBER" --json additions --jq '.additions')
     PR_DELETIONS_POLICY=$(gh pr view "$PR_NUMBER" --json deletions --jq '.deletions')
     PR_TOTAL_LINES_POLICY=$((PR_ADDITIONS_POLICY + PR_DELETIONS_POLICY))
+    PR_CHANGED_FILES=$(gh pr view "$PR_NUMBER" --json files --jq '.files[].path')
+
+    # Enforce dedicated merge path for GitHub workflow file changes
+    if [ "$PRMERGE_ALLOW_WORKFLOW_FILES" != "1" ]; then
+        WORKFLOW_FILES=$(echo "$PR_CHANGED_FILES" | sed 's/^"//;s/"$//' | grep '^\.github/workflows/.*\.ya\?ml$' || true)
+        if [ -n "$WORKFLOW_FILES" ]; then
+            error "PR modifies GitHub workflow files; blocked by default merge policy"
+            echo ""
+            echo "Workflow files detected:"
+            echo "$WORKFLOW_FILES" | sed 's/^/  - /'
+            echo ""
+            echo "Use dedicated workflow-change PR/merge path with elevated token scope, or explicit override for exceptional cases:"
+            echo "  PRMERGE_ALLOW_WORKFLOW_FILES=1 ./scripts/prmerge $ISSUE_NUMBER"
+            exit 1
+        fi
+    fi
+
+    info "Domain-specific validation guidance"
+    if echo "$PR_CHANGED_FILES" | grep -Eq 'tests/|apps/api/|agents/|scripts/'; then
+        echo "  - Backend scope detected: run focused pytest for touched domain before merge"
+    fi
+    if echo "$PR_CHANGED_FILES" | grep -Eq '^"apps/web/|^"client/|\.tsx"$|\.jsx"$'; then
+        echo "  - Frontend scope detected: run npm lint/build or focused UI tests before merge"
+    fi
+    if echo "$PR_CHANGED_FILES" | grep -Eq '\.md"$|docs/'; then
+        echo "  - Docs-only scope: keep validation lightweight (policy/docs checks)"
+    fi
 
     if [ "$PRMERGE_ALLOW_LARGE_SLICE" != "1" ]; then
         if [ "$PR_FILES_POLICY" -gt "$PRMERGE_MAX_FILES" ] || [ "$PR_TOTAL_LINES_POLICY" -gt "$PRMERGE_MAX_LINES" ]; then
