@@ -140,6 +140,8 @@ Token Budget Mode:
     if archive_enabled:
         _archive_goals(stage="pre", issue_number=args.issue)
 
+    _ensure_github_models_token()
+
     # Check prerequisites
     if not _check_prerequisites():
         exit_code = 1
@@ -240,6 +242,32 @@ def _check_prerequisites() -> bool:
             )
         )
 
+    # Check GitHub Models token availability (env or gh auth token)
+    has_token = bool(
+        os.environ.get("GITHUB_TOKEN")
+        or os.environ.get("GH_TOKEN")
+        or os.environ.get("GITHUB_PAT")
+    )
+    if not has_token:
+        try:
+            token_result = subprocess.run(
+                ["gh", "auth", "token"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            cli_token = (token_result.stdout or "").strip() if token_result.returncode == 0 else ""
+            if cli_token:
+                os.environ.setdefault("GH_TOKEN", cli_token)
+                has_token = True
+        except Exception:
+            has_token = False
+
+    if has_token:
+        checks.append(("GitHub Models token (env/gh auth)", "✅"))
+    else:
+        checks.append(("GitHub Models token (env/gh auth)", "❌ Missing - run `gh auth login` or export GITHUB_TOKEN/GH_TOKEN"))
+
     # Check Python virtual environment
     if Path(".venv").exists():
         checks.append(("Python virtualenv (.venv)", "✅"))
@@ -313,6 +341,29 @@ def _ensure_venv_and_reexec() -> None:
         print(f"🔁 Re-executing under .venv Python: {venv_python}")
         os.environ["WORK_ISSUE_REEXEC"] = "1"
         os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+
+
+def _ensure_github_models_token() -> None:
+    """Populate GH_TOKEN from gh auth when not already set.
+
+    This prevents runtime initialization failures when users are already
+    authenticated via GitHub CLI but have not exported token environment vars.
+    """
+    if os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_PAT"):
+        return
+
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        token = (result.stdout or "").strip() if result.returncode == 0 else ""
+        if token:
+            os.environ.setdefault("GH_TOKEN", token)
+    except Exception:
+        pass
 
 
 def _archive_goals(stage: str, issue_number: int) -> None:

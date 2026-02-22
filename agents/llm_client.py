@@ -6,6 +6,7 @@ Configuration is loaded from the active config (see LLMClientFactory.get_config_
 
 import json
 import os
+import subprocess
 from pathlib import Path
 from typing import Optional, Dict
 from openai import AsyncOpenAI
@@ -13,6 +14,67 @@ from openai import AsyncOpenAI
 
 class LLMClientFactory:
     """Factory for creating LLM clients based on configuration."""
+
+    _cached_github_token: Optional[str] = None
+
+    @staticmethod
+    def _looks_like_placeholder(key: str) -> bool:
+        if not key:
+            return True
+        lowered = key.lower().strip()
+        return (
+            lowered in {"your-api-key-here", "your-token-here", "changeme"}
+            or "your_token_here" in lowered
+            or "your token here" in lowered
+        )
+
+    @staticmethod
+    def _get_github_token_from_env() -> str:
+        return (
+            os.environ.get("GITHUB_TOKEN")
+            or os.environ.get("GITHUB_PAT")
+            or os.environ.get("GH_TOKEN")
+            or ""
+        )
+
+    @staticmethod
+    def _get_github_token_from_gh_cli() -> str:
+        if LLMClientFactory._cached_github_token is not None:
+            return LLMClientFactory._cached_github_token
+
+        try:
+            result = subprocess.run(
+                ["gh", "auth", "token"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            token = (result.stdout or "").strip() if result.returncode == 0 else ""
+            if token:
+                LLMClientFactory._cached_github_token = token
+                return token
+        except Exception:
+            pass
+
+        LLMClientFactory._cached_github_token = ""
+        return ""
+
+    @staticmethod
+    def resolve_github_api_key(config_key: str = "") -> str:
+        """Resolve GitHub Models API key from config/env/gh-cli in that order."""
+        if not LLMClientFactory._looks_like_placeholder(config_key):
+            return config_key
+
+        env_token = LLMClientFactory._get_github_token_from_env()
+        if env_token:
+            return env_token
+
+        cli_token = LLMClientFactory._get_github_token_from_gh_cli()
+        if cli_token:
+            os.environ.setdefault("GH_TOKEN", cli_token)
+            return cli_token
+
+        return config_key
 
     @staticmethod
     def get_config_path() -> Path:
@@ -159,33 +221,18 @@ class LLMClientFactory:
         base_url = role_config.get("base_url") or ""
         api_key = role_config.get("api_key") or ""
 
-        def _looks_like_placeholder(key: str) -> bool:
-            if not key:
-                return True
-            lowered = key.lower().strip()
-            return (
-                lowered in {"your-api-key-here", "your-token-here", "changeme"}
-                or "your_token_here" in lowered
-                or "your token here" in lowered
-            )
-
         # Allow secrets via environment variables (preferred; avoids writing configs/llm.json).
         # Only override when config is missing/placeholder.
-        if _looks_like_placeholder(api_key) and (
+        if LLMClientFactory._looks_like_placeholder(api_key) and (
             provider == "github" or "models.github.ai" in base_url
         ):
-            api_key = (
-                os.environ.get("GITHUB_TOKEN")
-                or os.environ.get("GITHUB_PAT")
-                or os.environ.get("GH_TOKEN")
-                or api_key
-            )
+            api_key = LLMClientFactory.resolve_github_api_key(api_key)
 
         # GitHub Models
         if provider == "github" or "models.github.ai" in base_url:
-            if not api_key or api_key == "your-api-key-here":
+            if LLMClientFactory._looks_like_placeholder(api_key):
                 raise ValueError(
-                    "GitHub PAT token required for GitHub Models. Set api_key in the active config, or export GITHUB_TOKEN/GH_TOKEN."
+                    "GitHub PAT token required for GitHub Models. Set api_key in the active config, export GITHUB_TOKEN/GH_TOKEN, or run `gh auth login` so `gh auth token` can be used automatically."
                 )
             return AsyncOpenAI(base_url="https://models.github.ai/inference", api_key=api_key)
 
@@ -207,19 +254,11 @@ class LLMClientFactory:
         """
         if api_key is None:
             config = LLMClientFactory.load_config()
-            api_key = config.get("api_key", "")
-
-            if (not api_key) or api_key == "your-api-key-here":
-                api_key = (
-                    os.environ.get("GITHUB_TOKEN")
-                    or os.environ.get("GITHUB_PAT")
-                    or os.environ.get("GH_TOKEN")
-                    or api_key
-                )
+            api_key = LLMClientFactory.resolve_github_api_key(config.get("api_key", ""))
             
-            if not api_key or api_key == "your-api-key-here":
+            if LLMClientFactory._looks_like_placeholder(api_key):
                 raise ValueError(
-                    "GitHub PAT token required. Set in configs/llm.json or pass as parameter.\n"
+                    "GitHub PAT token required. Set in configs/llm.json, export GITHUB_TOKEN/GH_TOKEN, or run `gh auth login`.\n"
                     "Get your token at: https://github.com/settings/tokens"
                 )
         
