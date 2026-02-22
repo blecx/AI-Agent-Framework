@@ -216,9 +216,8 @@ if not api_key:
 client = OpenAI(base_url="https://models.github.ai/inference", api_key=api_key)
 
 planning_candidates = [
-    "openai/gpt-5.3-codex",
-    "openai/gpt-5.2-codex",
     "openai/gpt-5.2",
+  "openai/gpt-5.2-codex",
     "openai/gpt-5.1-codex",
     "openai/gpt-4.1",
 ]
@@ -229,6 +228,7 @@ execution_candidates = [
 ]
 
 def first_available(candidates):
+    rate_limited = False
     for model in candidates:
         try:
             client.chat.completions.create(
@@ -236,13 +236,21 @@ def first_available(candidates):
                 messages=[{"role": "user", "content": "ok"}],
                 max_tokens=1,
             )
-            return model
-        except Exception:
+            return model, rate_limited
+        except Exception as exc:
+            msg = str(exc).lower()
+            if "too many requests" in msg or "ratelimit" in msg or "429" in msg:
+                rate_limited = True
             continue
-    return ""
+    return "", rate_limited
 
-planning_model = first_available(planning_candidates)
-coding_model = first_available(execution_candidates)
+planning_model, planning_rl = first_available(planning_candidates)
+coding_model, coding_rl = first_available(execution_candidates)
+
+if not planning_model and planning_rl:
+    planning_model = "openai/gpt-4.1"
+if not coding_model and coding_rl:
+    coding_model = "openai/gpt-4o"
 
 if not planning_model:
     raise SystemExit("no_planning_model")
@@ -340,6 +348,41 @@ select_next_backend_issue() {
   GH_PAGER=cat "${cmd[@]}"
 }
 
+run_work_issue_with_retry() {
+  local issue="$1"
+  local attempts=4
+  local delay=30
+  local attempt=1
+
+  while [[ "$attempt" -le "$attempts" ]]; do
+    local log_file
+    log_file=".tmp/work-issue-${issue}-attempt-${attempt}.log"
+
+    set +e
+    ./scripts/work-issue.py --issue "$issue" 2>&1 | tee "$log_file"
+    local rc=${PIPESTATUS[0]}
+    set -e
+
+    if [[ "$rc" -eq 0 ]]; then
+      return 0
+    fi
+
+    if grep -qiE "Too many requests|RateLimit|429" "$log_file"; then
+      if [[ "$attempt" -lt "$attempts" ]]; then
+        echo "⚠️  Rate limit hit for issue #$issue (attempt $attempt/$attempts). Retrying in ${delay}s..."
+        sleep "$delay"
+        delay=$((delay * 2))
+        attempt=$((attempt + 1))
+        continue
+      fi
+    fi
+
+    return "$rc"
+  done
+
+  return 1
+}
+
 cd "$ROOT_DIR"
 
 resolve_backend_models
@@ -375,7 +418,7 @@ while true; do
     echo "[dry-run] Would run: ./scripts/work-issue.py --issue $issue"
     echo "[dry-run] Would run: ./scripts/prmerge $issue"
   else
-    ./scripts/work-issue.py --issue "$issue"
+    run_work_issue_with_retry "$issue"
     ./scripts/prmerge "$issue"
   fi
 
