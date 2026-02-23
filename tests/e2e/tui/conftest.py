@@ -58,7 +58,9 @@ def backend_server(temp_docs_dir: str) -> str:
         s.listen(1)
         port = s.getsockname()[1]
 
-    python_exe = _resolve_python_executable(Path(__file__).resolve().parent.parent.parent.parent)
+    python_exe = _resolve_python_executable(
+        Path(__file__).resolve().parent.parent.parent.parent
+    )
 
     proc = subprocess.Popen(
         [
