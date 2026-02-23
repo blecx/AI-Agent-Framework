@@ -847,7 +847,7 @@ else
     if echo "$PR_CHANGED_FILES" | grep -Eq 'tests/|apps/api/|agents/|scripts/'; then
         echo "  - Backend scope detected: run focused pytest for touched domain before merge"
     fi
-    if echo "$PR_CHANGED_FILES" | grep -Eq '^"apps/web/|^"client/|\.tsx"$|\.jsx"$'; then
+    if echo "$PR_CHANGED_FILES" | grep -Eq '^"_external/AI-Agent-Framework-Client/client/|^"client/|\.tsx"$|\.jsx"$'; then
         echo "  - Frontend scope detected: run npm lint/build or focused UI tests before merge"
     fi
     if echo "$PR_CHANGED_FILES" | grep -Eq '\.md"$|docs/'; then

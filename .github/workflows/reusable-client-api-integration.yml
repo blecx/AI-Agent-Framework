@@ -29,7 +29,7 @@ on:
         type: string
         default: http://localhost:8000
       client_workdir:
-        description: 'Working directory in the client repo (e.g. apps/web)'
+        description: 'Working directory in the client repo (e.g. client)'
         required: false
         type: string
         default: .
