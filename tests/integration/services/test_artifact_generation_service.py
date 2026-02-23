@@ -11,16 +11,16 @@ import os
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
 
-from services.artifact_generation_service import (
+from services.artifact_generation_service import (  # noqa: E402
     ArtifactGenerationService,
     ArtifactGenerationError,
     ValidationError,
 )
-from apps.api.services.template_service import TemplateService
-from apps.api.services.blueprint_service import BlueprintService
-from apps.api.services.git_manager import GitManager
-from apps.api.domain.templates.models import TemplateCreate
-from apps.api.domain.blueprints.models import BlueprintCreate
+from apps.api.services.template_service import TemplateService  # noqa: E402
+from apps.api.services.blueprint_service import BlueprintService  # noqa: E402
+from apps.api.services.git_manager import GitManager  # noqa: E402
+from apps.api.domain.templates.models import TemplateCreate  # noqa: E402
+from apps.api.domain.blueprints.models import BlueprintCreate  # noqa: E402
 
 
 @pytest.fixture

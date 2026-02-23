@@ -11,7 +11,6 @@ import tempfile
 import shutil
 import sys
 import os
-import json
 
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../apps/api"))
@@ -502,7 +501,6 @@ def test_audit_events_validation(client, test_project):
 
     # If audit events are implemented, verify content
     if len(events) > 0:
-        event_types = [e.get("event_type", e.get("action")) for e in events]
         # Should have events for RAID or artifact operations if logging is active
         assert len(events) >= 1, f"Expected at least 1 audit event, got {len(events)}"
 

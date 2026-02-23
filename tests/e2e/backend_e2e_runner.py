@@ -95,7 +95,7 @@ def check_health(base_url):
         response.raise_for_status()
         data = response.json()
 
-        print(f"✓ Backend is healthy")
+        print("✓ Backend is healthy")
         print(f"  Status: {data.get('status')}")
         print(f"  Docs path: {data.get('docs_path')}")
         print(f"  Docs exists: {data.get('docs_exists')}")
@@ -156,7 +156,7 @@ def validate_backend(base_url):
         assert response.status_code == 200
         projects = response.json()
         assert any(p["key"] == test_project_key for p in projects)
-        print(f"   ✓ Project found in list")
+        print("   ✓ Project found in list")
     except Exception as e:
         print(f"   ✗ List projects failed: {e}")
         all_passed = False
@@ -169,7 +169,7 @@ def validate_backend(base_url):
         state = response.json()
         assert "project_info" in state
         assert "artifacts" in state
-        print(f"   ✓ Project state retrieved")
+        print("   ✓ Project state retrieved")
     except Exception as e:
         print(f"   ✗ Get project state failed: {e}")
         all_passed = False
@@ -199,7 +199,7 @@ def validate_backend(base_url):
                 f"   ✓ Command proposed (proposal_id: {proposal['proposal_id'][:8]}...)"
             )
         elif response.status_code == 500 and "LLM" in response.text:
-            print(f"   ⚠ Command propose returned 500 (LLM unavailable, acceptable)")
+            print("   ⚠ Command propose returned 500 (LLM unavailable, acceptable)")
         else:
             raise Exception(f"Unexpected status: {response.status_code}")
     except Exception as e:
@@ -236,14 +236,14 @@ def wait_for_backend(base_url, timeout=30, interval=1):
         try:
             response = httpx.get(f"{base_url}/health", timeout=2.0)
             if response.status_code == 200:
-                print(f"✓ Backend is ready!")
+                print("✓ Backend is ready!")
                 return True
         except Exception:
             pass
 
         time.sleep(interval)
 
-    print(f"✗ Timeout waiting for backend")
+    print("✗ Timeout waiting for backend")
     return False
 
 

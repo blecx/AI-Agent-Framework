@@ -3,7 +3,6 @@
 import pytest
 import tempfile
 import shutil
-from pathlib import Path
 
 from apps.api.domain.blueprints.models import BlueprintCreate, BlueprintUpdate
 from apps.api.domain.templates.models import TemplateCreate
