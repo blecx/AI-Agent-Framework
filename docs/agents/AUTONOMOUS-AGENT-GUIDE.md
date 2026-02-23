@@ -217,6 +217,20 @@ Edit `configs/llm.json`:
 }
 ```
 
+### Request Throttle (Rate-Limit Protection)
+
+The agent applies a process-local throttle to **all outbound LLM calls** (planning, coding, review) by default.
+
+- `WORK_ISSUE_MAX_RPS` (default: `0.2`) → hard max requests/second (5 seconds minimum spacing)
+- `WORK_ISSUE_RPS_JITTER` (default: `0.1`) → adds up to 10% positive jitter per request to reduce burst alignment
+
+Example:
+
+```bash
+export WORK_ISSUE_MAX_RPS=0.25
+export WORK_ISSUE_RPS_JITTER=0.15
+```
+
 **Available Models (all free on GitHub):**
 
 ---

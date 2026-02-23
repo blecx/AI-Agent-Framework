@@ -7,20 +7,125 @@ Configuration is loaded from the active config (see LLMClientFactory.get_config_
 import json
 import os
 import subprocess
+import asyncio
+import random
+import time
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Dict, Callable, Awaitable
+
+import httpx
 from openai import AsyncOpenAI
+
+
+class _LLMRequestThrottle:
+    """Process-local async request throttle for outbound LLM calls."""
+
+    def __init__(
+        self,
+        *,
+        max_rps: float,
+        jitter_ratio: float,
+        clock: Callable[[], float] = time.monotonic,
+        sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        jitter_fn: Callable[[float, float], float] = random.uniform,
+    ):
+        self.max_rps = max_rps
+        self.min_interval = 1.0 / max_rps
+        self.jitter_ratio = jitter_ratio
+        self._clock = clock
+        self._sleeper = sleeper
+        self._jitter_fn = jitter_fn
+        self._lock = asyncio.Lock()
+        self._last_request_time: Optional[float] = None
+
+    async def acquire(self) -> None:
+        """Wait until the next request slot is available."""
+        async with self._lock:
+            now = self._clock()
+            if self._last_request_time is None:
+                self._last_request_time = now
+                return
+
+            elapsed = now - self._last_request_time
+            remaining = max(0.0, self.min_interval - elapsed)
+            jitter_cap = self.min_interval * self.jitter_ratio
+            jitter = self._jitter_fn(0.0, jitter_cap) if jitter_cap > 0 else 0.0
+            wait_seconds = remaining + jitter
+
+            if wait_seconds > 0:
+                await self._sleeper(wait_seconds)
+                now = self._clock()
+
+            self._last_request_time = now
+
+
+class _RateLimitedAsyncHTTPClient(httpx.AsyncClient):
+    """httpx client wrapper that throttles before each outbound request."""
+
+    def __init__(self, *, throttle: _LLMRequestThrottle):
+        super().__init__()
+        self._throttle = throttle
+
+    async def send(self, request, **kwargs):
+        await self._throttle.acquire()
+        return await super().send(request, **kwargs)
 
 
 class LLMClientFactory:
     """Factory for creating LLM clients based on configuration."""
 
     _cached_github_token: Optional[str] = None
+    _shared_request_throttle: Optional[_LLMRequestThrottle] = None
+    _shared_request_throttle_key: Optional[tuple[float, float]] = None
     _default_role_models = {
         "planning": "openai/gpt-5.2",
         "coding": "openai/gpt-4o-mini",
         "review": "openai/gpt-4o-mini",
     }
+
+    @staticmethod
+    def _parse_positive_float(value: str, fallback: float) -> float:
+        try:
+            parsed = float(value)
+            if parsed > 0:
+                return parsed
+        except (TypeError, ValueError):
+            pass
+        return fallback
+
+    @staticmethod
+    def _get_rps_settings() -> tuple[float, float]:
+        """Return max-RPS and jitter ratio for LLM requests."""
+        max_rps = LLMClientFactory._parse_positive_float(
+            os.environ.get("WORK_ISSUE_MAX_RPS", "0.2"),
+            0.2,
+        )
+        jitter_ratio = LLMClientFactory._parse_positive_float(
+            os.environ.get("WORK_ISSUE_RPS_JITTER", "0.1"),
+            0.1,
+        )
+        jitter_ratio = min(max(jitter_ratio, 0.0), 1.0)
+        return max_rps, jitter_ratio
+
+    @staticmethod
+    def _get_shared_request_throttle() -> _LLMRequestThrottle:
+        key = LLMClientFactory._get_rps_settings()
+        if (
+            LLMClientFactory._shared_request_throttle is None
+            or LLMClientFactory._shared_request_throttle_key != key
+        ):
+            max_rps, jitter_ratio = key
+            LLMClientFactory._shared_request_throttle = _LLMRequestThrottle(
+                max_rps=max_rps,
+                jitter_ratio=jitter_ratio,
+            )
+            LLMClientFactory._shared_request_throttle_key = key
+        return LLMClientFactory._shared_request_throttle
+
+    @staticmethod
+    def _create_rate_limited_http_client() -> httpx.AsyncClient:
+        throttle = LLMClientFactory._get_shared_request_throttle()
+        return _RateLimitedAsyncHTTPClient(throttle=throttle)
 
     @staticmethod
     def _looks_like_placeholder(key: str) -> bool:
@@ -91,7 +196,11 @@ class LLMClientFactory:
         3) configs/llm.json (local override; should remain gitignored)
         4) configs/llm.default.json (repo default)
         """
-        env_path = (Path(str(p)).expanduser() if (p := (os.environ.get("LLM_CONFIG_PATH") or "").strip()) else None)
+        env_path = (
+            Path(str(p)).expanduser()
+            if (p := (os.environ.get("LLM_CONFIG_PATH") or "").strip())
+            else None
+        )
         if env_path is not None:
             resolved = env_path if env_path.is_absolute() else Path.cwd() / env_path
             if resolved.exists():
@@ -115,7 +224,7 @@ class LLMClientFactory:
         raise FileNotFoundError(
             "No LLM configuration found. Set LLM_CONFIG_PATH, create configs/llm.json, or use configs/llm.default.json"
         )
-    
+
     @staticmethod
     def load_config() -> dict:
         """Load LLM configuration from configs/llm.json or default."""
@@ -172,11 +281,16 @@ class LLMClientFactory:
                 }
             except Exception:
                 role_endpoints[role] = {}
+        max_rps, jitter_ratio = LLMClientFactory._get_rps_settings()
         return {
             "config_path": config_path,
             "provider": config.get("provider", ""),
             "configured_base_url": config.get("base_url", ""),
             "models": models,
+            "request_throttle": {
+                "max_rps": max_rps,
+                "jitter_ratio": jitter_ratio,
+            },
             "role_endpoints": role_endpoints,
         }
 
@@ -200,7 +314,7 @@ class LLMClientFactory:
 
         prefix = f"{role}_"
         role_overrides = {
-            k[len(prefix):]: v
+            k[len(prefix) :]: v
             for k, v in config.items()
             if isinstance(k, str) and k.startswith(prefix)
         }
@@ -241,48 +355,53 @@ class LLMClientFactory:
                 raise ValueError(
                     "GitHub PAT token required for GitHub Models. Set api_key in the active config, export GITHUB_TOKEN/GH_TOKEN, or run `gh auth login` so `gh auth token` can be used automatically."
                 )
-            return AsyncOpenAI(base_url="https://models.github.ai/inference", api_key=api_key)
+            return AsyncOpenAI(
+                base_url="https://models.github.ai/inference",
+                api_key=api_key,
+                http_client=LLMClientFactory._create_rate_limited_http_client(),
+            )
 
         # Everything else is intentionally unsupported in this repo.
         raise ValueError(
             "Unsupported LLM provider/config. This project only supports GitHub Models (provider=github)."
         )
-    
+
     @staticmethod
     def create_github_client(api_key: Optional[str] = None) -> AsyncOpenAI:
         """
         Create OpenAI client configured for GitHub Models.
-        
+
         Args:
             api_key: GitHub PAT token. If None, loads from config.
-            
+
         Returns:
             Configured AsyncOpenAI client
         """
         if api_key is None:
             config = LLMClientFactory.load_config()
             api_key = LLMClientFactory.resolve_github_api_key(config.get("api_key", ""))
-            
+
             if LLMClientFactory._looks_like_placeholder(api_key):
                 raise ValueError(
                     "GitHub PAT token required. Set in configs/llm.json, export GITHUB_TOKEN/GH_TOKEN, or run `gh auth login`.\n"
                     "Get your token at: https://github.com/settings/tokens"
                 )
-        
+
         return AsyncOpenAI(
             base_url="https://models.github.ai/inference",
             api_key=api_key,
+            http_client=LLMClientFactory._create_rate_limited_http_client(),
         )
-    
+
     @staticmethod
     def get_recommended_model() -> str:
         """
         Get recommended model for autonomous agent work.
-        
+
         For planning/execution split:
         - planning: GPT-5 class model (default: openai/gpt-5.2)
         - coding/review: free-tier capable smaller models (default: openai/gpt-4o-mini)
-        
+
         Returns:
             Model ID string
         """
@@ -294,5 +413,5 @@ class LLMClientFactory:
                 return model
         except Exception:
             pass
-        
+
         return LLMClientFactory._default_role_models["planning"]
