@@ -163,12 +163,25 @@ Token Budget Mode:
             print("✅ Dry run complete: initialization succeeded (no LLM calls executed).")
             return
 
+        max_attempts = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_RETRIES", "4"))
+        base_delay = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_DELAY", "30"))
+
         if args.plan_only:
-            _ = await agent.plan_only()
+            _ = await _run_with_rate_limit_retry(
+                agent.plan_only,
+                max_attempts=max_attempts,
+                base_delay=base_delay,
+                operation="planning",
+            )
             print("✅ Plan-only complete: planning finished (no repo changes executed).")
             return
 
-        success = await agent.execute()
+        success = await _run_with_rate_limit_retry(
+            agent.execute,
+            max_attempts=max_attempts,
+            base_delay=base_delay,
+            operation="execution",
+        )
         
         # Interactive mode
         if args.interactive and success:
@@ -189,6 +202,35 @@ Token Budget Mode:
             _archive_goals(stage="post", issue_number=args.issue)
 
     sys.exit(exit_code)
+
+
+async def _run_with_rate_limit_retry(func, max_attempts: int, base_delay: int, operation: str):
+    """Retry a coroutine on rate-limit errors with exponential backoff."""
+    attempt = 1
+    delay = base_delay
+    while True:
+        try:
+            return await func()
+        except Exception as exc:  # pragma: no cover - defensive guard
+            message = str(exc).lower()
+            is_rate_limit = any(
+                token in message
+                for token in [
+                    "too many requests",
+                    "ratelimit",
+                    "rate limit",
+                    "429",
+                ]
+            )
+            if not is_rate_limit or attempt >= max_attempts:
+                raise
+            print(
+                f"⚠️  Rate limit hit during {operation} (attempt {attempt}/{max_attempts}). "
+                f"Retrying in {delay}s..."
+            )
+            await asyncio.sleep(delay)
+            delay *= 2
+            attempt += 1
 
 
 def _check_prerequisites() -> bool:
