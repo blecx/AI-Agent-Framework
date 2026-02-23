@@ -52,6 +52,10 @@ class AutonomousWorkflowAgent:
         self.coding_thread = None
         self.review_agent: Optional[ChatAgent] = None
         self.review_thread = None
+        self.last_plan_text: str = ""
+        self.last_estimated_manual_minutes: Optional[int] = None
+        self.last_guardrail_triggered: bool = False
+        self.last_split_recommendation: str = ""
 
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
@@ -571,15 +575,19 @@ Begin now."""
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
             plan_text = self._truncate_for_prompt(plan_text)
+            self.last_plan_text = plan_text
 
             guard_ok, estimate, guard_message = self._evaluate_manual_plan_guardrail(
                 plan_text
             )
+            self.last_estimated_manual_minutes = estimate
+            self.last_guardrail_triggered = not guard_ok
             print(f"🛡️  Planning guardrail: {guard_message}")
             if not guard_ok:
                 split_recommendation = self._build_split_recommendation(
                     plan_text, estimate
                 )
+                self.last_split_recommendation = split_recommendation
                 print("\n🧩 Split recommendation (required before execution):")
                 print(split_recommendation)
                 execution_data["error"] = guard_message
@@ -587,6 +595,7 @@ Begin now."""
                 if not self.dry_run:
                     await self._extract_and_update_learnings(execution_data)
                 return False
+            self.last_split_recommendation = ""
 
             ui_ux_scope = self._is_ui_ux_scope(plan_text)
             if ui_ux_scope:

@@ -359,9 +359,15 @@ run_work_issue_with_retry() {
     log_file=".tmp/work-issue-${issue}-attempt-${attempt}.log"
 
     set +e
-    ./scripts/work-issue.py --issue "$issue" 2>&1 | tee "$log_file"
+    ./scripts/work-issue.py --issue "$issue" --create-split-issues 2>&1 | tee "$log_file"
     local rc=${PIPESTATUS[0]}
     set -e
+
+    if [[ "$rc" -eq 2 ]]; then
+      rm -f .tmp/work-issue-"$issue"-attempt-*.log || true
+      echo "⏸️  Split issues created for #$issue. Pausing backend loop."
+      return 2
+    fi
 
     if [[ "$rc" -eq 0 ]]; then
       return 0
@@ -415,10 +421,22 @@ while true; do
   echo "============================================================"
 
   if [[ "$DRY_RUN" == "1" ]]; then
-    echo "[dry-run] Would run: ./scripts/work-issue.py --issue $issue"
+    echo "[dry-run] Would run: ./scripts/work-issue.py --issue $issue --create-split-issues"
     echo "[dry-run] Would run: ./scripts/prmerge $issue"
   else
+    set +e
     run_work_issue_with_retry "$issue"
+    work_rc=$?
+    set -e
+
+    if [[ "$work_rc" -eq 2 ]]; then
+      echo "Split operation completed for #$issue; stopping loop for manual review of new child issues."
+      break
+    fi
+    if [[ "$work_rc" -ne 0 ]]; then
+      exit "$work_rc"
+    fi
+
     ./scripts/prmerge "$issue"
   fi
 
