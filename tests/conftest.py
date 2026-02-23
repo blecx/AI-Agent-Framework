@@ -4,6 +4,7 @@ Root conftest.py for all tests.
 Provides fixtures and configuration that apply to all test directories.
 """
 
+import os
 import pytest
 from prometheus_client import REGISTRY
 
@@ -13,6 +14,7 @@ def pytest_configure(config):
     Early configuration hook - runs before test collection.
     Clear Prometheus registry to avoid duplicate metric errors across test modules.
     """
+    os.environ.pop("PLAYWRIGHT_CONFIG", None)
     # Clear any existing collectors from the registry
     collectors = list(REGISTRY._collector_to_names.keys())
     for collector in collectors:

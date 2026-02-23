@@ -8,8 +8,18 @@ Run with: pytest tests/e2e/tutorial/test_gui_basics.py -v
 Note: Requires Playwright installed (pip install playwright && playwright install chromium)
 """
 
+import os
 import pytest
 import time
+
+
+if os.getenv("RUN_GUI_TESTS") != "1":
+    pytest.skip(
+        "GUI Playwright tests require RUN_GUI_TESTS=1.",
+        allow_module_level=True,
+    )
+
+
 from playwright.sync_api import Page, expect
 
 WEB_URL = "http://localhost:8080"

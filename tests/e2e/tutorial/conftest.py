@@ -9,13 +9,13 @@ Provides:
 - Web driver fixtures (optional)
 """
 
+import os
 import pytest
 import subprocess
 import time
 import requests
 from pathlib import Path
 import shutil
-import os
 
 
 # Test configuration
@@ -23,6 +23,11 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 PROJECT_DOCS_PATH = PROJECT_ROOT / "projectDocs"
 API_BASE_URL = "http://localhost:8000"
 WEB_BASE_URL = "http://localhost:5173"
+
+
+def _require_gui_tests() -> None:
+    if os.getenv("RUN_GUI_TESTS") != "1":
+        pytest.skip("GUI Playwright fixtures require RUN_GUI_TESTS=1.")
 
 
 @pytest.fixture(scope="session")
@@ -300,6 +305,7 @@ def browser_page(docker_environment):
     Provides a Playwright browser page for GUI testing.
     Requires: pip install playwright && playwright install chromium
     """
+    _require_gui_tests()
     from playwright.sync_api import sync_playwright, Error as PlaywrightError
 
     with sync_playwright() as p:
