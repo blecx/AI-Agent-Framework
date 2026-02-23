@@ -93,6 +93,12 @@ bash scripts/run_pytest_coverage.sh --local-stable
 - Backend quality gates run in `.github/workflows/ci-backend.yml` (tests, coverage, docs sync, lint, security, etc.).
 - The separate `.github/workflows/ci.yml` workflow is intentionally PR-meta/hygiene only.
 
+Run the docs-sync gate locally before pushing changes that touch tests or test docs:
+
+```bash
+./.venv/bin/python scripts/check_test_docs.py
+```
+
 ## TUI E2E notes
 
 `tests/e2e/tui/` starts a session-scoped backend for the suite and binds it to a dynamically chosen free localhost port (to avoid CI port conflicts).
