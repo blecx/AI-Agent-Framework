@@ -249,6 +249,7 @@ To avoid duplicated setup instructions across docs, this repository uses:
 ### Local quick reference
 
 ```bash
+git submodule update --init --recursive
 ./setup.sh
 source .venv/bin/activate
 mkdir -p projectDocs
@@ -267,6 +268,7 @@ npm run dev
 ### Docker quick reference
 
 ```bash
+git submodule update --init --recursive
 docker compose up --build
 ```
 

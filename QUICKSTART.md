@@ -30,6 +30,12 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
+1. Initialize the canonical web client submodule:
+
+```bash
+git submodule update --init --recursive
+```
+
 1. (Optional) Create a custom LLM config:
 
 ```bash
@@ -74,6 +80,12 @@ docker compose --profile tools up -d client tui
 ```bash
 git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
+```
+
+1. Initialize the canonical web client submodule:
+
+```bash
+git submodule update --init --recursive
 ```
 
 1. Setup Python environment:
