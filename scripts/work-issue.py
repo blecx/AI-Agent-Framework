@@ -11,10 +11,12 @@ Usage:
 """
 
 import asyncio
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,7 +30,8 @@ async def main():
 
     # Import after venv re-exec so dependencies are available
     from agents.autonomous_workflow_agent import AutonomousWorkflowAgent
-    
+    from scripts.work_issue_split import generate_split_issue_stubs
+
     parser = argparse.ArgumentParser(
         description="Autonomous AI Agent for Issue Resolution",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -45,7 +48,7 @@ The agent will:
 Examples:
   # Fully autonomous - agent works independently
   ./scripts/work-issue.py --issue 26
-  
+
     # Dry run - initialize only (no LLM calls, no changes)
   ./scripts/work-issue.py --issue 26 --dry-run
 
@@ -57,7 +60,7 @@ Examples:
         ./scripts/work-issue.py --issue 26 --plan-only
     # Or via flag:
     ./scripts/work-issue.py --issue 26 --plan-only --llm-config configs/llm.hybrid.json.example
-  
+
   # Interactive - pause for approval between phases
   ./scripts/work-issue.py --issue 26 --interactive
 
@@ -76,14 +79,11 @@ Token Budget Mode:
     - Compact prompt mode is enabled by default via `WORK_ISSUE_COMPACT=1`
     - Prompt insertion budget can be tuned with `WORK_ISSUE_MAX_PROMPT_CHARS` (default: 3200)
     - Set `WORK_ISSUE_COMPACT=0` only when your model endpoint supports larger request payloads
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        "--issue",
-        type=int,
-        required=True,
-        help="GitHub issue number to work on"
+        "--issue", type=int, required=True, help="GitHub issue number to work on"
     )
 
     parser.add_argument(
@@ -100,41 +100,60 @@ Token Budget Mode:
     mode_group.add_argument(
         "--dry-run",
         action="store_true",
-        help="Initialize only (no LLM calls, no repo changes)"
+        help="Initialize only (no LLM calls, no repo changes)",
     )
 
     mode_group.add_argument(
         "--plan-only",
         action="store_true",
-        help="Run Phase 1-2 planning only (LLM required, no repo changes)"
+        help="Run Phase 1-2 planning only (LLM required, no repo changes)",
     )
-    
+
     parser.add_argument(
-        "--interactive",
+        "--interactive", action="store_true", help="Pause for approval between phases"
+    )
+
+    parser.add_argument(
+        "--create-split-issues",
         action="store_true",
-        help="Pause for approval between phases"
+        help=(
+            "When planning guardrail requires a split, generate and create split issues via gh CLI, "
+            "then stop the loop."
+        ),
+    )
+
+    parser.add_argument(
+        "--split-issue-limit",
+        type=int,
+        default=3,
+        help="Maximum number of split child issues to generate/create (default: 3)",
     )
 
     parser.add_argument(
         "--no-goal-archive",
         action="store_true",
-        help="Disable automatic pre/post goal archiving from .tmp"
+        help="Disable automatic pre/post goal archiving from .tmp",
     )
-    
+
     args = parser.parse_args()
 
     if args.llm_config:
         os.environ["LLM_CONFIG_PATH"] = args.llm_config
 
-    archive_enabled = not args.no_goal_archive and os.environ.get("WORK_ISSUE_GOAL_ARCHIVE", "1") != "0"
-    
-    print("""
+    archive_enabled = (
+        not args.no_goal_archive
+        and os.environ.get("WORK_ISSUE_GOAL_ARCHIVE", "1") != "0"
+    )
+
+    print(
+        """
 ╔══════════════════════════════════════════════════════════════════╗
 ║        Autonomous Workflow Agent - AI-Powered Development        ║
 ║                  Powered by Microsoft Agent Framework            ║
 ╚══════════════════════════════════════════════════════════════════╝
-""")
-    
+"""
+    )
+
     exit_code = 0
 
     if archive_enabled:
@@ -154,13 +173,15 @@ Token Budget Mode:
         agent = AutonomousWorkflowAgent(
             issue_number=args.issue,
             # plan-only should also behave as read-only inside the agent
-            dry_run=bool(args.dry_run or args.plan_only)
+            dry_run=bool(args.dry_run or args.plan_only),
         )
-        
+
         await agent.initialize()
 
         if args.dry_run:
-            print("✅ Dry run complete: initialization succeeded (no LLM calls executed).")
+            print(
+                "✅ Dry run complete: initialization succeeded (no LLM calls executed)."
+            )
             return
 
         max_attempts = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_RETRIES", "4"))
@@ -173,7 +194,9 @@ Token Budget Mode:
                 base_delay=base_delay,
                 operation="planning",
             )
-            print("✅ Plan-only complete: planning finished (no repo changes executed).")
+            print(
+                "✅ Plan-only complete: planning finished (no repo changes executed)."
+            )
             return
 
         success = await _run_with_rate_limit_retry(
@@ -182,19 +205,45 @@ Token Budget Mode:
             base_delay=base_delay,
             operation="execution",
         )
-        
+
+        if (
+            not success
+            and args.create_split_issues
+            and getattr(agent, "last_guardrail_triggered", False)
+        ):
+            split_drafts = generate_split_issue_stubs(
+                parent_issue_number=args.issue,
+                estimated_minutes=getattr(agent, "last_estimated_manual_minutes", None),
+                recommendation_text=getattr(agent, "last_split_recommendation", ""),
+                max_issues=max(1, args.split_issue_limit),
+            )
+            _persist_split_drafts(args.issue, split_drafts)
+            created = _create_split_issues_via_gh(
+                issue_number=args.issue,
+                drafts=split_drafts,
+                repo=os.environ.get("WORK_ISSUE_REPO", "blecx/AI-Agent-Framework"),
+            )
+            _cleanup_split_transient_files(args.issue)
+            print(f"\nSPLIT_ISSUES_CREATED: {len(created)}")
+            for created_issue in created:
+                print(f"- {created_issue}")
+            print("⏸️  Execution paused after split issue creation.")
+            exit_code = 2
+            return
+
         # Interactive mode
         if args.interactive and success:
             await _interactive_mode(agent)
-        
+
         exit_code = 0 if success else 1
-        
+
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
         exit_code = 130
     except Exception as e:
         print(f"\n❌ Fatal error: {e}")
         import traceback
+
         traceback.print_exc()
         exit_code = 1
     finally:
@@ -204,7 +253,9 @@ Token Budget Mode:
     sys.exit(exit_code)
 
 
-async def _run_with_rate_limit_retry(func, max_attempts: int, base_delay: int, operation: str):
+async def _run_with_rate_limit_retry(
+    func, max_attempts: int, base_delay: int, operation: str
+):
     """Retry a coroutine on rate-limit errors with exponential backoff."""
     attempt = 1
     delay = base_delay
@@ -233,34 +284,128 @@ async def _run_with_rate_limit_retry(func, max_attempts: int, base_delay: int, o
             attempt += 1
 
 
+def _persist_split_drafts(issue_number: int, drafts: Sequence) -> None:
+    """Persist split issue drafts for traceability/debugging."""
+    output_path = Path(f".tmp/issue-{issue_number}-split-stubs.json")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = [
+        {
+            "title": draft.title,
+            "body": draft.body,
+        }
+        for draft in drafts
+    ]
+    output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _create_split_issues_via_gh(
+    issue_number: int, drafts: Sequence, repo: str
+) -> list[str]:
+    """Create split issues via gh CLI while skipping duplicate titles."""
+    created: list[str] = []
+    for draft in drafts:
+        exists = subprocess.run(
+            [
+                "gh",
+                "issue",
+                "list",
+                "--repo",
+                repo,
+                "--state",
+                "open",
+                "--search",
+                f'"{draft.title}" in:title',
+                "--json",
+                "number",
+                "--jq",
+                ".[0].number // empty",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        existing_number = (exists.stdout or "").strip()
+        if existing_number:
+            created.append(f"#{existing_number} (existing) {draft.title}")
+            continue
+
+        result = subprocess.run(
+            [
+                "gh",
+                "issue",
+                "create",
+                "--repo",
+                repo,
+                "--title",
+                draft.title,
+                "--body",
+                draft.body,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            print(
+                f"⚠️  Failed to create split issue '{draft.title}': {(result.stderr or '').strip()}"
+            )
+            continue
+        created.append((result.stdout or "").strip() or draft.title)
+
+    if not created:
+        print(
+            f"⚠️  No split issues were created for #{issue_number}. "
+            "Check gh authentication and repository permissions."
+        )
+
+    return created
+
+
+def _cleanup_split_transient_files(issue_number: int) -> None:
+    """Clean transient artifacts after split operation."""
+    for path in Path(".tmp").glob(f"work-issue-{issue_number}-attempt-*.log"):
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+
 def _check_prerequisites() -> bool:
     """Check that required tools are available."""
     import subprocess
     import shutil
-    
+
     checks = []
-    
+
     # Check gh CLI
     if shutil.which("gh"):
         checks.append(("GitHub CLI (gh)", "✅"))
     else:
-        checks.append(("GitHub CLI (gh)", "❌ Not found - install from https://cli.github.com"))
-    
+        checks.append(
+            ("GitHub CLI (gh)", "❌ Not found - install from https://cli.github.com")
+        )
+
     # Check git
     if shutil.which("git"):
         checks.append(("Git", "✅"))
     else:
         checks.append(("Git", "❌ Not found"))
-    
+
     # Check Python version
     import sys
+
     version = sys.version_info
     py_exec = sys.executable
     if version.major == 3 and version.minor >= 12:
         checks.append((f"Python {version.major}.{version.minor} ({py_exec})", "✅"))
     else:
-        checks.append((f"Python {version.major}.{version.minor} ({py_exec})", "❌ Need Python 3.12+"))
-    
+        checks.append(
+            (
+                f"Python {version.major}.{version.minor} ({py_exec})",
+                "❌ Need Python 3.12+",
+            )
+        )
+
     # Check LLM config
     config_path: Path
     env_path = (os.environ.get("LLM_CONFIG_PATH") or "").strip()
@@ -298,7 +443,11 @@ def _check_prerequisites() -> bool:
                 text=True,
                 timeout=5,
             )
-            cli_token = (token_result.stdout or "").strip() if token_result.returncode == 0 else ""
+            cli_token = (
+                (token_result.stdout or "").strip()
+                if token_result.returncode == 0
+                else ""
+            )
             if cli_token:
                 os.environ.setdefault("GH_TOKEN", cli_token)
                 has_token = True
@@ -308,7 +457,12 @@ def _check_prerequisites() -> bool:
     if has_token:
         checks.append(("GitHub Models token (env/gh auth)", "✅"))
     else:
-        checks.append(("GitHub Models token (env/gh auth)", "❌ Missing - run `gh auth login` or export GITHUB_TOKEN/GH_TOKEN"))
+        checks.append(
+            (
+                "GitHub Models token (env/gh auth)",
+                "❌ Missing - run `gh auth login` or export GITHUB_TOKEN/GH_TOKEN",
+            )
+        )
 
     # Check Python virtual environment
     if Path(".venv").exists():
@@ -329,13 +483,13 @@ def _check_prerequisites() -> bool:
             checks.append(("npm", "✅"))
         else:
             checks.append(("npm", "❌ Not found"))
-    
+
     # Print results
     print("Prerequisites:")
     for name, status in checks:
         print(f"  {name:.<40} {status}")
     print()
-    
+
     # Return True if all checks passed
     return all("✅" in status for _, status in checks)
 
@@ -382,7 +536,10 @@ def _ensure_venv_and_reexec() -> None:
     if not in_venv and venv_python.exists():
         print(f"🔁 Re-executing under .venv Python: {venv_python}")
         os.environ["WORK_ISSUE_REEXEC"] = "1"
-        os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+        os.execv(
+            str(venv_python),
+            [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]],
+        )
 
 
 def _ensure_github_models_token() -> None:
@@ -391,7 +548,11 @@ def _ensure_github_models_token() -> None:
     This prevents runtime initialization failures when users are already
     authenticated via GitHub CLI but have not exported token environment vars.
     """
-    if os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_PAT"):
+    if (
+        os.environ.get("GITHUB_TOKEN")
+        or os.environ.get("GH_TOKEN")
+        or os.environ.get("GITHUB_PAT")
+    ):
         return
 
     try:
@@ -434,7 +595,9 @@ def _archive_goals(stage: str, issue_number: int) -> None:
             for line in result.stdout.strip().splitlines():
                 print(f"   {line}")
         else:
-            print(f"⚠️  Goal archive ({stage}) failed with exit code {result.returncode}")
+            print(
+                f"⚠️  Goal archive ({stage}) failed with exit code {result.returncode}"
+            )
             if result.stdout:
                 print(result.stdout.strip())
             if result.stderr:
@@ -450,21 +613,21 @@ async def _interactive_mode(agent):
     print("   Type 'exit' or 'quit' to finish")
     print("=" * 70)
     print()
-    
+
     while True:
         try:
             user_input = input("\n You: ").strip()
-            
-            if not user_input or user_input.lower() in ['exit', 'quit', 'q']:
+
+            if not user_input or user_input.lower() in ["exit", "quit", "q"]:
                 break
-            
+
             print("Agent: ", end="", flush=True)
             response = await agent.continue_conversation(user_input)
             print(response)
-            
+
         except (KeyboardInterrupt, EOFError):
             break
-    
+
     print("\n👋 Ending interactive session")
 
 

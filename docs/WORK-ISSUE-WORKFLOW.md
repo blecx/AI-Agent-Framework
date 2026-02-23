@@ -75,6 +75,11 @@ Execution guard behavior:
 - If estimate is missing, execution also stops (conservative fail-safe).
 - The agent prints a split recommendation to drive creation of smaller follow-up issues.
 
+Split issue creation mode:
+
+- Run `./scripts/work-issue.py --issue <n> --create-split-issues` to convert split recommendations into GitHub issue stubs.
+- `scripts/continue-backend.sh` runs with split-creation mode and pauses the loop when split issues are created.
+
 ## Goal Archive Behavior (`.tmp`)
 
 `scripts/work-issue.py` now archives issue goals from `.tmp/*.md` automatically:
