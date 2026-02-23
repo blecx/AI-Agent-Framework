@@ -20,7 +20,7 @@ if os.getenv("RUN_GUI_TESTS") != "1":
     )
 
 
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, expect  # noqa: E402
 
 WEB_URL = "http://localhost:8080"
 API_URL = "http://localhost:8000"
