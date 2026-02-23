@@ -525,6 +525,17 @@ Tests run automatically in CI via `.github/workflows/ci.yml`:
 
 See `tests/README.md` for detailed testing documentation.
 
+#### Docs Sync Gate (Backend)
+
+Backend CI includes a docs-sync quality gate that validates `tests/README.md` against the
+current backend test structure.
+
+Run it locally before opening a PR that changes tests or test documentation:
+
+```bash
+./.venv/bin/python scripts/check_test_docs.py
+```
+
 ### Manual Testing
 
 1. **Start the API:**
