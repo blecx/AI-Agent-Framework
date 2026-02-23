@@ -4,13 +4,13 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Copy package files
-COPY apps/web/package*.json ./
+COPY _external/AI-Agent-Framework-Client/client/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY apps/web/ .
+COPY _external/AI-Agent-Framework-Client/client/ .
 
 # Build the app
 RUN npm run build

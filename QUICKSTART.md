@@ -3,7 +3,7 @@
 This guide gives you the fastest path to run the AI-Agent-Framework with:
 
 - **Backend API** (`apps/api`)
-- **Web client** (`apps/web`)
+- **Web client** (`_external/AI-Agent-Framework-Client/client`)
 - Optional terminal clients (`client/`, `apps/tui`)
 
 For the full installation + LLM guide (Docker images, local setup, troubleshooting), see:
@@ -100,7 +100,7 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 1. Start web client in another terminal:
 
 ```bash
-cd apps/web
+cd _external/AI-Agent-Framework-Client/client
 npm install
 npm run dev
 ```
