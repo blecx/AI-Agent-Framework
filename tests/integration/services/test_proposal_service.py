@@ -10,15 +10,18 @@ import tempfile
 import shutil
 import sys
 import os
-from datetime import datetime, timezone
 
 # Add apps/api to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
 
-from apps.api.domain.proposals.models import Proposal, ProposalStatus, ChangeType
-from apps.api.services.proposal_service import ProposalService
-from apps.api.services.git_manager import GitManager
-from apps.api.services.audit_service import AuditService
+from apps.api.domain.proposals.models import (  # noqa: E402
+    Proposal,
+    ProposalStatus,
+    ChangeType,
+)
+from apps.api.services.proposal_service import ProposalService  # noqa: E402
+from apps.api.services.git_manager import GitManager  # noqa: E402
+from apps.api.services.audit_service import AuditService  # noqa: E402
 
 
 @pytest.fixture

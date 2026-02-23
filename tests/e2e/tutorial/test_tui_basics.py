@@ -10,8 +10,7 @@ Run with: pytest tests/e2e/tutorial/test_tui_basics.py -v
 import pytest
 import json
 import uuid
-from pathlib import Path
-from helpers.tui_automation import TUIAutomation, TUIResult
+from helpers.tui_automation import TUIAutomation
 
 
 def _unique_project_key(prefix: str) -> str:

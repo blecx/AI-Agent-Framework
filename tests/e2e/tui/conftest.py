@@ -21,6 +21,13 @@ from fixtures.factories import ProjectFactory  # noqa: E402
 from e2e.tui.helpers import wait_for_http_ok  # noqa: E402
 
 
+def _resolve_python_executable(project_root: Path) -> str:
+    venv_python = project_root / ".venv" / "bin" / "python"
+    if venv_python.exists():
+        return str(venv_python)
+    return sys.executable
+
+
 @pytest.fixture(scope="session")
 def temp_docs_dir() -> str:
     """Create a temporary directory for project documents (session scope)."""
@@ -51,9 +58,13 @@ def backend_server(temp_docs_dir: str) -> str:
         s.listen(1)
         port = s.getsockname()[1]
 
+    python_exe = _resolve_python_executable(
+        Path(__file__).resolve().parent.parent.parent.parent
+    )
+
     proc = subprocess.Popen(
         [
-            sys.executable,
+            python_exe,
             "-m",
             "uvicorn",
             "main:app",
@@ -72,11 +83,17 @@ def backend_server(temp_docs_dir: str) -> str:
     # Wait for server to be ready (health check)
     api_url = f"http://localhost:{port}"
     try:
-        wait_for_http_ok(f"{api_url}/health", timeout_seconds=10.0)
+        wait_for_http_ok(f"{api_url}/health", timeout_seconds=60.0)
         print(f"\n✓ Backend server started at {api_url}")
     except TimeoutError:
         proc.terminate()
-        pytest.fail("Backend server failed to start within 10s")
+        stdout, stderr = proc.communicate(timeout=2)
+        details = ""
+        if stdout:
+            details += f"\n--- stdout ---\n{stdout.strip()}"
+        if stderr:
+            details += f"\n--- stderr ---\n{stderr.strip()}"
+        pytest.fail("Backend server failed to start within 60s" + details)
 
     yield api_url
 

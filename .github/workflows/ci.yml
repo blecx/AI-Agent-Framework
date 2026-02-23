@@ -111,8 +111,6 @@ jobs:
             const backendTouched = changed.some(p => p.startsWith('apps/api/'));
             const testsTouched = changed.some(p => p.startsWith('tests/'));
             const uiTouched = changed.some(p =>
-              p.startsWith('apps/web/') ||
-              p.startsWith('client/src/') ||
               p.startsWith('_external/AI-Agent-Framework-Client/client/') ||
               /\.(css|scss|sass|tsx|jsx)$/i.test(p)
             );

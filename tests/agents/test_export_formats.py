@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from scripts.extract_learnings import LearningsExtractor
+from scripts.extract_learnings import LearningsExtractor  # noqa: E402
 
 
 def test_markdown_export():
@@ -70,7 +70,7 @@ def test_json_export():
     json_data = {
         "issue": 99,
         "content": """# Issue #99 Test
-        
+
 ## Phase 1: Context
 Reading issue.
 

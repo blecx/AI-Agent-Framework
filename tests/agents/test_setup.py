@@ -161,6 +161,8 @@ def test_agent_imports():
         from agents.base_agent import BaseAgent, AgentPhase
         from agents.workflow_agent import WorkflowAgent
 
+        assert BaseAgent and AgentPhase and WorkflowAgent
+
         print("  ✅ Agent modules import successfully")
         return True
     except ImportError as e:
@@ -180,7 +182,7 @@ def test_knowledge_base_initialized():
 
     required_keys = ["version", "last_updated", "issues", "common_phases"]
     if not all(key in wp for key in required_keys):
-        print(f"  ❌ workflow_patterns.json missing required keys")
+        print("  ❌ workflow_patterns.json missing required keys")
         return False
 
     # Check agent_metrics
@@ -188,7 +190,7 @@ def test_knowledge_base_initialized():
         am = json.load(f)
 
     if "workflow_agent" not in am.get("agents", {}):
-        print(f"  ❌ agent_metrics.json missing workflow_agent")
+        print("  ❌ agent_metrics.json missing workflow_agent")
         return False
 
     print("  ✅ Knowledge base properly initialized")

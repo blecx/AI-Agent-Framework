@@ -14,8 +14,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
 
-from main import app
-from services.git_manager import GitManager
+from main import app  # noqa: E402
+from services.git_manager import GitManager  # noqa: E402
 
 
 @pytest.fixture

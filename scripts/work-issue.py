@@ -472,8 +472,8 @@ def _check_prerequisites() -> bool:
 
     # Check Node/npm if frontend or client repo exists
     client_repo = Path("_external/AI-Agent-Framework-Client")
-    frontend_repo = Path("apps/web")
-    if client_repo.exists() or frontend_repo.exists():
+    frontend_repo = client_repo / "client"
+    if frontend_repo.exists():
         if shutil.which("node"):
             checks.append(("Node.js", "✅"))
         else:

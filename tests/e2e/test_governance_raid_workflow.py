@@ -248,6 +248,9 @@ class TestCompleteGovernanceWorkflow:
         assert all_decisions.status_code == 200
         decisions_list = all_decisions.json()
         assert len(decisions_list) == 2
+        decision_ids = {decision["id"] for decision in decisions_list}
+        assert decision1_id in decision_ids
+        assert decision2_id in decision_ids
 
         # Step 9: List all RAID items
         all_raid = client.get("/projects/E2E_GOV/raid")

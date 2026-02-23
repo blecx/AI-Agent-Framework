@@ -73,7 +73,7 @@ Docker containers set `WORKDIR /app` which maps to `apps/api/`. Absolute imports
 
 - **Strict mode:** Enabled (no `any` types in production code)
 - **Formatter:** Built into ESLint config
-- **Linter:** `npm run lint` in `apps/web/`
+- **Linter:** `npm run lint` in `_external/AI-Agent-Framework-Client/client`
 - **Tests:** Vitest + React Testing Library
 
 ## Testing Requirements
