@@ -58,6 +58,9 @@ projectDocs/
 
 # Local-only: external repos checked out for review/testing
 _external/
+!_external/
+!_external/AI-Agent-Framework-Client/
+!_external/AI-Agent-Framework-Client/**
 
 # Testing & Coverage
 .pytest_cache/
