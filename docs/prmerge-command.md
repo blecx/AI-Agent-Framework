@@ -43,7 +43,9 @@ The `prmerge` command automates these steps:
 
 - Automatically finds PR associated with issue number
 - Verifies PR state (open, merged, closed)
-- Checks CI status (build, lint, tests, type check)
+- Watches required CI checks until completion (no blind snapshot merge)
+- Enforces that all required checks are `PASS` before merge
+- Uses timeout-based watchdog protection for long-running checks
 - **Policy guard:** Blocks PRs that modify `.github/workflows/*.yml` by default
   - This avoids standard-loop merge failures when elevated workflow token scope is unavailable
   - Use a dedicated workflow-change merge path, or explicit override for exceptions:
@@ -59,10 +61,19 @@ The `prmerge` command automates these steps:
   - Ensures acceptance criteria checkboxes are checked
   - Validates automated checks evidence is filled (inline format)
   - Reports missing sections or warnings before merge
-- Fails fast if CI is failing or template validation fails
+- Fails fast if required checks fail, timeout, or template validation fails
 - Displays PR details (number, title, branch, URL)
 
+**Strict CI gate behavior:**
+
+- Uses `gh pr checks --required --watch --fail-fast`
+- Default timeout: `1200s` (20m)
+- Default watch interval: `8s`
+- Optional watchdog cancellation for stale in-progress branch runs older than `25m`
+- Prints CI health summary (`total/pass/fail/pending/skipped/elapsed`) before merge decision
+
 **⚠️ CI Re-run Behavior:**
+
 - **Workflow reruns use cached PR payload** - updating PR description won't affect existing workflow runs
 - To trigger fresh CI with updated PR description:
   1. Push a new commit (e.g., empty commit: `git commit --allow-empty -m "chore: trigger CI"`), OR
@@ -271,8 +282,9 @@ PR Details:
   Branch: issue/24-api-service-layer
   URL: https://github.com/blecx/AI-Agent-Framework-Client/pull/60
 
-ℹ Checking CI status...
-✅ All CI checks passing
+ℹ Validating required checks for PR #60
+ℹ Waiting for required checks to complete (timeout=1200s, watch-interval=8s)
+✅ All required CI checks are complete and passing
 
 =========================================
 Step 2: Review PR
@@ -460,6 +472,11 @@ Offered automatically after `prmerge` completes.
 
 - `GITHUB_TOKEN` - GitHub API authentication (optional if gh authenticated)
 - `VISUAL` / `EDITOR` - Editor for manual edits (optional)
+- `PRMERGE_CI_WAIT_TIMEOUT_SECONDS` - Timeout for required check watch (default: `1200`)
+- `PRMERGE_CI_WATCH_INTERVAL_SECONDS` - Check watch refresh interval (default: `8`)
+- `PRMERGE_LONGRUNNER_MAX_MINUTES` - Age threshold for stale in-progress runs (default: `25`)
+- `PRMERGE_CANCEL_LONGRUNNERS` - Cancel stale runs after timeout (`1` enabled, `0` disabled)
+- `PRMERGE_ALLOW_NO_REQUIRED_CHECKS` - Allow merge when no required checks exist (`0` default, `1` override)
 
 ### Color Output
 
@@ -535,7 +552,7 @@ If merge has conflicts:
 Ensure CI passes before running prmerge:
 
 ```bash
-gh pr checks <pr_number> --watch
+gh pr checks <pr_number> --required --watch --fail-fast
 ```
 
 ### 2. Review Before Merging

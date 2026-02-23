@@ -24,6 +24,7 @@ REQUIRED_SNIPPETS = [
     "Backend scope detected: run focused pytest for touched domain before merge",
     "Frontend scope detected: run npm lint/build or focused UI tests before merge",
     "Docs-only scope: keep validation lightweight (policy/docs checks)",
+    "CI health summary:",
 ]
 
 

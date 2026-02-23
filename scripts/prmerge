@@ -36,6 +36,11 @@ PRMERGE_MAX_LINES=${PRMERGE_MAX_LINES:-500}
 PRMERGE_ALLOW_LARGE_SLICE=${PRMERGE_ALLOW_LARGE_SLICE:-0}
 PRMERGE_ALLOW_UNAPPROVED=${PRMERGE_ALLOW_UNAPPROVED:-0}
 PRMERGE_ALLOW_WORKFLOW_FILES=${PRMERGE_ALLOW_WORKFLOW_FILES:-0}
+PRMERGE_CI_WAIT_TIMEOUT_SECONDS=${PRMERGE_CI_WAIT_TIMEOUT_SECONDS:-1200}
+PRMERGE_CI_WATCH_INTERVAL_SECONDS=${PRMERGE_CI_WATCH_INTERVAL_SECONDS:-8}
+PRMERGE_LONGRUNNER_MAX_MINUTES=${PRMERGE_LONGRUNNER_MAX_MINUTES:-25}
+PRMERGE_CANCEL_LONGRUNNERS=${PRMERGE_CANCEL_LONGRUNNERS:-1}
+PRMERGE_ALLOW_NO_REQUIRED_CHECKS=${PRMERGE_ALLOW_NO_REQUIRED_CHECKS:-0}
 
 # Helper functions (must be defined before first use)
 info() {
@@ -60,6 +65,158 @@ section() {
     echo "$1"
     echo "========================================="
     echo ""
+}
+
+cancel_long_running_branch_runs() {
+    local branch="$1"
+    local max_minutes="$2"
+
+    local now_epoch
+    now_epoch=$(date -u +%s)
+    local max_age_seconds=$((max_minutes * 60))
+
+    local runs_json
+    runs_json=$(gh run list --branch "$branch" --status in_progress --limit 50 --json databaseId,workflowName,createdAt,url 2>/dev/null || echo "[]")
+
+    mapfile -t stale_runs < <(
+        echo "$runs_json" | jq -r \
+            --argjson now "$now_epoch" \
+            --argjson max_age "$max_age_seconds" \
+            '.[]
+             | . as $run
+             | ($now - (.createdAt | fromdateiso8601)) as $age
+             | select($age > $max_age)
+             | "\($run.databaseId)|\($run.workflowName)|\($run.createdAt)|\($run.url)|\($age)"'
+    )
+
+    if [ ${#stale_runs[@]} -eq 0 ]; then
+        info "Watchdog: no stale in-progress runs found for branch '$branch'"
+        return 0
+    fi
+
+    warning "Watchdog: found ${#stale_runs[@]} stale in-progress run(s) older than ${max_minutes}m"
+    local cancelled=0
+    for stale in "${stale_runs[@]}"; do
+        IFS='|' read -r run_id workflow_name created_at run_url age_seconds <<< "$stale"
+        local age_minutes=$((age_seconds / 60))
+        warning "Cancelling run $run_id ($workflow_name), age=${age_minutes}m, url=$run_url"
+        if gh run cancel "$run_id" >/dev/null 2>&1; then
+            cancelled=$((cancelled + 1))
+        fi
+    done
+
+    if [ "$cancelled" -gt 0 ]; then
+        success "Watchdog cancelled $cancelled stale run(s)"
+    fi
+
+    return 0
+}
+
+wait_for_required_ci_checks() {
+    local pr_number="$1"
+    local branch="$2"
+
+    print_required_ci_summary() {
+        local checks_json="$1"
+
+        local now_epoch
+        now_epoch=$(date -u +%s)
+
+        local total pass fail pending skipped
+        total=$(echo "$checks_json" | jq 'length')
+        pass=$(echo "$checks_json" | jq '[.[] | select(.state == "PASS")] | length')
+        fail=$(echo "$checks_json" | jq '[.[] | select(.state == "FAIL" or .state == "ERROR" or .state == "CANCEL" or .state == "ACTION_REQUIRED")] | length')
+        pending=$(echo "$checks_json" | jq '[.[] | select(.state == "PENDING" or .state == "STARTUP")] | length')
+        skipped=$(echo "$checks_json" | jq '[.[] | select(.state == "SKIP")] | length')
+
+        local elapsed
+        elapsed=$(echo "$checks_json" | jq -r --argjson now "$now_epoch" '
+            def ts(v): if v == null then null else (v | fromdateiso8601) end;
+            ([.[].startedAt | ts(.)] | map(select(. != null)) | min) as $start
+            | ([.[].completedAt | ts(.)] | map(select(. != null)) | max) as $end
+            | if $start == null then "n/a"
+              else ((if $end == null then $now else $end end) - $start | tostring + "s")
+              end
+        ')
+
+        info "CI health summary: total=$total pass=$pass fail=$fail pending=$pending skipped=$skipped elapsed=$elapsed"
+    }
+
+    info "Validating required checks for PR #$pr_number"
+
+    local required_json
+    required_json=$(gh pr checks "$pr_number" --required --json name,state,link,bucket 2>/dev/null || echo "[]")
+    local required_count
+    required_count=$(echo "$required_json" | jq 'length')
+
+    print_required_ci_summary "$required_json"
+
+    if [ "$required_count" -eq 0 ]; then
+        if [ "$PRMERGE_ALLOW_NO_REQUIRED_CHECKS" = "1" ]; then
+            warning "No required checks configured; override enabled (PRMERGE_ALLOW_NO_REQUIRED_CHECKS=1)"
+            return 0
+        fi
+
+        error "No required checks detected for this PR; refusing to merge by default"
+        echo "Set PRMERGE_ALLOW_NO_REQUIRED_CHECKS=1 only for exceptional cases"
+        return 1
+    fi
+
+    info "Waiting for required checks to complete (timeout=${PRMERGE_CI_WAIT_TIMEOUT_SECONDS}s, watch-interval=${PRMERGE_CI_WATCH_INTERVAL_SECONDS}s)"
+
+    set +e
+    timeout "$PRMERGE_CI_WAIT_TIMEOUT_SECONDS" \
+        gh pr checks "$pr_number" --required --watch --fail-fast --interval "$PRMERGE_CI_WATCH_INTERVAL_SECONDS"
+    local watch_rc=$?
+    set -e
+
+    if [ "$watch_rc" -eq 124 ]; then
+        error "Required checks did not finish within timeout (${PRMERGE_CI_WAIT_TIMEOUT_SECONDS}s)"
+
+        if [ "$PRMERGE_CANCEL_LONGRUNNERS" = "1" ]; then
+            warning "Running long-runner watchdog (max age: ${PRMERGE_LONGRUNNER_MAX_MINUTES}m)"
+            cancel_long_running_branch_runs "$branch" "$PRMERGE_LONGRUNNER_MAX_MINUTES"
+        else
+            warning "Watchdog cancellation disabled (PRMERGE_CANCEL_LONGRUNNERS=0)"
+        fi
+
+        echo ""
+        info "Current required check states:"
+        gh pr checks "$pr_number" --required || true
+
+        local timed_out_json
+        timed_out_json=$(gh pr checks "$pr_number" --required --json name,state,link,bucket,startedAt,completedAt 2>/dev/null || echo "[]")
+        print_required_ci_summary "$timed_out_json"
+        return 1
+    fi
+
+    if [ "$watch_rc" -ne 0 ]; then
+        error "Required checks failed"
+        echo ""
+        info "Current required check states:"
+        gh pr checks "$pr_number" --required || true
+
+        local failed_json
+        failed_json=$(gh pr checks "$pr_number" --required --json name,state,link,bucket,startedAt,completedAt 2>/dev/null || echo "[]")
+        print_required_ci_summary "$failed_json"
+        return 1
+    fi
+
+    local final_required_json
+    final_required_json=$(gh pr checks "$pr_number" --required --json name,state,link,bucket,startedAt,completedAt 2>/dev/null || echo "[]")
+    local non_pass_count
+    non_pass_count=$(echo "$final_required_json" | jq '[.[] | select(.state != "PASS")] | length')
+
+    print_required_ci_summary "$final_required_json"
+
+    if [ "$non_pass_count" -gt 0 ]; then
+        error "Required checks are not all passing"
+        echo "$final_required_json" | jq -r '.[] | "  - \(.name): \(.state) (\(.link))"'
+        return 1
+    fi
+
+    success "All required CI checks are complete and passing"
+    return 0
 }
 
 # Detect repository context
@@ -648,30 +805,11 @@ if [ "$PR_STATE" = "MERGED" ]; then
         # Continue to issue closing section
     fi
 else
-    # PR not yet merged, check CI status
-    info "Checking CI status..."
-    CI_STATUS=$(echo "$PR_JSON" | jq -r '.statusCheckRollup[]? | select(.conclusion != null) | .conclusion' | sort -u)
-    
-    if echo "$CI_STATUS" | grep -q "FAILURE\|CANCELLED"; then
-        error "CI checks are failing! Cannot merge."
-        echo ""
-        echo "Failed checks:"
-        echo "$PR_JSON" | jq -r '.statusCheckRollup[]? | select(.conclusion == "FAILURE" or .conclusion == "CANCELLED") | "  - \(.name): \(.conclusion)"'
-        echo ""
-        warning "Please fix CI failures before merging"
+    # PR not yet merged, enforce strict required-check CI gate
+    if ! wait_for_required_ci_checks "$PR_NUMBER" "$PR_BRANCH"; then
+        warning "Please fix CI status before merging"
         warning "PR URL: $PR_URL"
         exit 1
-    fi
-    
-    if echo "$CI_STATUS" | grep -q "SUCCESS"; then
-        success "All CI checks passing"
-    else
-        warning "CI status unclear or pending"
-        read -p "Continue anyway? (y/N): " continue_merge
-        if [[ ! "$continue_merge" =~ ^[Yy]$ ]]; then
-            info "Merge cancelled"
-            exit 0
-        fi
     fi
     
     # Validate PR template
@@ -831,9 +969,18 @@ else
             fi
         fi
         
-        # Get merge commit
-        sleep 2  # Wait for GitHub to process merge
-        MERGE_COMMIT=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid')
+        # Get merge commit (avoid fixed sleep; fetch immediately)
+        MERGE_COMMIT=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid // ""')
+        if [ -z "$MERGE_COMMIT" ]; then
+            warning "Merge commit not immediately available; refreshing once"
+            MERGE_COMMIT=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid // ""')
+        fi
+
+        if [ -z "$MERGE_COMMIT" ]; then
+            error "Unable to resolve merge commit SHA after merge"
+            exit 1
+        fi
+
         MERGE_COMMIT_SHORT="${MERGE_COMMIT:0:7}"
         
         success "Merge commit: $MERGE_COMMIT_SHORT"
