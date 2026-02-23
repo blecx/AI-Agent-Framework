@@ -351,6 +351,72 @@ class TestResourceHashing:
 class TestEnhancedAuditRules:
     """Test enhanced audit rules (cross-artifact validation)."""
 
+    def test_audit_issue_order_is_deterministic(
+        self, audit_service, git_manager, test_project
+    ):
+        """Issue ordering should be stable for identical project inputs."""
+        project_path = git_manager.get_project_path(test_project)
+        artifacts_path = project_path / "artifacts"
+        artifacts_path.mkdir(parents=True, exist_ok=True)
+
+        metadata = {
+            "key": test_project,
+            "name": "Test Project",
+            "description": "Deterministic ordering test",
+            "start_date": "2026-03-01",
+            "end_date": "2026-06-01",
+        }
+        (project_path / "metadata.json").write_text(json.dumps(metadata))
+
+        pmp_data = {
+            "deliverables": [{"id": "D-001", "name": "Deliverable"}],
+            "milestones": [
+                {
+                    "id": "M-002",
+                    "name": "Late milestone",
+                    "due_date": "2026-07-01",
+                },
+                {
+                    "id": "M-001",
+                    "name": "Early milestone",
+                    "due_date": "2026-02-01",
+                },
+            ],
+        }
+        (artifacts_path / "pmp.json").write_text(json.dumps(pmp_data))
+
+        raid_data = {
+            "items": [
+                {
+                    "id": "R-002",
+                    "type": "risk",
+                    "related_deliverables": ["D-999"],
+                },
+                {
+                    "id": "R-001",
+                    "type": "risk",
+                    "related_deliverables": ["D-998"],
+                },
+            ]
+        }
+        (artifacts_path / "raid.json").write_text(json.dumps(raid_data))
+
+        first = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+            rule_set=["cross_reference", "date_consistency"],
+        )
+        second = audit_service.run_audit_rules(
+            project_key=test_project,
+            git_manager=git_manager,
+            rule_set=["cross_reference", "date_consistency"],
+        )
+
+        first_messages = [issue["message"] for issue in first["issues"]]
+        second_messages = [issue["message"] for issue in second["issues"]]
+
+        assert first_messages == second_messages
+
     def test_run_audit_rules_no_issues(self, audit_service, git_manager, test_project):
         """Test running audit rules on a well-formed project."""
         # Create minimal valid artifacts

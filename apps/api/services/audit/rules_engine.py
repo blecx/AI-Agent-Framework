@@ -58,6 +58,8 @@ class AuditRulesEngine:
                 issues.extend(rule_issues)
                 rule_violations[rule_name] = len(rule_issues)
 
+        issues = self._sort_issues(issues)
+
         # Calculate completeness score
         completeness_score = self._calculate_completeness_score(
             project_key, git_manager
@@ -69,6 +71,20 @@ class AuditRulesEngine:
             "rule_violations": rule_violations,
             "total_issues": len(issues),
         }
+
+    def _sort_issues(self, issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Return issues in deterministic order for stable outputs."""
+
+        def sort_key(issue: Dict[str, Any]) -> tuple:
+            return (
+                str(issue.get("rule", "")),
+                str(issue.get("severity", "")),
+                str(issue.get("artifact", "")),
+                str(issue.get("item_id", issue.get("milestone_id", ""))),
+                str(issue.get("message", "")),
+            )
+
+        return sorted(issues, key=sort_key)
 
     def compute_resource_hash(self, content: str) -> str:
         """Compute SHA-256 hash of resource content for compliance tracking."""
