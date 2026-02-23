@@ -19,6 +19,9 @@ services:
 
   web:
     image: ${WEB_IMAGE:-ghcr.io/blecx/ai-agent-framework-web:main}
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
     container_name: iso21500-web
     ports:
       - "8080:80"
