@@ -8,18 +8,17 @@ import pytest
 import subprocess
 import tempfile
 import shutil
-import time
 import sys
 import os
 import socket
 from pathlib import Path
-import httpx
 
 # Add helpers to path (before local imports)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tests"))
 
 from helpers.tui_automation import TUIAutomation  # noqa: E402
 from fixtures.factories import ProjectFactory  # noqa: E402
+from e2e.tui.helpers import wait_for_http_ok  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -72,20 +71,12 @@ def backend_server(temp_docs_dir: str) -> str:
 
     # Wait for server to be ready (health check)
     api_url = f"http://localhost:{port}"
-    max_wait = 10
-    start_time = time.time()
-
-    while time.time() - start_time < max_wait:
-        try:
-            response = httpx.get(f"{api_url}/health", timeout=2.0)
-            if response.status_code == 200:
-                print(f"\n✓ Backend server started at {api_url}")
-                break
-        except (httpx.ConnectError, httpx.ReadTimeout):
-            time.sleep(0.5)
-    else:
+    try:
+        wait_for_http_ok(f"{api_url}/health", timeout_seconds=10.0)
+        print(f"\n✓ Backend server started at {api_url}")
+    except TimeoutError:
         proc.terminate()
-        pytest.fail(f"Backend server failed to start within {max_wait}s")
+        pytest.fail("Backend server failed to start within 10s")
 
     yield api_url
 
