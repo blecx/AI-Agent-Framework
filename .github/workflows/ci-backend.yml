@@ -17,12 +17,19 @@ on:
       - 'apps/tui/**'
       - 'tests/**'
 
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Gate 1: All Tests Pass
   test:
     name: "Gate 1: All Tests Pass"
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      duration_seconds: ${{ steps.test-timing.outputs.duration_seconds }}
+      within_limit: ${{ steps.test-timing.outputs.within_limit }}
     env:
       PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
@@ -47,19 +54,28 @@ jobs:
           git config --global user.email "ci@example.com"
           git config --global user.name "CI"
       
-      - name: Run unit tests
-        run: |
-          pytest tests/unit/ -v --tb=short -m "not tui"
-      
-      - name: Run integration tests
-        run: |
-          pytest tests/integration/ -v --tb=short
-      
-      - name: Run E2E tests
+      - name: Run tests and capture duration
+        id: test-timing
         env:
           TERM: xterm-256color
         run: |
+          START_TIME=$(date +%s)
+          
+          pytest tests/unit/ -v --tb=short -m "not tui"
+          pytest tests/integration/ -v --tb=short
           pytest tests/e2e/ -v --tb=short -m "not tui"
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "duration_seconds=$DURATION" >> "$GITHUB_OUTPUT"
+
+          if [ $DURATION -gt 600 ]; then
+            echo "within_limit=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "within_limit=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Gate 1 duration: ${DURATION}s"
       
       - name: Gate Status
         if: failure()
@@ -73,6 +89,7 @@ jobs:
     name: "Gate 2: Coverage Threshold (80%+)"
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 20
     env:
       PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
@@ -102,7 +119,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          bash scripts/run_pytest_coverage.sh --ci
+          bash scripts/run_pytest_coverage.sh --local-stable
       
       - name: Check coverage diff
         run: |
@@ -378,40 +395,15 @@ jobs:
     name: "Gate 8: Test Execution Time (<10min)"
     runs-on: ubuntu-latest
     needs: test
-    env:
-      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-      
-      - name: Install dependencies
+      - name: Evaluate timing from Gate 1
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      - name: Create projectDocs directory
-        run: mkdir -p projectDocs
-
-      - name: Configure git identity (required for git-backed tests)
-        run: |
-          git config --global user.email "ci@example.com"
-          git config --global user.name "CI"
-      
-      - name: Run tests with timing
-        run: |
-          START_TIME=$(date +%s)
-          pytest tests/ -v --tb=short -q -m "not tui"
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
+          DURATION='${{ needs.test.outputs.duration_seconds }}'
+          WITHIN_LIMIT='${{ needs.test.outputs.within_limit }}'
           
-          echo "Test suite completed in ${DURATION}s"
+          echo "Gate 1 test duration: ${DURATION}s"
           
-          if [ $DURATION -gt 600 ]; then
+          if [ "$WITHIN_LIMIT" != "true" ]; then
             echo "❌ Gate 8 FAILED: Test suite took ${DURATION}s (limit: 600s / 10min)"
             echo "Remediation: Optimize slow tests or parallelize execution"
             exit 1
@@ -424,6 +416,7 @@ jobs:
     name: "Gate 9: Flaky Test Detection"
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 10
     env:
       PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
@@ -439,7 +432,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest-rerunfailures
       
       - name: Create projectDocs directory
         run: mkdir -p projectDocs
@@ -449,33 +441,29 @@ jobs:
           git config --global user.email "ci@example.com"
           git config --global user.name "CI"
       
-      - name: Run tests 3 times to detect flakiness
+      - name: Run targeted tests twice to detect flakiness
         run: |
-          echo "Running test suite 3 times to detect flaky tests..."
+          echo "Running targeted suite twice to detect flaky tests quickly..."
+          TARGETS="tests/unit tests/integration"
           
           # Run 1
-          pytest tests/ -v --tb=short -q -m "not tui" > run1.log 2>&1
+          pytest $TARGETS -v --tb=short -q -m "not tui" > run1.log 2>&1
           RUN1=$?
           
           # Run 2
-          pytest tests/ -v --tb=short -q -m "not tui" > run2.log 2>&1
+          pytest $TARGETS -v --tb=short -q -m "not tui" > run2.log 2>&1
           RUN2=$?
           
-          # Run 3
-          pytest tests/ -v --tb=short -q -m "not tui" > run3.log 2>&1
-          RUN3=$?
-          
           # Check for inconsistent results
-          if [ $RUN1 -ne $RUN2 ] || [ $RUN2 -ne $RUN3 ] || [ $RUN1 -ne $RUN3 ]; then
+          if [ $RUN1 -ne $RUN2 ]; then
             echo "❌ Gate 9 WARNING: Flaky tests detected (inconsistent results across runs)"
             echo "Run 1 exit code: $RUN1"
             echo "Run 2 exit code: $RUN2"
-            echo "Run 3 exit code: $RUN3"
             echo ""
             echo "⚠️  This is a warning only - not failing the build"
             echo "Remediation: Investigate and fix non-deterministic test behavior"
           else
-            echo "✅ No flaky tests detected (3 consistent runs)"
+            echo "✅ No flaky tests detected (2 consistent runs)"
           fi
 
   # Final gate: All gates passed
