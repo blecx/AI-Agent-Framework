@@ -1,0 +1,67 @@
+name: Web UI Guardrails
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docker/web/**'
+      - 'docker-compose.yml'
+      - '.gitmodules'
+      - '.gitignore'
+      - 'README.md'
+      - 'QUICKSTART.md'
+      - '_external/AI-Agent-Framework-Client'
+  push:
+    branches: [main]
+    paths:
+      - 'docker/web/**'
+      - 'docker-compose.yml'
+      - '.gitmodules'
+      - '.gitignore'
+      - 'README.md'
+      - 'QUICKSTART.md'
+      - '_external/AI-Agent-Framework-Client'
+
+jobs:
+  guardrails:
+    name: Guardrails + Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Enforce canonical UI sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R "apps/web" docker/web/Dockerfile; then
+            echo "apps/web is not allowed in docker/web/Dockerfile"
+            exit 1
+          fi
+
+          if ! git submodule status _external/AI-Agent-Framework-Client >/dev/null 2>&1; then
+            echo "_external/AI-Agent-Framework-Client must be a git submodule"
+            exit 1
+          fi
+
+          if ! test -f .gitmodules; then
+            echo ".gitmodules missing; client submodule not configured"
+            exit 1
+          fi
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: _external/AI-Agent-Framework-Client/client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: _external/AI-Agent-Framework-Client/client
+        run: npm ci
+
+      - name: Build client
+        working-directory: _external/AI-Agent-Framework-Client/client
+        run: npm run build
