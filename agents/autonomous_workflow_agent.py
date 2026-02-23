@@ -17,6 +17,7 @@ Based on AI Toolkit best practices and Microsoft Agent Framework.
 import asyncio
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -34,12 +35,14 @@ from agents.tools import get_all_tools, get_compact_tools
 
 class AutonomousWorkflowAgent:
     """AI-powered agent that autonomously resolves GitHub issues."""
-    
+
     def __init__(self, issue_number: int, dry_run: bool = False):
         self.issue_number = issue_number
         self.dry_run = dry_run
         self.compact_mode = os.environ.get("WORK_ISSUE_COMPACT", "1") != "0"
-        self.max_prompt_chars = int(os.environ.get("WORK_ISSUE_MAX_PROMPT_CHARS", "3200"))
+        self.max_prompt_chars = int(
+            os.environ.get("WORK_ISSUE_MAX_PROMPT_CHARS", "3200")
+        )
         self.agent: Optional[ChatAgent] = None
         self.thread = None
 
@@ -49,13 +52,13 @@ class AutonomousWorkflowAgent:
         self.coding_thread = None
         self.review_agent: Optional[ChatAgent] = None
         self.review_thread = None
-        
+
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
         self.workflow_guide = self._load_workflow_guide()
         self.knowledge_base = self._load_knowledge_base()
         self.client_repo_context = self._load_client_repo_context()
-    
+
     def _load_copilot_instructions(self) -> str:
         """Load project conventions from .github/copilot-instructions.md"""
         try:
@@ -65,7 +68,7 @@ class AutonomousWorkflowAgent:
         except Exception as e:
             print(f"⚠️  Could not load copilot instructions: {e}")
         return ""
-    
+
     def _load_workflow_guide(self) -> str:
         """Load 6-phase workflow guide"""
         try:
@@ -78,7 +81,7 @@ class AutonomousWorkflowAgent:
         except Exception as e:
             print(f"⚠️  Could not load workflow guide: {e}")
         return ""
-    
+
     def _load_knowledge_base(self) -> str:
         """Load patterns from previous issues"""
         try:
@@ -121,7 +124,9 @@ class AutonomousWorkflowAgent:
                 pkg_path = client_app / "package.json"
                 if pkg_path.exists():
                     data = json.loads(pkg_path.read_text())
-                    scripts = (data.get("scripts") or {}) if isinstance(data, dict) else {}
+                    scripts = (
+                        (data.get("scripts") or {}) if isinstance(data, dict) else {}
+                    )
                     if isinstance(scripts, dict) and scripts:
                         preferred = [
                             "dev",
@@ -150,16 +155,16 @@ class AutonomousWorkflowAgent:
 
         summary = "\n\n".join([p for p in parts if p]).strip()
         return summary[:2500]
-    
+
     async def initialize(self):
         """Initialize the AI agent with GitHub Models."""
         print(f"🤖 Initializing Autonomous Workflow Agent v2.0")
         print(f"📋 Issue #{self.issue_number}")
         print(f"🐍 Python: {sys.version.split()[0]} ({sys.executable})")
-        
+
         if self.dry_run:
             print("ℹ️  DRY RUN MODE - No actual changes will be made")
-        
+
         # Report model configuration (no secrets)
         report = LLMClientFactory.get_startup_report()
         models = report.get("models", {})
@@ -186,7 +191,9 @@ class AutonomousWorkflowAgent:
                 base_url = ep.get("base_url") or ""
                 azure_endpoint = ep.get("azure_endpoint") or ""
                 if provider or base_url or azure_endpoint:
-                    print(f"   {role} endpoint: provider={provider} base_url={base_url} azure_endpoint={azure_endpoint}")
+                    print(
+                        f"   {role} endpoint: provider={provider} base_url={base_url} azure_endpoint={azure_endpoint}"
+                    )
 
         # Build system instructions
         system_instructions = self._build_system_instructions()
@@ -201,9 +208,15 @@ class AutonomousWorkflowAgent:
         coding_model_id = LLMClientFactory.get_model_id_for_role("coding")
         review_model_id = LLMClientFactory.get_model_id_for_role("review")
 
-        planning_chat = OpenAIChatClient(async_client=planning_client, model_id=planning_model_id)
-        coding_chat = OpenAIChatClient(async_client=coding_client, model_id=coding_model_id)
-        review_chat = OpenAIChatClient(async_client=review_client, model_id=review_model_id)
+        planning_chat = OpenAIChatClient(
+            async_client=planning_client, model_id=planning_model_id
+        )
+        coding_chat = OpenAIChatClient(
+            async_client=coding_client, model_id=coding_model_id
+        )
+        review_chat = OpenAIChatClient(
+            async_client=review_client, model_id=review_model_id
+        )
 
         tools = get_compact_tools() if self.compact_mode else get_all_tools()
         print(f"🧱 Prompt mode: {'compact' if self.compact_mode else 'full'}")
@@ -234,13 +247,19 @@ class AutonomousWorkflowAgent:
         # Back-compat: keep existing attributes pointing at coding agent
         self.agent = self.coding_agent
         self.thread = self.coding_thread
-        
+
         print("✅ Agent initialized and ready\n")
-    
+
     def _build_system_instructions(self) -> str:
         """Build token-budget-safe system instructions for the agent."""
-        project_excerpt = self.project_instructions[:400] if self.project_instructions else "No project context"
-        workflow_excerpt = self.workflow_guide[:400] if self.workflow_guide else "No workflow guide"
+        project_excerpt = (
+            self.project_instructions[:400]
+            if self.project_instructions
+            else "No project context"
+        )
+        workflow_excerpt = (
+            self.workflow_guide[:400] if self.workflow_guide else "No workflow guide"
+        )
         return f"""You are an autonomous software development agent resolving Issue #{self.issue_number}.
 
 Mission:
@@ -275,8 +294,10 @@ Mode:
         head = text[: max_chars // 2]
         tail = text[-(max_chars // 2) :]
         return f"{head}\n\n...[truncated for token budget]...\n\n{tail}"
-    
-    async def _run_agent_stream(self, agent: ChatAgent, thread, prompt: str, label: str) -> str:
+
+    async def _run_agent_stream(
+        self, agent: ChatAgent, thread, prompt: str, label: str
+    ) -> str:
         """Run a prompt with streaming console output and return the full text."""
         print(f"\n{'=' * 70}")
         print(f"🧩 {label}")
@@ -315,6 +336,86 @@ Mode:
         ]
         return any(hint in lowered for hint in hints)
 
+    @staticmethod
+    def _extract_estimated_manual_minutes(plan_text: str) -> Optional[int]:
+        """Extract ESTIMATED_MANUAL_MINUTES from planner output."""
+        if not plan_text:
+            return None
+
+        patterns = [
+            r"ESTIMATED_MANUAL_MINUTES\s*[:=]\s*(\d+)",
+            r"estimated manual minutes\s*[:=]\s*(\d+)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, plan_text, flags=re.IGNORECASE)
+            if match:
+                try:
+                    return int(match.group(1))
+                except ValueError:
+                    return None
+        return None
+
+    @staticmethod
+    def _extract_split_recommendation(plan_text: str) -> str:
+        """Extract split recommendation block from planner output when present."""
+        if not plan_text:
+            return ""
+
+        match = re.search(
+            r"SPLIT_RECOMMENDATION\s*:\s*(.+?)(?:\n[A-Z_][A-Z0-9_\- ]*:\s|\Z)",
+            plan_text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if not match:
+            return ""
+
+        return (match.group(1) or "").strip()
+
+    def _evaluate_manual_plan_guardrail(
+        self, plan_text: str
+    ) -> tuple[bool, Optional[int], str]:
+        """Return guard decision for 20-minute manual-work planning limit."""
+        estimate = self._extract_estimated_manual_minutes(plan_text)
+        max_minutes = 20
+
+        if estimate is None:
+            message = (
+                "Planner output missing ESTIMATED_MANUAL_MINUTES. "
+                "Guardrail requires explicit estimate and defaults to split-required behavior."
+            )
+            return False, None, message
+
+        if estimate > max_minutes:
+            return (
+                False,
+                estimate,
+                f"Estimated manual effort is {estimate} minutes, exceeding {max_minutes}-minute limit.",
+            )
+
+        return (
+            True,
+            estimate,
+            f"Estimated manual effort is {estimate} minutes (within {max_minutes}-minute limit).",
+        )
+
+    def _build_split_recommendation(
+        self, plan_text: str, estimate: Optional[int]
+    ) -> str:
+        """Build a clear recommendation for splitting oversized work into smaller issues."""
+        extracted = self._extract_split_recommendation(plan_text)
+        if extracted:
+            return extracted
+
+        estimate_label = "unknown" if estimate is None else str(estimate)
+        return (
+            "Split recommendation:\n"
+            f"- Current plan estimate: {estimate_label} minutes (guardrail max: 20).\n"
+            "- Create issue A for planning/spec alignment only (target <= 20 min manual work).\n"
+            "- Create issue B for implementation slice 1 with focused validation.\n"
+            "- Create issue C for follow-up slice and documentation updates.\n"
+            "- Re-run work-issue on the first split issue once created."
+        )
+
     async def _run_ux_gate(self, context_text: str, stage_label: str) -> str:
         """Run mandatory UX authority gate and return PASS/CHANGES decision."""
         ux_prompt = f"""You are acting as the blecs UX authority gate for Issue #{self.issue_number}.
@@ -352,7 +453,9 @@ Then include:
         decision = "PASS" if first_line == "UX_DECISION: PASS" else "CHANGES"
 
         if not self.dry_run:
-            self._persist_ux_consultation(stage_label=stage_label, ux_text=ux_text, decision=decision)
+            self._persist_ux_consultation(
+                stage_label=stage_label, ux_text=ux_text, decision=decision
+            )
 
         return decision
 
@@ -383,7 +486,9 @@ Then include:
         print(packet)
         return packet
 
-    def _persist_ux_consultation(self, stage_label: str, ux_text: str, decision: str) -> None:
+    def _persist_ux_consultation(
+        self, stage_label: str, ux_text: str, decision: str
+    ) -> None:
         """Persist UX consultation evidence for PR/issue traceability."""
         try:
             tmp_dir = Path(".tmp")
@@ -412,7 +517,7 @@ Then include:
         """
         if not (self.planning_agent and self.coding_agent and self.review_agent):
             raise RuntimeError("Agent not initialized. Call initialize() first.")
-        
+
         start_time = datetime.now()
         execution_data = {
             "issue_number": self.issue_number,
@@ -421,14 +526,16 @@ Then include:
             "problems_encountered": [],
             "commands_used": [],
         }
-        
+
         print("=" * 70)
         print("🚀 Starting Autonomous Workflow Execution (hybrid models)")
         print("=" * 70)
         print()
-        
+
         try:
-            workflow_packet = self._truncate_for_prompt(await self._build_workflow_packet(), 1800)
+            workflow_packet = self._truncate_for_prompt(
+                await self._build_workflow_packet(), 1800
+            )
 
             planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
 
@@ -442,6 +549,10 @@ WORKFLOW_PACKET_FROM_BLECS_WORKFLOW_AUTHORITY:
 
 Hard rules:
 - If dry-run is enabled, do NOT apply changes, commit, or create a PR.
+- Include a planning guardrail block with:
+    ESTIMATED_MANUAL_MINUTES: <integer>
+    SPLIT_REQUIRED: YES|NO
+    SPLIT_RECOMMENDATION: <short actionable split when required>
 - End your response with a clearly marked handoff block:
 
 HANDOFF_TO_CODING:
@@ -460,6 +571,22 @@ Begin now."""
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
             plan_text = self._truncate_for_prompt(plan_text)
+
+            guard_ok, estimate, guard_message = self._evaluate_manual_plan_guardrail(
+                plan_text
+            )
+            print(f"🛡️  Planning guardrail: {guard_message}")
+            if not guard_ok:
+                split_recommendation = self._build_split_recommendation(
+                    plan_text, estimate
+                )
+                print("\n🧩 Split recommendation (required before execution):")
+                print(split_recommendation)
+                execution_data["error"] = guard_message
+                execution_data["success"] = False
+                if not self.dry_run:
+                    await self._extract_and_update_learnings(execution_data)
+                return False
 
             ui_ux_scope = self._is_ui_ux_scope(plan_text)
             if ui_ux_scope:
@@ -559,35 +686,38 @@ Requirements:
 
             if decision != "PASS":
                 raise RuntimeError("Review did not pass within iteration budget")
-            
+
             # Get execution summary
             duration = (datetime.now() - start_time).total_seconds()
             execution_data["end_time"] = datetime.now().isoformat()
             execution_data["duration_seconds"] = duration
-            
+
             print("=" * 70)
-            print(f"✅ Workflow Completed in {duration:.1f} seconds ({duration/60:.1f} minutes)")
+            print(
+                f"✅ Workflow Completed in {duration:.1f} seconds ({duration/60:.1f} minutes)"
+            )
             print("=" * 70)
-            
+
             # GUARANTEED LEARNING: Extract and update knowledge base
             if not self.dry_run:
                 print("\n📚 Updating knowledge base with learnings...")
                 await self._extract_and_update_learnings(execution_data)
                 print("✅ Knowledge base updated\n")
-            
+
             return True
-            
+
         except Exception as e:
             print(f"\n\n❌ Error during execution: {e}")
             import traceback
+
             traceback.print_exc()
-            
+
             # Still try to learn from failures
             if not self.dry_run:
                 execution_data["error"] = str(e)
                 execution_data["success"] = False
                 await self._extract_and_update_learnings(execution_data)
-            
+
             return False
 
     async def plan_only(self) -> str:
@@ -639,29 +769,29 @@ Begin now."""
             planning_prompt,
             "Plan-only: Planning (Phase 1-2)",
         )
-    
+
     async def continue_conversation(self, message: str) -> str:
         """Continue conversation with the agent (for follow-up questions)."""
         if not self.agent or not self.thread:
             raise RuntimeError("Agent not initialized or no active thread")
-        
+
         response_text = []
         async for chunk in self.agent.run_stream(message, thread=self.thread):
             if chunk.text:
                 response_text.append(chunk.text)
-        
+
         return "".join(response_text)
-    
+
     async def _extract_and_update_learnings(self, execution_data: dict):
         """
         Extract learnings from execution and update knowledge base.
-        
+
         This runs AFTER agent completes to guarantee learning happens.
         """
         from agents.tools import update_knowledge_base
         import json
         from pathlib import Path
-        
+
         try:
             # 1. Build workflow pattern
             workflow_pattern = {
@@ -673,7 +803,7 @@ Begin now."""
                 "phases": execution_data.get("phases_completed", []),
                 "dry_run": self.dry_run,
             }
-            
+
             # 2. Ask agent for structured learnings
             learning_prompt = f"""Based on the work you just completed on Issue #{self.issue_number}, 
 provide structured learnings in JSON format:
@@ -699,33 +829,35 @@ provide structured learnings in JSON format:
 }}
 
 Provide ONLY the JSON, no additional text."""
-            
+
             response = await self.continue_conversation(learning_prompt)
-            
+
             # Try to parse JSON from response
             try:
                 # Extract JSON from response (may have markdown code blocks)
-                json_start = response.find('{')
-                json_end = response.rfind('}') + 1
+                json_start = response.find("{")
+                json_end = response.rfind("}") + 1
                 if json_start >= 0 and json_end > json_start:
                     learnings = json.loads(response[json_start:json_end])
                 else:
                     learnings = {}
             except json.JSONDecodeError:
                 learnings = {}
-            
+
             # 3. Update workflow_patterns.json
-            workflow_pattern.update({
-                "problems": learnings.get("problems_encountered", []),
-                "decisions": learnings.get("key_decisions", []),
-                "commands": learnings.get("useful_commands", []),
-                "files_changed": learnings.get("files_changed", []),
-                "patterns": learnings.get("patterns_learned", []),
-            })
-            
+            workflow_pattern.update(
+                {
+                    "problems": learnings.get("problems_encountered", []),
+                    "decisions": learnings.get("key_decisions", []),
+                    "commands": learnings.get("useful_commands", []),
+                    "files_changed": learnings.get("files_changed", []),
+                    "patterns": learnings.get("patterns_learned", []),
+                }
+            )
+
             kb_path = Path("agents/knowledge")
             kb_path.mkdir(parents=True, exist_ok=True)
-            
+
             # Update workflow_patterns.json
             patterns_file = kb_path / "workflow_patterns.json"
             patterns = []
@@ -737,12 +869,12 @@ Provide ONLY the JSON, no additional text."""
                             patterns = [patterns]
                 except Exception:
                     patterns = []
-            
+
             patterns.append(workflow_pattern)
-            
-            with open(patterns_file, 'w') as f:
+
+            with open(patterns_file, "w") as f:
                 json.dump(patterns, f, indent=2)
-            
+
             # 4. Update problem_solutions.json
             if learnings.get("problems_encountered"):
                 problems_file = kb_path / "problem_solutions.json"
@@ -755,15 +887,15 @@ Provide ONLY the JSON, no additional text."""
                                 problems = [problems]
                     except Exception:
                         problems = []
-                
+
                 for problem in learnings["problems_encountered"]:
                     problem["issue_number"] = self.issue_number
                     problem["date"] = execution_data["start_time"]
                     problems.append(problem)
-                
-                with open(problems_file, 'w') as f:
+
+                with open(problems_file, "w") as f:
                     json.dump(problems, f, indent=2)
-            
+
             # 5. Update time_estimates.json
             if learnings.get("time_insights"):
                 time_file = kb_path / "time_estimates.json"
@@ -776,15 +908,15 @@ Provide ONLY the JSON, no additional text."""
                                 estimates = [estimates]
                     except Exception:
                         estimates = []
-                
+
                 time_data = learnings["time_insights"]
                 time_data["issue_number"] = self.issue_number
                 time_data["date"] = execution_data["start_time"]
                 estimates.append(time_data)
-                
-                with open(time_file, 'w') as f:
+
+                with open(time_file, "w") as f:
                     json.dump(estimates, f, indent=2)
-            
+
             # 6. Update command_sequences.json
             if learnings.get("useful_commands"):
                 commands_file = kb_path / "command_sequences.json"
@@ -797,15 +929,15 @@ Provide ONLY the JSON, no additional text."""
                                 commands = [commands]
                     except Exception:
                         commands = []
-                
+
                 for cmd in learnings["useful_commands"]:
                     cmd["issue_number"] = self.issue_number
                     cmd["date"] = execution_data["start_time"]
                     commands.append(cmd)
-                
-                with open(commands_file, 'w') as f:
+
+                with open(commands_file, "w") as f:
                     json.dump(commands, f, indent=2)
-            
+
             # 7. Update agent_metrics.json
             metrics_file = kb_path / "agent_metrics.json"
             metrics = {"total_issues": 0, "successful_issues": 0, "last_updated": ""}
@@ -815,16 +947,16 @@ Provide ONLY the JSON, no additional text."""
                         metrics = json.load(f)
                 except Exception:
                     pass
-            
+
             metrics["total_issues"] = metrics.get("total_issues", 0) + 1
             if execution_data.get("success", True):
                 metrics["successful_issues"] = metrics.get("successful_issues", 0) + 1
             metrics["last_updated"] = datetime.now().isoformat()
             metrics["last_issue"] = self.issue_number
-            
-            with open(metrics_file, 'w') as f:
+
+            with open(metrics_file, "w") as f:
                 json.dump(metrics, f, indent=2)
-            
+
         except Exception as e:
             print(f"⚠️  Warning: Could not update knowledge base: {e}")
             # Don't fail the whole execution if learning fails
@@ -833,7 +965,7 @@ Provide ONLY the JSON, no additional text."""
 async def main():
     """Main entry point for CLI usage."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Autonomous Workflow Agent - AI-powered issue resolution",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -847,63 +979,55 @@ Examples:
   
   # Interactive mode (step through with approvals)
   python agents/autonomous_workflow_agent.py --issue 26 --interactive
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        "--issue",
-        type=int,
-        required=True,
-        help="GitHub issue number to work on"
+        "--issue", type=int, required=True, help="GitHub issue number to work on"
     )
-    
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Analyze and plan but don't make actual changes"
+        help="Analyze and plan but don't make actual changes",
     )
-    
+
     parser.add_argument(
-        "--interactive",
-        action="store_true",
-        help="Pause for approval between phases"
+        "--interactive", action="store_true", help="Pause for approval between phases"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Create and initialize agent
-    agent = AutonomousWorkflowAgent(
-        issue_number=args.issue,
-        dry_run=args.dry_run
-    )
-    
+    agent = AutonomousWorkflowAgent(issue_number=args.issue, dry_run=args.dry_run)
+
     await agent.initialize()
-    
+
     # Execute workflow
     success = await agent.execute()
-    
+
     # Interactive mode: allow follow-up questions
     if args.interactive and success:
         print("\n💬 Interactive mode - you can now give additional instructions")
         print("   (Type 'exit' or 'quit' to finish)\n")
-        
+
         while True:
             try:
                 user_input = input("You: ").strip()
-                
-                if user_input.lower() in ['exit', 'quit', '']:
+
+                if user_input.lower() in ["exit", "quit", ""]:
                     break
-                
+
                 print("Agent: ", end="", flush=True)
                 response = await agent.continue_conversation(user_input)
                 print(response)
                 print()
-                
+
             except (KeyboardInterrupt, EOFError):
                 break
-        
+
         print("\n👋 Ending session")
-    
+
     sys.exit(0 if success else 1)
 
 
