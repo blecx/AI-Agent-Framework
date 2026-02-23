@@ -7,7 +7,9 @@ import time
 import httpx
 
 
-def wait_for_http_ok(url: str, timeout_seconds: float = 10.0, attempt_timeout: float = 0.5) -> None:
+def wait_for_http_ok(
+    url: str, timeout_seconds: float = 10.0, attempt_timeout: float = 0.5
+) -> None:
     """Wait until an HTTP endpoint responds with 200, else raise TimeoutError."""
     start_time = time.monotonic()
     with httpx.Client(timeout=timeout_seconds) as client:
@@ -24,4 +26,6 @@ def wait_for_http_ok(url: str, timeout_seconds: float = 10.0, attempt_timeout: f
             except (httpx.ConnectError, httpx.ReadTimeout):
                 pass
 
-    raise TimeoutError(f"Endpoint did not become healthy in {timeout_seconds:.1f}s: {url}")
+    raise TimeoutError(
+        f"Endpoint did not become healthy in {timeout_seconds:.1f}s: {url}"
+    )

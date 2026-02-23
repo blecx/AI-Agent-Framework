@@ -51,7 +51,7 @@ TERM=xterm-256color pytest tests/e2e
 pytest tests/e2e/tui -v
 
 # Deterministic baseline spine test (run 3x)
-for i in 1 2 3; do pytest tests/e2e/tui/test_workflow_spine.py -q; done
+for i in 1 2 3; do pytest tests/e2e/tui -k workflow_spine -q; done
 
 # Tutorial E2E tests
 pytest tests/e2e/tutorial -v
@@ -97,7 +97,7 @@ bash scripts/run_pytest_coverage.sh --local-stable
 
 `tests/e2e/tui/` starts a session-scoped backend for the suite and binds it to a dynamically chosen free localhost port (to avoid CI port conflicts).
 
-For deterministic baseline verification (Issue #388 acceptance), run `tests/e2e/tui/test_workflow_spine.py` three consecutive times and ensure all runs pass.
+For deterministic baseline verification (Issue #388 acceptance), run `pytest tests/e2e/tui -k workflow_spine -q` three consecutive times and ensure all runs pass.
 
 For cross-repo E2E harness usage, prefer invoking the runner as a module (avoids hardcoding paths):
 
