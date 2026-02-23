@@ -61,6 +61,20 @@ Recommended practice:
 - Keep planning/review packets concise and scoped to touched files.
 - Keep workflow-file changes (`.github/workflows/*.yml`) in dedicated PRs with appropriate merge scope.
 
+## Planning Guardrail (20-Minute Manual Limit)
+
+To keep issue slices small and reviewable, planning output must include a manual-effort estimate:
+
+- `ESTIMATED_MANUAL_MINUTES: <integer>`
+- `SPLIT_REQUIRED: YES|NO`
+- `SPLIT_RECOMMENDATION: <actionable split>` (required when split is needed)
+
+Execution guard behavior:
+
+- If `ESTIMATED_MANUAL_MINUTES > 20`, execution stops before coding/review phases.
+- If estimate is missing, execution also stops (conservative fail-safe).
+- The agent prints a split recommendation to drive creation of smaller follow-up issues.
+
 ## Goal Archive Behavior (`.tmp`)
 
 `scripts/work-issue.py` now archives issue goals from `.tmp/*.md` automatically:

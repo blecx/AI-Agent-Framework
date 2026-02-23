@@ -231,6 +231,22 @@ export WORK_ISSUE_MAX_RPS=0.25
 export WORK_ISSUE_RPS_JITTER=0.15
 ```
 
+### Planning Guardrail (20-Minute Limit)
+
+The planning phase enforces a hard manual-work guardrail before implementation starts.
+
+- Planner output must include `ESTIMATED_MANUAL_MINUTES`.
+- If estimate is `> 20`, execution halts before coding and prints a split recommendation.
+- If estimate is missing, execution also halts (conservative split-required behavior).
+
+Expected planning block:
+
+```text
+ESTIMATED_MANUAL_MINUTES: 15
+SPLIT_REQUIRED: NO
+SPLIT_RECOMMENDATION: <short split plan when SPLIT_REQUIRED is YES>
+```
+
 **Available Models (all free on GitHub):**
 
 ---
