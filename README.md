@@ -23,6 +23,7 @@ This system provides intelligent project management following ISO 21500 standard
 
 - 🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 10 minutes
 - 🧰 **[Install & LLM Setup Guide](docs/howto/install-and-llm-setup.md)** - Docker images, local setup, and provider configuration examples
+- 🧩 **[Context7 MCP Setup (VS Code + Docker)](docs/howto/context7-vscode-docker.md)** - Persistent docs-grounding setup with boot-time startup
 - 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels
 - � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run autonomous agent from VS Code chat
 - 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
