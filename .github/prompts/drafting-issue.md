@@ -40,7 +40,13 @@ Please help me draft a complete issue including:
    - Potential gotchas or tricky areas
    - References to similar existing code
 
-6. **Estimated Size**: S (< 50 lines) / M (50-200 lines) / L (> 200 lines)
+6. **Docs Grounding (MCP + Context7)**:
+   - List framework/library versions in scope (e.g., FastAPI 0.109.1, Pydantic 2.5.3)
+   - Require Context7-backed doc retrieval for API/SDK behavior questions
+   - Specify: “Use repo conventions for architecture, use Context7 for external API correctness”
+   - Include a short note for any unresolved version ambiguity
+
+7. **Estimated Size**: S (< 50 lines) / M (50-200 lines) / L (> 200 lines)
 
 Format as a GitHub issue ready to copy-paste.
 ```
@@ -104,6 +110,12 @@ python -m black apps/api/
 python -m flake8 apps/api/
 ```
 
+## Docs Grounding (MCP + Context7)
+- Libraries in scope: FastAPI 0.109.1, Pydantic 2.5.3, GitPython 3.1.41
+- External API behavior must be validated against Context7-provided docs
+- Repo architecture decisions must follow DDD and local project conventions
+- If docs are ambiguous across versions, capture assumptions in issue notes
+
 ## Implementation Notes
 - Add new route in `apps/api/routers/projects.py`
 - Use existing `GitManager` to read artifacts
@@ -124,6 +136,7 @@ python -m flake8 apps/api/
 - Be specific about what changes and what doesn't
 - Include both happy path and error cases
 - Make validation steps copy-pasteable
+- Add a Context7 docs-grounding note for any non-trivial framework/API behavior
 - Link to related issues for context
 - Consider backwards compatibility
 - Note any environment variables or config needed
