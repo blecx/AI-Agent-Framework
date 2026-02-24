@@ -157,6 +157,32 @@ AUTO_APPROVE_SETTINGS = {
 }
 
 
+def _with_low_friction_settings(base: Dict[str, Any]) -> Dict[str, Any]:
+    """Return extended settings for near-zero terminal approval friction."""
+    low = json.loads(json.dumps(base))
+
+    terminal_auto = low.setdefault("chat.tools.terminal.autoApprove", {})
+    terminal_auto["/^\\s*.+$/"] = {
+        "approve": True,
+        "matchCommandLine": True,
+        "description": "Low-friction mode: approve nearly all terminal command lines"
+    }
+    terminal_auto["/^\\s*.*(?:\\/tmp\\/|\\.tmp\\/|\\$TMPDIR|TMPDIR=).*$/"] = {
+        "approve": True,
+        "matchCommandLine": True,
+        "description": "Approve command lines that reference /tmp, .tmp, or TMPDIR"
+    }
+
+    # Prefer workspace-local temp files to reduce /tmp usage and related prompts.
+    low["terminal.integrated.env.linux"] = {
+        "TMPDIR": "${workspaceFolder}/.tmp",
+        "TMP": "${workspaceFolder}/.tmp",
+        "TEMP": "${workspaceFolder}/.tmp"
+    }
+
+    return low
+
+
 def get_vscode_settings_path() -> Path:
     """Get the VS Code user settings path based on OS."""
     if sys.platform == "linux":
@@ -228,7 +254,7 @@ def write_json_file(path: Path, data: Dict[str, Any]) -> None:
         f.write('\n')  # Add trailing newline
 
 
-def update_settings(path: Path, name: str) -> bool:
+def update_settings(path: Path, name: str, settings_payload: Dict[str, Any]) -> bool:
     """Update settings file with auto-approve configuration."""
     print(f"\n📝 Updating {name}...")
     print(f"   Path: {path}")
@@ -237,7 +263,7 @@ def update_settings(path: Path, name: str) -> bool:
     existing = read_json_file(path)
     
     # Merge with auto-approve settings
-    updated = merge_settings(existing, AUTO_APPROVE_SETTINGS)
+    updated = merge_settings(existing, settings_payload)
     
     # Write back
     try:
@@ -272,13 +298,13 @@ def _collect_drift(expected: Any, actual: Any, path: str = "") -> list[str]:
     return drifts
 
 
-def verify_settings(path: Path, name: str) -> bool:
+def verify_settings(path: Path, name: str, settings_payload: Dict[str, Any]) -> bool:
     """Verify managed settings keys exactly match source-of-truth values."""
     print(f"\n🔎 Verifying {name}...")
     print(f"   Path: {path}")
 
     existing = read_json_file(path)
-    drifts = _collect_drift(AUTO_APPROVE_SETTINGS, existing)
+    drifts = _collect_drift(settings_payload, existing)
 
     if not drifts:
         print(f"   ✅ No drift detected in {name}")
@@ -307,12 +333,21 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Operate only on backend/client workspace settings (skip global user settings).",
     )
+    parser.add_argument(
+        "--low-friction",
+        action="store_true",
+        help="Enable near-zero terminal approvals and force TMPDIR to ${workspaceFolder}/.tmp.",
+    )
     return parser.parse_args()
 
 
 def main():
     """Main entry point."""
     args = parse_args()
+
+    settings_payload = AUTO_APPROVE_SETTINGS
+    if args.low_friction:
+        settings_payload = _with_low_friction_settings(AUTO_APPROVE_SETTINGS)
 
     print("🚀 VS Code Auto-Approve Setup")
     print("=" * 60)
@@ -326,10 +361,10 @@ def main():
             global_settings = get_vscode_settings_path()
             total_count += 1
             if args.check:
-                if verify_settings(global_settings, "Global VS Code settings"):
+                if verify_settings(global_settings, "Global VS Code settings", settings_payload):
                     success_count += 1
             else:
-                if update_settings(global_settings, "Global VS Code settings"):
+                if update_settings(global_settings, "Global VS Code settings", settings_payload):
                     success_count += 1
         except Exception as e:
             mode = "verify" if args.check else "update"
@@ -339,20 +374,20 @@ def main():
     backend_workspace = Path(__file__).parent.parent / ".vscode/settings.json"
     total_count += 1
     if args.check:
-        if verify_settings(backend_workspace, "Backend workspace"):
+        if verify_settings(backend_workspace, "Backend workspace", settings_payload):
             success_count += 1
     else:
-        if update_settings(backend_workspace, "Backend workspace"):
+        if update_settings(backend_workspace, "Backend workspace", settings_payload):
             success_count += 1
     
     # 3. Update client workspace settings
     client_workspace = Path(__file__).parent.parent / "_external/AI-Agent-Framework-Client/.vscode/settings.json"
     total_count += 1
     if args.check:
-        if verify_settings(client_workspace, "Client workspace"):
+        if verify_settings(client_workspace, "Client workspace", settings_payload):
             success_count += 1
     else:
-        if update_settings(client_workspace, "Client workspace"):
+        if update_settings(client_workspace, "Client workspace", settings_payload):
             success_count += 1
     
     # Summary
