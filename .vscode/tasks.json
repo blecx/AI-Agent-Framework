@@ -2,6 +2,24 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "⚙️ Auto: Apply Low Approval",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/setup-low-approval.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared",
+        "focus": false,
+        "clear": false
+      }
+    },
+    {
       "label": "🤖 Work on Issue (Autonomous)",
       "type": "shell",
       "command": "${workspaceFolder}/scripts/work-issue.py",
@@ -243,6 +261,38 @@
       }
     },
     {
+      "label": "🚀 Dev Stack: Supervised",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-u", "${workspaceFolder}/scripts/dev_stack_supervisor.py"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "dev-stack-supervisor started",
+          "endsPattern": "frontend: http://127.0.0.1:5173"
+        }
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": false
+      }
+    },
+    {
       "label": "🏗️ Frontend: Build",
       "type": "shell",
       "command": "npm",
@@ -336,12 +386,25 @@
     },
     {
       "label": "🚀 Start: Full Stack (Dev)",
-      "dependsOn": [
-        "🚀 Backend: Start API Server",
-        "🎨 Frontend: Start Dev Server"
-      ],
-      "dependsOrder": "parallel",
+      "dependsOn": ["🚀 Dev Stack: Supervised"],
       "problemMatcher": []
+    },
+    {
+      "label": "🧪 Dev Stack: Smoke Test",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["${workspaceFolder}/scripts/dev_stack_smoke_test.py"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "clear": true
+      },
+      "group": "test"
     }
   ],
   "inputs": [
