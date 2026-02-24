@@ -15,6 +15,9 @@ import json
 import os
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Sequence
 
@@ -135,6 +138,18 @@ Token Budget Mode:
         help="Disable automatic pre/post goal archiving from .tmp",
     )
 
+    parser.add_argument(
+        "--dev-stack",
+        choices=["auto", "required", "off"],
+        default=os.environ.get("WORK_ISSUE_DEV_STACK", "auto"),
+        help=(
+            "Development stack behavior before agent execution: "
+            "'auto' (default) attempts to ensure backend+frontend are running, "
+            "'required' fails fast if stack is not healthy, "
+            "'off' skips dev-stack checks."
+        ),
+    )
+
     args = parser.parse_args()
 
     if args.llm_config:
@@ -169,6 +184,15 @@ Token Budget Mode:
     try:
         if exit_code != 0:
             return
+
+        if not args.dry_run and not args.plan_only:
+            dev_stack_ok = _ensure_dev_stack(mode=args.dev_stack)
+            if not dev_stack_ok and args.dev_stack == "required":
+                print(
+                    "❌ Dev stack is required but not ready. "
+                    "Fix startup issues or run with --dev-stack off/auto."
+                )
+                sys.exit(1)
 
         agent = AutonomousWorkflowAgent(
             issue_number=args.issue,
@@ -604,6 +628,101 @@ def _archive_goals(stage: str, issue_number: int) -> None:
                 print(result.stderr.strip())
     except Exception as exc:
         print(f"⚠️  Goal archive ({stage}) error: {exc}")
+
+
+def _ensure_dev_stack(mode: str) -> bool:
+    """Ensure backend API and frontend dev server are available for issue work."""
+    if mode == "off":
+        print("🧩 Dev stack check: OFF (skipped by --dev-stack off)")
+        return True
+
+    project_root = Path(__file__).parent.parent
+    backend_health_url = os.environ.get(
+        "WORK_ISSUE_BACKEND_HEALTH_URL", "http://127.0.0.1:8000/health"
+    )
+    frontend_url = os.environ.get("WORK_ISSUE_FRONTEND_URL", "http://127.0.0.1:5173")
+
+    print("🧩 Ensuring dev stack (backend + frontend) ...")
+
+    backend_ready = _is_url_ready(backend_health_url)
+    frontend_ready = _is_url_ready(frontend_url)
+
+    if not backend_ready or not frontend_ready:
+        print("  🚀 Starting supervised dev stack (backend + frontend) ...")
+        _start_dev_stack_supervisor(project_root)
+        if not backend_ready:
+            backend_ready = _wait_for_url(backend_health_url, timeout_seconds=45)
+        if not frontend_ready:
+            frontend_ready = _wait_for_url(frontend_url, timeout_seconds=90)
+
+    print(
+        f"  Backend: {'✅ ready' if backend_ready else '❌ not ready'} ({backend_health_url})"
+    )
+    print(f"  Frontend: {'✅ ready' if frontend_ready else '❌ not ready'} ({frontend_url})")
+
+    if backend_ready and frontend_ready:
+        return True
+
+    if mode == "required":
+        return False
+
+    print(
+        "⚠️  Continuing with partial dev stack (mode=auto). "
+        "Set --dev-stack required to enforce strict startup."
+    )
+    return False
+
+
+def _is_url_ready(url: str, timeout_seconds: float = 2.0) -> bool:
+    """Return True when an HTTP endpoint responds with 2xx/3xx/4xx quickly."""
+    request = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            return 200 <= response.status < 500
+    except urllib.error.HTTPError as exc:
+        return 200 <= exc.code < 500
+    except Exception:
+        return False
+
+
+def _wait_for_url(url: str, timeout_seconds: int = 30, poll_seconds: float = 1.0) -> bool:
+    """Wait until URL responds or timeout is reached."""
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        if _is_url_ready(url):
+            return True
+        time.sleep(poll_seconds)
+    return False
+
+
+def _start_dev_stack_supervisor(project_root: Path) -> None:
+    """Start dev stack supervisor in background if not already running."""
+    logs_dir = project_root / ".tmp"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    pid_file = logs_dir / "dev-stack-supervisor.pid"
+    if pid_file.exists():
+        pid_text = pid_file.read_text(encoding="utf-8").strip()
+        if pid_text.isdigit():
+            try:
+                os.kill(int(pid_text), 0)
+                return
+            except OSError:
+                pid_file.unlink(missing_ok=True)
+
+    supervisor_script = project_root / "scripts" / "dev_stack_supervisor.py"
+    venv_python = project_root / ".venv" / "bin" / "python"
+    log_path = logs_dir / "work-issue-dev-supervisor.log"
+
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        subprocess.Popen(
+            [str(venv_python), str(supervisor_script)],
+            cwd=str(project_root),
+            env=dict(os.environ),
+            stdout=log_file,
+            stderr=log_file,
+            start_new_session=True,
+        )
 
 
 async def _interactive_mode(agent):
