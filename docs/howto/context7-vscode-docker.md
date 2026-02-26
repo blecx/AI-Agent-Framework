@@ -83,6 +83,7 @@ curl -sS -i http://127.0.0.1:3010/mcp | head -n 14
 
 # Verify container is up and restart policy applies
 docker compose -f docker-compose.context7.yml ps context7
+docker inspect -f '{{ .HostConfig.RestartPolicy.Name }}' context7-mcp
 
 # Verify boot persistence after systemd install
 systemctl is-enabled context7-mcp.service
@@ -93,5 +94,6 @@ Expected outcomes:
 
 - `curl` output includes an HTTP status line (typically `406 Not Acceptable`).
 - `docker compose ... ps context7` shows service/container as running.
+- `docker inspect ... context7-mcp` returns `unless-stopped`.
 - `systemctl is-enabled` returns `enabled`.
 - `systemctl is-active` returns `active`.
