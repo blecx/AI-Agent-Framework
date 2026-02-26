@@ -35,6 +35,18 @@ BACKEND_PORT = int(os.environ.get("DEV_STACK_BACKEND_PORT", "8000"))
 FRONTEND_HOST = os.environ.get("DEV_STACK_FRONTEND_HOST", "127.0.0.1")
 FRONTEND_PORT = int(os.environ.get("DEV_STACK_FRONTEND_PORT", "5173"))
 
+RESTART_WINDOW_SECONDS = int(os.environ.get("DEV_STACK_RESTART_WINDOW_SECONDS", "60"))
+RESTART_MAX_IN_WINDOW = int(os.environ.get("DEV_STACK_RESTART_MAX_IN_WINDOW", "8"))
+RESTART_BACKOFF_BASE_SECONDS = float(
+    os.environ.get("DEV_STACK_RESTART_BACKOFF_BASE_SECONDS", "1")
+)
+RESTART_BACKOFF_MAX_SECONDS = float(
+    os.environ.get("DEV_STACK_RESTART_BACKOFF_MAX_SECONDS", "30")
+)
+RESTART_STABLE_RESET_SECONDS = float(
+    os.environ.get("DEV_STACK_RESTART_STABLE_RESET_SECONDS", "30")
+)
+
 PID_FILE = _env_path("DEV_STACK_PID_FILE", TMP_DIR / "dev-stack-supervisor.pid")
 SUPERVISOR_LOG = _env_path("DEV_STACK_SUPERVISOR_LOG", TMP_DIR / "dev-stack-supervisor.log")
 
@@ -144,6 +156,7 @@ def _frontend_process() -> subprocess.Popen:
             FRONTEND_HOST,
             "--port",
             str(FRONTEND_PORT),
+            "--strictPort",
         ],
         cwd=str(frontend_cwd),
         env=dict(os.environ),
@@ -157,13 +170,55 @@ def _stop_process(proc: subprocess.Popen | None) -> None:
     if proc is None or proc.poll() is not None:
         return
     try:
-        proc.terminate()
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
         proc.wait(timeout=10)
     except Exception:
         try:
-            proc.kill()
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
         except Exception:
             pass
+
+
+def _prune_restart_events(events: list[float], now: float) -> list[float]:
+    min_allowed = now - RESTART_WINDOW_SECONDS
+    return [event for event in events if event >= min_allowed]
+
+
+def _handle_crash_restart(
+    name: str,
+    restart_events: list[float],
+    consecutive_failures: int,
+    log,
+) -> tuple[bool, list[float], int]:
+    now = time.monotonic()
+    restart_events = _prune_restart_events(restart_events, now)
+    restart_events.append(now)
+    consecutive_failures += 1
+
+    if len(restart_events) > RESTART_MAX_IN_WINDOW:
+        message = (
+            f"[{time.ctime()}] {name} exceeded restart budget "
+            f"({len(restart_events)} restarts/{RESTART_WINDOW_SECONDS}s), "
+            "stopping supervisor to avoid crash loop\n"
+        )
+        log.write(message)
+        log.flush()
+        print(message.strip(), flush=True)
+        return False, restart_events, consecutive_failures
+
+    delay = min(
+        RESTART_BACKOFF_BASE_SECONDS * (2 ** (consecutive_failures - 1)),
+        RESTART_BACKOFF_MAX_SECONDS,
+    )
+    if delay > 0:
+        log.write(
+            f"[{time.ctime()}] {name} restart backoff {delay:.1f}s "
+            f"(failure #{consecutive_failures})\n"
+        )
+        log.flush()
+        time.sleep(delay)
+
+    return True, restart_events, consecutive_failures
 
 
 def main() -> int:
@@ -181,6 +236,12 @@ def main() -> int:
 
     backend = _backend_process()
     frontend = _frontend_process()
+    backend_started_at = time.monotonic()
+    frontend_started_at = time.monotonic()
+    backend_restart_events: list[float] = []
+    frontend_restart_events: list[float] = []
+    backend_consecutive_failures = 0
+    frontend_consecutive_failures = 0
 
     backend_snapshot = _snapshot(BACKEND_PATTERNS)
     frontend_snapshot = _snapshot(FRONTEND_PATTERNS)
@@ -193,16 +254,48 @@ def main() -> int:
 
     try:
         while not stop_requested:
+            now = time.monotonic()
+            if backend.poll() is None and (now - backend_started_at) >= RESTART_STABLE_RESET_SECONDS:
+                backend_consecutive_failures = 0
+                backend_restart_events = []
+            if frontend.poll() is None and (now - frontend_started_at) >= RESTART_STABLE_RESET_SECONDS:
+                frontend_consecutive_failures = 0
+                frontend_restart_events = []
+
             if backend.poll() is not None:
                 log.write(f"[{time.ctime()}] backend exited, restarting\n")
                 log.flush()
+                can_restart, backend_restart_events, backend_consecutive_failures = (
+                    _handle_crash_restart(
+                        "backend",
+                        backend_restart_events,
+                        backend_consecutive_failures,
+                        log,
+                    )
+                )
+                if not can_restart:
+                    stop_requested = True
+                    continue
                 backend = _backend_process()
+                backend_started_at = time.monotonic()
                 backend_snapshot = _snapshot(BACKEND_PATTERNS)
 
             if frontend.poll() is not None:
                 log.write(f"[{time.ctime()}] frontend exited, restarting\n")
                 log.flush()
+                can_restart, frontend_restart_events, frontend_consecutive_failures = (
+                    _handle_crash_restart(
+                        "frontend",
+                        frontend_restart_events,
+                        frontend_consecutive_failures,
+                        log,
+                    )
+                )
+                if not can_restart:
+                    stop_requested = True
+                    continue
                 frontend = _frontend_process()
+                frontend_started_at = time.monotonic()
                 frontend_snapshot = _snapshot(FRONTEND_PATTERNS)
 
             current_backend = _snapshot(BACKEND_PATTERNS)
@@ -211,6 +304,9 @@ def main() -> int:
                 log.flush()
                 _stop_process(backend)
                 backend = _backend_process()
+                backend_started_at = time.monotonic()
+                backend_consecutive_failures = 0
+                backend_restart_events = []
                 backend_snapshot = current_backend
 
             current_frontend = _snapshot(FRONTEND_PATTERNS)
@@ -221,6 +317,9 @@ def main() -> int:
                 log.flush()
                 _stop_process(frontend)
                 frontend = _frontend_process()
+                frontend_started_at = time.monotonic()
+                frontend_consecutive_failures = 0
+                frontend_restart_events = []
                 frontend_snapshot = current_frontend
 
             time.sleep(1.0)
