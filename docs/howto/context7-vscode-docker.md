@@ -1,6 +1,7 @@
 # Context7 Setup for VS Code + Docker (Persistent)
 
-This guide installs Context7 for VS Code, runs a local Context7 MCP endpoint in Docker, and enables host boot startup.
+This guide installs Context7 for VS Code, runs a local Context7 MCP endpoint in
+Docker, and enables host boot startup.
 
 ## 1) Install VS Code Extension
 
@@ -31,7 +32,8 @@ Validate endpoint:
 curl -sS -i http://127.0.0.1:3010/mcp | head
 ```
 
-Expected: HTTP response from MCP endpoint (typically `406 Not Acceptable` for plain curl, which indicates the MCP endpoint is live).
+Expected: HTTP response from MCP endpoint (typically `406 Not Acceptable` for
+plain curl, which indicates the MCP endpoint is live).
 
 ## 4) Enable Startup at Host Boot (systemd)
 
@@ -63,6 +65,33 @@ Reload VS Code window after setup:
 Add this in your team prompt conventions:
 
 ```txt
-Always use Context7 for library/API docs, setup/configuration steps, and code generation where external framework behavior matters.
+Always use Context7 for library/API docs, setup/configuration steps, and code
+generation where external framework behavior matters.
 Use repository conventions for architecture and internal implementation details.
 ```
+
+## 6) Reproducible Validation Checklist
+
+Run these commands from repository root and compare with expected outcomes.
+
+```bash
+# Start / rebuild local MCP endpoint
+docker compose -f docker-compose.context7.yml up -d --build
+
+# Check MCP endpoint is reachable (406 for plain curl is expected)
+curl -sS -i http://127.0.0.1:3010/mcp | head -n 14
+
+# Verify container is up and restart policy applies
+docker compose -f docker-compose.context7.yml ps context7
+
+# Verify boot persistence after systemd install
+systemctl is-enabled context7-mcp.service
+systemctl is-active context7-mcp.service
+```
+
+Expected outcomes:
+
+- `curl` output includes an HTTP status line (typically `406 Not Acceptable`).
+- `docker compose ... ps context7` shows service/container as running.
+- `systemctl is-enabled` returns `enabled`.
+- `systemctl is-active` returns `active`.
