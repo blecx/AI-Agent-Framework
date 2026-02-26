@@ -65,6 +65,39 @@
       "status": "created",
       "title": "Phase 2 \u2014 Publish migration playbook for blecs UX authority operations",
       "title_hash": "d8a153ff317e"
+    },
+    "blecx/AI-Agent-Framework|S4-BE-01": {
+      "issue_number": 481,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/481",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-4.yml",
+      "source_id": "S4-BE-01",
+      "status": "created",
+      "title": "Step 4 \u2014 OpenAI Images client + mockup artifact writer",
+      "title_hash": "748be8784fe3"
+    },
+    "blecx/AI-Agent-Framework|S4-BE-02": {
+      "issue_number": 482,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/482",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-4.yml",
+      "source_id": "S4-BE-02",
+      "status": "created",
+      "title": "Step 4 \u2014 Add designer skills: design guidelines + coder change plan",
+      "title_hash": "b8df09847623"
+    },
+    "blecx/AI-Agent-Framework|S4-BE-03": {
+      "issue_number": 483,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/483",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-4.yml",
+      "source_id": "S4-BE-03",
+      "status": "created",
+      "title": "Step 4 \u2014 Workflow Phase 2.6: generate mockups + prototype before coding",
+      "title_hash": "95e067a3b0ab"
     }
   },
   "version": 1
