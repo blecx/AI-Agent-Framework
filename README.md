@@ -218,13 +218,25 @@ All clients communicate with the same REST API, ensuring feature parity and flex
 
 ### VS Code Auto-Approve Setup (Optional but Recommended)
 
-If you're using VS Code with GitHub Copilot, run this script to enable auto-approve for all agent commands:
+If you're using VS Code with GitHub Copilot, apply the safe profile (default):
 
 ```bash
-./scripts/setup-autoapprove.sh
+./scripts/setup-low-approval.sh safe
 ```
 
-To regenerate only workspace settings (backend + client) and verify no drift:
+Opt in to low-friction mode only when working in a high-trust environment:
+
+```bash
+./scripts/setup-low-approval.sh low-friction
+```
+
+Roll back to safe mode at any time:
+
+```bash
+./scripts/setup-low-approval.sh safe
+```
+
+To regenerate workspace settings (backend + client) and verify no drift:
 
 ```bash
 ./scripts/setup-autoapprove.sh --workspace-only
@@ -232,13 +244,14 @@ To regenerate only workspace settings (backend + client) and verify no drift:
 ```
 
 This configures auto-approve for:
+
 - **Subagents**: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
 - **Terminal commands**: Git, npm, Python, Docker, and 60+ common commands
 - **All workspaces**: Backend, client, and global VS Code settings
 
 After running, reload VS Code (`Ctrl+Shift+P` → `Developer: Reload Window`) to apply changes.
 
-**Benefits**: No manual approval prompts when using Copilot agents, significantly faster workflow.
+**Risk note**: Low-friction mode increases convenience but broadens approval scope; prefer `safe` as the default profile.
 
 ## Installation & Setup
 

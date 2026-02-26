@@ -18,6 +18,12 @@ import argparse
 from pathlib import Path
 from typing import Dict, Any
 
+
+LOW_FRICTION_ONLY_TERMINAL_KEYS = [
+    "/^\\s*.+$/",
+    "/^\\s*.*(?:\\/tmp\\/|\\.tmp\\/|\\$TMPDIR|TMPDIR=).*$/",
+]
+
 # Auto-approve settings to be applied
 AUTO_APPROVE_SETTINGS = {
     "chat.agent.maxRequests": 50,
@@ -154,6 +160,12 @@ AUTO_APPROVE_SETTINGS = {
             "description": "Allow cd with command chaining"
         },
     }
+    ,
+    "terminal.integrated.env.linux": {
+        "TMPDIR": "${workspaceFolder}/.tmp",
+        "TMP": "${workspaceFolder}/.tmp",
+        "TEMP": "${workspaceFolder}/.tmp"
+    }
 }
 
 
@@ -173,14 +185,17 @@ def _with_low_friction_settings(base: Dict[str, Any]) -> Dict[str, Any]:
         "description": "Approve command lines that reference /tmp, .tmp, or TMPDIR"
     }
 
-    # Prefer workspace-local temp files to reduce /tmp usage and related prompts.
-    low["terminal.integrated.env.linux"] = {
-        "TMPDIR": "${workspaceFolder}/.tmp",
-        "TMP": "${workspaceFolder}/.tmp",
-        "TEMP": "${workspaceFolder}/.tmp"
-    }
-
     return low
+
+
+def _strip_low_friction_overrides(settings_obj: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove ultra-broad low-friction approvals to enforce safe profile."""
+    cleaned = json.loads(json.dumps(settings_obj))
+    terminal_auto = cleaned.get("chat.tools.terminal.autoApprove", {})
+    if isinstance(terminal_auto, dict):
+        for key in LOW_FRICTION_ONLY_TERMINAL_KEYS:
+            terminal_auto.pop(key, None)
+    return cleaned
 
 
 def get_vscode_settings_path() -> Path:
@@ -254,7 +269,7 @@ def write_json_file(path: Path, data: Dict[str, Any]) -> None:
         f.write('\n')  # Add trailing newline
 
 
-def update_settings(path: Path, name: str, settings_payload: Dict[str, Any]) -> bool:
+def update_settings(path: Path, name: str, settings_payload: Dict[str, Any], profile: str) -> bool:
     """Update settings file with auto-approve configuration."""
     print(f"\n📝 Updating {name}...")
     print(f"   Path: {path}")
@@ -262,6 +277,9 @@ def update_settings(path: Path, name: str, settings_payload: Dict[str, Any]) -> 
     # Read existing settings
     existing = read_json_file(path)
     
+    if profile == "safe":
+        existing = _strip_low_friction_overrides(existing)
+
     # Merge with auto-approve settings
     updated = merge_settings(existing, settings_payload)
     
@@ -298,13 +316,20 @@ def _collect_drift(expected: Any, actual: Any, path: str = "") -> list[str]:
     return drifts
 
 
-def verify_settings(path: Path, name: str, settings_payload: Dict[str, Any]) -> bool:
+def verify_settings(path: Path, name: str, settings_payload: Dict[str, Any], profile: str) -> bool:
     """Verify managed settings keys exactly match source-of-truth values."""
     print(f"\n🔎 Verifying {name}...")
     print(f"   Path: {path}")
 
     existing = read_json_file(path)
     drifts = _collect_drift(settings_payload, existing)
+
+    if profile == "safe":
+        terminal_auto = existing.get("chat.tools.terminal.autoApprove", {})
+        if isinstance(terminal_auto, dict):
+            for key in LOW_FRICTION_ONLY_TERMINAL_KEYS:
+                if key in terminal_auto:
+                    drifts.append(f"chat.tools.terminal.autoApprove.{key}: disallowed in safe profile")
 
     if not drifts:
         print(f"   ✅ No drift detected in {name}")
@@ -334,9 +359,15 @@ def parse_args() -> argparse.Namespace:
         help="Operate only on backend/client workspace settings (skip global user settings).",
     )
     parser.add_argument(
+        "--profile",
+        choices=["safe", "low-friction"],
+        default="safe",
+        help="Approval profile: 'safe' (default) or explicit high-trust 'low-friction'.",
+    )
+    parser.add_argument(
         "--low-friction",
         action="store_true",
-        help="Enable near-zero terminal approvals and force TMPDIR to ${workspaceFolder}/.tmp.",
+        help="Backward-compatible alias for --profile low-friction.",
     )
     return parser.parse_args()
 
@@ -345,9 +376,15 @@ def main():
     """Main entry point."""
     args = parse_args()
 
+    profile = "low-friction" if args.low_friction else args.profile
+
     settings_payload = AUTO_APPROVE_SETTINGS
-    if args.low_friction:
+    if profile == "low-friction":
         settings_payload = _with_low_friction_settings(AUTO_APPROVE_SETTINGS)
+
+    print(f"🔐 Profile: {profile}")
+    if profile == "low-friction":
+        print("⚠️  High-trust mode enabled: near-zero command approvals are active.")
 
     print("🚀 VS Code Auto-Approve Setup")
     print("=" * 60)
@@ -361,10 +398,10 @@ def main():
             global_settings = get_vscode_settings_path()
             total_count += 1
             if args.check:
-                if verify_settings(global_settings, "Global VS Code settings", settings_payload):
+                if verify_settings(global_settings, "Global VS Code settings", settings_payload, profile):
                     success_count += 1
             else:
-                if update_settings(global_settings, "Global VS Code settings", settings_payload):
+                if update_settings(global_settings, "Global VS Code settings", settings_payload, profile):
                     success_count += 1
         except Exception as e:
             mode = "verify" if args.check else "update"
@@ -374,20 +411,20 @@ def main():
     backend_workspace = Path(__file__).parent.parent / ".vscode/settings.json"
     total_count += 1
     if args.check:
-        if verify_settings(backend_workspace, "Backend workspace", settings_payload):
+        if verify_settings(backend_workspace, "Backend workspace", settings_payload, profile):
             success_count += 1
     else:
-        if update_settings(backend_workspace, "Backend workspace", settings_payload):
+        if update_settings(backend_workspace, "Backend workspace", settings_payload, profile):
             success_count += 1
     
     # 3. Update client workspace settings
     client_workspace = Path(__file__).parent.parent / "_external/AI-Agent-Framework-Client/.vscode/settings.json"
     total_count += 1
     if args.check:
-        if verify_settings(client_workspace, "Client workspace", settings_payload):
+        if verify_settings(client_workspace, "Client workspace", settings_payload, profile):
             success_count += 1
     else:
-        if update_settings(client_workspace, "Client workspace", settings_payload):
+        if update_settings(client_workspace, "Client workspace", settings_payload, profile):
             success_count += 1
     
     # Summary

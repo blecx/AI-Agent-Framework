@@ -2,9 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "⚙️ Auto: Apply Low Approval",
+      "label": "⚙️ Auto: Apply Safe Approval",
       "type": "shell",
-      "command": "${workspaceFolder}/scripts/setup-low-approval.sh",
+      "command": "bash",
+      "args": ["${workspaceFolder}/scripts/setup-low-approval.sh", "safe"],
       "options": {
         "cwd": "${workspaceFolder}"
       },

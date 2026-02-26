@@ -107,12 +107,18 @@ Complete guide for local development of the ISO 21500 AI-Agent Framework.
 5. **(Optional) Sync VS Code auto-approve rules:**
 
    ```bash
+   ./scripts/setup-low-approval.sh safe
+   ./scripts/setup-low-approval.sh low-friction
+   ./scripts/setup-low-approval.sh safe  # rollback
    ./scripts/setup-autoapprove.sh --workspace-only
    ./scripts/setup-autoapprove.sh --check --workspace-only
    ```
 
-   - First command regenerates backend/client workspace auto-approve settings.
-   - Second command verifies no drift (non-zero exit if mismatches exist).
+   - `safe` is the default recommended profile.
+   - `low-friction` is explicit opt-in for high-trust workflows and broader command auto-approval.
+   - Re-run `safe` to roll back from low-friction mode.
+   - `setup-autoapprove.sh --workspace-only` regenerates backend/client workspace auto-approve settings.
+   - `setup-autoapprove.sh --check --workspace-only` verifies no drift (non-zero exit if mismatches exist).
 
 ---
 
