@@ -148,6 +148,17 @@ Use this when the parent issue exceeds the manual guardrail and needs a dedicate
 **Suggested title pattern:**
 - `split(#<parent>): slice <n> - planning/spec alignment for <feature>`
 
+**Hard rules for split issue quality (required):**
+- Never use placeholder wording like "issue A", "issue B", "slice 1", or "implementation slice" without naming the actual capability.
+- The title must include a concrete deliverable (component/file/domain), e.g. `... - add Context7 systemd installer validation checks`.
+- The body "In Scope" section must name specific artifacts to change (files/modules) and one measurable output.
+- The body "Validation Steps" must be focused to the slice and runnable as copy/paste commands.
+- If the slice is planning-only, explicitly state "no runtime/code-path behavior changes".
+
+**Rewrite rule for placeholders:**
+- If the source plan only has placeholder labels (A/B/C), replace them with concrete, user-visible work descriptions before creating the issue.
+- If concrete descriptions are not available, stop and request missing context instead of creating a generic split issue.
+
 **Minimal body scaffold:**
 ```markdown
 ## Goal / Problem Statement
