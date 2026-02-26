@@ -30,7 +30,7 @@ from agent_framework.openai import OpenAIChatClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agents.llm_client import LLMClientFactory
-from agents.tools import get_all_tools, get_compact_tools
+from agents.tools import get_all_tools, get_shell_only_tools
 
 
 class AutonomousWorkflowAgent:
@@ -56,6 +56,7 @@ class AutonomousWorkflowAgent:
         self.last_estimated_manual_minutes: Optional[int] = None
         self.last_guardrail_triggered: bool = False
         self.last_split_recommendation: str = ""
+        self.last_ux_feedback: str = ""
 
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
@@ -222,26 +223,32 @@ class AutonomousWorkflowAgent:
             async_client=review_client, model_id=review_model_id
         )
 
-        tools = get_compact_tools() if self.compact_mode else get_all_tools()
+        if self.compact_mode:
+            planning_tools = get_shell_only_tools()
+            execution_tools = get_shell_only_tools()
+        else:
+            tools = get_all_tools()
+            planning_tools = tools
+            execution_tools = tools
         print(f"🧱 Prompt mode: {'compact' if self.compact_mode else 'full'}")
 
         self.planning_agent = ChatAgent(
             chat_client=planning_chat,
             name="PlanningAgent",
             instructions=system_instructions,
-            tools=tools,
+            tools=planning_tools,
         )
         self.coding_agent = ChatAgent(
             chat_client=coding_chat,
             name="CodingAgent",
             instructions=system_instructions,
-            tools=tools,
+            tools=execution_tools,
         )
         self.review_agent = ChatAgent(
             chat_client=review_chat,
             name="ReviewAgent",
             instructions=system_instructions,
-            tools=tools,
+            tools=execution_tools,
         )
 
         self.planning_thread = self.planning_agent.get_new_thread()
@@ -257,12 +264,12 @@ class AutonomousWorkflowAgent:
     def _build_system_instructions(self) -> str:
         """Build token-budget-safe system instructions for the agent."""
         project_excerpt = (
-            self.project_instructions[:400]
+            self.project_instructions[:200]
             if self.project_instructions
             else "No project context"
         )
         workflow_excerpt = (
-            self.workflow_guide[:400] if self.workflow_guide else "No workflow guide"
+            self.workflow_guide[:200] if self.workflow_guide else "No workflow guide"
         )
         return f"""You are an autonomous software development agent resolving Issue #{self.issue_number}.
 
@@ -315,6 +322,11 @@ Mode:
                 print(chunk.text, end="", flush=True)
         print("\n")
         return "".join(chunks)
+
+    @property
+    def learning_writes_disabled(self) -> bool:
+        """Return True when learning writes are globally disabled via env."""
+        return os.environ.get("WORK_ISSUE_DISABLE_LEARNINGS", "0") == "1"
 
     @staticmethod
     def _is_ui_ux_scope(text: str) -> bool:
@@ -380,7 +392,7 @@ Mode:
     ) -> tuple[bool, Optional[int], str]:
         """Return guard decision for 20-minute manual-work planning limit."""
         estimate = self._extract_estimated_manual_minutes(plan_text)
-        max_minutes = 20
+        max_minutes = int(os.environ.get("WORK_ISSUE_MAX_MANUAL_MINUTES", "20"))
 
         if estimate is None:
             message = (
@@ -452,6 +464,7 @@ Then include:
             ux_prompt,
             f"{stage_label}: UX authority gate",
         )
+        self.last_ux_feedback = ux_text or ""
 
         first_line = (ux_text.strip().splitlines() or [""])[0].strip()
         decision = "PASS" if first_line == "UX_DECISION: PASS" else "CHANGES"
@@ -568,44 +581,48 @@ HANDOFF_TO_CODING:
 Begin now."""
 
             planning_thread = self.planning_agent.get_new_thread()
-            plan_text = await self._run_agent_stream(
+            full_plan_text = await self._run_agent_stream(
                 self.planning_agent,
                 planning_thread,
                 planning_prompt,
                 "Phase 1-2: Planning (Copilot/GitHub Models)",
             )
-            plan_text = self._truncate_for_prompt(plan_text)
+            plan_text = self._truncate_for_prompt(full_plan_text)
             self.last_plan_text = plan_text
 
             guard_ok, estimate, guard_message = self._evaluate_manual_plan_guardrail(
-                plan_text
+                full_plan_text
             )
             self.last_estimated_manual_minutes = estimate
             self.last_guardrail_triggered = not guard_ok
             print(f"🛡️  Planning guardrail: {guard_message}")
             if not guard_ok:
                 split_recommendation = self._build_split_recommendation(
-                    plan_text, estimate
+                    full_plan_text, estimate
                 )
                 self.last_split_recommendation = split_recommendation
                 print("\n🧩 Split recommendation (required before execution):")
                 print(split_recommendation)
                 execution_data["error"] = guard_message
                 execution_data["success"] = False
-                if not self.dry_run:
+                if not self.dry_run and not self.learning_writes_disabled:
                     await self._extract_and_update_learnings(execution_data)
                 return False
             self.last_split_recommendation = ""
 
             ui_ux_scope = self._is_ui_ux_scope(plan_text)
+            ux_required_changes = ""
             if ui_ux_scope:
                 ux_decision = await self._run_ux_gate(
                     context_text=self._truncate_for_prompt(plan_text, 2200),
                     stage_label="Phase 2.5",
                 )
                 if ux_decision != "PASS":
-                    raise RuntimeError(
-                        "UX authority gate blocked implementation after planning (UX_DECISION: CHANGES)"
+                    ux_required_changes = self._truncate_for_prompt(
+                        self.last_ux_feedback, 600
+                    )
+                    print(
+                        "⚠️  UX authority requested changes at Phase 2.5; carrying requirements into coding phase."
                     )
 
             coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
@@ -618,7 +635,10 @@ Important:
 - If dry-run is enabled, do NOT apply changes, commit, or create a PR.
 
 PLAN_FROM_PLANNING_AGENT:
-{self._truncate_for_prompt(plan_text)}
+{self._truncate_for_prompt(plan_text, 600)}
+
+UX_REQUIRED_CHANGES:
+{ux_required_changes if ux_required_changes else 'None'}
 
 At the end, include:
 CODING_SUMMARY:
@@ -708,7 +728,7 @@ Requirements:
             print("=" * 70)
 
             # GUARANTEED LEARNING: Extract and update knowledge base
-            if not self.dry_run:
+            if not self.dry_run and not self.learning_writes_disabled:
                 print("\n📚 Updating knowledge base with learnings...")
                 await self._extract_and_update_learnings(execution_data)
                 print("✅ Knowledge base updated\n")
@@ -721,8 +741,12 @@ Requirements:
 
             traceback.print_exc()
 
-            # Still try to learn from failures
-            if not self.dry_run:
+            # Optionally learn from failures (opt-in)
+            if (
+                not self.dry_run
+                and not self.learning_writes_disabled
+                and os.environ.get("WORK_ISSUE_RECORD_FAILURE_LEARNINGS") == "1"
+            ):
                 execution_data["error"] = str(e)
                 execution_data["success"] = False
                 await self._extract_and_update_learnings(execution_data)

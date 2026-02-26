@@ -285,6 +285,24 @@ def create_feature_branch(
 # ============================================================================
 
 
+def _resolve_working_directory(working_directory: str) -> str:
+    """Resolve working directory safely for subprocess execution."""
+    repo_root = Path(__file__).resolve().parent.parent
+    provided_path = Path(working_directory)
+
+    if provided_path.exists():
+        return working_directory
+
+    if working_directory in {"AI-Agent-Framework", "./AI-Agent-Framework"}:
+        return str(repo_root)
+
+    candidate = repo_root / working_directory
+    if candidate.exists():
+        return str(candidate)
+
+    return working_directory
+
+
 def run_command(
     command: Annotated[str, "Shell command to execute"],
     working_directory: Annotated[str, "Working directory for command"] = ".",
@@ -324,6 +342,7 @@ def run_command(
 
     # Run command and measure time
     start_time = time.time()
+    resolved_working_directory = _resolve_working_directory(working_directory)
 
     try:
         result = subprocess.run(
@@ -332,7 +351,7 @@ def run_command(
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
-            cwd=working_directory,
+            cwd=resolved_working_directory,
         )
 
         elapsed = time.time() - start_time
@@ -671,5 +690,24 @@ def get_compact_tools():
         git_commit,
         get_changed_files,
         create_feature_branch,
+        run_command,
+    ]
+
+
+def get_ultra_compact_tools():
+    """Get an ultra-compact tool subset for strict request-size limits."""
+    return [
+        fetch_github_issue,
+        read_file_content,
+        write_file_content,
+        list_directory_contents,
+        get_changed_files,
+        run_command,
+    ]
+
+
+def get_shell_only_tools():
+    """Get a shell-only tool subset for maximum prompt compactness."""
+    return [
         run_command,
     ]
