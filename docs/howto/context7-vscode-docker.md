@@ -42,10 +42,20 @@ chmod +x scripts/install-context7-systemd.sh
 ./scripts/install-context7-systemd.sh
 ```
 
+The installer creates and uses `/etc/default/context7-mcp` for optional
+`CONTEXT7_API_KEY` persistence at boot.
+
+If needed, edit it manually:
+
+```bash
+sudoedit /etc/default/context7-mcp
+```
+
 Check status:
 
 ```bash
 sudo systemctl status context7-mcp.service
+sudo systemctl cat context7-mcp.service | grep EnvironmentFile
 docker ps --filter name=context7-mcp
 ```
 
@@ -88,6 +98,7 @@ docker inspect -f '{{ .HostConfig.RestartPolicy.Name }}' context7-mcp
 # Verify boot persistence after systemd install
 systemctl is-enabled context7-mcp.service
 systemctl is-active context7-mcp.service
+sudo systemctl cat context7-mcp.service | grep EnvironmentFile
 ```
 
 Expected outcomes:
@@ -97,3 +108,4 @@ Expected outcomes:
 - `docker inspect ... context7-mcp` returns `unless-stopped`.
 - `systemctl is-enabled` returns `enabled`.
 - `systemctl is-active` returns `active`.
+- `systemctl cat ... | grep EnvironmentFile` shows `/etc/default/context7-mcp`.
