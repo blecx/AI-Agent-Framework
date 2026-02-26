@@ -8,6 +8,14 @@ from typing import List
 import re
 
 
+_NON_ACTIONABLE_STEP_PREFIXES = (
+    "current plan estimate:",
+    "estimated manual effort:",
+    "guardrail max:",
+    "parent estimated manual effort:",
+)
+
+
 @dataclass(frozen=True)
 class SplitIssueDraft:
     """Draft payload for a split child issue."""
@@ -36,7 +44,9 @@ def extract_split_steps(recommendation_text: str, max_items: int = 3) -> List[st
         elif numbered_match:
             candidate = numbered_match.group(1).strip()
 
-        if candidate:
+        if candidate and not candidate.lower().startswith(
+            _NON_ACTIONABLE_STEP_PREFIXES
+        ):
             steps.append(candidate)
 
     if max_items > 0:

@@ -53,3 +53,22 @@ def test_generate_split_issue_stubs_falls_back_when_empty():
 
     assert len(drafts) == 3
     assert "unknown" in drafts[0].body
+
+
+def test_generate_split_issue_stubs_ignores_estimate_metadata_bullet():
+    drafts = generate_split_issue_stubs(
+        parent_issue_number=434,
+        estimated_minutes=None,
+        recommendation_text=(
+            "- Current plan estimate: unknown minutes (guardrail max: 20).\n"
+            "- Create issue A for planning/spec alignment only (target <= 20 min manual work).\n"
+            "- Create issue B for implementation slice 1 with focused validation.\n"
+            "- Create issue C for follow-up slice and documentation updates."
+        ),
+        max_issues=3,
+    )
+
+    assert len(drafts) == 3
+    assert "Current plan estimate" not in drafts[0].title
+    assert "Create issue A" in drafts[0].title
+    assert "Current plan estimate" not in drafts[0].body

@@ -11,10 +11,10 @@ WORKFLOW (in order):
    - Repeat until everything is reconciled
 
 2. SELECTION PHASE (only after reconciliation):
-   - Query GitHub for open issues (source of truth)
-   - Use tracking file ONLY for metadata (estimated hours, phase, blockers)
-   - Select next issue based on priority, dependencies, and order
-   - Never hardcode "next issue" in docs (GitHub is source of truth)
+    - Query GitHub for open issues (source of truth)
+    - Use tracking file ONLY for metadata (estimated hours, phase, blockers)
+    - Select next issue based on priority, dependencies, and order
+    - Never hardcode "next issue" in docs (GitHub is source of truth)
 
 IMPORTANT: GitHub is the source of truth. Local markdown files are updated
 to match GitHub state, never the other way around.
@@ -56,12 +56,12 @@ STATUS_FILE = _resolve_step1_file(
 KNOWLEDGE_FILE = REPO_ROOT / ".issue-resolution-knowledge.json"
 
 # GitHub repository
-GITHUB_REPO = "blecx/AI-Agent-Framework-Client"
+GITHUB_REPO = "blecx/AI-Agent-Framework"
 
 # Configuration
 DEFAULT_TIMEOUT = 15  # seconds for individual operations
 MAX_RECONCILE_ITERATIONS = 3
-STEP1_ISSUE_RANGE = (24, 59)  # Issues 24-58
+STEP1_ISSUE_RANGE = (24, 59)  # Legacy Step-1 window (fallback to open issues if exhausted)
 
 
 class TimeoutError(Exception):
@@ -584,8 +584,8 @@ class IssueSelector:
         - Phase information
         - Sequential order (24, 25, 26... 58)
         """
-        # Define Step 1 issue range (from tracking file order)
-        issue_numbers = list(range(24, 59))  # Issues 24-58
+        # Define legacy Step 1 issue range (from tracking file order)
+        issue_numbers = list(range(*STEP1_ISSUE_RANGE))
         
         # Get issues from GitHub by specific numbers (no label assumptions!)
         github_issues = self.github.get_issues_by_numbers(issue_numbers)
@@ -633,7 +633,7 @@ class IssueSelector:
         content = self.tracking_file.read_text()
         
         # Parse each issue individually (much faster than complex regex)
-        for issue_num in range(24, 59):
+        for issue_num in range(*STEP1_ISSUE_RANGE):
             # Find issue header
             issue_match = re.search(rf'### Issue #{issue_num}:', content)
             if not issue_match:
@@ -826,7 +826,7 @@ def format_issue_recommendation(issue: Dict, context: str, knowledge: IssueKnowl
     
     output.append("🚀 Next Steps:")
     output.append("   1. Read the full issue on GitHub:")
-    output.append(f"      gh issue view {issue['number']} --repo blecx/AI-Agent-Framework-Client")
+    output.append(f"      gh issue view {issue['number']} --repo {GITHUB_REPO}")
     output.append("")
     output.append("   2. Create feature branch:")
     output.append(f"      git checkout main && git pull origin main")
