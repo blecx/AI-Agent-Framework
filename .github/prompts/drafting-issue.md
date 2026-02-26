@@ -140,3 +140,45 @@ python -m flake8 apps/api/
 - Link to related issues for context
 - Consider backwards compatibility
 - Note any environment variables or config needed
+
+## Split Slice: Planning/Spec Alignment (<= 20 min)
+
+Use this when the parent issue exceeds the manual guardrail and needs a dedicated planning slice.
+
+**Suggested title pattern:**
+- `split(#<parent>): slice <n> - planning/spec alignment for <feature>`
+
+**Minimal body scaffold:**
+```markdown
+## Goal / Problem Statement
+Deliver planning/spec alignment only, keeping manual execution within 20 minutes.
+
+## Scope
+### In Scope
+- Produce or refine acceptance criteria for the next execution slice.
+- Confirm constraints/dependencies and explicit out-of-scope items.
+
+### Out of Scope
+- Implementation changes outside planning/spec artifacts.
+
+## Acceptance Criteria
+- [ ] Next execution slice has clear, testable acceptance criteria.
+- [ ] Scope boundaries are explicit and reviewable.
+- [ ] No runtime/code-path behavior changes are introduced in this planning slice.
+
+## Validation Steps
+- [ ] Review resulting issue text for clarity and actionability.
+- [ ] Confirm size remains S (< 50 lines changed) for this planning slice.
+```
+
+**CLI grounding commands (safe for current GitHub API behavior):**
+```bash
+# Read issue fields without deprecated projectCards path
+gh issue view <issue-number> --repo blecx/AI-Agent-Framework \
+   --json number,title,body,state,url
+
+# Create follow-up split issue
+gh issue create --repo blecx/AI-Agent-Framework \
+   --title "split(#<parent>): slice <n> - planning/spec alignment for <feature>" \
+   --body-file .tmp/issue-<parent>-slice-<n>.md
+```
