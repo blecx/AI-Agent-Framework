@@ -7,3 +7,4 @@
 - [Issue Authoring for Planning Specs](issue-authoring.md)
 - [Publish Planning Issues](publish-issues.md)
 - [Local Token Setup for Agent Workflows](local-agent-token-setup.md)
+- [Auto-Approve Profiles (safe vs low-friction)](../development.md#optional-sync-vs-code-auto-approve-rules)

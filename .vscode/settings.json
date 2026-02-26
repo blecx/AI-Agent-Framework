@@ -122,16 +122,6 @@
       "approve": true,
       "matchCommandLine": true,
       "description": "Allow cd with command chaining"
-    },
-    "/^\\s*.+$/": {
-      "approve": true,
-      "matchCommandLine": true,
-      "description": "Low-friction mode: approve nearly all terminal command lines"
-    },
-    "/^\\s*.*(?:\\/tmp\\/|\\.tmp\\/|\\$TMPDIR|TMPDIR=).*$/": {
-      "approve": true,
-      "matchCommandLine": true,
-      "description": "Approve command lines that reference /tmp, .tmp, or TMPDIR"
     }
   },
   "mcp": {
