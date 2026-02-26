@@ -7,8 +7,8 @@ DRY_RUN=0
 NO_PUBLISH=0
 MAX_ISSUES_CAP=25
 
-ROADMAP_PATHS=("planning/issues/step-3.yml")
-ISSUE_LABEL="step:3"
+ROADMAP_PATHS=("planning/issues/step-4.yml")
+ISSUE_LABEL="step:4"
 BACKEND_REPO="blecx/AI-Agent-Framework"
 
 export WORK_ISSUE_COMPACT="${WORK_ISSUE_COMPACT:-1}"
@@ -26,8 +26,8 @@ Runs the backend-first roadmap loop:
 
 Options:
   --issue <n>              Run a single explicit backend issue.
-  --paths <glob> [...]     Roadmap spec paths (default: planning/issues/step-3.yml).
-  --label <name>           Label used for scoped selection (default: step:3).
+  --paths <glob> [...]     Roadmap spec paths (default: planning/issues/step-4.yml).
+  --label <name>           Label used for scoped selection (default: step:4).
   --max-issues <n>         Stop after n issues (default: 25).
   --dry-run                Select and print actions, do not execute work/merge/publish.
   --no-publish             Do not auto-publish roadmap issues.
@@ -37,6 +37,20 @@ Notes:
   - This command is backend-only and intended for roadmap-scoped issues.
   - Client work stays in its own loop.
 EOF
+}
+
+ensure_roadmap_specs_present() {
+  local p
+  for p in "${ROADMAP_PATHS[@]}"; do
+    if [[ "$p" == "planning/issues/step-4.yml" && ! -f "$p" ]]; then
+      echo "Roadmap spec missing: $p; generating deterministically..."
+      if [[ "$DRY_RUN" == "1" ]]; then
+        echo "[dry-run] Would run: ./.venv/bin/python scripts/generate_step_4_roadmap.py --out $p"
+      else
+        ./.venv/bin/python scripts/generate_step_4_roadmap.py --out "$p"
+      fi
+    fi
+  done
 }
 
 require_option_value() {
@@ -391,6 +405,7 @@ run_work_issue_with_retry() {
 
 cd "$ROOT_DIR"
 
+ensure_roadmap_specs_present
 resolve_backend_models
 validate_backend_issue_budget
 
