@@ -43,7 +43,7 @@ Please help me draft a complete issue including:
 6. **Docs Grounding (MCP + Context7)**:
    - List framework/library versions in scope (e.g., FastAPI 0.109.1, Pydantic 2.5.3)
    - Require Context7-backed doc retrieval for API/SDK behavior questions
-   - Specify: “Use repo conventions for architecture, use Context7 for external API correctness”
+   - Specify explicitly: “Use repo conventions for architecture and internal implementation details; use Context7 for external API/library correctness”
    - Include a short note for any unresolved version ambiguity
 
 7. **Estimated Size**: S (< 50 lines) / M (50-200 lines) / L (> 200 lines)
