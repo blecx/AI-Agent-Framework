@@ -10,3 +10,4 @@ services:
       - CONTEXT7_API_KEY=${CONTEXT7_API_KEY:-}
     ports:
       - "127.0.0.1:3010:3010"
+      - "127.0.0.1:3010:3010"
