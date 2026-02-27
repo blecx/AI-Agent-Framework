@@ -26,6 +26,15 @@ class OpenAIImagesGenerateParams:
     response_format: str = "b64_json"
 
 
+@dataclass(frozen=True)
+class MockImageResult:
+    ok: bool
+    message: str | None = None
+    b64_json: str | None = None
+    png_bytes: bytes | None = None
+    model: str = OpenAIImagesGenerateParams.model
+
+
 class OpenAIImagesClient:
     """Small OpenAI Images client wrapper.
 
@@ -62,6 +71,19 @@ class OpenAIImagesClient:
         params: OpenAIImagesGenerateParams | None = None,
     ) -> bytes:
         """Generate a single image and return PNG bytes."""
+        b64_json = self.generate_b64_json(prompt, params=params)
+        try:
+            return base64.b64decode(b64_json)
+        except Exception as exc:  # pragma: no cover
+            raise RuntimeError("Failed to decode image base64 payload") from exc
+
+    def generate_b64_json(
+        self,
+        prompt: str,
+        *,
+        params: OpenAIImagesGenerateParams | None = None,
+    ) -> str:
+        """Generate a single image and return the `b64_json` payload."""
         if not prompt or not prompt.strip():
             raise ValueError("prompt must be a non-empty string")
 
@@ -74,11 +96,39 @@ class OpenAIImagesClient:
             response_format=resolved.response_format,
         )
 
-        b64_json = _extract_first_b64_json(response)
-        try:
-            return base64.b64decode(b64_json)
-        except Exception as exc:  # pragma: no cover
-            raise RuntimeError("Failed to decode image base64 payload") from exc
+        return _extract_first_b64_json(response)
+
+
+def generate_mock_image(
+    prompt: str,
+    *,
+    api_key: str | None = None,
+    openai_client: Any | None = None,
+    params: OpenAIImagesGenerateParams | None = None,
+) -> MockImageResult:
+    """Issue #486 helper: generate an image and return a non-throwing result.
+
+    - Uses `OPENAI_API_KEY` if `api_key` is not provided.
+    - If no key is available, returns `ok=False` with an actionable message.
+    - Intended for unit tests to mock the OpenAI client (no network).
+    """
+    try:
+        client = OpenAIImagesClient(api_key=api_key, openai_client=openai_client)
+    except OpenAIAPIKeyMissingError as exc:
+        return MockImageResult(ok=False, message=str(exc))
+
+    try:
+        resolved = params or OpenAIImagesGenerateParams()
+        b64_json = client.generate_b64_json(prompt, params=resolved)
+        png_bytes = base64.b64decode(b64_json)
+        return MockImageResult(
+            ok=True,
+            b64_json=b64_json,
+            png_bytes=png_bytes,
+            model=resolved.model,
+        )
+    except Exception as exc:
+        return MockImageResult(ok=False, message=str(exc))
 
 
 def _extract_first_b64_json(response: Any) -> str:
