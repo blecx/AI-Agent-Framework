@@ -128,6 +128,30 @@ memory = {
 }
 ```
 
+### 4. Design Guidelines Skill
+
+**Name**: `design_guidelines`
+
+**Purpose**: Produce concise, deterministic Markdown guidelines after a UI mockup is approved.
+
+**Enable/Disable**: `SKILL_DESIGN_GUIDELINES_ENABLED=true|false`
+
+**Output (SkillResult.data)**:
+- `markdown` (string)
+- `platform` (string)
+
+### 5. Coder Change Plan Skill
+
+**Name**: `coder_change_plan`
+
+**Purpose**: Produce a coder-facing plan in Markdown plus a machine-parsable YAML stub suitable for turning into issue specs.
+
+**Enable/Disable**: `SKILL_CODER_CHANGE_PLAN_ENABLED=true|false`
+
+**Output (SkillResult.data)**:
+- `markdown` (string, includes a clearly delimited ` ```yaml ` block)
+- `yaml` (string)
+
 ## API Usage
 
 ### Base URL
@@ -163,9 +187,21 @@ GET /api/v1/agents/{agent_id}/skills
       "version": "1.0.0",
       "description": "Capture and learn from experience events",
       "enabled": true
+    },
+    {
+      "name": "design_guidelines",
+      "version": "1.0.0",
+      "description": "Generate concise UI design guidelines (deterministic markdown).",
+      "enabled": true
+    },
+    {
+      "name": "coder_change_plan",
+      "version": "1.0.0",
+      "description": "Generate a coder-facing change plan (markdown + YAML stubs).",
+      "enabled": true
     }
   ],
-  "total": 3
+  "total": 5
 }
 ```
 
