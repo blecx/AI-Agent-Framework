@@ -711,23 +711,30 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Check if we're in main repo or client repo
-if [ -f "$REPO_ROOT/_external/AI-Agent-Framework-Client/package.json" ]; then
-    # We're in main repo, work with client
-    CLIENT_REPO="$REPO_ROOT/_external/AI-Agent-Framework-Client"
-    MAIN_REPO="$REPO_ROOT"
-    info "Working with client repository: $CLIENT_REPO"
-elif [ -f "$REPO_ROOT/package.json" ]; then
-    # We're already in client repo
-    CLIENT_REPO="$REPO_ROOT"
-    MAIN_REPO="$(cd "$REPO_ROOT/../.." && pwd)"
-    info "Working in client repository"
+# Backend repo root is always REPO_ROOT when this script lives in backend.
+MAIN_REPO="$REPO_ROOT"
+CLIENT_REPO="$REPO_ROOT/_external/AI-Agent-Framework-Client"
+
+BACKEND_REPO_NAME="blecx/AI-Agent-Framework"
+CLIENT_REPO_NAME="blecx/AI-Agent-Framework-Client"
+
+WORK_REPO_DIR="$MAIN_REPO"
+WORK_REPO_NAME="$BACKEND_REPO_NAME"
+
+if gh issue view "$ISSUE_NUMBER" --repo "$BACKEND_REPO_NAME" --json number >/dev/null 2>&1; then
+    WORK_REPO_DIR="$MAIN_REPO"
+    WORK_REPO_NAME="$BACKEND_REPO_NAME"
+elif [ -f "$CLIENT_REPO/package.json" ] && gh issue view "$ISSUE_NUMBER" --repo "$CLIENT_REPO_NAME" --json number >/dev/null 2>&1; then
+    WORK_REPO_DIR="$CLIENT_REPO"
+    WORK_REPO_NAME="$CLIENT_REPO_NAME"
 else
-    error "Cannot determine repository structure"
+    error "Issue #$ISSUE_NUMBER not found in backend or client repo"
+    echo "Tried: $BACKEND_REPO_NAME and $CLIENT_REPO_NAME"
     exit 1
 fi
 
-cd "$CLIENT_REPO"
+info "Working repository: $WORK_REPO_NAME ($WORK_REPO_DIR)"
+cd "$WORK_REPO_DIR"
 
 section "Step 1: Validate PR and CI Status"
 
