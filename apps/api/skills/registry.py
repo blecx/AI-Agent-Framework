@@ -157,13 +157,24 @@ def _register_builtin_skills(registry: SkillRegistry) -> None:
     from .memory_skill import MemorySkill
     from .planning_skill import PlanningSkill
     from .learning_skill import LearningSkill
+    from .design_guidelines_skill import DesignGuidelinesSkill
+    from .coder_change_plan_skill import CoderChangePlanSkill
 
     # Check environment variables for skill enablement
     memory_enabled = os.getenv("SKILL_MEMORY_ENABLED", "true").lower() == "true"
     planning_enabled = os.getenv("SKILL_PLANNING_ENABLED", "true").lower() == "true"
     learning_enabled = os.getenv("SKILL_LEARNING_ENABLED", "true").lower() == "true"
 
+    design_guidelines_enabled = (
+        os.getenv("SKILL_DESIGN_GUIDELINES_ENABLED", "true").lower() == "true"
+    )
+    coder_change_plan_enabled = (
+        os.getenv("SKILL_CODER_CHANGE_PLAN_ENABLED", "true").lower() == "true"
+    )
+
     # Register built-in skills
     registry.register(MemorySkill(), enabled=memory_enabled)
     registry.register(PlanningSkill(), enabled=planning_enabled)
     registry.register(LearningSkill(), enabled=learning_enabled)
+    registry.register(DesignGuidelinesSkill(), enabled=design_guidelines_enabled)
+    registry.register(CoderChangePlanSkill(), enabled=coder_change_plan_enabled)
