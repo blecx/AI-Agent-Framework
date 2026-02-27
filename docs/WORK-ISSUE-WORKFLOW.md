@@ -80,6 +80,18 @@ Split issue creation mode:
 - Run `./scripts/work-issue.py --issue <n> --create-split-issues` to convert split recommendations into GitHub issue stubs.
 - `scripts/continue-backend.sh` runs with split-creation mode and pauses the loop when split issues are created.
 
+Split-step derivation order (deterministic):
+
+1. Parse actionable bullets/numbered items from `SPLIT_RECOMMENDATION`.
+2. If recommendation text is empty or non-actionable, fall back to parent issue `### In Scope` bullets.
+3. If neither source yields actionable steps, use the built-in 3-step default sequence.
+
+Notes:
+
+- Metadata bullets such as estimate/guardrail lines are filtered from split steps.
+- Generated drafts are persisted to `.tmp/issue-<n>-split-stubs.json` before `gh issue create` calls.
+- Existing open issues with matching titles are reused (dedup) instead of creating duplicates.
+
 ## Goal Archive Behavior (`.tmp`)
 
 `scripts/work-issue.py` now archives issue goals from `.tmp/*.md` automatically:
