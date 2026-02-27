@@ -602,6 +602,101 @@ Then include:
 
         return decision
 
+    def _run_mockups_phase(self, *, context_text: str) -> dict:
+        """Phase 2.6: generate UI mockups + lightweight prototype artifacts.
+
+        Writes evidence under `.tmp/mockups/issue-<n>/` when available.
+        If generation is unavailable (e.g., missing OPENAI_API_KEY), returns a
+        structured skip reason and continues workflow.
+        """
+        print(f"\n{'=' * 70}")
+        print("🖼️  Phase 2.6: Mockups + Prototype")
+        print(f"{'=' * 70}\n")
+
+        if self.dry_run:
+            message = "dry-run enabled; skipping mockup generation"
+            print(f"ℹ️  {message}")
+            return {"skipped": True, "reason": message}
+
+        try:
+            from agents.tooling.mockup_image_generation import (
+                generate_issue_mockup_artifacts,
+            )
+
+            # Keep prompt bounded and deterministic.
+            prompt = (
+                "Generate a single UI mockup image based on this issue plan. "
+                "Focus on clear layout, accessibility, and existing components.\n\n"
+                f"PLAN_CONTEXT:\n{self._truncate_for_prompt(context_text, 900)}\n"
+            )
+
+            mockup_result = generate_issue_mockup_artifacts(
+                self.issue_number,
+                prompt=prompt,
+                image_count=1,
+            )
+
+            if not mockup_result.ok:
+                print(f"⚠️  Mockup generation skipped: {mockup_result.message}")
+                return {
+                    "skipped": True,
+                    "reason": mockup_result.message,
+                    "output_dir": str(mockup_result.output_dir),
+                }
+
+            index_path = mockup_result.index_html_path
+            print(f"✅ Mockup artifacts written: {mockup_result.output_dir}")
+            if index_path:
+                print(f"🔗 Prototype: {index_path}")
+
+            # After mockup approval (PASS), generate designer outputs.
+            from apps.api.skills.registry import get_global_registry
+
+            registry = get_global_registry()
+            design_skill = registry.get("design_guidelines")
+            plan_skill = registry.get("coder_change_plan")
+
+            if design_skill:
+                dg = design_skill.execute(
+                    "workflow-agent",
+                    {"context": "Mockups generated", "platform": "web"},
+                )
+                if dg.success and isinstance(dg.data, dict) and dg.data.get("markdown"):
+                    out_path = mockup_result.output_dir / "design-guidelines.md"
+                    out_path.write_text(str(dg.data["markdown"]), encoding="utf-8")
+                    print(f"📝 Design guidelines: {out_path}")
+
+            if plan_skill:
+                cp = plan_skill.execute(
+                    "workflow-agent",
+                    {
+                        "feature": "Mockup implementation",
+                        "goal": "Implement approved mockups",
+                    },
+                )
+                if cp.success and isinstance(cp.data, dict):
+                    md = cp.data.get("markdown")
+                    yaml_stub = cp.data.get("yaml")
+                    if md:
+                        md_path = mockup_result.output_dir / "coder-change-plan.md"
+                        md_path.write_text(str(md), encoding="utf-8")
+                        print(f"📝 Coder change plan: {md_path}")
+                    if yaml_stub:
+                        yaml_path = mockup_result.output_dir / "coder-change-plan.yaml"
+                        yaml_path.write_text(str(yaml_stub), encoding="utf-8")
+                        print(f"🧾 YAML stub: {yaml_path}")
+
+            return {
+                "skipped": False,
+                "output_dir": str(mockup_result.output_dir),
+                "index_html": str(index_path) if index_path else None,
+                "images": [str(p) for p in mockup_result.image_paths],
+            }
+        except Exception as exc:
+            message = f"Mockup generation failed; continuing without images: {exc}"
+            print(f"⚠️  {message}")
+            return {"skipped": True, "reason": message}
+
     async def _build_workflow_packet(self) -> str:
         """Build a compact workflow packet for phase execution context (phase-2 integration)."""
         print(f"\n{'=' * 70}")
@@ -751,11 +846,13 @@ Begin now."""
 
             ui_ux_scope = self._is_ui_ux_scope(plan_text)
             ux_required_changes = ""
+            ux_gate_passed = True
             if ui_ux_scope:
                 ux_decision = await self._run_ux_gate(
                     context_text=self._truncate_for_prompt(plan_text, 2200),
                     stage_label="Phase 2.5",
                 )
+                ux_gate_passed = ux_decision == "PASS"
                 if ux_decision != "PASS":
                     ux_required_changes = self._truncate_for_prompt(
                         self.last_ux_feedback, 600
@@ -763,6 +860,11 @@ Begin now."""
                     print(
                         "⚠️  UX authority requested changes at Phase 2.5; carrying requirements into coding phase."
                     )
+
+            if ui_ux_scope and ux_gate_passed:
+                execution_data["mockups_phase"] = self._run_mockups_phase(
+                    context_text=plan_text
+                )
 
             coding_prompt = f"""Phase 3-4 ONLY (Implementation + Testing) for Issue #{self.issue_number}.
 

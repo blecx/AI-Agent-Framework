@@ -176,6 +176,14 @@ bash scripts/archive-goals.sh
 
 **Goal:** Understand issue and create implementation plan
 
+### Autonomous Subphases (2.5 → 2.6)
+
+When running via the autonomous agent (`scripts/work-issue.py`), Phase 2 includes two additional subphases for UI-impacting work:
+
+- **Phase 2.5 (UX gate):** consults the UX authority and may block or require changes.
+- **Phase 2.6 (Mockups + prototype):** generates UI mockup artifacts under `.tmp/mockups/issue-<n>/` (images + `index.html`) and persists designer outputs when available.
+   - If image generation is unavailable (e.g., missing `OPENAI_API_KEY`), the workflow continues but records a clear skip reason.
+
 **Steps:**
 
 1. **Read Full Issue**
