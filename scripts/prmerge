@@ -293,8 +293,10 @@ detect_issue_type() {
         echo "docs"
     else
         # Check file patterns if title is ambiguous
-        local doc_count=$(echo "$files_changed" | grep -c '\.md$\|/docs/' || echo "0")
-        local test_count=$(echo "$files_changed" | grep -c 'test\|spec' || echo "0")
+        # NOTE: `grep -c` prints "0" even when it exits non-zero (no matches).
+        # Avoid `|| echo 0` which would append a second "0" and break numeric comparisons.
+        local doc_count=$(echo "$files_changed" | grep -cE '\.md$|/docs/' || true)
+        local test_count=$(echo "$files_changed" | grep -cE 'test|spec' || true)
         local total_files=$(echo "$files_changed" | wc -l)
         
         # If >50% doc files, it's a docs issue
