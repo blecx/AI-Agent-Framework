@@ -205,6 +205,15 @@ curl http://localhost:8000/health
 
 ## 6) What to read next
 
+## 7) Optional: Mockup generation setup
+
+The workflow mockup tool uses OpenAI Images and is optional.
+
+- Set `OPENAI_API_KEY` in your environment (do not commit secrets).
+- Entry point: `agents.tools.generate_mockup_artifacts(issue_number, prompt, image_count=1)`.
+- Artifacts are written to `.tmp/mockups/issue-<n>/` and include an `index.html` preview.
+- Without the key, the tool returns a graceful, actionable message.
+
 - Full install + Docker image workflow + local setup + LLM deep dive:
   - [docs/howto/install-and-llm-setup.md](docs/howto/install-and-llm-setup.md)
 - Development workflow:
