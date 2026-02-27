@@ -55,6 +55,30 @@ def test_generate_split_issue_stubs_falls_back_when_empty():
     assert "unknown" in drafts[0].body
 
 
+def test_generate_split_issue_stubs_uses_parent_in_scope_when_recommendation_empty():
+    parent_issue_body = """
+## Scope
+### In Scope
+- First PR: Refactor sidebar grouping/order logic, update type/state, and confirm with basic visual distinction.
+- Keep implementation and validation within a small, reviewable slice.
+
+### Out of Scope
+- Work not directly required for this split slice.
+"""
+
+    drafts = generate_split_issue_stubs(
+        parent_issue_number=440,
+        estimated_minutes=60,
+        recommendation_text="",
+        parent_issue_body=parent_issue_body,
+        max_issues=3,
+    )
+
+    assert len(drafts) == 1
+    assert "Refactor sidebar grouping/order logic" in drafts[0].title
+    assert "First PR: Refactor sidebar grouping/order logic" in drafts[0].body
+
+
 def test_generate_split_issue_stubs_ignores_estimate_metadata_bullet():
     drafts = generate_split_issue_stubs(
         parent_issue_number=434,
@@ -72,3 +96,23 @@ def test_generate_split_issue_stubs_ignores_estimate_metadata_bullet():
     assert "Current plan estimate" not in drafts[0].title
     assert "Create issue A" in drafts[0].title
     assert "Current plan estimate" not in drafts[0].body
+
+
+def test_generate_split_issue_stubs_filters_non_actionable_scope_bullets():
+    parent_issue_body = """
+## Scope
+### In Scope
+- Keep implementation and validation within a small, reviewable slice.
+- Work not directly required for this split slice.
+"""
+
+    drafts = generate_split_issue_stubs(
+        parent_issue_number=500,
+        estimated_minutes=None,
+        recommendation_text="",
+        parent_issue_body=parent_issue_body,
+        max_issues=3,
+    )
+
+    assert len(drafts) == 3
+    assert "Create foundational planning/spec split" in drafts[0].title

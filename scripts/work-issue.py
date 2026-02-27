@@ -235,10 +235,12 @@ Token Budget Mode:
             and args.create_split_issues
             and getattr(agent, "last_guardrail_triggered", False)
         ):
+            parent_issue_body = _fetch_issue_body_via_gh(args.issue)
             split_drafts = generate_split_issue_stubs(
                 parent_issue_number=args.issue,
                 estimated_minutes=getattr(agent, "last_estimated_manual_minutes", None),
                 recommendation_text=getattr(agent, "last_split_recommendation", ""),
+                parent_issue_body=parent_issue_body,
                 max_issues=max(1, args.split_issue_limit),
             )
             _persist_split_drafts(args.issue, split_drafts)
@@ -320,6 +322,30 @@ def _persist_split_drafts(issue_number: int, drafts: Sequence) -> None:
         for draft in drafts
     ]
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _fetch_issue_body_via_gh(issue_number: int) -> str:
+    """Fetch issue body text via gh CLI for split-step derivation."""
+    from agents.tooling.gh_throttle import run_gh_throttled
+
+    cmd = [
+        "gh",
+        "issue",
+        "view",
+        str(issue_number),
+        "--json",
+        "body",
+        "--jq",
+        ".body",
+    ]
+    repo = (os.environ.get("WORK_ISSUE_REPO") or "").strip()
+    if repo:
+        cmd.extend(["--repo", repo])
+
+    result = run_gh_throttled(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        return ""
+    return (result.stdout or "").strip()
 
 
 def _create_split_issues_via_gh(
