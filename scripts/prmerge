@@ -420,7 +420,12 @@ validate_pr_template() {
             echo "  ⚠️  $warn"
         done
         echo ""
-        read -p "Continue despite warnings? (y/N): " continue_despite_warnings
+        if [ "${PRMERGE_ASSUME_YES:-}" = "1" ]; then
+            continue_despite_warnings="y"
+            info "PRMERGE_ASSUME_YES=1: continuing despite warnings"
+        else
+            read -p "Continue despite warnings? (y/N): " continue_despite_warnings
+        fi
         if [[ ! "$continue_despite_warnings" =~ ^[Yy]$ ]]; then
             info "Merge cancelled. Please fix PR description and re-run prmerge."
             return 1
@@ -723,16 +728,119 @@ CLIENT_REPO_NAME="blecx/AI-Agent-Framework-Client"
 WORK_REPO_DIR="$MAIN_REPO"
 WORK_REPO_NAME="$BACKEND_REPO_NAME"
 
-if gh issue view "$ISSUE_NUMBER" --repo "$BACKEND_REPO_NAME" --json number >/dev/null 2>&1; then
-    WORK_REPO_DIR="$MAIN_REPO"
-    WORK_REPO_NAME="$BACKEND_REPO_NAME"
-elif [ -f "$CLIENT_REPO/package.json" ] && gh issue view "$ISSUE_NUMBER" --repo "$CLIENT_REPO_NAME" --json number >/dev/null 2>&1; then
-    WORK_REPO_DIR="$CLIENT_REPO"
-    WORK_REPO_NAME="$CLIENT_REPO_NAME"
-else
-    error "Issue #$ISSUE_NUMBER not found in backend or client repo"
-    echo "Tried: $BACKEND_REPO_NAME and $CLIENT_REPO_NAME"
-    exit 1
+get_issue_state() {
+    local repo="$1"
+    gh issue view "$ISSUE_NUMBER" --repo "$repo" --json state --jq '.state' 2>/dev/null || true
+}
+
+find_open_pr_for_issue() {
+    local repo="$1"
+    local issue_number="$2"
+
+    # Heuristic: look for an OPEN PR whose title OR body references the issue number.
+    # Common patterns: "Fixes #123", "Closes #123", "Resolves #123".
+    # Keep this fast and resilient: any gh/jq failure returns empty.
+    gh pr list \
+        --repo "$repo" \
+        --state open \
+        --limit 200 \
+        --json number,title,body \
+        --jq ".[]
+            | select(
+                (((.title // \"\") | test(\"#${issue_number}([^0-9]|$)\")) or (((.title // \"\") | test(\"[Ii]ssue[[:space:]]*#?${issue_number}([^0-9]|$)\"))))
+                or
+                (((.body // \"\") | ascii_downcase) | test(\"(fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)[[:space:]]*:?[[:space:]]*#?${issue_number}([^0-9]|$)\"))
+            )
+            | .number" \
+        2>/dev/null \
+        | head -1 \
+        || true
+}
+
+# Explicit repo override for ambiguous issue numbers (exists in both repos).
+# Values:
+#   PRMERGE_REPO=backend|client
+#   PRMERGE_REPO=blecx/AI-Agent-Framework|blecx/AI-Agent-Framework-Client
+REPO_OVERRIDE_SET=""
+if [ -n "${PRMERGE_REPO:-}" ]; then
+    case "$PRMERGE_REPO" in
+        backend|"$BACKEND_REPO_NAME")
+            WORK_REPO_DIR="$MAIN_REPO"
+            WORK_REPO_NAME="$BACKEND_REPO_NAME"
+            REPO_OVERRIDE_SET="1"
+            info "PRMERGE_REPO override: selecting backend"
+            ;; 
+        client|"$CLIENT_REPO_NAME")
+            if [ ! -f "$CLIENT_REPO/package.json" ]; then
+                error "PRMERGE_REPO=client requested, but client repo not found at: $CLIENT_REPO"
+                exit 1
+            fi
+            WORK_REPO_DIR="$CLIENT_REPO"
+            WORK_REPO_NAME="$CLIENT_REPO_NAME"
+            REPO_OVERRIDE_SET="1"
+            info "PRMERGE_REPO override: selecting client"
+        ;;
+        *)
+            error "Invalid PRMERGE_REPO value: $PRMERGE_REPO"
+            echo "Allowed: backend|client|$BACKEND_REPO_NAME|$CLIENT_REPO_NAME"
+            exit 1
+            ;;
+    esac
+fi
+
+BACKEND_ISSUE_STATE=""
+CLIENT_ISSUE_STATE=""
+if [ -z "$REPO_OVERRIDE_SET" ]; then
+    BACKEND_ISSUE_STATE="$(get_issue_state "$BACKEND_REPO_NAME")"
+    if [ -f "$CLIENT_REPO/package.json" ]; then
+        CLIENT_ISSUE_STATE="$(get_issue_state "$CLIENT_REPO_NAME")"
+    fi
+fi
+
+if [ -z "$REPO_OVERRIDE_SET" ]; then
+    if [ -n "$BACKEND_ISSUE_STATE" ] && [ -n "$CLIENT_ISSUE_STATE" ]; then
+        # Both repos have this issue number. Prefer the one that is still OPEN.
+        if [ "$CLIENT_ISSUE_STATE" = "OPEN" ] && [ "$BACKEND_ISSUE_STATE" != "OPEN" ]; then
+            WORK_REPO_DIR="$CLIENT_REPO"
+            WORK_REPO_NAME="$CLIENT_REPO_NAME"
+            warning "Issue #$ISSUE_NUMBER exists in both repos; selecting client because it is OPEN (backend is $BACKEND_ISSUE_STATE)"
+        elif [ "$BACKEND_ISSUE_STATE" = "OPEN" ] && [ "$CLIENT_ISSUE_STATE" != "OPEN" ]; then
+            WORK_REPO_DIR="$MAIN_REPO"
+            WORK_REPO_NAME="$BACKEND_REPO_NAME"
+            warning "Issue #$ISSUE_NUMBER exists in both repos; selecting backend because it is OPEN (client is $CLIENT_ISSUE_STATE)"
+        else
+            # Both OPEN or both CLOSED: try to disambiguate by presence of an open PR.
+            BACKEND_OPEN_PR="$(find_open_pr_for_issue "$BACKEND_REPO_NAME" "$ISSUE_NUMBER")"
+            CLIENT_OPEN_PR=""
+            if [ -f "$CLIENT_REPO/package.json" ]; then
+                CLIENT_OPEN_PR="$(find_open_pr_for_issue "$CLIENT_REPO_NAME" "$ISSUE_NUMBER")"
+            fi
+
+            if [ -n "$CLIENT_OPEN_PR" ] && [ -z "$BACKEND_OPEN_PR" ]; then
+                WORK_REPO_DIR="$CLIENT_REPO"
+                WORK_REPO_NAME="$CLIENT_REPO_NAME"
+                warning "Issue #$ISSUE_NUMBER exists in both repos (backend=$BACKEND_ISSUE_STATE, client=$CLIENT_ISSUE_STATE); selecting client due to open PR #$CLIENT_OPEN_PR"
+            elif [ -n "$BACKEND_OPEN_PR" ] && [ -z "$CLIENT_OPEN_PR" ]; then
+                WORK_REPO_DIR="$MAIN_REPO"
+                WORK_REPO_NAME="$BACKEND_REPO_NAME"
+                warning "Issue #$ISSUE_NUMBER exists in both repos (backend=$BACKEND_ISSUE_STATE, client=$CLIENT_ISSUE_STATE); selecting backend due to open PR #$BACKEND_OPEN_PR"
+            else
+                WORK_REPO_DIR="$MAIN_REPO"
+                WORK_REPO_NAME="$BACKEND_REPO_NAME"
+                warning "Issue #$ISSUE_NUMBER exists in both repos (backend=$BACKEND_ISSUE_STATE, client=$CLIENT_ISSUE_STATE); defaulting to backend"
+            fi
+        fi
+    elif [ -n "$BACKEND_ISSUE_STATE" ]; then
+        WORK_REPO_DIR="$MAIN_REPO"
+        WORK_REPO_NAME="$BACKEND_REPO_NAME"
+    elif [ -n "$CLIENT_ISSUE_STATE" ]; then
+        WORK_REPO_DIR="$CLIENT_REPO"
+        WORK_REPO_NAME="$CLIENT_REPO_NAME"
+    else
+        error "Issue #$ISSUE_NUMBER not found in backend or client repo"
+        echo "Tried: $BACKEND_REPO_NAME and $CLIENT_REPO_NAME"
+        exit 1
+    fi
 fi
 
 info "Working repository: $WORK_REPO_NAME ($WORK_REPO_DIR)"
@@ -768,10 +876,20 @@ if [ -z "$PR_NUMBER" ]; then
     fi
 
     if [ -z "$PR_NUMBER" ]; then
-        warning "No PR found for Issue #$ISSUE_NUMBER. Nothing to merge."
-        info "Create a PR titled like: 'issue #$ISSUE_NUMBER: <short description>' and re-run."
-        info "Optional override: set PRMERGE_PR_NUMBER=<pr> if you need to merge a PR with a non-standard title."
-        exit 0
+        info "No PR found by title; searching open PR bodies for issue references (Fixes/Closes/Resolves)..."
+        PR_NUMBER=$(gh pr list --state open --limit 200 --json number,title,body --jq ".[]
+            | select(
+                (((.title // \"\") | test(\"#${ISSUE_NUMBER}([^0-9]|$)\")) or (((.title // \"\") | test(\"[Ii]ssue[[:space:]]*#?${ISSUE_NUMBER}([^0-9]|$)\"))))
+                or
+                (((.body // \"\") | ascii_downcase) | test(\"(fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)[[:space:]]*:?[[:space:]]*#?${ISSUE_NUMBER}([^0-9]|$)\"))
+            )
+            | .number" | head -1 2>/dev/null)
+
+        if [ -z "$PR_NUMBER" ]; then
+            warning "No PR found for Issue #$ISSUE_NUMBER. Nothing to merge."
+            info "Either title the PR with '#$ISSUE_NUMBER', include 'Fixes #$ISSUE_NUMBER' in the body, or set PRMERGE_PR_NUMBER=<pr>."
+            exit 0
+        fi
     fi
 fi
 
@@ -921,7 +1039,12 @@ else
     echo "  - Validate acceptance criteria are met"
     echo ""
     
-    read -p "Has the PR been reviewed and approved? (y/N): " pr_approved
+    if [ "${PRMERGE_ASSUME_YES:-}" = "1" ]; then
+        pr_approved="y"
+        info "PRMERGE_ASSUME_YES=1: skipping interactive review confirmation"
+    else
+        read -p "Has the PR been reviewed and approved? (y/N): " pr_approved
+    fi
     if [[ ! "$pr_approved" =~ ^[Yy]$ ]]; then
         info "Please complete review before merging"
         exit 0
@@ -938,17 +1061,27 @@ else
         echo "  B) Temporarily disable branch protection"
         echo "  C) Manual git merge (bypass GitHub PR)"
         echo ""
+        if [ "${PRMERGE_ASSUME_YES:-}" = "1" ]; then
+            error "PR is BLOCKED and PRMERGE_ASSUME_YES=1 is set; refusing to guess an unblock option"
+            echo "Resolve branch protection in GitHub first: $PR_URL"
+            exit 1
+        fi
+
         read -p "Which option? (A/B/C): " unblock_option
         
         case "${unblock_option^^}" in
             A)
                 info "Please approve the PR at: $PR_URL"
-                read -p "Press Enter after approving..."
+                if [ "${PRMERGE_ASSUME_YES:-}" != "1" ]; then
+                    read -p "Press Enter after approving..."
+                fi
                 ;;
             B)
                 warning "Temporarily disabling branch protection"
                 warning "Remember to re-enable it after merge!"
-                read -p "Press Enter after disabling protection..."
+                if [ "${PRMERGE_ASSUME_YES:-}" != "1" ]; then
+                    read -p "Press Enter after disabling protection..."
+                fi
                 ;;
             C)
                 info "Performing manual git merge..."
@@ -1101,9 +1234,15 @@ if [ -n "$ACTUAL_HOURS" ]; then
     # Optional learning prompts (can be skipped)
     echo ""
     info "Optional: Provide learning data for future estimates (press Enter to skip)"
-    read -p "Unexpected challenges encountered (optional): " CHALLENGES
-    read -p "Main time sink if any (optional): " TIME_SINK
-    read -p "Key learning/insight (optional): " LEARNING
+    if [ "${PRMERGE_ASSUME_YES:-}" = "1" ]; then
+        CHALLENGES=""
+        TIME_SINK=""
+        LEARNING=""
+    else
+        read -p "Unexpected challenges encountered (optional): " CHALLENGES
+        read -p "Main time sink if any (optional): " TIME_SINK
+        read -p "Key learning/insight (optional): " LEARNING
+    fi
     
     # Build notes string
     NOTES="Completed via prmerge - Merge: $MERGE_COMMIT_SHORT"
@@ -1222,7 +1361,11 @@ echo ""
 run_next_pr="n"
 if [ -t 0 ]; then
     # Interactive shell: ask the user.
-    read -p "Run './next-pr' now? (Y/n): " run_next_pr || run_next_pr="n"
+    if [ "${PRMERGE_ASSUME_YES:-}" = "1" ]; then
+        run_next_pr="n"
+    else
+        read -p "Run './next-pr' now? (Y/n): " run_next_pr || run_next_pr="n"
+    fi
 fi
 
 if [[ ! "$run_next_pr" =~ ^[Nn]$ ]]; then
