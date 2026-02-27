@@ -326,9 +326,27 @@ def _create_split_issues_via_gh(
     issue_number: int, drafts: Sequence, repo: str
 ) -> list[str]:
     """Create split issues via gh CLI while skipping duplicate titles."""
+    min_interval_seconds = int(os.environ.get("GH_MIN_INTERVAL_SECONDS", "1") or "1")
+    last_call_ts: float | None = None
+
+    def gh_slow(args: list[str]) -> subprocess.CompletedProcess[str]:
+        nonlocal last_call_ts
+        if min_interval_seconds > 0 and last_call_ts is not None:
+            elapsed = time.monotonic() - last_call_ts
+            remaining = min_interval_seconds - elapsed
+            if remaining > 0:
+                time.sleep(remaining)
+        last_call_ts = time.monotonic()
+        return subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     created: list[str] = []
     for draft in drafts:
-        exists = subprocess.run(
+        exists = gh_slow(
             [
                 "gh",
                 "issue",
@@ -344,16 +362,13 @@ def _create_split_issues_via_gh(
                 "--jq",
                 ".[0].number // empty",
             ],
-            capture_output=True,
-            text=True,
-            check=False,
         )
         existing_number = (exists.stdout or "").strip()
         if existing_number:
             created.append(f"#{existing_number} (existing) {draft.title}")
             continue
 
-        result = subprocess.run(
+        result = gh_slow(
             [
                 "gh",
                 "issue",
@@ -365,9 +380,6 @@ def _create_split_issues_via_gh(
                 "--body",
                 draft.body,
             ],
-            capture_output=True,
-            text=True,
-            check=False,
         )
         if result.returncode != 0:
             print(
