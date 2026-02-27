@@ -1203,7 +1203,12 @@ echo "  3. Merge (squash) when ready"
 echo ""
 
 # Offer to run next-pr
-read -p "Run './next-pr' now? (Y/n): " run_next_pr
+run_next_pr="n"
+if [ -t 0 ]; then
+    # Interactive shell: ask the user.
+    read -p "Run './next-pr' now? (Y/n): " run_next_pr || run_next_pr="n"
+fi
+
 if [[ ! "$run_next_pr" =~ ^[Nn]$ ]]; then
     echo ""
     if [ -f "./scripts/next-pr.py" ]; then
