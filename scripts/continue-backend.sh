@@ -15,6 +15,31 @@ export WORK_ISSUE_COMPACT="${WORK_ISSUE_COMPACT:-1}"
 export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-1800}"
 export LLM_CONFIG_PATH="${LLM_CONFIG_PATH:-configs/llm.workflow.json}"
 
+# Throttling knobs (reduce GitHub Models request bursts).
+export MODEL_RESOLVE_TTL_SECONDS="${MODEL_RESOLVE_TTL_SECONDS:-1800}"
+export WORK_ISSUE_RATE_LIMIT_RETRIES="${WORK_ISSUE_RATE_LIMIT_RETRIES:-${WORK_ISSUE_RATE_LIMIT_ATTEMPTS:-4}}"
+export WORK_ISSUE_RATE_LIMIT_DELAY="${WORK_ISSUE_RATE_LIMIT_DELAY:-${WORK_ISSUE_RATE_LIMIT_DELAY_SECONDS:-120}}"
+
+# GitHub API pacing (gh CLI). Default is conservative to avoid secondary rate limits.
+export GH_MIN_INTERVAL_SECONDS="${GH_MIN_INTERVAL_SECONDS:-1}"
+
+__GH_LAST_CALL_TS=""
+gh_slow() {
+  local min_interval
+  min_interval="${GH_MIN_INTERVAL_SECONDS:-0}"
+  if [[ -n "${__GH_LAST_CALL_TS}" && "${min_interval}" != "0" ]]; then
+    local now
+    now="$(date +%s)"
+    local elapsed
+    elapsed=$((now - __GH_LAST_CALL_TS))
+    if [[ "$elapsed" -lt "$min_interval" ]]; then
+      sleep "$((min_interval - elapsed))"
+    fi
+  fi
+  __GH_LAST_CALL_TS="$(date +%s)"
+  command gh "$@"
+}
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
@@ -200,7 +225,7 @@ PY
   fi
 
   local existing
-  existing="$(GH_PAGER=cat gh label list --repo "$BACKEND_REPO" --limit 1000 --json name --jq '.[].name')"
+  existing="$(GH_PAGER=cat gh_slow label list --repo "$BACKEND_REPO" --limit 1000 --json name --jq '.[].name')"
 
   while IFS= read -r label; do
     [[ -z "$label" ]] && continue
@@ -208,7 +233,7 @@ PY
       if [[ "$DRY_RUN" == "1" ]]; then
         echo "[dry-run] Would create label in $BACKEND_REPO: $label"
       else
-        GH_PAGER=cat gh label create "$label" --repo "$BACKEND_REPO" --color BFD4F2 --description "Roadmap scoped label" >/dev/null
+        GH_PAGER=cat gh_slow label create "$label" --repo "$BACKEND_REPO" --color BFD4F2 --description "Roadmap scoped label" >/dev/null
         echo "Created missing backend label: $label"
       fi
     fi
@@ -216,6 +241,54 @@ PY
 }
 
 resolve_backend_models() {
+  local cache_path
+  cache_path=".tmp/llm.workflow.resolved.json"
+
+  if [[ -f "$cache_path" && "${MODEL_RESOLVE_TTL_SECONDS:-0}" -gt 0 ]]; then
+    local is_fresh
+    is_fresh="$(./.venv/bin/python - <<'PY'
+import os
+import time
+from pathlib import Path
+
+ttl = int(os.environ.get("MODEL_RESOLVE_TTL_SECONDS", "0") or "0")
+path = Path(".tmp/llm.workflow.resolved.json")
+if ttl <= 0 or not path.exists():
+    print("0")
+else:
+    age = time.time() - path.stat().st_mtime
+    print("1" if age < ttl else "0")
+PY
+)"
+
+    if [[ "$is_fresh" == "1" ]]; then
+      export LLM_CONFIG_PATH="$cache_path"
+
+      local planning_model
+      local coding_model
+      planning_model="$(./.venv/bin/python - <<'PY'
+import json
+from pathlib import Path
+cfg = json.loads(Path(".tmp/llm.workflow.resolved.json").read_text(encoding="utf-8"))
+print(cfg["roles"]["planning"]["model"])
+PY
+)"
+      coding_model="$(./.venv/bin/python - <<'PY'
+import json
+from pathlib import Path
+cfg = json.loads(Path(".tmp/llm.workflow.resolved.json").read_text(encoding="utf-8"))
+print(cfg["roles"]["coding"]["model"])
+PY
+)"
+
+      if [[ "$planning_model" != openai/gpt-5* ]]; then
+        echo "⚠️  GPT-5 planning models unavailable on endpoint; using cached fallback planning model: $planning_model"
+      fi
+      echo "Model policy (cached): planning=$planning_model coding=$coding_model"
+      return 0
+    fi
+  fi
+
   local resolved
   resolved="$(./.venv/bin/python - <<'PY'
 import json
@@ -338,8 +411,8 @@ validate_backend_issue_budget() {
 }
 
 select_next_backend_issue() {
-  local cmd=(
-    gh issue list
+  local args=(
+    issue list
     --repo "$BACKEND_REPO"
     --state open
     --limit 200
@@ -348,8 +421,8 @@ select_next_backend_issue() {
   )
 
   if [[ -n "$ISSUE_LABEL" ]]; then
-    cmd=(
-      gh issue list
+    args=(
+      issue list
       --repo "$BACKEND_REPO"
       --state open
       --label "$ISSUE_LABEL"
@@ -359,13 +432,13 @@ select_next_backend_issue() {
     )
   fi
 
-  GH_PAGER=cat "${cmd[@]}"
+  GH_PAGER=cat gh_slow "${args[@]}"
 }
 
 run_work_issue_with_retry() {
   local issue="$1"
-  local attempts=4
-  local delay=30
+  local attempts="${WORK_ISSUE_RATE_LIMIT_RETRIES:-4}"
+  local delay="${WORK_ISSUE_RATE_LIMIT_DELAY:-120}"
   local attempt=1
 
   while [[ "$attempt" -le "$attempts" ]]; do

@@ -18,6 +18,7 @@ import asyncio
 import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -160,6 +161,129 @@ class AutonomousWorkflowAgent:
 
         summary = "\n\n".join([p for p in parts if p]).strip()
         return summary[:2500]
+
+    def _get_repo_override(self) -> Optional[str]:
+        repo = (os.environ.get("WORK_ISSUE_REPO") or "").strip()
+        return repo or None
+
+    def _fetch_issue_context_for_prompt(self) -> str:
+        """Fetch issue details via gh CLI and format for inclusion in prompts.
+
+        This avoids relying on the LLM to call tools correctly during planning and
+        reduces repeat GitHub API calls across phases.
+        """
+
+        cmd = [
+            "gh",
+            "issue",
+            "view",
+            str(self.issue_number),
+            "--json",
+            "number,title,body,labels,state,url",
+        ]
+        if repo := self._get_repo_override():
+            cmd.extend(["--repo", repo])
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except Exception as exc:
+            return f"ISSUE_CONTEXT_FETCH_ERROR: {exc}"
+
+        if result.returncode != 0:
+            details = (result.stderr or result.stdout or "").strip()
+            return f"ISSUE_CONTEXT_FETCH_ERROR: {details or 'gh issue view failed'}"
+
+        try:
+            data = json.loads(result.stdout)
+        except Exception as exc:
+            return f"ISSUE_CONTEXT_PARSE_ERROR: {exc}"
+
+        labels = [
+            str(item.get("name"))
+            for item in (data.get("labels") or [])
+            if isinstance(item, dict) and item.get("name")
+        ]
+        label_text = ", ".join(labels) if labels else "(none)"
+        body = (data.get("body") or "").strip()
+
+        def extract_sections(markdown: str, headings: list[str]) -> str:
+            if not markdown:
+                return ""
+            lines = markdown.splitlines()
+            wanted = {h.lower(): h for h in headings}
+            out: list[str] = []
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                if line.lstrip().startswith("##"):
+                    title = line.lstrip("# ").strip().lower()
+                    if title in wanted:
+                        out.append(lines[i])
+                        i += 1
+                        while i < len(lines) and not lines[i].lstrip().startswith("##"):
+                            out.append(lines[i])
+                            i += 1
+                        out.append("")
+                        continue
+                i += 1
+            return "\n".join(out).strip()
+
+        excerpt = extract_sections(
+            body,
+            headings=["goal / problem statement", "scope", "acceptance criteria", "validation"],
+        )
+        if not excerpt:
+            excerpt = body
+        if len(excerpt) > 1200:
+            excerpt = self._truncate_for_prompt(excerpt, 1200)
+
+        return (
+            "ISSUE_CONTEXT_FROM_GH:\n"
+            f"- Number: #{data.get('number', self.issue_number)}\n"
+            f"- Title: {data.get('title', '')}\n"
+            f"- URL: {data.get('url', '')}\n"
+            f"- State: {data.get('state', '')}\n"
+            f"- Labels: {label_text}\n"
+            "\n"
+            "BODY_EXCERPT:\n"
+            f"{excerpt}\n"
+        )
+
+    async def _repair_missing_guardrail(self, plan_text: str) -> str:
+        """One-shot repair prompt if planner forgets required guardrail fields."""
+
+        if not self.planning_agent:
+            return plan_text
+
+        repair_prompt = (
+            "You forgot the required planning guardrail block. "
+            "Output ONLY these two blocks (no other text):\n\n"
+            "PLANNING_GUARDRAIL:\n"
+            "ESTIMATED_MANUAL_MINUTES: <integer>\n"
+            "SPLIT_REQUIRED: YES|NO\n"
+            "SPLIT_RECOMMENDATION: <short actionable split when required>\n\n"
+            "HANDOFF_TO_CODING:\n"
+            "- Summary:\n"
+            "- Steps:\n"
+            "- Files:\n"
+            "- Validation:\n\n"
+            "Use the plan below as context (do not reprint it):\n\n"
+            f"{self._truncate_for_prompt(plan_text, 2400)}"
+        )
+
+        thread = self.planning_agent.get_new_thread()
+        repaired = await self._run_agent_stream(
+            self.planning_agent,
+            thread,
+            repair_prompt,
+            "Planning guardrail repair",
+        )
+        return f"{plan_text}\n\n{repaired}\n"
 
     async def initialize(self):
         """Initialize the AI agent with GitHub Models."""
@@ -554,6 +678,10 @@ Then include:
                 await self._build_workflow_packet(), 1800
             )
 
+            issue_context = self._truncate_for_prompt(
+                self._fetch_issue_context_for_prompt(), 1400
+            )
+
             planning_prompt = f"""Phase 1-2 ONLY (Context & Analysis + Planning) for Issue #{self.issue_number}.
 
 You must:
@@ -563,6 +691,8 @@ You must:
 
 WORKFLOW_PACKET_FROM_BLECS_WORKFLOW_AUTHORITY:
 {workflow_packet}
+
+{issue_context}
 
 Hard rules:
 - If dry-run is enabled, do NOT apply changes, commit, or create a PR.
@@ -593,6 +723,13 @@ Begin now."""
             guard_ok, estimate, guard_message = self._evaluate_manual_plan_guardrail(
                 full_plan_text
             )
+            if not guard_ok and estimate is None:
+                full_plan_text = await self._repair_missing_guardrail(full_plan_text)
+                plan_text = self._truncate_for_prompt(full_plan_text)
+                self.last_plan_text = plan_text
+                guard_ok, estimate, guard_message = self._evaluate_manual_plan_guardrail(
+                    full_plan_text
+                )
             self.last_estimated_manual_minutes = estimate
             self.last_guardrail_triggered = not guard_ok
             print(f"🛡️  Planning guardrail: {guard_message}")
@@ -762,12 +899,18 @@ Requirements:
         if not self.planning_agent or not self.planning_thread:
             raise RuntimeError("Agent not initialized. Call initialize() first.")
 
+        issue_context = self._truncate_for_prompt(
+            self._fetch_issue_context_for_prompt(), 1400
+        )
+
         planning_prompt = f"""PLAN-ONLY MODE for Issue #{self.issue_number}.
 
 Goals:
 1) Fetch and analyze the issue.
 2) Read relevant code/docs (read-only).
 3) Produce a concrete plan/spec with acceptance criteria, target files, doc targets, and validation commands.
+
+{issue_context}
 
 Hard rules:
 - Do NOT modify files.
