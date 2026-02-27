@@ -773,6 +773,15 @@ docker compose up --build
   - Verify `configs/llm.json` configuration
   - System will fall back to templates if LLM is unavailable
 
+**Problem:** Step 4 mockup generation reports missing API key
+
+- **Solution:** Configure `OPENAI_API_KEY` in your shell (do not write secrets to repo files):
+   ```bash
+   export OPENAI_API_KEY=your_api_key_here
+   ```
+- **Output location:** Generated images and prototype index are written to `.tmp/mockups/issue-<n>/`.
+- **Workflow entry point:** `agents.tools.generate_mockup_artifacts(...)`.
+
 ### Docker Issues
 
 **Problem:** Port already in use
