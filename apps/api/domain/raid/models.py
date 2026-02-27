@@ -19,6 +19,12 @@ class RAIDItem(BaseModel):
     description: str = Field(..., description="Detailed description")
     status: RAIDStatus = Field(default=RAIDStatus.OPEN, description="Current status")
     owner: str = Field(..., description="Owner/assignee")
+    owner_avatar_url: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional avatar URL for the owner/assignee (when derivable from the owner identifier)"
+        ),
+    )
     priority: RAIDPriority = Field(
         default=RAIDPriority.MEDIUM, description="Priority/severity"
     )
