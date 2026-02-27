@@ -30,6 +30,8 @@ from agent_framework.openai import OpenAIChatClient
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from agents.tooling.gh_throttle import run_gh_throttled
+
 from agents.llm_client import LLMClientFactory
 from agents.tools import get_all_tools, get_shell_only_tools
 
@@ -185,7 +187,7 @@ class AutonomousWorkflowAgent:
             cmd.extend(["--repo", repo])
 
         try:
-            result = subprocess.run(
+            result = run_gh_throttled(
                 cmd,
                 capture_output=True,
                 text=True,
