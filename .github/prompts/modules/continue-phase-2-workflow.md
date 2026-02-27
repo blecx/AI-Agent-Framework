@@ -19,6 +19,10 @@ Limit policy:
 4. **Validate:** run required checks for changed areas before PR merge.
 5. **Review gate:** ensure PR reviewed and approved before merge.
 6. **Merge gate:** merge with `./scripts/prmerge <issue>` after CI pass.
+
+Merge rule:
+
+- If `prmerge` reports no PR found for the issue, treat that as a complete answer (nothing to merge). Do not prompt for a manual PR number; stop or continue to the next issue.
 7. **Record:** append notes/artifacts and continue to next issue.
 
 ## Quality Gates

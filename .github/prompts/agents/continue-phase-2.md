@@ -17,7 +17,7 @@
 4. Ensure UX authority consultation evidence for UI-affecting changes.
 5. Run validations and fix failures.
 6. Run PR review using repository rubric and confirm approval status.
-7. Merge via `scripts/prmerge` only after review + CI pass.
+7. Merge via `scripts/prmerge` only after review + CI pass. If `prmerge` reports "No PR found" it is a complete answer (nothing to merge): do not prompt for a PR number; stop or move to next issue.
 8. Record outcome and continue with next issue until stop condition.
 
 Primary command:

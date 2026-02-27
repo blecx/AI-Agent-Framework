@@ -17,7 +17,7 @@
 3. Publish backend roadmap issues idempotently.
 4. Select next scoped backend issue.
 5. Run `scripts/work-issue.py` with retry/backoff for rate-limit handling.
-6. Merge via `scripts/prmerge` after review/CI gates.
+6. Merge via `scripts/prmerge` after review/CI gates. If `prmerge` reports "No PR found" it is a complete answer (nothing to merge): do not prompt for a PR number; stop or move to next issue.
 7. Continue until stop condition.
 
 Primary command:

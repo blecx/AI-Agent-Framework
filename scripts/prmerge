@@ -742,20 +742,36 @@ section "Step 1: Validate PR and CI Status"
 
 # Find PR number for this issue
 info "Finding PR for Issue #$ISSUE_NUMBER..."
-PR_NUMBER=$(gh pr list --search "issue #$ISSUE_NUMBER in:title" --state all --json number --jq '.[0].number' 2>/dev/null || echo "")
+PR_NUMBER=""
+
+# Allow explicit override (e.g., for unusual titles/search failures)
+if [ -n "${PRMERGE_PR_NUMBER:-}" ]; then
+    PR_NUMBER="$PRMERGE_PR_NUMBER"
+fi
 
 if [ -z "$PR_NUMBER" ]; then
-    error "No PR found for Issue #$ISSUE_NUMBER"
-    info "Attempting alternate search pattern..."
-    PR_NUMBER=$(gh pr list --search "$ISSUE_NUMBER" --state all --json number,title --jq ".[] | select(.title | contains(\"#$ISSUE_NUMBER\") or contains(\"Issue $ISSUE_NUMBER\")) | .number" | head -1)
-    
+    PR_NUMBER=$(gh pr list --search "issue #$ISSUE_NUMBER in:title" --state all --json number --jq '.[0].number' 2>/dev/null)
+    PR_LIST_EXIT=$?
+    if [ $PR_LIST_EXIT -ne 0 ]; then
+        error "Failed to search PRs via gh (exit=$PR_LIST_EXIT). Check auth/rate limits and retry."
+        exit 1
+    fi
+fi
+
+if [ -z "$PR_NUMBER" ]; then
+    info "No PR found by exact title pattern; attempting alternate search pattern..."
+    PR_NUMBER=$(gh pr list --search "$ISSUE_NUMBER" --state all --json number,title --jq ".[] | select(.title | contains(\"#$ISSUE_NUMBER\") or contains(\"Issue $ISSUE_NUMBER\")) | .number" | head -1 2>/dev/null)
+    PR_ALT_EXIT=$?
+    if [ $PR_ALT_EXIT -ne 0 ]; then
+        error "Failed to run alternate PR search via gh (exit=$PR_ALT_EXIT). Check auth/rate limits and retry."
+        exit 1
+    fi
+
     if [ -z "$PR_NUMBER" ]; then
-        error "Could not find PR. Please specify PR number manually:"
-        read -p "Enter PR number: " PR_NUMBER
-        if [ -z "$PR_NUMBER" ]; then
-            error "PR number required"
-            exit 1
-        fi
+        warning "No PR found for Issue #$ISSUE_NUMBER. Nothing to merge."
+        info "Create a PR titled like: 'issue #$ISSUE_NUMBER: <short description>' and re-run."
+        info "Optional override: set PRMERGE_PR_NUMBER=<pr> if you need to merge a PR with a non-standard title."
+        exit 0
     fi
 fi
 
