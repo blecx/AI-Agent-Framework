@@ -7,6 +7,8 @@ from pathlib import Path
 
 from agents.tools import (
     fetch_github_issue,
+    generate_mockup_artifacts,
+    get_all_tools,
     list_github_issues,
     read_file_content,
     update_knowledge_base,
@@ -199,3 +201,28 @@ def test_update_knowledge_base_legacy_list_schema_still_appends(
         (kb_dir / "problem_solutions.json").read_text(encoding="utf-8")
     )
     assert updated == [{"problem": "old"}, {"problem": "new"}]
+
+
+def test_generate_mockup_artifacts_wrapper_returns_actionable_json(monkeypatch):
+    class _FakeResult:
+        ok = False
+        message = "OPENAI_API_KEY is not set. Set OPENAI_API_KEY to enable image generation."
+        output_dir = Path(".tmp/mockups/issue-481")
+        image_paths = ()
+        index_html_path = None
+
+    def _fake_generate(*_args, **_kwargs):
+        return _FakeResult()
+
+    monkeypatch.setattr("agents.tools.generate_issue_mockup_artifacts", _fake_generate)
+
+    payload = json.loads(generate_mockup_artifacts(481, "Generate one UI mockup"))
+
+    assert payload["ok"] is False
+    assert "OPENAI_API_KEY" in payload["message"]
+    assert payload["suggestion"] == "Set OPENAI_API_KEY and retry."
+    assert payload["output_dir"].endswith("issue-481")
+
+
+def test_generate_mockup_artifacts_is_available_to_workflow_agent_tools():
+    assert generate_mockup_artifacts in get_all_tools()
