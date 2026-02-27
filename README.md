@@ -216,6 +216,15 @@ All clients communicate with the same REST API, ensuring feature parity and flex
 
 **📖 See [QUICKSTART.md](QUICKSTART.md) for a detailed step-by-step guide.**
 
+### Optional: OpenAI Images for workflow mockups
+
+Some workflow steps can generate UI mockup artifacts via OpenAI Images.
+
+- Set `OPENAI_API_KEY` in your shell before running mockup-enabled steps.
+- Workflow entry point: `agents.tools.generate_mockup_artifacts(...)`.
+- Output folder: `.tmp/mockups/issue-<n>/` (images + `index.html`).
+- If the key is missing, mockup generation exits gracefully with an actionable message.
+
 ### VS Code Auto-Approve Setup (Optional but Recommended)
 
 If you're using VS Code with GitHub Copilot, apply the safe profile (default):
