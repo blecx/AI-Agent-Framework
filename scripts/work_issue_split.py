@@ -13,6 +13,8 @@ _NON_ACTIONABLE_STEP_PREFIXES = (
     "estimated manual effort:",
     "guardrail max:",
     "parent estimated manual effort:",
+    "keep implementation and validation within",
+    "work not directly required for this split slice",
 )
 
 
@@ -54,15 +56,56 @@ def extract_split_steps(recommendation_text: str, max_items: int = 3) -> List[st
     return steps
 
 
+def extract_in_scope_steps(issue_body: str, max_items: int = 3) -> List[str]:
+    """Extract actionable bullets from the parent issue In Scope section."""
+    if not issue_body:
+        return []
+
+    lines = issue_body.splitlines()
+    in_scope = False
+    steps: list[str] = []
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        lowered = line.lower()
+
+        if lowered.startswith("### "):
+            heading = lowered[4:].strip()
+            in_scope = heading == "in scope"
+            continue
+
+        if in_scope and lowered.startswith("## "):
+            break
+
+        if not in_scope:
+            continue
+
+        bullet_match = re.match(r"^[-*]\s+(.*)$", line)
+        if not bullet_match:
+            continue
+
+        candidate = bullet_match.group(1).strip()
+        if not candidate or candidate.lower().startswith(_NON_ACTIONABLE_STEP_PREFIXES):
+            continue
+        steps.append(candidate)
+
+    if max_items > 0:
+        return steps[:max_items]
+    return steps
+
+
 def generate_split_issue_stubs(
     *,
     parent_issue_number: int,
     estimated_minutes: int | None,
     recommendation_text: str,
+    parent_issue_body: str = "",
     max_issues: int = 3,
 ) -> List[SplitIssueDraft]:
     """Generate issue stubs from split recommendation text."""
     steps = extract_split_steps(recommendation_text, max_items=max_issues)
+    if not steps:
+        steps = extract_in_scope_steps(parent_issue_body, max_items=max_issues)
     if not steps:
         steps = [
             "Create foundational planning/spec split with explicit acceptance criteria",
