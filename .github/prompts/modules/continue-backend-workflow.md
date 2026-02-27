@@ -20,6 +20,10 @@ Limit policy:
 4. **Select:** pick next scoped backend issue (label-filtered by default).
 5. **Implement:** run `./scripts/work-issue.py --issue <n>` with retry/backoff.
 6. **Merge:** run `./scripts/prmerge <n>` after required checks.
+
+Merge rule:
+
+- If `prmerge` reports no PR found for the issue, treat that as a complete answer (nothing to merge). Do not prompt for a manual PR number; stop or continue to the next issue.
 7. **Record:** persist outcomes and continue.
 
 ## Quality Gates

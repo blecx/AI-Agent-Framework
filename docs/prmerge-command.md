@@ -387,8 +387,11 @@ Failed checks:
 ```
 ❌ No PR found for Issue #24
 ℹ Attempting alternate search pattern...
-❌ Could not find PR. Please specify PR number manually:
-Enter PR number:
+If no PR exists for the issue, `prmerge` will now exit cleanly without prompting ("Nothing to merge").
+
+If you need to merge a PR with a non-standard title (so it isn't discoverable by issue number), you can override discovery:
+
+- Set `PRMERGE_PR_NUMBER=<pr>` and re-run `./scripts/prmerge <issue>`
 ```
 
 ### Branch Protection Block
