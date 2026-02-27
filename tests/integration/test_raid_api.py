@@ -107,6 +107,8 @@ class TestRAIDItemCRUDAPI:
         assert data["type"] == "risk"
         assert data["title"] == "Test Risk"
         assert data["owner"] == "John Doe"
+        assert "owner_avatar_url" in data
+        assert data["owner_avatar_url"] is None
         assert "id" in data
         assert "created_at" in data
 
@@ -151,6 +153,23 @@ class TestRAIDItemCRUDAPI:
         data = response.json()
         assert data["id"] == item_id
         assert data["title"] == "Specific Issue"
+        assert "owner_avatar_url" in data
+
+    def test_owner_avatar_url_for_github_like_owner(self, client, test_project):
+        """Owner avatar URL should be inferred for GitHub-like usernames."""
+        item = {
+            "type": "issue",
+            "title": "Avatar Owner",
+            "description": "Test description",
+            "owner": "octocat",
+            "created_by": "test_user",
+        }
+
+        create_response = client.post("/projects/TEST001/raid", json=item)
+        assert create_response.status_code == 201
+        data = create_response.json()
+        assert data["owner"] == "octocat"
+        assert data["owner_avatar_url"] == "https://github.com/octocat.png"
 
     def test_update_raid_item(self, client, test_project):
         """Test updating a RAID item via API."""

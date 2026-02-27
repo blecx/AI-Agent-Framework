@@ -15,12 +15,19 @@ from models import (
     RAIDStatus,
     RAIDPriority,
 )
+from services.avatar_service import infer_owner_avatar_url
 from services.raid_service import RAIDService
 
 router = APIRouter()
 
 # Single instance of RAID service
 raid_service = RAIDService()
+
+
+def _enrich_owner_avatar(item: dict) -> dict:
+    enriched = dict(item)
+    enriched["owner_avatar_url"] = infer_owner_avatar_url(enriched.get("owner"))
+    return enriched
 
 
 # ============================================================================
@@ -58,7 +65,7 @@ async def list_raid_items(
     )
 
     return RAIDItemList(
-        items=[RAIDItem(**item) for item in filtered_items],
+        items=[RAIDItem(**_enrich_owner_avatar(item)) for item in filtered_items],
         total=len(filtered_items),
         filtered_by={
             "type": type.value if type else None,
@@ -85,7 +92,7 @@ async def get_raid_item(project_key: str, raid_id: str, request: Request):
 
         raise HTTPException(status_code=404, detail=not_found("RAID item", raid_id))
 
-    return RAIDItem(**item)
+    return RAIDItem(**_enrich_owner_avatar(item))
 
 
 @router.post("", response_model=RAIDItem, status_code=201)
@@ -102,7 +109,7 @@ async def create_raid_item(project_key: str, item: RAIDItemCreate, request: Requ
         created = raid_service.create_raid_item(
             project_key, item.model_dump(), git_manager
         )
-        return RAIDItem(**created)
+        return RAIDItem(**_enrich_owner_avatar(created))
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to create RAID item: {str(e)}"
@@ -125,7 +132,7 @@ async def update_raid_item(
         updated = raid_service.update_raid_item(
             project_key, raid_id, updates.model_dump(exclude_unset=True), git_manager
         )
-        return RAIDItem(**updated)
+        return RAIDItem(**_enrich_owner_avatar(updated))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -195,7 +202,7 @@ async def get_raid_items_by_decision(
     )
 
     return RAIDItemList(
-        items=[RAIDItem(**item) for item in items],
+        items=[RAIDItem(**_enrich_owner_avatar(item)) for item in items],
         total=len(items),
         filtered_by={"decision_id": decision_id},
     )
