@@ -1,35 +1,34 @@
-# Issue 460 — Split Meta Slice (Traceability)
+# Issue 460 — Split Slice Summary (Parent: #458)
 
-## Context
+## Summary
 
-Issue #460 is a follow-up split issue from #458 with a malformed scope body (`Summary:` only).
+This issue exists as a small follow-up slice to #458 to keep manual execution time below ~20 minutes.
 
-The concrete backend scope for this split chain is captured in parent issue #458:
+Parent #458 delivered a backend RAID response enrichment:
 
-- expose owner avatar information in API responses where available
+- Added optional `owner_avatar_url` to RAID item responses.
+- Implemented deterministic inference for avatar URLs:
+  - Email → Gravatar identicon URL (md5 of normalized email)
+  - GitHub-like username → `https://github.com/<user>.png`
+  - Otherwise → `null`
+- Updated RAID API responses to include the field.
+- Added/updated integration tests covering `owner_avatar_url` behavior.
 
-That backend work is already completed and merged.
-
-## Cross-Repo / Upstream Mapping
-
-- Backend issue (this): `blecx/AI-Agent-Framework#460`
-- Parent backend issue: `blecx/AI-Agent-Framework#458`
-- Implementing PR (already merged): `blecx/AI-Agent-Framework#525`
-- Upstream split chain root: `blecx/AI-Agent-Framework#455`
+Implementation PR (already merged): https://github.com/blecx/AI-Agent-Framework/pull/525
 
 ## Scope
 
-### In scope (this backend PR)
+### In Scope
 
-- Record closure traceability for the split-meta issue so #460 can be closed cleanly.
+- Record a concise summary of what #458 shipped and where it landed.
 
-### Out of scope (this backend PR)
+### Out of Scope
 
-- Additional API/behavior changes (already delivered in #525).
+- Any further code changes related to avatars (already completed in #458).
 
 ## Acceptance Criteria
 
-- [x] Scoped implementation is complete and validated (traceability recorded).
+- [x] Scoped implementation is complete and validated (summary recorded).
 - [x] Changes remain within one reviewable PR.
 - [x] No sensitive files committed (`projectDocs/`, `configs/llm.json`).
 
