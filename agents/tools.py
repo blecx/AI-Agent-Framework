@@ -34,6 +34,8 @@ from agents.tooling.github_tools import (
     list_github_issues_typed,
 )
 
+from agents.tooling.mockup_image_generation import generate_issue_mockup_artifacts
+
 
 # ============================================================================
 # GitHub Tools
@@ -258,6 +260,40 @@ def get_changed_files(
         details = result.error.details if result.error else "failed to read git status"
         return f"Error: {details}"
     return result.value or ""
+
+
+# ==========================================================================
+# Mockup Tools
+# ==========================================================================
+
+
+def generate_mockup_artifacts(
+    issue_number: Annotated[int, "GitHub issue number for deterministic output folder"],
+    prompt: Annotated[str, "Prompt describing the UI mockup to generate"],
+    image_count: Annotated[int, "Number of images to generate (default: 1)"] = 1,
+) -> str:
+    """Generate UI mockup images under `.tmp/mockups/issue-<n>/`.
+
+    Reads `OPENAI_API_KEY` from the environment. If missing, returns a structured
+    error message without raising.
+    """
+    result = generate_issue_mockup_artifacts(
+        issue_number,
+        prompt=prompt,
+        image_count=image_count,
+    )
+
+    payload = {
+        "ok": result.ok,
+        "message": result.message,
+        "output_dir": str(result.output_dir),
+        "index_html": str(result.index_html_path) if result.index_html_path else None,
+        "images": [str(p) for p in result.image_paths],
+    }
+    if not result.ok:
+        payload["suggestion"] = "Set OPENAI_API_KEY and retry."
+
+    return json.dumps(payload, indent=2)
 
 
 def create_feature_branch(
@@ -672,6 +708,8 @@ def get_all_tools():
         get_cache_metrics,
         get_time_estimate,
         analyze_coverage_impact,
+        # Mockups
+        generate_mockup_artifacts,
         # Knowledge Base
         get_knowledge_base_patterns,
         update_knowledge_base,

@@ -188,6 +188,13 @@ Use GitHub Models endpoint with a GitHub token:
 }
 ```
 
+### OpenAI Images (Mockups)
+
+Some workflow steps can optionally generate UI mockup images using the OpenAI Images API (`gpt-image-1`).
+
+- Set `OPENAI_API_KEY` in your environment (never commit this).
+- Outputs are written under `.tmp/mockups/issue-<n>/` and include an `index.html` you can open directly.
+
 ### 3) Local models
 
 #### LM Studio
