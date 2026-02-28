@@ -27,14 +27,12 @@ def test_audit_fix_cycle_foundation(tui, unique_project_key):
     assert result.success
     assert unique_project_key in result.stdout
 
-    # NOTE: Full audit cycle requires:
-    #   1. Artifacts with intentional issues
-    #   2. TUI audit command
-    #   3. Parse audit results
-    #   4. Create fix proposals
-    #   5. Apply fixes
-    #   6. Re-run audit
-    # This test validates the foundation; extend with audit commands when available
+    # Run audit command for existing project
+    result = tui.execute_command(["audit", "--project", unique_project_key])
+    assert result.success, f"Audit command failed: {result.stderr}"
+    assert "Audit completed" in result.stdout
+    assert "Issue Counts by" in result.stdout
+    assert "Total issues" in result.stdout
 
     print(f"✓ Audit cycle foundation validated for {unique_project_key}")
 
@@ -89,8 +87,10 @@ def test_audit_error_handling(tui, unique_project_key):
     # Try to audit non-existent project
     result = tui.execute_command(["audit", "--project", "NONEXISTENT-999"], check=False)
 
-    # Either command doesn't exist (acceptable) or handles error
     assert result is not None, "Audit command should handle errors gracefully"
+    assert result.returncode != 0
+    combined_output = f"{result.stdout}\n{result.stderr}".lower()
+    assert "not found" in combined_output or "404" in combined_output
 
 
 @pytest.mark.skipif(True, reason="Requires TUI audit history command")
