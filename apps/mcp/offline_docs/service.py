@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,6 +47,32 @@ class OfflineDocsService:
                 USING fts5(path UNINDEXED, content)
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS index_meta (
+                  key TEXT PRIMARY KEY,
+                  value TEXT NOT NULL
+                )
+                """
+            )
+
+    def _compute_sources_fingerprint(self) -> str:
+        digest = hashlib.sha256()
+        for file_path in self._iter_source_files():
+            relative = file_path.relative_to(self.repo_root).as_posix()
+            stat = file_path.stat()
+            digest.update(relative.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(str(stat.st_size).encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(str(stat.st_mtime_ns).encode("utf-8"))
+            digest.update(b"\0")
+        return digest.hexdigest()
+
+    def _get_meta(self, key: str) -> str | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT value FROM index_meta WHERE key = ?", (key,)).fetchone()
+        return str(row[0]) if row else None
 
     def _iter_source_files(self) -> list[Path]:
         files: list[Path] = []
@@ -79,6 +106,7 @@ class OfflineDocsService:
     def rebuild_index(self) -> dict[str, Any]:
         indexed = 0
         skipped = 0
+        fingerprint = self._compute_sources_fingerprint()
 
         with self._connect() as conn:
             conn.execute("DELETE FROM docs")
@@ -101,6 +129,11 @@ class OfflineDocsService:
                 )
                 indexed += 1
 
+            conn.execute(
+                "INSERT OR REPLACE INTO index_meta(key, value) VALUES (?, ?)",
+                ("sources_fingerprint", fingerprint),
+            )
+
         return {
             "indexed_files": indexed,
             "skipped_files": skipped,
@@ -108,10 +141,12 @@ class OfflineDocsService:
         }
 
     def ensure_index(self) -> None:
+        current_fingerprint = self._compute_sources_fingerprint()
+        stored_fingerprint = self._get_meta("sources_fingerprint")
         with self._connect() as conn:
             row = conn.execute("SELECT COUNT(*) FROM docs").fetchone()
             doc_count = int(row[0]) if row else 0
-        if doc_count == 0:
+        if doc_count == 0 or stored_fingerprint != current_fingerprint:
             self.rebuild_index()
 
     def stats(self) -> dict[str, Any]:

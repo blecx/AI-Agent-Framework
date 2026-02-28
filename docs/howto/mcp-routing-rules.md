@@ -56,6 +56,9 @@ For repository documentation Q&A and grounding (docs/tutorials/readmes/templates
 prefer `offlineDocs` MCP for index/search/read operations.
 Use `filesystem` reads only for exact-path excerpts after the document is known.
 
+Offline Docs index maintenance is change-driven: refresh after `docs/` or
+`templates/` updates, not as a boot-time requirement.
+
 ## Rule 10: Tie-breaker
 
 If uncertainty remains, enforce precedence by task class:

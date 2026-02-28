@@ -42,6 +42,8 @@ precedence and usage model:
 
 9. For local docs Q&A on repository documentation, prefer `offlineDocs` MCP for
 	index/search/read; use `filesystem` read only for exact-path excerpts.
+10. Keep `offlineDocs` index lifecycle change-driven: refresh after `docs/` or
+	`templates/` source changes; do not require boot-time rebuilds.
 
 Prompts must treat these as hard rules, not preferences.
 
