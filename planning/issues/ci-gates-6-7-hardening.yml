@@ -1,0 +1,33 @@
+title: Stabilize Gate 6/7 with deterministic shared checks
+type: reliability
+goal: >
+  Eliminate recurring non-issue-specific failures in Gate 6 (linting) and Gate 7
+  (security) by unifying local/CI commands and making PR checks diff-aware.
+
+scope:
+  in:
+    - Introduce shared scripts for Gate 6 and Gate 7 checks
+    - Use the same scripts from CI workflow and local ci_backend simulation
+    - Add diff-aware mode for pull requests to avoid blocking unrelated changes
+    - Keep full-scan behavior available for non-PR execution
+  out:
+    - Refactoring unrelated application logic
+    - Frontend lint/security process changes
+
+root_causes:
+  - CI and local checks had partially duplicated command logic, increasing drift risk
+  - Gate 6/7 evaluated full backend scope on every PR, blocking unrelated changes on baseline debt
+  - Safety scans were not tied to dependency-file changes in PR scope
+
+acceptance_criteria:
+  - Gate 6 and Gate 7 checks are implemented as reusable scripts under scripts/quality
+  - ci-backend.yml runs shared scripts for both gates
+  - scripts/ci_backend.sh runs the same shared scripts for local simulation
+  - Pull request runs evaluate only changed backend-relevant files (diff mode)
+  - Non-PR runs retain full-scan capability
+
+validation:
+  - ./.venv/bin/python scripts/check_context7_guardrails.py
+  - ./scripts/validate_prompts.sh
+  - CI_DIFF_ONLY=true bash scripts/quality/gate6_lint.sh
+  - CI_DIFF_ONLY=true bash scripts/quality/gate7_security.sh
