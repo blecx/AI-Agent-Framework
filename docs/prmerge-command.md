@@ -56,6 +56,7 @@ The `prmerge` command automates these steps:
   - Docs-only scope: lightweight policy/documentation checks
 - **NEW:** Validates PR description follows template requirements
   - Checks for required sections (Summary, Acceptance Criteria, Validation, etc.)
+  - Uses CI-aligned section detection for backend/client contracts with summary heading compatibility (`#` or `##`)
   - Verifies "Fixes: #N" line exists (where N is issue number)
   - **Cross-repo support:** Accepts `Fixes: #N` for same-repo or `Fixes: owner/repo#N` for cross-repo
   - Ensures acceptance criteria checkboxes are checked

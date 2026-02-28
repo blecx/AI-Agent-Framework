@@ -3,7 +3,7 @@
 # Validates PR body before creation to prevent CI failures
 # Part of Agent Improvement Plan - Phase 1.1 (Issue #159)
 
-set -e
+set -euo pipefail
 
 # Configuration
 DRY_RUN=false
@@ -44,10 +44,18 @@ EOF
 while [[ $# -gt 0 ]]; do
     case $1 in
         --body-file)
+            if [[ $# -lt 2 || "$2" == --* ]]; then
+                echo -e "${RED}Error: --body-file requires a file path${NC}"
+                exit 1
+            fi
             PR_BODY_FILE="$2"
             shift 2
             ;;
         --repo)
+            if [[ $# -lt 2 || "$2" == --* ]]; then
+                echo -e "${RED}Error: --repo requires a value (backend|client)${NC}"
+                exit 1
+            fi
             REPO_TYPE="$2"
             shift 2
             ;;
@@ -73,6 +81,11 @@ fi
 
 if [[ ! -f "$PR_BODY_FILE" ]]; then
     echo -e "${RED}Error: PR body file not found: $PR_BODY_FILE${NC}"
+    exit 1
+fi
+
+if [[ "$REPO_TYPE" != "backend" && "$REPO_TYPE" != "client" ]]; then
+    echo -e "${RED}Error: --repo must be 'backend' or 'client'${NC}"
     exit 1
 fi
 
@@ -102,18 +115,12 @@ info() {
 
 validate_required_sections() {
     info "Checking required sections..."
-    
-    local required_sections=()
-    
+
+    local section_labels=()
+    local section_patterns=()
+
     if [[ "$REPO_TYPE" == "backend" ]]; then
-        required_sections=(
-            "## Goal / Context"
-            "## Acceptance Criteria"
-            "## Validation Evidence"
-            "## Repo Hygiene / Safety"
-        )
-    else
-        required_sections=(
+        section_labels=(
             "# Summary"
             "## Goal / Acceptance Criteria (required)"
             "## Issue / Tracking Link (required)"
@@ -121,22 +128,57 @@ validate_required_sections() {
             "## Automated checks"
             "## Manual test evidence (required)"
         )
+        section_patterns=(
+            '^#{1,2}[[:space:]]+Summary[[:space:]]*$'
+            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Acceptance[[:space:]]+Criteria[[:space:]]*\(required\)[[:space:]]*$'
+            '^##[[:space:]]+Issue[[:space:]]*/[[:space:]]*Tracking[[:space:]]+Link[[:space:]]*\(required\)[[:space:]]*$'
+            '^##[[:space:]]+Validation[[:space:]]*\(required\)[[:space:]]*$'
+            '^##[[:space:]]+Automated[[:space:]]+checks[[:space:]]*$'
+            '^##[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence[[:space:]]*\(required\)[[:space:]]*$'
+        )
+    else
+        section_labels=(
+            "Summary heading (# or ##)"
+            "Goal / Acceptance Criteria"
+            "Issue / Tracking Link"
+            "Validation"
+            "Automated checks"
+            "Manual test evidence"
+        )
+        section_patterns=(
+            '^#{1,2}[[:space:]]+Summary([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Acceptance[[:space:]]+Criteria([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##[[:space:]]+Issue[[:space:]]*/[[:space:]]*Tracking[[:space:]]+Link([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##[[:space:]]+Validation([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##[[:space:]]+Automated[[:space:]]+checks([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence([[:space:]]*\(required\))?[[:space:]]*$'
+        )
     fi
-    
-    for section in "${required_sections[@]}"; do
-        if grep -q "^$section" "$PR_BODY_FILE"; then
-            success "Found: $section"
+
+    local idx
+    for idx in "${!section_labels[@]}"; do
+        local label="${section_labels[$idx]}"
+        local pattern="${section_patterns[$idx]}"
+
+        if grep -Eqi "$pattern" "$PR_BODY_FILE"; then
+            success "Found: $label"
         else
-            error "Missing required section: $section"
+            error "Missing required section: $label"
         fi
     done
 }
 
 validate_evidence_format() {
     info "Checking evidence format..."
-    
-    # Check for code block evidence (bad)
-    if grep -Pzo '## (Validation Evidence|Manual test evidence)[^\#]*```' "$PR_BODY_FILE" >/dev/null 2>&1; then
+
+    # Check for fenced code blocks inside validation/manual evidence sections (bad)
+    if awk '
+        BEGIN { in_section=0; bad=0 }
+        /^##[[:space:]]+(Validation( Evidence)?|Manual test evidence)/ { in_section=1; next }
+        /^##[[:space:]]+/ { in_section=0 }
+        in_section && /```/ { bad=1 }
+        END { exit bad ? 0 : 1 }
+    ' "$PR_BODY_FILE"; then
         error 'Evidence must be in inline format, not code blocks (```).'
         echo "  → Use: ✅ npm test -- PASS (10 tests), ✅ npm run lint -- OK"
         echo "  → Not: \`\`\`bash ... \`\`\`"
