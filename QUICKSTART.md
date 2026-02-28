@@ -49,6 +49,12 @@ docker compose pull api web
 docker compose up -d api web
 ```
 
+  Optional host-port override when `8000` is already in use:
+
+```bash
+API_HOST_PORT=18000 docker compose up -d api web
+```
+
 1. (Optional) Pin immutable image tags from CI/CD:
 
 ```bash
@@ -66,8 +72,8 @@ docker compose --profile tools up -d client tui
 1. Open:
 
 - Web UI: <http://localhost:8080>
-- API: <http://localhost:8000>
-- API docs: <http://localhost:8000/docs>
+- API: <http://localhost:8000> (or your `API_HOST_PORT` override)
+- API docs: <http://localhost:8000/docs> (or your `API_HOST_PORT` override)
 
 > If you want to build containers from local source code instead of pulling images, use `docker compose up --build`.
 

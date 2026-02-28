@@ -14,6 +14,7 @@ import pytest
 import subprocess
 import time
 import requests
+import socket
 from pathlib import Path
 import shutil
 
@@ -23,6 +24,24 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 PROJECT_DOCS_PATH = PROJECT_ROOT / "projectDocs"
 API_BASE_URL = "http://localhost:8000"
 WEB_BASE_URL = "http://localhost:5173"
+COMPOSE_ARGS = ["docker", "compose", "-f", "docker-compose.yml"]
+
+
+def _is_port_available(port: int) -> bool:
+    """Return True if localhost:port is currently available."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return sock.connect_ex(("127.0.0.1", port)) != 0
+
+
+def _select_api_host_port(preferred_port: int = 8000) -> int:
+    """Select a host port for API: prefer preferred_port, else choose a free ephemeral port."""
+    if _is_port_available(preferred_port):
+        return preferred_port
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
 
 
 def _require_gui_tests() -> None:
@@ -39,19 +58,33 @@ def docker_environment():
     """
     print("\n🐳 Starting Docker environment...")
 
+    preferred_host_port = int(os.getenv("API_HOST_PORT", "8000"))
+    selected_host_port = _select_api_host_port(preferred_host_port)
+    selected_api_base_url = f"http://localhost:{selected_host_port}"
+
+    previous_api_host_port = os.environ.get("API_HOST_PORT")
+    previous_api_base_url = os.environ.get("API_BASE_URL")
+
+    os.environ["API_HOST_PORT"] = str(selected_host_port)
+    os.environ["API_BASE_URL"] = selected_api_base_url
+
+    global API_BASE_URL
+    API_BASE_URL = selected_api_base_url
+    print(f"ℹ️ Tutorial E2E API URL: {API_BASE_URL}")
+
     # Ensure we're in project root
     os.chdir(PROJECT_ROOT)
 
     # Stop any existing services
     subprocess.run(
-        ["docker", "compose", "down", "-v"],
+        [*COMPOSE_ARGS, "down", "-v"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
 
     # Start services
     result = subprocess.run(
-        ["docker", "compose", "up", "-d"], capture_output=True, text=True
+        [*COMPOSE_ARGS, "up", "-d"], capture_output=True, text=True
     )
 
     if result.returncode != 0:
@@ -82,10 +115,20 @@ def docker_environment():
     # Teardown
     print("\n🛑 Stopping Docker environment...")
     subprocess.run(
-        ["docker", "compose", "down"],
+        [*COMPOSE_ARGS, "down"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+
+    if previous_api_host_port is None:
+        os.environ.pop("API_HOST_PORT", None)
+    else:
+        os.environ["API_HOST_PORT"] = previous_api_host_port
+
+    if previous_api_base_url is None:
+        os.environ.pop("API_BASE_URL", None)
+    else:
+        os.environ["API_BASE_URL"] = previous_api_base_url
 
 
 @pytest.fixture(scope="function")
