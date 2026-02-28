@@ -370,6 +370,30 @@ class APIClient:
         )
         return self._handle_response(response)
 
+    def run_audit(
+        self,
+        project_key: str,
+        rule_set: Optional[list[str]] = None,
+    ) -> Dict[str, Any]:
+        """Run audit rules for a project.
+
+        Args:
+            project_key: Project key
+            rule_set: Optional list of rule names to run
+
+        Returns:
+            Audit result payload with issues and summary fields
+        """
+        params: Dict[str, Any] = {}
+        if rule_set:
+            params["rule_set"] = rule_set
+
+        response = self.client.post(
+            f"{self.base_url}/projects/{project_key}/audit",
+            params=params or None,
+        )
+        return self._handle_response(response)
+
     def close(self):
         """Close the HTTP client."""
         self.client.close()

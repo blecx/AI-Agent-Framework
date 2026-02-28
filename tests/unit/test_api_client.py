@@ -22,8 +22,9 @@ class DummyHTTPClient:
         self.calls.append(("get", url, params))
         return httpx.Response(200, request=httpx.Request("GET", url), json={"ok": True})
 
-    def post(self, url, json=None):
-        self.calls.append(("post", url, json))
+    def post(self, url, json=None, params=None):
+        payload = json if json is not None else params
+        self.calls.append(("post", url, payload))
         return httpx.Response(
             200, request=httpx.Request("POST", url), json={"ok": True}
         )
@@ -287,6 +288,8 @@ def test_workflow_methods_use_expected_paths_and_payloads():
         offset=5,
     )
     client.get_audit_events(project_key="P1")
+    client.run_audit("P1")
+    client.run_audit("P1", rule_set=["required_fields", "workflow_state"])
 
     assert dummy.calls[0] == (
         "get",
@@ -331,6 +334,16 @@ def test_workflow_methods_use_expected_paths_and_payloads():
         "get",
         "http://api.local/projects/P1/audit-events",
         None,
+    )
+    assert dummy.calls[6] == (
+        "post",
+        "http://api.local/projects/P1/audit",
+        None,
+    )
+    assert dummy.calls[7] == (
+        "post",
+        "http://api.local/projects/P1/audit",
+        {"rule_set": ["required_fields", "workflow_state"]},
     )
 
 

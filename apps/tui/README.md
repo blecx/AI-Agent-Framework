@@ -8,6 +8,7 @@ The TUI client provides a simple, scriptable command-line interface for:
 - Managing projects
 - Proposing and applying commands
 - Viewing and managing artifacts
+- Running project audit checks
 - Checking API health
 
 ## Features
@@ -15,6 +16,7 @@ The TUI client provides a simple, scriptable command-line interface for:
 - **Project Management**: Create projects, list all projects, view project details
 - **Command Workflow**: Propose commands with preview, apply approved proposals
 - **Artifact Access**: List and view project artifacts
+- **Audit Command**: Run audit rules with severity summary and issue preview
 - **Rich Output**: Formatted tables, syntax highlighting, and colored output
 - **Docker Support**: Run via Docker or locally
 
@@ -232,6 +234,19 @@ python main.py workflow audit-events \
   --actor "PM" \
   --limit 20 \
   --offset 0
+```
+
+#### Audit Command
+
+```bash
+# Run full audit for a project
+python main.py audit --project PROJ001
+
+# Run a subset of rules (repeat --rule)
+python main.py audit --project PROJ001 --rule required_fields --rule workflow_state
+
+# Limit displayed issues
+python main.py audit --project PROJ001 --limit 5
 ```
 
 #### Configuration Management
