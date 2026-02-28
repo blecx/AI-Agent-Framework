@@ -1,0 +1,47 @@
+AI-Agent-Framework:
+  - id: BE-560
+    title: "Stabilize Gate 6/7 with deterministic shared checks"
+    labels: ["backend/ci", "size:S"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Eliminate recurring non-issue-specific failures in Gate 6 (linting) and Gate 7 (security) by unifying local/CI commands and making PR checks diff-aware.
+
+      ## Scope
+      ### In Scope
+      - Introduce shared scripts for Gate 6 and Gate 7 checks.
+      - Use the same scripts from CI workflow and local `scripts/ci_backend.sh` simulation.
+      - Add diff-aware mode for pull requests and pushes with explicit diff ranges.
+      - Keep full-scan behavior available for non-PR execution.
+
+      ### Out of Scope
+      - Refactoring unrelated application logic.
+      - Frontend lint/security process changes.
+
+      ### Dependencies
+      - None.
+
+      ## Acceptance Criteria
+      - [ ] Gate 6 and Gate 7 checks are implemented as reusable scripts under `scripts/quality`.
+      - [ ] `.github/workflows/ci-backend.yml` runs shared scripts for both gates.
+      - [ ] `scripts/ci_backend.sh` runs the same shared scripts for local simulation.
+      - [ ] PR/push runs evaluate only changed backend-relevant files (diff mode).
+      - [ ] Non-PR runs retain full-scan capability.
+
+      ## Technical Approach
+      - Add `scripts/quality/gate6_lint.sh` for black/flake8 execution in full or diff mode.
+      - Add `scripts/quality/gate7_security.sh` for Bandit/Safety execution in full or diff mode.
+      - Update `.github/workflows/ci-backend.yml` Gate 6/7 to call shared scripts.
+      - Update `scripts/ci_backend.sh` Gate 6/7 to call shared scripts.
+
+      ## Testing Requirements
+      - `bash -n scripts/quality/gate6_lint.sh && bash -n scripts/quality/gate7_security.sh`
+      - `CI_DIFF_ONLY=true CI_DIFF_RANGE=origin/main...HEAD bash scripts/quality/gate6_lint.sh`
+      - `CI_DIFF_ONLY=true CI_DIFF_RANGE=origin/main...HEAD bash scripts/quality/gate7_security.sh`
+      - `./scripts/validate_issue_specs.sh`
+
+      ## Documentation Updates
+      - [ ] Keep this issue spec updated in `planning/issues/ci-gates-6-7-hardening.yml`.
+
+      ## Cross-Repository Coordination
+      No.
