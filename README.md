@@ -28,6 +28,7 @@ This system provides intelligent project management following ISO 21500 standard
 - 🧱 **[Repo Fundamentals MCP Setup](docs/howto/mcp-repo-fundamentals.md)** - Git/Search/Filesystem MCP servers
 - ⚙️ **[DevOps MCP Setup](docs/howto/mcp-devops.md)** - Docker/Compose + Test Runner MCP servers
 - 📚 **[Offline Docs MCP Setup](docs/howto/mcp-offline-docs.md)** - Local SQLite docs index for fully offline docs grounding
+- 🧑‍💻 **[GitHub Ops MCP Setup](docs/howto/mcp-github-ops.md)** - PR/Issue/Checks workflows via `gh` in a dedicated MCP container
 - 📏 **[MCP Tool Arbitration Hard Rules](docs/howto/mcp-routing-rules.md)** - Strict tool-selection precedence for ambiguous tasks
 
 Boot-time setup helper (all MCP services):

@@ -50,7 +50,10 @@ def test_context7_guardrails_pass_with_required_snippets(tmp_path: Path):
                         },
                         "offlineDocs": {
                             "url": "http://127.0.0.1:3017/mcp",
-                        }
+                        },
+                        "githubOps": {
+                            "url": "http://127.0.0.1:3018/mcp",
+                        },
                     }
                 }
             }
