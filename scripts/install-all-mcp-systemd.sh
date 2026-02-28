@@ -13,5 +13,6 @@ run_step "scripts/install-context7-systemd.sh"
 run_step "scripts/install-bash-gateway-mcp-systemd.sh"
 run_step "scripts/install-repo-fundamentals-mcp-systemd.sh"
 run_step "scripts/install-devops-mcp-systemd.sh"
+run_step "scripts/install-offline-docs-mcp-systemd.sh"
 
 echo "[ok] All MCP systemd services installed and enabled"

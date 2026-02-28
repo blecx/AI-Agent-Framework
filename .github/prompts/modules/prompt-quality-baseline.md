@@ -37,7 +37,7 @@ precedence and usage model:
 7. Use `bashGateway` MCP only for allowlisted script workflows or when a
 	required domain action has no dedicated MCP capability.
 8. For external API/library docs, use Context7 when online; when offline, use
-	local MCP search on repository docs.
+	`offlineDocs` MCP for indexed local docs; use `search` MCP as fallback only.
 
 Prompts must treat these as hard rules, not preferences.
 

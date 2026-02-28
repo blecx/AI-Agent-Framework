@@ -31,7 +31,7 @@ chmod +x scripts/install-devops-mcp-systemd.sh
 ./scripts/install-devops-mcp-systemd.sh
 ```
 
-Install all MCP services (Context7, Bash Gateway, Repo Fundamentals, DevOps):
+Install all MCP services (Context7, Bash Gateway, Repo Fundamentals, DevOps, Offline Docs):
 
 ```bash
 chmod +x scripts/install-all-mcp-systemd.sh

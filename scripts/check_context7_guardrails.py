@@ -41,6 +41,7 @@ REQUIRED_MCP_SERVER_URLS = {
     "filesystem": "http://127.0.0.1:3014/mcp",
     "dockerCompose": "http://127.0.0.1:3015/mcp",
     "testRunner": "http://127.0.0.1:3016/mcp",
+    "offlineDocs": "http://127.0.0.1:3017/mcp",
 }
 
 
