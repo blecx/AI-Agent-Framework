@@ -135,15 +135,13 @@ print(f\"✅ OpenAPI spec valid ({len(spec[\\\"paths\\\"])} endpoints documented
 
 # Gate 6: Linting
 run_gate 6 "Linting (black + flake8)" "
-    python -m black --check apps/api/ apps/tui/ tests/ &&
-    python -m flake8 apps/api/ apps/tui/ tests/ --count --show-source --statistics
+    CI_DIFF_ONLY=true CI_DIFF_RANGE=origin/main...HEAD bash scripts/quality/gate6_lint.sh
 "
 
 # Gate 7: Security Scanning
 run_gate 7 "Security Scanning (bandit + safety)" "
     pip install -q bandit safety > /dev/null 2>&1 &&
-    bandit -r apps/api/ apps/tui/ -ll -q &&
-    (safety check || echo '⚠️  Safety check warning (non-blocking)')
+    CI_DIFF_ONLY=true CI_DIFF_RANGE=origin/main...HEAD bash scripts/quality/gate7_security.sh
 "
 
 # Gate 8: Test Execution Time

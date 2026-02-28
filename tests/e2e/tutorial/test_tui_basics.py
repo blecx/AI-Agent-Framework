@@ -10,6 +10,7 @@ Run with: pytest tests/e2e/tutorial/test_tui_basics.py -v
 import pytest
 import json
 import uuid
+import os
 from helpers.tui_automation import TUIAutomation
 
 
@@ -21,7 +22,7 @@ def _unique_project_key(prefix: str) -> str:
 @pytest.fixture(scope="module")
 def tui(docker_environment):
     """TUI automation helper for running commands."""
-    return TUIAutomation(api_base_url="http://localhost:8000")
+    return TUIAutomation(api_base_url=os.getenv("API_BASE_URL", "http://localhost:8000"))
 
 
 @pytest.mark.tutorial

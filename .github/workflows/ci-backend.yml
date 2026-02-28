@@ -296,6 +296,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -309,13 +311,12 @@ jobs:
           # Keep the toolchain pinned to the repo's declared versions for determinism.
           pip install black==24.1.1 flake8==7.0.0
       
-      - name: Check black formatting
+      - name: Run Gate 6 lint checks
+        env:
+          CI_DIFF_ONLY: true
+          CI_DIFF_RANGE: ${{ github.event_name == 'pull_request' && 'origin/main...HEAD' || 'HEAD~1...HEAD' }}
         run: |
-          python -m black --check apps/api/ apps/tui/ tests/
-      
-      - name: Run flake8
-        run: |
-          python -m flake8 apps/api/ apps/tui/ --count --show-source --statistics
+          bash scripts/quality/gate6_lint.sh
       
       - name: Gate Status
         if: failure()
@@ -331,6 +332,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -342,46 +345,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install bandit safety
       
-      - name: Run bandit (code security)
+        - name: Run Gate 7 security checks
+        env:
+            CI_DIFF_ONLY: true
+            CI_DIFF_RANGE: ${{ github.event_name == 'pull_request' && 'origin/main...HEAD' || 'HEAD~1...HEAD' }}
         run: |
-          bandit -r apps/api/ apps/tui/ -ll -f json -o bandit-report.json || true
-          python -c "
-          import json
-          with open('bandit-report.json') as f:
-              report = json.load(f)
-          
-          high_severity = [r for r in report['results'] if r['issue_severity'] == 'HIGH']
-          
-          if high_severity:
-              print('❌ High severity security issues found:')
-              for issue in high_severity:
-                  print(f\"  - {issue['issue_text']} at {issue['filename']}:{issue['line_number']}\")
-              exit(1)
-          
-          print(f\"✅ No high severity issues (scanned {report['metrics']['_totals']['loc']} lines)\")
-          "
-      
-      - name: Run safety (dependency vulnerabilities)
-        run: |
-          safety check --json > safety-report.json || true
-          python -c "
-          import json
-          import sys
-          try:
-              with open('safety-report.json') as f:
-                  report = json.load(f)
-              
-              if isinstance(report, list) and len(report) > 0:
-                  print('❌ Vulnerable dependencies found:')
-                  for vuln in report:
-                      print(f\"  - {vuln.get('package', 'unknown')}: {vuln.get('advisory', 'No details')}\")
-                  sys.exit(1)
-              
-              print('✅ No vulnerable dependencies detected')
-          except Exception as e:
-              print(f'⚠️  Safety check inconclusive: {e}')
-              # Don't fail the build on safety check errors
-          "
+          bash scripts/quality/gate7_security.sh
       
       - name: Gate Status
         if: failure()
