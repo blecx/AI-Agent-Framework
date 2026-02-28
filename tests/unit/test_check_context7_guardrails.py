@@ -29,6 +29,18 @@ def test_context7_guardrails_pass_with_required_snippets(tmp_path: Path):
                             "headers": {
                                 "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}",
                             },
+                        },
+                        "bashGateway": {
+                            "url": "http://127.0.0.1:3011/mcp",
+                        },
+                        "git": {
+                            "url": "http://127.0.0.1:3012/mcp",
+                        },
+                        "search": {
+                            "url": "http://127.0.0.1:3013/mcp",
+                        },
+                        "filesystem": {
+                            "url": "http://127.0.0.1:3014/mcp",
                         }
                     }
                 }
