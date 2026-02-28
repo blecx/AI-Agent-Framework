@@ -29,6 +29,11 @@ REQUIRED_HEADERS = [
     "## Completion Criteria",
 ]
 
+UX_NAMING_DRIFT_PATTERNS = (
+    "blecx UX Authority Agent",
+    "blecx-ux-authority",
+)
+
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
@@ -73,6 +78,21 @@ def _check_broken_local_links(errors: list[str]) -> None:
                 errors.append(f"{file}: broken link -> {target}")
 
 
+def _check_ux_authority_naming_drift(errors: list[str]) -> None:
+    governance_roots = [ROOT / ".github" / "agents", ROOT / ".github" / "prompts"]
+
+    for governance_root in governance_roots:
+        if not governance_root.exists():
+            continue
+        for file in sorted(governance_root.rglob("*.md")):
+            text = _read_text(file)
+            for pattern in UX_NAMING_DRIFT_PATTERNS:
+                if pattern in text:
+                    errors.append(
+                        f"{file}: legacy UX authority naming found: '{pattern}'"
+                    )
+
+
 def _is_strict_mode() -> bool:
     return "--strict" in sys.argv
 
@@ -83,6 +103,7 @@ def main() -> int:
     _check_agent_line_limits(errors)
     _check_required_sections(errors)
     _check_broken_local_links(errors)
+    _check_ux_authority_naming_drift(errors)
 
     if errors:
         mode = "strict" if _is_strict_mode() else "baseline"
