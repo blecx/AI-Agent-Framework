@@ -4,7 +4,7 @@
 
 1. Select issue (backend-first, lowest number) and confirm scope.
 2. Write compact plan: goal, scope, AC, files, validation commands.
-3. If scope affects UI/UX/navigation/responsive behavior, run `blecs-ux-authority` consultation and capture decision.
+3. Apply UX delegation policy from `./ux/delegation-policy.md` and capture required consultation outcome.
 4. Implement minimal code changes in a dedicated branch.
 5. Run required validations for touched areas.
 6. Commit with `Fixes #<issue>` and push.
@@ -22,4 +22,4 @@
 - Avoid unrelated refactors.
 - Keep diffs reviewable and DDD-compliant.
 - Use `.tmp/` for transient artifacts.
-- Block completion until UX consultation is `PASS` for UI-affecting scope.
+- Follow `./ux/delegation-policy.md` as the canonical delegation rule source.

@@ -14,7 +14,7 @@
 1. Select next issue and validate dependencies.
 2. Create a small implementation slice (target reviewable diff and CI-safe scope).
 3. Run implementation via `scripts/work-issue.py` with existing guardrails.
-4. Ensure UX authority consultation evidence for UI-affecting changes.
+4. Apply UX delegation policy from `.github/prompts/modules/ux/delegation-policy.md`.
 5. Run validations and fix failures.
 6. Run PR review using repository rubric and confirm approval status.
 7. Merge via `scripts/prmerge` only after review + CI pass. If `prmerge` reports "No PR found" it is a complete answer (nothing to merge): do not prompt for a PR number; stop or move to next issue.
@@ -35,7 +35,7 @@ Default cap policy:
 
 - Keep one issue per PR.
 - Do not merge without review confirmation.
-- Preserve DDD boundaries and UX delegation policy.
+- Preserve DDD boundaries and canonical UX delegation policy.
 - Keep process deterministic and repeatable.
 
 **References:**

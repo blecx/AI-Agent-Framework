@@ -27,6 +27,11 @@ Do not use these files as generic end-user docs; they are operator rails for age
 - Delegate out-of-scope actions to the correct agent.
 - Keep detailed procedural content in shared modules under `../modules/`.
 
+## Canonical UX Delegation Policy
+
+- Canonical source: `.github/prompts/modules/ux/delegation-policy.md`
+- Agent/workflow prompts must reference this source instead of duplicating delegation policy blocks.
+
 ## Validation
 
 - `python scripts/check_prompt_quality.py`
