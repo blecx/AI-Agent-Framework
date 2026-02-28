@@ -10,7 +10,7 @@
 
 ## Namespace Alignment TODO (Required Before Phase 2)
 
-- [x] Rename blecx authority agent files and IDs to blecs equivalents
+- [x] Rename legacy authority agent files and IDs to blecs equivalents
 - [x] Rename old extension command files to blecs extension files (`blecs.*`)
 - [x] Update all prompt/CI/workflow references to blecs authority names
 - [x] Re-run prompt and syntax validation after namespace migration
