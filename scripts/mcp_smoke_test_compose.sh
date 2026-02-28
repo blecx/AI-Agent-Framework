@@ -41,6 +41,7 @@ check_compose_service "repo-fundamentals-mcp" "$ROOT_DIR/docker-compose.repo-fun
 check_compose_service "repo-fundamentals-mcp" "$ROOT_DIR/docker-compose.repo-fundamentals-mcp.yml" "filesystem-mcp"
 check_compose_service "devops-mcp" "$ROOT_DIR/docker-compose.mcp-devops.yml" "docker-compose-mcp"
 check_compose_service "devops-mcp" "$ROOT_DIR/docker-compose.mcp-devops.yml" "test-runner-mcp"
+check_compose_service "offline-docs-mcp" "$ROOT_DIR/docker-compose.mcp-offline-docs.yml" "offline-docs-mcp"
 
 check_endpoint_406 "Context7 MCP" "http://127.0.0.1:3010/mcp"
 check_endpoint_406 "Bash Gateway MCP" "http://127.0.0.1:3011/mcp"
@@ -49,6 +50,7 @@ check_endpoint_406 "Search MCP" "http://127.0.0.1:3013/mcp"
 check_endpoint_406 "Filesystem MCP" "http://127.0.0.1:3014/mcp"
 check_endpoint_406 "Docker Compose MCP" "http://127.0.0.1:3015/mcp"
 check_endpoint_406 "Test Runner MCP" "http://127.0.0.1:3016/mcp"
+check_endpoint_406 "Offline Docs MCP" "http://127.0.0.1:3017/mcp"
 
 python3 "$ROOT_DIR/scripts/check_mcp_connections.py"
 

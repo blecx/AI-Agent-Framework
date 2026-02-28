@@ -27,6 +27,7 @@ This system provides intelligent project management following ISO 21500 standard
 - 🛡️ **[Bash Gateway MCP Setup (VS Code + Docker)](docs/howto/mcp-bash-gateway.md)** - Policy-allowlisted script execution via local MCP server
 - 🧱 **[Repo Fundamentals MCP Setup](docs/howto/mcp-repo-fundamentals.md)** - Git/Search/Filesystem MCP servers
 - ⚙️ **[DevOps MCP Setup](docs/howto/mcp-devops.md)** - Docker/Compose + Test Runner MCP servers
+- 📚 **[Offline Docs MCP Setup](docs/howto/mcp-offline-docs.md)** - Local SQLite docs index for fully offline docs grounding
 - 📏 **[MCP Tool Arbitration Hard Rules](docs/howto/mcp-routing-rules.md)** - Strict tool-selection precedence for ambiguous tasks
 
 Boot-time setup helper (all MCP services):

@@ -47,13 +47,13 @@ Use `bashGateway` MCP only when:
 ## Rule 8: External docs grounding
 
 Use Context7 when online for external APIs/frameworks.
-When offline, use local repository docs via `search` MCP (`docs/`, `README.md`,
-`templates/`).
+When offline, use `offlineDocs` MCP first for indexed local docs.
+Use `search` MCP only as fallback when required content is not indexed.
 
 ## Rule 9: Tie-breaker
 
 If uncertainty remains, enforce this strict precedence order:
 
-`git/search/filesystem/dockerCompose/testRunner` (domain MCP) > `bashGateway` > generic terminal.
+`git/search/filesystem/dockerCompose/testRunner/offlineDocs` (domain MCP) > `bashGateway` > generic terminal.
 
 No lower-tier tool may be chosen when a higher-tier, capable tool is available.
