@@ -35,6 +35,8 @@ REQUIRED_MCP_SERVER_URLS = {
     "git": "http://127.0.0.1:3012/mcp",
     "search": "http://127.0.0.1:3013/mcp",
     "filesystem": "http://127.0.0.1:3014/mcp",
+    "dockerCompose": "http://127.0.0.1:3015/mcp",
+    "testRunner": "http://127.0.0.1:3016/mcp",
 }
 
 

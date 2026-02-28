@@ -7,6 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /workspace
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ripgrep && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir \
     mcp==1.12.4 \
     uvicorn[standard]==0.27.0

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import fnmatch
+import json
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,34 +13,58 @@ from .path_guard import RepoPathGuard
 @dataclass
 class SearchService:
     repo_root: Path
+    forbidden_globs: tuple[str, ...] = ("!projectDocs/**", "!configs/llm.json")
 
     def __post_init__(self) -> None:
         self.repo_root = self.repo_root.resolve()
         self.path_guard = RepoPathGuard(self.repo_root)
 
-    def _iter_files(self, scope: str, include_glob: str) -> list[Path]:
+    def _resolve_scope_dir(self, scope: str) -> tuple[Path, str]:
         resolved_scope = self.path_guard.resolve_relative_path(scope, allow_nonexistent=False)
         if not resolved_scope.is_dir():
             raise ValueError("scope must resolve to a directory")
+        return resolved_scope, str(resolved_scope.relative_to(self.repo_root))
 
-        files: list[Path] = []
-        for path in resolved_scope.rglob("*"):
-            if not path.is_file():
-                continue
+    def _rg_base_args(self, include_glob: str) -> list[str]:
+        args = ["rg", "--hidden"]
+        if include_glob:
+            args.extend(["-g", include_glob])
+        for forbidden_glob in self.forbidden_globs:
+            args.extend(["-g", forbidden_glob])
+        return args
 
-            relative = path.relative_to(self.repo_root).as_posix()
-            if fnmatch.fnmatch(relative, include_glob):
-                files.append(path)
-        return files
+    def _run_rg(self, args: list[str]) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(
+                args,
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except FileNotFoundError as exc:
+            raise ValueError("ripgrep (rg) is not installed in this environment") from exc
+
+    def _list_files_rg(self, scope_relative: str, include_glob: str, max_results: int) -> list[str]:
+        args = [*self._rg_base_args(include_glob), "--files", scope_relative]
+        proc = self._run_rg(args)
+
+        if proc.returncode not in (0, 1):
+            stderr = proc.stderr.strip() or proc.stdout.strip() or "rg --files failed"
+            raise ValueError(stderr)
+
+        files = [line.strip().removeprefix("./") for line in proc.stdout.splitlines() if line.strip()]
+        return files[:max_results]
 
     def list_files(self, scope: str = ".", include_glob: str = "**/*", max_results: int = 200) -> dict[str, Any]:
         if max_results <= 0 or max_results > 2000:
             raise ValueError("max_results must be between 1 and 2000")
 
-        files = self._iter_files(scope=scope, include_glob=include_glob)[:max_results]
+        _, scope_relative = self._resolve_scope_dir(scope)
+        files = self._list_files_rg(scope_relative=scope_relative, include_glob=include_glob, max_results=max_results)
         return {
             "count": len(files),
-            "files": [str(path.relative_to(self.repo_root)) for path in files],
+            "files": files,
         }
 
     def search(
@@ -56,41 +81,59 @@ class SearchService:
             raise ValueError("query is required")
         if max_results <= 0 or max_results > 2000:
             raise ValueError("max_results must be between 1 and 2000")
-
-        files = self._iter_files(scope=scope, include_glob=include_glob)
+        _, scope_relative = self._resolve_scope_dir(scope)
 
         if is_regexp:
-            matcher = re.compile(query_text, flags=re.IGNORECASE)
+            try:
+                re.compile(query_text)
+            except re.error as exc:
+                raise ValueError(str(exc)) from exc
 
-            def is_match(line: str) -> bool:
-                return bool(matcher.search(line))
-        else:
-            query_lower = query_text.lower()
+        args = [
+            *self._rg_base_args(include_glob),
+            "--json",
+            "--line-number",
+            "--ignore-case",
+        ]
+        if not is_regexp:
+            args.append("--fixed-strings")
+        args.extend([query_text, scope_relative])
 
-            def is_match(line: str) -> bool:
-                return query_lower in line.lower()
+        proc = self._run_rg(args)
+        if proc.returncode not in (0, 1):
+            stderr = proc.stderr.strip() or proc.stdout.strip() or "rg query failed"
+            raise ValueError(stderr)
 
         matches: list[dict[str, Any]] = []
-        for file_path in files:
+        for line in proc.stdout.splitlines():
             if len(matches) >= max_results:
                 break
 
             try:
-                text = file_path.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
                 continue
 
-            for line_no, line in enumerate(text.splitlines(), start=1):
-                if is_match(line):
-                    matches.append(
-                        {
-                            "path": str(file_path.relative_to(self.repo_root)),
-                            "line": line_no,
-                            "text": line,
-                        }
-                    )
-                    if len(matches) >= max_results:
-                        break
+            if payload.get("type") != "match":
+                continue
+
+            data = payload.get("data", {})
+            path_info = data.get("path", {})
+            line_number = data.get("line_number")
+            lines_info = data.get("lines", {})
+
+            path_text = path_info.get("text")
+            line_text = lines_info.get("text")
+            if not isinstance(path_text, str) or not isinstance(line_number, int) or not isinstance(line_text, str):
+                continue
+
+            matches.append(
+                {
+                    "path": path_text.removeprefix("./"),
+                    "line": line_number,
+                    "text": line_text.rstrip("\n"),
+                }
+            )
 
         return {
             "query": query_text,
