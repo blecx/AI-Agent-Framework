@@ -27,7 +27,7 @@ Merge rule:
 
 ## Quality Gates
 
-- Mandatory UX authority consultation for UI-affecting scope.
+- Apply canonical UX delegation policy from `./ux/delegation-policy.md`.
 - Mandatory PR review before merge.
 - CI must pass for merge path.
 - PR merge slice limits enforced by `scripts/prmerge` policy defaults.

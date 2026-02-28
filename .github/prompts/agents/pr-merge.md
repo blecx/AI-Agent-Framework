@@ -25,7 +25,7 @@ Merge a ready PR safely, close the linked issue with traceability, and clean tem
 - Never fix PR content here; delegate to `resolve-issue-dev`.
 - Prefer `gh pr merge --squash --delete-branch`.
 - Use `.tmp/` (never `/tmp`) for transient files.
-- For UI/UX-affecting PRs, require evidence that `blecs-ux-authority` consultation passed.
+- Apply UX delegation policy from `../modules/ux/delegation-policy.md` (canonical source).
 
 ## Workflow
 

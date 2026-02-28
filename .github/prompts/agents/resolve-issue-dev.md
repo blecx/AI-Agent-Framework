@@ -29,7 +29,7 @@ Implement one issue into a small, reviewable PR with DDD-compliant changes and l
 - If Context7 is unavailable/offline, continue with local MCP-first grounding (`git`, `search`, `filesystem`, `bashGateway`) and repository docs (`docs/`, `README.md`, `templates/`).
 - Follow MCP Tool Arbitration Hard Rules from `modules/prompt-quality-baseline.md`; when tools overlap, the more specialized MCP server must win.
 - For internal architecture, prioritize repository conventions and local source-of-truth files.
-- If scope affects UI/UX/navigation/responsive behavior, consult `blecs-ux-authority` and block completion until `UX_DECISION: PASS`.
+- Apply UX delegation policy from `../modules/ux/delegation-policy.md` (canonical source).
 
 ## Workflow
 
