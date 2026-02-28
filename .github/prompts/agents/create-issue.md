@@ -27,6 +27,8 @@ Draft and create high-quality GitHub issues (template-compliant, testable, and t
 - Follow `.github/ISSUE_TEMPLATE/feature_request.yml` structure.
 - Keep acceptance criteria testable (`- [ ]` checkboxes).
 - Include explicit scope boundaries and validation steps.
+- For external API/framework behavior, require Context7 docs-grounding notes in the issue body.
+- For internal architecture decisions, anchor requirements to repository conventions and local codebase evidence.
 - Never implement code in this mode.
 
 ## Workflow
