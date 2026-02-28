@@ -137,7 +137,7 @@ validate_evidence_format() {
     
     # Check for code block evidence (bad)
     if grep -Pzo '## (Validation Evidence|Manual test evidence)[^\#]*```' "$PR_BODY_FILE" >/dev/null 2>&1; then
-        error "Evidence must be in inline format, not code blocks (```)."
+        error 'Evidence must be in inline format, not code blocks (```).'
         echo "  → Use: ✅ npm test -- PASS (10 tests), ✅ npm run lint -- OK"
         echo "  → Not: \`\`\`bash ... \`\`\`"
     else
