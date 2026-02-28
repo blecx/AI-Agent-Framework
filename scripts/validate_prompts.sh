@@ -14,6 +14,9 @@ echo "[validate_prompts] Running strict prompt quality checks..."
 echo "[validate_prompts] Running command contract checks..."
 "${PYTHON_BIN}" "${ROOT_DIR}/scripts/check_command_contracts.py"
 
+echo "[validate_prompts] Running Context7 guardrail checks..."
+"${PYTHON_BIN}" "${ROOT_DIR}/scripts/check_context7_guardrails.py"
+
 echo "[validate_prompts] Running prmerge policy checks..."
 "${PYTHON_BIN}" "${ROOT_DIR}/scripts/check_prmerge_policy.py"
 

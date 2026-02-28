@@ -12,6 +12,12 @@ Each operational prompt (non-README) should include:
 - Output Format
 - Completion Criteria
 
+## Docs Grounding Guardrail (Context7)
+
+- For external API/library/framework behavior, prompts must require Context7-backed documentation grounding.
+- For internal architecture and implementation details, prompts must prioritize repository conventions and local codebase facts.
+- If version-specific docs are ambiguous, prompts must require explicit assumptions in output.
+
 ## Size Guidance
 
 - `agents/*.md`: target <= 100 lines
@@ -28,4 +34,5 @@ Each operational prompt (non-README) should include:
 ## Validation
 
 - Run: `python scripts/check_prompt_quality.py`
+- Run: `python scripts/check_context7_guardrails.py`
 - Verify links: `rg -n "\]\(.*\)" .github/prompts --glob '*.md'`
