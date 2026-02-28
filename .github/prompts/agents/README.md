@@ -20,6 +20,8 @@ Do not use these files as generic end-user docs; they are operator rails for age
 - `close-issue.md`
 - `tutorial.md`
 
+Note: Authority agent canonical definitions live under `.github/agents/*.agent.md`.
+
 ## Quality Baseline
 
 - Keep prompts concise (target <= 100 lines for `agents/*.md`).
