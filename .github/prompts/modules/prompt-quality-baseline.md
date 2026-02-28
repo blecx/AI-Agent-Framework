@@ -18,6 +18,29 @@ Each operational prompt (non-README) should include:
 - For internal architecture and implementation details, prompts must prioritize repository conventions and local codebase facts.
 - If version-specific docs are ambiguous, prompts must require explicit assumptions in output.
 
+## MCP Tool Arbitration Hard Rules
+
+When more than one MCP server could complete a task, prompts must enforce this
+precedence and usage model:
+
+1. Prefer the most specialized domain MCP server over generic servers.
+2. Use `git` MCP for repository history/state operations (`status`, `diff`,
+	`log`, `show`, `blame`, branch tasks).
+3. Use `search` MCP for code/doc content discovery and text matching before
+	file reads.
+4. Use `filesystem` MCP for deterministic file CRUD inside workspace scope;
+	never use it for git-history questions.
+5. Use `dockerCompose` MCP for container/compose lifecycle and health/log
+	operations; do not route these through generic shell paths first.
+6. Use `testRunner` MCP for lint/build/test execution profiles before any
+	fallback.
+7. Use `bashGateway` MCP only for allowlisted script workflows or when a
+	required domain action has no dedicated MCP capability.
+8. For external API/library docs, use Context7 when online; when offline, use
+	local MCP search on repository docs.
+
+Prompts must treat these as hard rules, not preferences.
+
 ## Size Guidance
 
 - `agents/*.md`: target <= 100 lines

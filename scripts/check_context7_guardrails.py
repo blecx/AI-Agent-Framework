@@ -16,16 +16,20 @@ RESOLVE_ISSUE_PROMPT = ROOT / ".github" / "prompts" / "agents" / "resolve-issue-
 REQUIRED_BASELINE_SNIPPETS = [
     "Context7",
     "external API",
+    "MCP Tool Arbitration Hard Rules",
+    "Prompts must treat these as hard rules",
 ]
 
 REQUIRED_AGENT_SNIPPETS = {
     CREATE_ISSUE_PROMPT: [
         "Context7",
         "docs-grounding",
+        "MCP Tool Arbitration Hard Rules",
     ],
     RESOLVE_ISSUE_PROMPT: [
         "Context7",
         "external API",
+        "MCP Tool Arbitration Hard Rules",
     ],
 }
 

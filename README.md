@@ -25,11 +25,14 @@ This system provides intelligent project management following ISO 21500 standard
 - 🧰 **[Install & LLM Setup Guide](docs/howto/install-and-llm-setup.md)** - Docker images, local setup, and provider configuration examples
 - 🧩 **[Context7 MCP Setup (VS Code + Docker)](docs/howto/context7-vscode-docker.md)** - Persistent docs-grounding setup with boot-time startup
 - 🛡️ **[Bash Gateway MCP Setup (VS Code + Docker)](docs/howto/mcp-bash-gateway.md)** - Policy-allowlisted script execution via local MCP server
+- 🧱 **[Repo Fundamentals MCP Setup](docs/howto/mcp-repo-fundamentals.md)** - Git/Search/Filesystem MCP servers
+- ⚙️ **[DevOps MCP Setup](docs/howto/mcp-devops.md)** - Docker/Compose + Test Runner MCP servers
+- 📏 **[MCP Tool Arbitration Hard Rules](docs/howto/mcp-routing-rules.md)** - Strict tool-selection precedence for ambiguous tasks
 
-Boot-time setup helper:
+Boot-time setup helper (all MCP services):
 
 ```bash
-./scripts/install-bash-gateway-mcp-systemd.sh
+./scripts/install-all-mcp-systemd.sh
 ```
 
 - 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels

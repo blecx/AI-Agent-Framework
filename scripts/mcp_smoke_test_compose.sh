@@ -50,4 +50,6 @@ check_endpoint_406 "Filesystem MCP" "http://127.0.0.1:3014/mcp"
 check_endpoint_406 "Docker Compose MCP" "http://127.0.0.1:3015/mcp"
 check_endpoint_406 "Test Runner MCP" "http://127.0.0.1:3016/mcp"
 
+python3 "$ROOT_DIR/scripts/check_mcp_connections.py"
+
 echo "[smoke] PASS"
