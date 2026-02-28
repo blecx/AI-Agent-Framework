@@ -58,6 +58,13 @@ OFFLINE_DOCS_INDEX_DB=/workspace/.tmp/mcp-offline-docs/docs_index.db
 - `offline_docs_search`
 - `offline_docs_read`
 
+## Index refresh policy
+
+- Keep the index DB local in `.tmp/mcp-offline-docs/docs_index.db` (never commit).
+- Rebuild is change-driven and triggered when indexed sources change (`docs/`, `templates/`, or configured source files).
+- Boot-time rebuild is not required.
+- Use `offline_docs_index_rebuild` only when you want to force a manual refresh.
+
 ## Validation
 
 ```bash
