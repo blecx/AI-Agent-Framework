@@ -108,7 +108,7 @@
       "label": "🗄️ Archive Goals (.tmp)",
       "type": "shell",
       "command": "bash",
-      "args": ["${workspaceFolder}/scripts/archive-goals.sh"],
+      "args": ["${workspaceFolder}/scripts/archive-goals-safe.sh"],
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -125,7 +125,7 @@
       "label": "🗄️ Archive Goals (.tmp, move)",
       "type": "shell",
       "command": "bash",
-      "args": ["${workspaceFolder}/scripts/archive-goals.sh", "--move"],
+      "args": ["${workspaceFolder}/scripts/archive-goals-safe.sh", "--move"],
       "options": {
         "cwd": "${workspaceFolder}"
       },
