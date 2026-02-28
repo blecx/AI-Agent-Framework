@@ -26,6 +26,9 @@ The Search MCP always excludes:
 
 even when querying from scope `.`.
 
+When more than one MCP server could satisfy a task, use
+[MCP Tool Arbitration Hard Rules](mcp-routing-rules.md).
+
 ## Start with Docker Compose
 
 ```bash

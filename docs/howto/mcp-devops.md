@@ -22,6 +22,29 @@ curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3016/mcp
 
 Expected for plain curl: `406`.
 
+## Start at boot (systemd)
+
+Install only DevOps MCP at boot:
+
+```bash
+chmod +x scripts/install-devops-mcp-systemd.sh
+./scripts/install-devops-mcp-systemd.sh
+```
+
+Install all MCP services (Context7, Bash Gateway, Repo Fundamentals, DevOps):
+
+```bash
+chmod +x scripts/install-all-mcp-systemd.sh
+./scripts/install-all-mcp-systemd.sh
+```
+
+Verify:
+
+```bash
+sudo systemctl is-enabled devops-mcp.service
+sudo systemctl is-active devops-mcp.service
+```
+
 ## Docker/Compose MCP scope
 
 Only allowlisted compose targets are exposed (for example `docker-compose.yml`,

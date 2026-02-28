@@ -14,6 +14,9 @@ enforces:
 - dry-run-by-default behavior when configured
 - persistent run audit logs
 
+If another domain-specific MCP server can solve the same task, that server must
+be chosen first per [MCP Tool Arbitration Hard Rules](mcp-routing-rules.md).
+
 ## Implemented MCP tools
 
 The `BashGatewayServer` currently exposes:

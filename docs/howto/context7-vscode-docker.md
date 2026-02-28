@@ -17,6 +17,8 @@ For strict offline workflows, prefer local MCP tools:
 When offline and you need docs grounding, scope local search to repository docs
 (`docs/`, `README.md`, `templates/`) instead of external fetches.
 
+For tool overlap decisions, enforce [MCP Tool Arbitration Hard Rules](mcp-routing-rules.md).
+
 ## 1) Install VS Code Extension
 
 ```bash

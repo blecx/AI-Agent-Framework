@@ -57,19 +57,19 @@ def test_context7_guardrails_pass_with_required_snippets(tmp_path: Path):
 
     baseline_file = tmp_path / "prompt-quality-baseline.md"
     baseline_file.write_text(
-        "Context7 external API guidance",
+        "Context7 external API guidance\nMCP Tool Arbitration Hard Rules\nPrompts must treat these as hard rules",
         encoding="utf-8",
     )
 
     create_file = tmp_path / "create-issue.md"
     create_file.write_text(
-        "Context7 docs-grounding",
+        "Context7 docs-grounding MCP Tool Arbitration Hard Rules",
         encoding="utf-8",
     )
 
     resolve_file = tmp_path / "resolve-issue-dev.md"
     resolve_file.write_text(
-        "Context7 external API",
+        "Context7 external API MCP Tool Arbitration Hard Rules",
         encoding="utf-8",
     )
 
