@@ -60,6 +60,7 @@ class AutonomousWorkflowAgent:
         self.last_guardrail_triggered: bool = False
         self.last_split_recommendation: str = ""
         self.last_ux_feedback: str = ""
+        self.last_ux_validation_error: str = ""
 
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
@@ -558,6 +559,57 @@ Mode:
             "- Re-run work-issue on the first split issue once created."
         )
 
+    @staticmethod
+    def _validate_ux_gate_output(ux_text: str) -> tuple[str, list[str], list[str]]:
+        """Validate UX authority output schema and normalize decision.
+
+        Returns:
+            tuple(decision, missing_sections, validation_errors)
+        """
+        text = (ux_text or "").strip()
+        lines = text.splitlines()
+        first_line = lines[0].strip() if lines else ""
+
+        valid_decisions = {
+            "UX_DECISION: PASS": "PASS",
+            "UX_DECISION: CHANGES": "CHANGES",
+        }
+        decision = valid_decisions.get(first_line, "CHANGES")
+
+        validation_errors: list[str] = []
+        if first_line not in valid_decisions:
+            validation_errors.append(
+                "invalid first line; expected 'UX_DECISION: PASS' or 'UX_DECISION: CHANGES'"
+            )
+
+        required_sections = [
+            "Navigation Plan:",
+            "Responsive Rules:",
+            "Grouping Decisions:",
+            "A11y Baseline:",
+            "Requirement Check:",
+            "Requirement Gaps:",
+            "Risk Notes:",
+        ]
+        if decision == "CHANGES":
+            required_sections.append("Required Changes:")
+
+        missing_sections: list[str] = []
+        for header in required_sections:
+            pattern = rf"(?im)^\s*(?:[-*]\s*)?(?:`)?{re.escape(header)}(?:`)?\s*$"
+            if re.search(pattern, text) is None:
+                missing_sections.append(header)
+
+        if missing_sections:
+            validation_errors.append(
+                "missing required sections: " + ", ".join(missing_sections)
+            )
+
+        if validation_errors:
+            decision = "CHANGES"
+
+        return decision, missing_sections, validation_errors
+
     async def _run_ux_gate(self, context_text: str, stage_label: str) -> str:
         """Run mandatory UX authority gate and return PASS/CHANGES decision."""
         ux_prompt = f"""You are acting as the blecs UX authority gate for Issue #{self.issue_number}.
@@ -590,10 +642,25 @@ Then include:
             ux_prompt,
             f"{stage_label}: UX authority gate",
         )
-        self.last_ux_feedback = ux_text or ""
+        ux_text = ux_text or ""
+        decision, missing_sections, validation_errors = self._validate_ux_gate_output(
+            ux_text
+        )
+        if validation_errors:
+            error_msg = "; ".join(validation_errors)
+            self.last_ux_validation_error = error_msg
+            print(f"⚠️  UX gate output schema invalid: {error_msg}")
+            ux_text = (
+                ux_text.rstrip()
+                + "\n\n"
+                + "UX_VALIDATION_ERROR: "
+                + error_msg
+                + "\n"
+            )
+        else:
+            self.last_ux_validation_error = ""
 
-        first_line = (ux_text.strip().splitlines() or [""])[0].strip()
-        decision = "PASS" if first_line == "UX_DECISION: PASS" else "CHANGES"
+        self.last_ux_feedback = ux_text
 
         if not self.dry_run:
             self._persist_ux_consultation(

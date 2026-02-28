@@ -20,6 +20,9 @@ def test_design_guidelines_skill_returns_skill_result_envelope():
     assert isinstance(result.data, dict)
     assert "markdown" in result.data
     assert "Design Guidelines" in result.data["markdown"]
+    assert "Requirement Check" in result.data["markdown"]
+    assert isinstance(result.data.get("requirement_check"), list)
+    assert isinstance(result.data.get("gaps"), list)
 
 
 def test_coder_change_plan_includes_yaml_block():
@@ -44,6 +47,9 @@ def test_coder_change_plan_includes_yaml_block():
     # Ensure YAML block is clearly delimited and contains the stub keys.
     assert re.search(r"```yaml\n[\s\S]+\n```", markdown)
     assert "acceptance_criteria" in result.data["yaml"]
+    assert "labels:" in result.data["yaml"]
+    assert "Requirement Gap Audit Checklist" in markdown
+    assert isinstance(result.data.get("requirement_gap_audit"), list)
 
 
 def test_global_registry_lists_new_skills(monkeypatch):
