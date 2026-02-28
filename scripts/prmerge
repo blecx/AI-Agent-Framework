@@ -362,27 +362,56 @@ EOF
 validate_pr_template() {
     local pr_body="$1"
     local pr_number="$2"
+    local repo_name="$3"
     
     info "Validating PR description format..."
     
-    local required_sections=(
-        "# Summary"
-        "## Goal / Acceptance Criteria (required)"
-        "## Issue / Tracking Link (required)"
-        "## Validation (required)"
-        "## Automated checks"
-        "## Manual test evidence (required)"
-    )
-    
     local missing_sections=()
     local warnings=()
-    
-    # Check for required sections
-    for section in "${required_sections[@]}"; do
-        if ! echo "$pr_body" | grep -q "$section"; then
-            missing_sections+=("$section")
-        fi
-    done
+
+    if [ "$repo_name" = "$BACKEND_REPO_NAME" ]; then
+        local required_patterns=(
+            '^## Goal / Context$'
+            '^## Acceptance Criteria$'
+            '^## Validation Evidence$'
+            '^## Repo Hygiene / Safety$'
+        )
+        local required_labels=(
+            '## Goal / Context'
+            '## Acceptance Criteria'
+            '## Validation Evidence'
+            '## Repo Hygiene / Safety'
+        )
+
+        for i in "${!required_patterns[@]}"; do
+            if ! echo "$pr_body" | grep -Eq "${required_patterns[$i]}"; then
+                missing_sections+=("${required_labels[$i]}")
+            fi
+        done
+    else
+        local required_patterns=(
+            '^# Summary$'
+            '^## Goal / Acceptance Criteria \(required\)$'
+            '^## Issue / Tracking Link \(required\)$'
+            '^## Validation \(required\)$'
+            '^##+ Automated checks$'
+            '^##+ Manual test evidence \(required\)$'
+        )
+        local required_labels=(
+            '# Summary'
+            '## Goal / Acceptance Criteria (required)'
+            '## Issue / Tracking Link (required)'
+            '## Validation (required)'
+            '## Automated checks'
+            '## Manual test evidence (required)'
+        )
+
+        for i in "${!required_patterns[@]}"; do
+            if ! echo "$pr_body" | grep -Eq "${required_patterns[$i]}"; then
+                missing_sections+=("${required_labels[$i]}")
+            fi
+        done
+    fi
     
     # Check if Fixes: line exists (accepts #N or owner/repo#N format)
     if ! echo "$pr_body" | grep -Eq "^Fixes: (#[0-9]+|[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+)"; then
@@ -958,7 +987,7 @@ else
     # Validate PR template
     info "Validating PR description format..."
     PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body')
-    if ! validate_pr_template "$PR_BODY" "$PR_NUMBER"; then
+    if ! validate_pr_template "$PR_BODY" "$PR_NUMBER" "$WORK_REPO_NAME"; then
         error "PR template validation failed. Please fix the PR description."
         warning "PR URL: $PR_URL"
         exit 1
