@@ -1,0 +1,33 @@
+profiles:
+  issue:
+    scripts:
+      - setup.sh
+      - verify_agent_system.sh
+      - next-issue
+      - next-pr
+      - scripts/prmerge
+      - scripts/archive-goals.sh
+      - scripts/close-issue.sh
+      - scripts/validate-pr-template.sh
+      - scripts/validate_issue_specs.sh
+      - scripts/install-context7-systemd.sh
+    default_timeout_sec: 180
+    max_timeout_sec: 1200
+    default_dry_run: true
+
+  ci:
+    scripts:
+      - verify_agent_system.sh
+      - scripts/validate-pr-template.sh
+      - scripts/validate_issue_specs.sh
+    default_timeout_sec: 120
+    max_timeout_sec: 600
+    default_dry_run: true
+
+  ops:
+    scripts:
+      - scripts/install-context7-systemd.sh
+      - scripts/archive-goals.sh
+    default_timeout_sec: 180
+    max_timeout_sec: 900
+    default_dry_run: true

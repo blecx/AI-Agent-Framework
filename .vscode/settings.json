@@ -131,6 +131,9 @@
         "headers": {
           "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
         }
+      },
+      "bashGateway": {
+        "url": "http://127.0.0.1:3011/mcp"
       }
     }
   },

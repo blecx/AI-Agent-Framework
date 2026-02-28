@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+ok() {
+  echo "[ok] $1"
+}
+
+fail() {
+  echo "[fail] $1" >&2
+  exit 1
+}
+
+check_systemd() {
+  local unit="$1"
+  local enabled
+  local active
+  enabled="$(sudo systemctl is-enabled "$unit" 2>/dev/null || true)"
+  active="$(sudo systemctl is-active "$unit" 2>/dev/null || true)"
+
+  [[ "$enabled" == "enabled" ]] || fail "$unit is not enabled (got: $enabled)"
+  [[ "$active" == "active" ]] || fail "$unit is not active (got: $active)"
+  ok "$unit enabled+active"
+}
+
+check_compose_service() {
+  local project_name="$1"
+  local compose_file="$2"
+  local service="$3"
+
+  local status
+  status="$(docker compose --project-name "$project_name" -f "$compose_file" ps --status running --services 2>/dev/null | grep -E "^${service}$" || true)"
+  [[ "$status" == "$service" ]] || fail "$service not running in $compose_file"
+  ok "$service running in compose project $project_name"
+}
+
+check_endpoint_406() {
+  local name="$1"
+  local url="$2"
+  local code
+  code="$(curl -sS -o /dev/null -w "%{http_code}" "$url" || true)"
+  [[ "$code" == "406" ]] || fail "$name endpoint expected HTTP 406, got $code"
+  ok "$name endpoint reachable ($code)"
+}
+
+echo "[smoke] MCP services smoke test"
+
+check_systemd "context7-mcp.service"
+check_systemd "bash-gateway-mcp.service"
+
+check_compose_service "context7-mcp" "$ROOT_DIR/docker-compose.context7.yml" "context7"
+check_compose_service "ai-agent-framework" "$ROOT_DIR/docker-compose.mcp-bash-gateway.yml" "bash-gateway-mcp"
+
+check_endpoint_406 "Context7 MCP" "http://127.0.0.1:3010/mcp"
+check_endpoint_406 "Bash Gateway MCP" "http://127.0.0.1:3011/mcp"
+
+echo "[smoke] PASS"
