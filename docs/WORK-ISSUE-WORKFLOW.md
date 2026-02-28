@@ -2,12 +2,12 @@
 
 **Standard workflow for working on issues in both AI-Agent-Framework and AI-Agent-Framework-Client repositories.**
 
-This document defines the comprehensive 6-phase workflow for resolving issues from selection through PR completion. The workflow is designed to be automated via `scripts/work-issue.py` (future) but can also be followed manually.
+This document defines the comprehensive 6-phase workflow for resolving issues from selection through PR completion. The workflow is automated via `scripts/work-issue.py` and can also be followed manually.
 
 ## Overview
 
 ```
-Phase 1: Selection & Setup (automated via next-issue.py)
+Phase 1: Selection & Setup (automated via `./next-issue`)
     ↓
 Phase 2: Context & Planning (analyze + plan)
     ↓
@@ -31,6 +31,7 @@ Phase 6: CI & PR (local CI + PR creation + record)
 - **No hallucinations:** Verify everything, don't make things up or assume completion
 - **Get approval for decisions:** Architecture and feature decisions require user approval
 - **Complete all phases:** Work through entire workflow, don't stop prematurely
+- **UI/UX governance is mandatory:** Use canonical delegation guidance and include PR UX evidence for UI-affecting changes.
 
 ## LLM Configuration (Hybrid Strategy)
 
@@ -116,7 +117,7 @@ Controls:
 
 **Goal:** Select next issue and prepare workspace
 
-**Automated by:** `./scripts/next-issue.py`
+**Automated by:** `./next-issue` (wrapper) or `./scripts/next-issue.py`
 
 **Steps:**
 
@@ -183,6 +184,12 @@ When running via the autonomous agent (`scripts/work-issue.py`), Phase 2 include
 - **Phase 2.5 (UX gate):** consults the UX authority and may block or require changes.
 - **Phase 2.6 (Mockups + prototype):** generates UI mockup artifacts under `.tmp/mockups/issue-<n>/` (images + `index.html`) and persists designer outputs when available.
    - If image generation is unavailable (e.g., missing `OPENAI_API_KEY`), the workflow continues but records a clear skip reason.
+
+Canonical UX governance links:
+
+- Delegation policy (source of truth): `.github/prompts/modules/ux/delegation-policy.md`
+- Authority agent contract: `.github/agents/blecs-ux-authority.agent.md`
+- CI UX evidence gate: `.github/workflows/ci.yml` (`## UX / Navigation Review` requirement)
 
 **Steps:**
 
@@ -724,7 +731,7 @@ When running via the autonomous agent (`scripts/work-issue.py`), Phase 2 include
 - Completion is recorded
 - Workflow documentation is updated with learnings
 
-## Checkpoints & Resume
+## Checkpoints & Recovery
 
 **Checkpoint Files:** `~/.aitk/work-issue-<number>.checkpoint`
 
@@ -744,18 +751,7 @@ When running via the autonomous agent (`scripts/work-issue.py`), Phase 2 include
 }
 ```
 
-**Resume from Checkpoint:**
-
-```bash
-./scripts/work-issue.py --resume <number>
-```
-
-This will:
-
-- Load checkpoint file
-- Restore state (branch, phase, progress)
-- Continue from last completed phase
-- Skip already-completed work
+`scripts/work-issue.py` currently does **not** support a `--resume` flag. Recover manually from checkpoint metadata.
 
 **Manual Resume:**
 
@@ -845,40 +841,24 @@ else
 fi
 ```
 
-## Future Automation
-
-**Goal:** Automate entire workflow via `scripts/work-issue.py`
-
-**Usage:**
+## Current Automation Commands
 
 ```bash
-# Full workflow (all phases)
-./scripts/work-issue.py
+# Full autonomous execution
+./scripts/work-issue.py --issue <number>
 
-# Resume from checkpoint
-./scripts/work-issue.py --resume 25
+# Planning-only run (no repo changes)
+./scripts/work-issue.py --issue <number> --plan-only
 
-# Run specific phase only
-./scripts/work-issue.py --phase 3  # implementation only
+# Dry-run initialization only
+./scripts/work-issue.py --issue <number> --dry-run
 
-# Run range of phases
-./scripts/work-issue.py --phase 2-5  # context through review
+# Interactive phase approvals
+./scripts/work-issue.py --issue <number> --interactive
 
-# Dry run (show what would happen)
-./scripts/work-issue.py --dry-run
-
-# Verbose output
-./scripts/work-issue.py --verbose
+# Split-issue generation mode
+./scripts/work-issue.py --issue <number> --create-split-issues
 ```
-
-**Implementation Strategy:**
-
-1. Start with manual execution following this workflow
-2. Identify automatable steps in each phase
-3. Implement phase-by-phase
-4. Test thoroughly with multiple issues
-5. Refine based on learnings
-6. Document gotchas and edge cases
 
 ## Workflow Refinement Process
 
@@ -915,13 +895,15 @@ fi
 - [STEP-1-IMPLEMENTATION-WORKFLOW.md](../STEP-1-IMPLEMENTATION-WORKFLOW.md) - 10-step protocol (superset)
 - [Quality Gates (Issue #24)](https://github.com/blecx/AI-Agent-Framework-Client/issues/24) - CI/CD requirements
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - General contribution guidelines
+- [Canonical UX Delegation Policy](../.github/prompts/modules/ux/delegation-policy.md) - mandatory UI/UX delegation rules
+- [UX Authority Agent Contract](../.github/agents/blecs-ux-authority.agent.md) - PASS/CHANGES authority output contract
 
 ## Quick Reference
 
 **Start New Issue:**
 
 ```bash
-./scripts/next-issue.py
+./next-issue
 git checkout -b issue/<number>-<description>
 ```
 
