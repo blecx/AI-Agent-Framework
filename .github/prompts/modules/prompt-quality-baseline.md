@@ -26,7 +26,7 @@ precedence and usage model:
 1. Prefer the most specialized domain MCP server over generic servers.
 2. Use `git` MCP for repository history/state operations (`status`, `diff`,
 	`log`, `show`, `blame`, branch tasks).
-3. Use `search` MCP for code/doc content discovery and text matching before
+3. Use `search` MCP for codebase content discovery and text matching before
 	file reads.
 4. Use `filesystem` MCP for deterministic file CRUD inside workspace scope;
 	never use it for git-history questions.
@@ -37,7 +37,11 @@ precedence and usage model:
 7. Use `bashGateway` MCP only for allowlisted script workflows or when a
 	required domain action has no dedicated MCP capability.
 8. For external API/library docs, use Context7 when online; when offline, use
-	`offlineDocs` MCP for indexed local docs; use `search` MCP as fallback only.
+	`offlineDocs` MCP for indexed local docs; use `search` MCP only when
+	`offlineDocs` does not cover required content.
+
+9. For local docs Q&A on repository documentation, prefer `offlineDocs` MCP for
+	index/search/read; use `filesystem` read only for exact-path excerpts.
 
 Prompts must treat these as hard rules, not preferences.
 

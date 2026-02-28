@@ -17,9 +17,9 @@ Use `git` MCP for:
 
 Do not use `filesystem` or generic shell paths for git-history reasoning.
 
-## Rule 3: Content discovery -> Search MCP
+## Rule 3: Code discovery -> Search MCP
 
-Use `search` MCP first for code/doc discovery and text matching.
+Use `search` MCP first for codebase discovery and text matching.
 Only use direct file reads when the target path is already known.
 
 ## Rule 4: File CRUD -> Filesystem MCP
@@ -50,10 +50,21 @@ Use Context7 when online for external APIs/frameworks.
 When offline, use `offlineDocs` MCP first for indexed local docs.
 Use `search` MCP only as fallback when required content is not indexed.
 
-## Rule 9: Tie-breaker
+## Rule 9: Local docs Q&A -> Offline Docs MCP
 
-If uncertainty remains, enforce this strict precedence order:
+For repository documentation Q&A and grounding (docs/tutorials/readmes/templates),
+prefer `offlineDocs` MCP for index/search/read operations.
+Use `filesystem` reads only for exact-path excerpts after the document is known.
 
-`git/search/filesystem/dockerCompose/testRunner/offlineDocs` (domain MCP) > `bashGateway` > generic terminal.
+## Rule 10: Tie-breaker
+
+If uncertainty remains, enforce precedence by task class:
+
+- Git/history/state: `git` > `bashGateway` > terminal
+- Code discovery: `search` > `filesystem` read > terminal
+- Local docs grounding/Q&A: `offlineDocs` > `search` > `filesystem` read
+- File CRUD: `filesystem` > `bashGateway` > terminal
+- Compose/containers: `dockerCompose` > `bashGateway` > terminal
+- Lint/build/test: `testRunner` > `bashGateway` > terminal
 
 No lower-tier tool may be chosen when a higher-tier, capable tool is available.
