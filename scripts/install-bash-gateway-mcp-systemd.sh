@@ -2,11 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/docker-compose.context7.yml"
-PROJECT_NAME="context7-mcp"
-UNIT_NAME="context7-mcp.service"
+COMPOSE_FILE="${ROOT_DIR}/docker-compose.mcp-bash-gateway.yml"
+UNIT_NAME="bash-gateway-mcp.service"
 UNIT_PATH="/etc/systemd/system/${UNIT_NAME}"
-ENV_FILE="/etc/default/context7-mcp"
+ENV_FILE="/etc/default/bash-gateway-mcp"
 DOCKER_BIN="$(command -v docker || true)"
 SYSTEMCTL_BIN="$(command -v systemctl || true)"
 SUDO_BIN="$(command -v sudo || true)"
@@ -42,24 +41,18 @@ if ! "${DOCKER_BIN}" compose version >/dev/null 2>&1; then
 fi
 
 if [[ ! -f "${ENV_FILE}" ]]; then
-  if [[ -n "${CONTEXT7_API_KEY:-}" ]]; then
-    sudo tee "${ENV_FILE}" >/dev/null <<EOF
-CONTEXT7_API_KEY=${CONTEXT7_API_KEY}
+  sudo tee "${ENV_FILE}" >/dev/null <<'EOF'
+# Optional overrides for Bash Gateway MCP service
+# BASH_GATEWAY_POLICY_PATH=/workspace/configs/bash_gateway_policy.default.yml
+# BASH_GATEWAY_AUDIT_DIR=/workspace/.tmp/agent-script-runs
 EOF
-    echo "Created ${ENV_FILE} with CONTEXT7_API_KEY from current shell environment."
-  else
-    sudo tee "${ENV_FILE}" >/dev/null <<'EOF'
-# Optional Context7 API key for MCP server
-# CONTEXT7_API_KEY=your_api_key_here
-EOF
-    echo "Created ${ENV_FILE} template (no CONTEXT7_API_KEY set)."
-  fi
   sudo chmod 0600 "${ENV_FILE}"
+  echo "Created ${ENV_FILE} template."
 fi
 
 sudo tee "${UNIT_PATH}" >/dev/null <<EOF
 [Unit]
-Description=Context7 MCP Docker Service
+Description=Bash Gateway MCP Docker Service
 After=docker.service network-online.target
 Wants=network-online.target
 Requires=docker.service
@@ -69,10 +62,10 @@ Type=oneshot
 RemainAfterExit=yes
 EnvironmentFile=-${ENV_FILE}
 WorkingDirectory=${ROOT_DIR}
-ExecStart=${DOCKER_BIN} compose --project-name ${PROJECT_NAME} -f ${COMPOSE_FILE} up -d --remove-orphans
-ExecStop=${DOCKER_BIN} compose --project-name ${PROJECT_NAME} -f ${COMPOSE_FILE} down --remove-orphans
-ExecReload=${DOCKER_BIN} compose --project-name ${PROJECT_NAME} -f ${COMPOSE_FILE} up -d --remove-orphans
-TimeoutStartSec=120
+ExecStart=${DOCKER_BIN} compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
+ExecStop=${DOCKER_BIN} compose -f ${COMPOSE_FILE} down
+ExecReload=${DOCKER_BIN} compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
+TimeoutStartSec=600
 TimeoutStopSec=120
 UMask=0077
 NoNewPrivileges=true
