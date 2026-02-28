@@ -41,6 +41,12 @@ def test_context7_guardrails_pass_with_required_snippets(tmp_path: Path):
                         },
                         "filesystem": {
                             "url": "http://127.0.0.1:3014/mcp",
+                        },
+                        "dockerCompose": {
+                            "url": "http://127.0.0.1:3015/mcp",
+                        },
+                        "testRunner": {
+                            "url": "http://127.0.0.1:3016/mcp",
                         }
                     }
                 }

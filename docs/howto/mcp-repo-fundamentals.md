@@ -13,6 +13,19 @@ Safety constraints are enforced server-side for all path-based operations:
 - deny path traversal (`..`)
 - deny repository-root escape (including symlink escape)
 
+## Provided MCP tools
+
+- Git MCP: `status`, `diff`, `log`, `show`, `branch current`, `branch list`, `blame`, staged-path helpers
+- Search MCP: ripgrep-backed search/list (`rg`) with server-enforced exclusions
+- Filesystem MCP: scoped read/write/list/mkdir/delete/move/copy with deny rules
+
+The Search MCP always excludes:
+
+- `projectDocs/**`
+- `configs/llm.json`
+
+even when querying from scope `.`.
+
 ## Start with Docker Compose
 
 ```bash

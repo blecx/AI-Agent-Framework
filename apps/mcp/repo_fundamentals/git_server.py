@@ -69,6 +69,32 @@ def git_show(rev: str = "HEAD", path: str | None = None) -> dict:
 
 
 @mcp.tool()
+def git_branch_current() -> dict:
+    """Return current checked-out branch name."""
+    return service.branch_current()
+
+
+@mcp.tool()
+def git_branch_list(all_branches: bool = False) -> dict:
+    """Return local or all branch names."""
+    return service.branch_list(all_branches=all_branches)
+
+
+@mcp.tool()
+def git_blame(
+    path: str,
+    rev: str | None = None,
+    line_start: int | None = None,
+    line_end: int | None = None,
+) -> dict:
+    """Return git blame porcelain output for a validated path."""
+    try:
+        return service.blame(path=path, rev=rev, line_start=line_start, line_end=line_end)
+    except (PathGuardError, ValueError) as exc:
+        raise ValueError(str(exc)) from exc
+
+
+@mcp.tool()
 def git_add(paths: list[str]) -> dict:
     """Stage specific paths after safety validation."""
     try:

@@ -3,6 +3,20 @@
 This guide installs Context7 for VS Code, runs a local Context7 MCP endpoint in
 Docker, and enables host boot startup.
 
+## Offline-first note
+
+Context7 is best when online because it fetches external docs.
+
+For strict offline workflows, prefer local MCP tools:
+
+- `git` MCP (`status`, `diff`, `log`, `blame`, `branch`)
+- `search` MCP (ripgrep-based, scoped to repository)
+- `filesystem` MCP (scoped writes with deny rules)
+- `bashGateway` MCP (policy allowlisted scripts + audit logs)
+
+When offline and you need docs grounding, scope local search to repository docs
+(`docs/`, `README.md`, `templates/`) instead of external fetches.
+
 ## 1) Install VS Code Extension
 
 ```bash

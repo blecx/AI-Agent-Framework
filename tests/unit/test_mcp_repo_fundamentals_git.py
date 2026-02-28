@@ -61,3 +61,55 @@ def test_git_service_add_uses_validated_relative_paths(tmp_path: Path, monkeypat
 
     assert result["added"] == ["README.md"]
     assert captured["args"] == ["add", "--", "README.md"]
+
+
+def test_git_service_branch_current(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    service = GitService(repo_root=tmp_path)
+
+    def fake_run(args: list[str]) -> str:
+        assert args == ["branch", "--show-current"]
+        return "main\n"
+
+    monkeypatch.setattr(service, "_run_git", fake_run)
+    result = service.branch_current()
+
+    assert result == {"branch": "main"}
+
+
+def test_git_service_branch_list(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    service = GitService(repo_root=tmp_path)
+
+    def fake_run(args: list[str]) -> str:
+        assert args == ["branch", "--list", "--format=%(refname:short)"]
+        return "main\nfeature/a\n"
+
+    monkeypatch.setattr(service, "_run_git", fake_run)
+    result = service.branch_list()
+
+    assert result["branches"] == ["main", "feature/a"]
+    assert result["count"] == 2
+
+
+def test_git_service_blame_validates_range_and_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "README.md").write_text("line1\nline2\n", encoding="utf-8")
+    service = GitService(repo_root=tmp_path)
+
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(args: list[str]) -> str:
+        captured["args"] = args
+        return "author Test\n"
+
+    monkeypatch.setattr(service, "_run_git", fake_run)
+    result = service.blame(path="README.md", line_start=1, line_end=2)
+
+    assert result["path"] == "README.md"
+    assert captured["args"] == ["blame", "--line-porcelain", "-L", "1,2", "--", "README.md"]
+
+
+def test_git_service_blame_rejects_partial_range(tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text("line1\n", encoding="utf-8")
+    service = GitService(repo_root=tmp_path)
+
+    with pytest.raises(ValueError):
+        service.blame(path="README.md", line_start=1)

@@ -97,6 +97,48 @@ class GitService:
             args.extend(["--", *self._validated_paths([path])])
         return {"output": self._run_git(args)}
 
+    def branch_current(self) -> dict[str, Any]:
+        output = self._run_git(["branch", "--show-current"])
+        return {"branch": output.strip()}
+
+    def branch_list(self, all_branches: bool = False) -> dict[str, Any]:
+        args = ["branch", "--list", "--format=%(refname:short)"]
+        if all_branches:
+            args.append("--all")
+
+        output = self._run_git(args)
+        branches = [line.strip() for line in output.splitlines() if line.strip()]
+        return {"branches": branches, "count": len(branches)}
+
+    def blame(
+        self,
+        path: str,
+        rev: str | None = None,
+        line_start: int | None = None,
+        line_end: int | None = None,
+    ) -> dict[str, Any]:
+        validated = self._validated_paths([path])[0]
+
+        args = ["blame", "--line-porcelain"]
+        if line_start is not None or line_end is not None:
+            if line_start is None or line_end is None:
+                raise ValueError("line_start and line_end must both be provided")
+            if line_start <= 0 or line_end <= 0:
+                raise ValueError("line_start and line_end must be >= 1")
+            if line_start > line_end:
+                raise ValueError("line_start must be <= line_end")
+            args.extend(["-L", f"{line_start},{line_end}"])
+
+        if rev:
+            rev_clean = rev.strip()
+            if not rev_clean:
+                raise ValueError("rev cannot be empty")
+            args.append(rev_clean)
+
+        args.extend(["--", validated])
+        output = self._run_git(args)
+        return {"path": validated, "output": output}
+
     def safe_root(self) -> dict[str, Any]:
         return {"repo_root": str(self.repo_root)}
 

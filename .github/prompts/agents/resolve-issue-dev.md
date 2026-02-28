@@ -26,6 +26,7 @@ Implement one issue into a small, reviewable PR with DDD-compliant changes and l
 - Follow DDD boundaries and keep diffs focused.
 - Use `.tmp/` for PR body and temporary artifacts.
 - For external API/framework usage, verify behavior against Context7 docs and capture assumptions when docs are version-ambiguous.
+- If Context7 is unavailable/offline, continue with local MCP-first grounding (`git`, `search`, `filesystem`, `bashGateway`) and repository docs (`docs/`, `README.md`, `templates/`).
 - For internal architecture, prioritize repository conventions and local source-of-truth files.
 - If scope affects UI/UX/navigation/responsive behavior, consult `blecs-ux-authority` and block completion until `UX_DECISION: PASS`.
 
