@@ -48,11 +48,18 @@ echo "[smoke] MCP services smoke test"
 
 check_systemd "context7-mcp.service"
 check_systemd "bash-gateway-mcp.service"
+check_systemd "repo-fundamentals-mcp.service"
 
 check_compose_service "context7-mcp" "$ROOT_DIR/docker-compose.context7.yml" "context7"
 check_compose_service "ai-agent-framework" "$ROOT_DIR/docker-compose.mcp-bash-gateway.yml" "bash-gateway-mcp"
+check_compose_service "repo-fundamentals-mcp" "$ROOT_DIR/docker-compose.repo-fundamentals-mcp.yml" "git-mcp"
+check_compose_service "repo-fundamentals-mcp" "$ROOT_DIR/docker-compose.repo-fundamentals-mcp.yml" "search-mcp"
+check_compose_service "repo-fundamentals-mcp" "$ROOT_DIR/docker-compose.repo-fundamentals-mcp.yml" "filesystem-mcp"
 
 check_endpoint_406 "Context7 MCP" "http://127.0.0.1:3010/mcp"
 check_endpoint_406 "Bash Gateway MCP" "http://127.0.0.1:3011/mcp"
+check_endpoint_406 "Git MCP" "http://127.0.0.1:3012/mcp"
+check_endpoint_406 "Search MCP" "http://127.0.0.1:3013/mcp"
+check_endpoint_406 "Filesystem MCP" "http://127.0.0.1:3014/mcp"
 
 echo "[smoke] PASS"

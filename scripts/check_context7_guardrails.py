@@ -29,6 +29,14 @@ REQUIRED_AGENT_SNIPPETS = {
     ],
 }
 
+REQUIRED_MCP_SERVER_URLS = {
+    "context7": "http://127.0.0.1:3010/mcp",
+    "bashGateway": "http://127.0.0.1:3011/mcp",
+    "git": "http://127.0.0.1:3012/mcp",
+    "search": "http://127.0.0.1:3013/mcp",
+    "filesystem": "http://127.0.0.1:3014/mcp",
+}
+
 
 def _must_contain(path: Path, snippets: list[str], errors: list[str]) -> None:
     if not path.exists():
@@ -61,15 +69,19 @@ def _check_settings(errors: list[str]) -> None:
         errors.append(f"{SETTINGS_FILE}: missing 'mcp.servers' object")
         return
 
+    for server_name, expected_url in REQUIRED_MCP_SERVER_URLS.items():
+        server = servers.get(server_name)
+        if not isinstance(server, dict):
+            errors.append(f"{SETTINGS_FILE}: missing 'mcp.servers.{server_name}' entry")
+            continue
+        if server.get("url") != expected_url:
+            errors.append(
+                f"{SETTINGS_FILE}: {server_name} url must be {expected_url}"
+            )
+
     context7 = servers.get("context7")
     if not isinstance(context7, dict):
-        errors.append(f"{SETTINGS_FILE}: missing 'mcp.servers.context7' entry")
         return
-
-    if context7.get("url") != "http://127.0.0.1:3010/mcp":
-        errors.append(
-            f"{SETTINGS_FILE}: context7 url must be http://127.0.0.1:3010/mcp"
-        )
 
     headers = context7.get("headers")
     if not isinstance(headers, dict) or headers.get("CONTEXT7_API_KEY") != "${env:CONTEXT7_API_KEY}":
@@ -87,12 +99,12 @@ def main() -> int:
         _must_contain(path, snippets, errors)
 
     if errors:
-        print("❌ Context7 guardrail checks failed:")
+        print("❌ MCP guardrail checks failed:")
         for error in errors:
             print(f"- {error}")
         return 1
 
-    print("✅ Context7 guardrail checks passed")
+    print("✅ MCP guardrail checks passed")
     return 0
 
 
