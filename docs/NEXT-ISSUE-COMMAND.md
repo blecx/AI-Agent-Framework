@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `./next-issue` command implements **Phase 1-2** of the [complete issue resolution workflow](./WORK-ISSUE-WORKFLOW.md). It intelligently selects the next Step 1 issue to work on with a **two-phase workflow**:
+The `./next-issue` command implements **Phase 1-2** of the [complete issue resolution workflow](./WORK-ISSUE-WORKFLOW.md). It intelligently selects the next open issue to work on with a **two-phase workflow**:
 
 **Note:** This command focuses on **selection and setup only**. For the complete workflow including context analysis, planning, implementation, testing, review, and PR creation, see [WORK-ISSUE-WORKFLOW.md](./WORK-ISSUE-WORKFLOW.md).
 
@@ -16,7 +16,7 @@ The `./next-issue` command implements **Phase 1-2** of the [complete issue resol
 
 ### Phase 2: Selection
 
-- Uses **sequential order from tracking file** (issues 24-58)
+- Uses **live open issues from GitHub** as the candidate pool
 - Checks which blockers are resolved via GitHub API
 - Selects the highest priority unblocked issue
 - Adjusts time estimates based on historical learning
@@ -84,7 +84,7 @@ The script has **built-in timeout protection**:
 
 ### Non-Verbose Mode (Default)
 
-```
+```text
 Phase 1: Reconciliation
 🔄 Reconciling with GitHub...
 ✅ Everything in sync
@@ -222,53 +222,18 @@ This helps set realistic expectations as the project progresses.
 
 ### Step 1: Reconciliation Phase
 
-1. **Check Merged PRs**
-   - Query GitHub for recently merged PRs (last 20)
-   - Extract issue numbers from PR titles
-   - Close issues if PRs are merged but issues still open
-
-2. **Update Tracking File**
-   - Query GitHub for all Step 1 issues (24-58)
-   - Compare GitHub state with local tracking file
-   - Update local file to match GitHub (source of truth)
-   - Don't overwrite "In Progress" or "Complete" statuses
-
-3. **Commit and Sync**
-   - Commit tracking file changes to git
-   - Push to remote repository
-   - Loop until no changes detected
+1. **Check Merged PRs** - Query recently merged PRs, extract issue numbers from PR titles, and close issues that remain open.
+2. **Update Tracking File** - Query open issues and current status, then update local tracking content to match GitHub without overwriting "In Progress" or "Complete" statuses.
+3. **Commit and Sync** - Commit tracking updates, push to remote, and repeat until reconciliation converges.
 
 ### Step 2: Issue Selection
 
-1. **Parse Issues from GitHub**
-   - Query issues 24-58 individually (no label assumptions)
-   - Sequential order defined by tracking file
-   - Uses caching to avoid repeated API calls
-
-2. **Parse Tracking Metadata**
-   - Extract estimated hours, blockers, phase from tracking file
-   - Use fast, optimized regex patterns
-   - Individual section parsing (not complex multi-line regex)
-
-3. **Filter Available Issues**
-   - Status must be "Open" on GitHub
-   - All blockers must be resolved (verified via GitHub)
-   - Blockers checked using merged PR verification
-
-4. **Priority Sorting**
-   - High/CRITICAL priority first
-   - Then sequential order (24, 25, 26...)
-   - Respects dependency chain
-
-5. **Context Enrichment**
-   - Extract full issue section from tracking file
-   - Add historical insights from knowledge base
-   - Calculate adjusted time estimates
-
-6. **Display Recommendation**
-   - Show selected issue with full context
-   - Provide GitHub-verified next steps
-   - Include learning insights
+1. **Parse Issues from GitHub** - Query open issues directly from GitHub, use tracking metadata when available, and leverage caching for repeated requests.
+2. **Parse Tracking Metadata** - Extract estimated hours, blockers, and phase details using optimized parsing from the tracking file.
+3. **Filter Available Issues** - Keep only issues that are open and unblocked after GitHub blocker verification.
+4. **Priority Sorting** - Sort by priority first, then by lowest issue number for deterministic ordering while respecting dependency constraints.
+5. **Context Enrichment** - Add local tracking details, learning insights, and adjusted estimates.
+6. **Display Recommendation** - Present the selected issue with GitHub-verified next steps.
 
 ## Key Features
 
@@ -312,7 +277,7 @@ Uses **sequential order** from tracking file (24-58):
 
 The command is designed to work with the 10-step protocol:
 
-```
+```text
 Step 1: Pre-work Validation
   ↓
 ./next-issue  ← Use command here to select next issue

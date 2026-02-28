@@ -61,7 +61,7 @@ GITHUB_REPO = "blecx/AI-Agent-Framework"
 # Configuration
 DEFAULT_TIMEOUT = 15  # seconds for individual operations
 MAX_RECONCILE_ITERATIONS = 3
-STEP1_ISSUE_RANGE = (24, 59)  # Legacy Step-1 window (fallback to open issues if exhausted)
+STEP1_ISSUE_RANGE = (24, 59)  # Legacy Step-1 metadata window
 
 
 class TimeoutError(Exception):
@@ -584,20 +584,9 @@ class IssueSelector:
         - Phase information
         - Sequential order (24, 25, 26... 58)
         """
-        # Define legacy Step 1 issue range (from tracking file order)
-        issue_numbers = list(range(*STEP1_ISSUE_RANGE))
-        
-        # Get issues from GitHub by specific numbers (no label assumptions!)
-        github_issues = self.github.get_issues_by_numbers(issue_numbers)
-
-        # Fallback for post-Step-1 phases:
-        # if no configured Step-1 issues are open, consider current open issues
-        # so selection does not hard-stop once legacy range is complete.
-        if not any(issue.get("state") == "OPEN" for issue in github_issues):
-            configured_numbers = {issue["number"] for issue in github_issues}
-            for open_issue in self.github.get_open_issues(limit=100):
-                if open_issue.get("number") not in configured_numbers:
-                    github_issues.append(open_issue)
+        # Primary source: live open issues from GitHub.
+        # This prevents hard-stopping once legacy Step-1 windows are exhausted.
+        github_issues = self.github.get_open_issues(limit=200)
         
         # Parse tracking file for metadata
         tracking_metadata = self._parse_tracking_file()
@@ -608,13 +597,10 @@ class IssueSelector:
             issue_num = gh_issue["number"]
             metadata = tracking_metadata.get(issue_num, {})
             
-            # Determine if issue is truly open and available
-            is_open = gh_issue["state"] == "OPEN"
-            
             issues.append({
                 "number": issue_num,
                 "title": gh_issue["title"],
-                "state": "Open" if is_open else "Closed",
+                "state": "Open",
                 "github_state": gh_issue["state"],  # Original GitHub state
                 "blockers": metadata.get("blockers", []),
                 "estimated_hours": metadata.get("estimated_hours", 4.0),
@@ -938,7 +924,7 @@ def _main_impl(args):
     selector = IssueSelector(TRACKING_FILE, knowledge, github)
     
     if args.verbose:
-        print(f"[DEBUG] Found {len(selector.issues)} total Step 1 issues", file=sys.stderr)
+        print(f"[DEBUG] Found {len(selector.issues)} candidate issues from live open query", file=sys.stderr)
         open_count = len([i for i in selector.issues if i["state"] == "Open"])
         print(f"[DEBUG] {open_count} open issues", file=sys.stderr)
     
