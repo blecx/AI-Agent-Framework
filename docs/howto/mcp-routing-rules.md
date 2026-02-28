@@ -44,6 +44,17 @@ Use `bashGateway` MCP only when:
 - the task is an allowlisted script workflow, or
 - there is no dedicated MCP capability for that action.
 
+## Rule 7a: GitHub/PR operations -> GitHub Ops MCP
+
+Use `githubOps` MCP for GitHub operations such as:
+
+- PR view/files/body/checks/watch
+- Merge (squash)
+- Issue view/close
+- Workflow runs list/cancel
+
+Do not route these actions through `bashGateway` scripts when `githubOps` is available.
+
 ## Rule 8: External docs grounding
 
 Use Context7 when online for external APIs/frameworks.

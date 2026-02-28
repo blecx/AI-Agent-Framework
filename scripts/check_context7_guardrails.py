@@ -42,6 +42,7 @@ REQUIRED_MCP_SERVER_URLS = {
     "dockerCompose": "http://127.0.0.1:3015/mcp",
     "testRunner": "http://127.0.0.1:3016/mcp",
     "offlineDocs": "http://127.0.0.1:3017/mcp",
+    "githubOps": "http://127.0.0.1:3018/mcp",
 }
 
 

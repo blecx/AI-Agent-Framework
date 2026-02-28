@@ -152,6 +152,9 @@
       },
       "offlineDocs": {
         "url": "http://127.0.0.1:3017/mcp"
+      },
+      "githubOps": {
+        "url": "http://127.0.0.1:3018/mcp"
       }
     }
   },
