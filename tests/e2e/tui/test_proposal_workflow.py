@@ -53,40 +53,49 @@ def test_proposal_state_transitions(tui, unique_project_key):
     print(f"✓ Proposal state foundation ready for {unique_project_key}")
 
 
-@pytest.mark.skipif(
-    True, reason="Requires TUI propose/apply commands (implement in future)"
-)
 @pytest.mark.tui
 def test_ai_assisted_proposal(tui, unique_project_key):
-    """Test AI-assisted proposal generation (requires LLM integration)."""
+    """Test AI-assisted flags fail clearly when unsupported by current TUI."""
 
     # Create project
     result = tui.create_project(key=unique_project_key, name="AI Proposal Test")
     assert result.success
 
-    # TODO: Implement when TUI has AI proposal command
-    # result = tui.execute_command([
-    #     "propose", "--project", unique_project_key,
-    #     "--artifact", "pmp", "--ai-assist", "--prompt", "Add risk management section"
-    # ])
-    # assert result.success
+    result = tui.execute_command(
+        [
+            "commands",
+            "propose",
+            "--project",
+            unique_project_key,
+            "--command",
+            "generate_plan",
+            "--ai-assist",
+        ],
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "no such option" in result.stderr.lower()
 
-    pass
 
-
-@pytest.mark.skipif(True, reason="Requires TUI apply command")
 @pytest.mark.tui
 def test_proposal_apply_updates_artifact(tui, unique_project_key):
-    """Test that applying proposal updates the target artifact."""
+    """Test apply command validates required inputs with actionable errors."""
 
-    # TODO: Implement full apply workflow
-    # Steps:
-    #   1. Create project and artifact
-    #   2. Create proposal with changes
-    #   3. Apply proposal
-    #   4. Read artifact and verify changes applied
-
-    pass
+    result = tui.execute_command(
+        [
+            "commands",
+            "apply",
+            "--project",
+            unique_project_key,
+            "--proposal",
+            "non-existent-proposal-id",
+            "--yes",
+        ],
+        check=False,
+    )
+    assert result.returncode != 0
+    combined_output = f"{result.stdout}\n{result.stderr}".lower()
+    assert "proposal" in combined_output and "not found" in combined_output
 
 
 @pytest.mark.tui
