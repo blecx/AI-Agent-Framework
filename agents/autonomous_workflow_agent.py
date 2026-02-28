@@ -809,8 +809,88 @@ Then include:
 
             with open(report_path, "a", encoding="utf-8") as handle:
                 handle.write(content)
+
+            self._persist_ux_requirement_matrix(
+                stage_label=stage_label,
+                ux_text=ux_text,
+                decision=decision,
+            )
         except Exception as exc:
             print(f"⚠️  Could not persist UX consultation artifact: {exc}")
+
+    @staticmethod
+    def _build_ux_requirement_matrix(ux_text: str, decision: str) -> list[dict[str, str]]:
+        """Build deterministic requirement matrix rows from UX consultation text."""
+        text = (ux_text or "")
+        lower = text.lower()
+
+        requirement_defs = [
+            ("navigation", "Navigation Plan:", "navigation"),
+            ("responsive", "Responsive Rules:", "responsive"),
+            ("grouping", "Grouping Decisions:", "group"),
+            ("a11y", "A11y Baseline:", "a11y"),
+            ("pr_evidence", "Requirement Check:", "pr evidence"),
+        ]
+
+        rows: list[dict[str, str]] = []
+        for requirement, header, keyword in requirement_defs:
+            header_pattern = rf"(?im)^\s*(?:[-*]\s*)?(?:`)?{re.escape(header)}(?:`)?\s*$"
+            has_header = re.search(header_pattern, text) is not None
+
+            status = "pass"
+            blocking = "no"
+            evidence = "section present"
+
+            if not has_header:
+                status = "gap"
+                blocking = "yes"
+                evidence = f"missing section: {header}"
+            elif decision != "PASS":
+                status = "gap"
+                if "non-blocking" in lower and keyword in lower:
+                    blocking = "no"
+                    evidence = "requirement gaps mention non-blocking"
+                else:
+                    blocking = "yes"
+                    evidence = "decision requires changes"
+
+            rows.append(
+                {
+                    "requirement": requirement,
+                    "status": status,
+                    "blocking": blocking,
+                    "evidence": evidence,
+                }
+            )
+
+        return rows
+
+    def _persist_ux_requirement_matrix(
+        self, stage_label: str, ux_text: str, decision: str
+    ) -> None:
+        """Persist requirement matrix artifact for UI-affecting UX consultations."""
+        tmp_dir = Path(".tmp")
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        matrix_path = tmp_dir / f"ux-requirement-matrix-issue-{self.issue_number}.md"
+
+        timestamp = datetime.now().isoformat()
+        rows = self._build_ux_requirement_matrix(ux_text=ux_text, decision=decision)
+
+        header = (
+            f"\n## {timestamp} - {stage_label}\n"
+            f"- Decision: {decision}\n\n"
+            "| Requirement | Status | Blocking | Evidence |\n"
+            "|---|---|---|---|\n"
+        )
+        table_rows = "\n".join(
+            [
+                f"| {row['requirement']} | {row['status']} | {row['blocking']} | {row['evidence']} |"
+                for row in rows
+            ]
+        )
+
+        with open(matrix_path, "a", encoding="utf-8") as handle:
+            handle.write(header + table_rows + "\n")
 
     async def execute(self) -> bool:
         """Execute the complete workflow autonomously.

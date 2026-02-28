@@ -88,3 +88,7 @@ Improve UX governance quality by strengthening `blecs-ux-authority`, validating 
 - UX modules aligned with anti-bypass + evidence rules.
 - Related skills upgraded for requirement-aware outputs.
 - Critical naming mismatch (`blecx` → `blecs`) fixed in workflow-authority agent definition.
+- Requirement matrix artifact persisted per UX consultation run:
+   - Path: `.tmp/ux-requirement-matrix-issue-<n>.md`
+   - Columns: `Requirement | Status | Blocking | Evidence`
+   - Categories: `navigation`, `responsive`, `grouping`, `a11y`, `pr_evidence`
