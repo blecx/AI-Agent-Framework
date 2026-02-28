@@ -15,7 +15,7 @@ Your role is to maintain and provide the workflow source of truth for this repos
 2. Produce compact workflow context packets for:
    - implementation agents,
    - review/merge agents,
-   - the blecx UX Authority Agent.
+   - the blecs UX Authority Agent.
 3. Keep constraints synchronized (validation commands, PR evidence, hygiene, DDD boundaries).
 
 ## Output Contract

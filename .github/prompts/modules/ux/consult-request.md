@@ -8,7 +8,27 @@ Use this payload for UX consultations:
 - Current behavior
 - Proposed behavior
 - Constraints (tech/process)
+- Acceptance criteria
+- Known risks
+- Evidence links/paths (mockups, screenshots, PR sections)
 
 Expected response:
 - `UX_DECISION: PASS|CHANGES`
+- `Requirement Check:`
+- `Requirement Gaps:`
+- `Risk Notes:`
 - Required changes (if any)
+
+Preferred request format:
+
+```
+ISSUE_PR_CONTEXT:
+USER_GOAL:
+CHANGED_FILES:
+CURRENT_BEHAVIOR:
+PROPOSED_BEHAVIOR:
+ACCEPTANCE_CRITERIA:
+CONSTRAINTS:
+KNOWN_RISKS:
+EVIDENCE_PATHS:
+```

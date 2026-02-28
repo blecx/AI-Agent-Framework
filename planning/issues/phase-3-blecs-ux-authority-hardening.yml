@@ -1,0 +1,153 @@
+AI-Agent-Framework:
+  - id: "P3-BE-01"
+    title: "Phase 3 — Enforce strict UX authority output schema validation"
+    labels: ["enhancement", "agents", "webui/ux", "size:S", "step:3"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Prevent schema drift where UX authority responses miss required requirement/gap sections while still returning PASS/CHANGES.
+
+      ## Scope
+      ### In Scope
+      - Add strict parser validation for required UX sections after decision header.
+      - Fail with actionable message when required sections are missing.
+      - Keep backward compatibility path documented for migration.
+      ### Out of Scope
+      - New UX decision states beyond PASS/CHANGES.
+      - UI feature implementation changes.
+      ### Dependencies
+      - None.
+
+      ## Acceptance Criteria
+      - [ ] Runtime marks consultation invalid when required sections are missing.
+      - [ ] Error output identifies exactly which section is missing.
+      - [ ] Existing valid authority output passes unchanged.
+      - [ ] Decision persistence still writes evidence artifacts.
+
+      ## Technical Approach
+      - Add section-level validation in workflow UX gate handling.
+      - Keep parser deterministic and small.
+
+      ## Testing Requirements
+      - `./.venv/bin/python -m pytest tests/ -k "ux gate or workflow" -q`
+
+      ## Documentation Updates
+      - [ ] Update `docs/WORK-ISSUE-WORKFLOW.md` with strict schema notes.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - id: "P3-BE-02"
+    title: "Phase 3 — Build UX requirement matrix and gap audit report generation"
+    labels: ["enhancement", "agents", "documentation", "size:M", "step:3"]
+    size_estimate: "M"
+    body: |
+      ## Goal / Problem Statement
+      Establish a repeatable requirement matrix so every UX consultation can identify and classify gaps consistently.
+
+      ## Scope
+      ### In Scope
+      - Define requirement matrix categories (navigation, responsive, grouping, a11y, PR evidence).
+      - Generate a concise gap audit artifact per run.
+      - Classify gaps as blocking/non-blocking.
+      ### Out of Scope
+      - Full redesign of issue workflow.
+      - Replacing existing CI gate logic.
+      ### Dependencies
+      - P3-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] A deterministic requirement matrix artifact is generated for UI-affecting work.
+      - [ ] Gap classification includes blocking/non-blocking flag.
+      - [ ] Artifact is easy to map into issue slicing.
+      - [ ] Non-UI work does not generate UX gap artifacts.
+
+      ## Technical Approach
+      - Reuse existing workflow evidence paths in `.tmp/`.
+      - Keep matrix generation lightweight and text-based.
+
+      ## Testing Requirements
+      - `./.venv/bin/python -m pytest tests/ -k "ux or requirement" -q`
+
+      ## Documentation Updates
+      - [ ] Update `planning/blecs-ux-authority-requirements-gap-plan.md` status section with matrix examples.
+
+      ## Cross-Repository Coordination
+      Yes - client should consume requirement matrix evidence schema in PR checks where applicable.
+
+  - id: "P3-BE-03"
+    title: "Phase 3 — Align prompt modules and workflow docs to single UX authority contract"
+    labels: ["documentation", "agents", "webui/ux", "size:S", "step:3"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Remove contract ambiguity between UX modules, authority prompt, and workflow documentation.
+
+      ## Scope
+      ### In Scope
+      - Normalize required section names across prompt modules.
+      - Eliminate stale naming or outdated references.
+      - Keep docs and prompts mutually consistent.
+      ### Out of Scope
+      - Runtime parser rewrites.
+      - New process stages.
+      ### Dependencies
+      - P3-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] All UX prompt modules reference the same required response sections.
+      - [ ] No stale `blecx` naming remains in UX authority-related artifacts.
+      - [ ] Documentation examples match the active contract.
+
+      ## Technical Approach
+      - Small focused edits to prompt/module docs.
+      - Add targeted checks in prompt validation scripts if needed.
+
+      ## Testing Requirements
+      - `./scripts/validate_prompts.sh`
+      - `./.venv/bin/python -m pytest tests/ -k "prompt" -q`
+
+      ## Documentation Updates
+      - [ ] Update `docs/skills.md` references if wording changed.
+
+      ## Cross-Repository Coordination
+      None.
+
+AI-Agent-Framework-Client:
+  - id: "P3-UX-01"
+    title: "Phase 3 — Align client UX evidence checks with requirement-gap contract"
+    labels: ["enhancement", "ci/cd", "webui/ux", "agents", "size:S", "step:3"]
+    size_estimate: "S"
+    body: |
+      ## Goal / Problem Statement
+      Ensure client-side CI checks validate not only consultation presence but also requirement-gap evidence shape when UI changes are present.
+
+      ## Scope
+      ### In Scope
+      - Extend client evidence checks to recognize requirement-gap disposition lines.
+      - Keep compatibility for existing checked consultation line.
+      - Improve failure messages with concrete remediation hints.
+      ### Out of Scope
+      - New CI workflow jobs.
+      - Non-PR workflows.
+      ### Dependencies
+      - AI-Agent-Framework P3-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] UI-affecting PRs fail when requirement-gap disposition is missing.
+      - [ ] Existing compliant PR template usage continues to pass.
+      - [ ] Non-UI PRs remain unblocked by UX-specific fields.
+
+      ## Technical Approach
+      - Update current client validation scripts and fixtures.
+
+      ## Testing Requirements
+      - `npm run lint`
+      - `npm run build`
+      - `npm test -- check-ux-evidence`
+
+      ## Documentation Updates
+      - [ ] Update client PR guidance with requirement-gap evidence fields.
+
+      ## Cross-Repository Coordination
+      Yes - keep wording synchronized with backend authority contract.

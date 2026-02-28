@@ -22,6 +22,17 @@
       "title": "Phase 2 \u2014 Add client PR UX evidence gate aligned with blecs authority",
       "title_hash": "c864d733a443"
     },
+    "blecx/AI-Agent-Framework-Client|P3-UX-01": {
+      "issue_number": 255,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/255",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/phase-3-blecs-ux-authority-hardening.yml",
+      "source_id": "P3-UX-01",
+      "status": "created",
+      "title": "Phase 3 \u2014 Align client UX evidence checks with requirement-gap contract",
+      "title_hash": "c73a2c960d5f"
+    },
     "blecx/AI-Agent-Framework|P2-BE-01": {
       "issue_number": 375,
       "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/375",
@@ -65,6 +76,39 @@
       "status": "created",
       "title": "Phase 2 \u2014 Publish migration playbook for blecs UX authority operations",
       "title_hash": "d8a153ff317e"
+    },
+    "blecx/AI-Agent-Framework|P3-BE-01": {
+      "issue_number": 582,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/582",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-3-blecs-ux-authority-hardening.yml",
+      "source_id": "P3-BE-01",
+      "status": "created",
+      "title": "Phase 3 \u2014 Enforce strict UX authority output schema validation",
+      "title_hash": "94ed13f1a772"
+    },
+    "blecx/AI-Agent-Framework|P3-BE-02": {
+      "issue_number": 583,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/583",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-3-blecs-ux-authority-hardening.yml",
+      "source_id": "P3-BE-02",
+      "status": "created",
+      "title": "Phase 3 \u2014 Build UX requirement matrix and gap audit report generation",
+      "title_hash": "b2a87b792189"
+    },
+    "blecx/AI-Agent-Framework|P3-BE-03": {
+      "issue_number": 584,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/584",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/phase-3-blecs-ux-authority-hardening.yml",
+      "source_id": "P3-BE-03",
+      "status": "created",
+      "title": "Phase 3 \u2014 Align prompt modules and workflow docs to single UX authority contract",
+      "title_hash": "54289fec2534"
     },
     "blecx/AI-Agent-Framework|S4-BE-01": {
       "issue_number": 481,

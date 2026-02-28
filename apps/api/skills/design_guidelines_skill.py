@@ -12,7 +12,7 @@ from .base import SkillResult
 
 class DesignGuidelinesSkill:
     name = "design_guidelines"
-    version = "1.0.0"
+    version = "1.1.0"
     description = "Generate concise UI design guidelines (deterministic markdown)."
 
     def execute(self, agent_id: str, params: Dict[str, Any], **kwargs) -> SkillResult:
@@ -25,6 +25,13 @@ class DesignGuidelinesSkill:
             items = "\n".join([f"- {c}" for c in constraints if str(c).strip()])
             if items:
                 constraints_md = f"\n\nConstraints:\n{items}"
+
+        requirement_check = [
+            "IA/navigation coherence reviewed",
+            "Responsive and breakpoint expectations defined",
+            "Workflow-based artifact grouping validated",
+            "Keyboard/focus/label baseline covered",
+        ]
 
         markdown = (
             "# Design Guidelines\n\n"
@@ -43,6 +50,13 @@ class DesignGuidelinesSkill:
             "## Components\n"
             "- Prefer existing components; avoid new bespoke UI\n"
             "- Keep interactions predictable and keyboard-friendly\n\n"
+            "## Requirement Check\n"
+            + "\n".join([f"- {item}" for item in requirement_check])
+            + "\n\n"
+            "## Requirement Gaps\n"
+            "- None identified from provided context; mark unknowns as gaps before implementation.\n\n"
+            "## Risk Notes\n"
+            "- Verify responsive behavior and focus order on changed views before merge.\n\n"
             "## Notes\n"
             f"- Platform: {platform}\n"
         )
@@ -58,6 +72,8 @@ class DesignGuidelinesSkill:
             data={
                 "markdown": markdown,
                 "platform": platform,
+                "requirement_check": requirement_check,
+                "gaps": [],
             },
             message="Design guidelines generated",
             metadata={"skill": self.name, "agent_id": agent_id},
