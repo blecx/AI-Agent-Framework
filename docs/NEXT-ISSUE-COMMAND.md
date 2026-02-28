@@ -235,6 +235,16 @@ This helps set realistic expectations as the project progresses.
 5. **Context Enrichment** - Add local tracking details, learning insights, and adjusted estimates.
 6. **Display Recommendation** - Present the selected issue with GitHub-verified next steps.
 
+### Selector Test Matrix
+
+The selector tests in `tests/unit/test_next_issue.py` are deterministic and run without network access by stubbing GitHub responses.
+
+- Live-open ingestion beyond legacy ranges (`#595+` style issue numbers)
+- Priority ordering (High/CRITICAL before Medium/Low)
+- Number tie-break ordering (same priority → lowest issue number)
+- Blocker filtering (blocked issue skipped when ready issue exists)
+- All-blocked behavior (`None` selected when no ready issue exists)
+
 ## Key Features
 
 ### 1. Reconciliation-First Approach
