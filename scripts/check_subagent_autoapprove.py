@@ -6,8 +6,11 @@ client workspace settings file:
 - .vscode/settings.json (required)
 - _external/AI-Agent-Framework-Client/.vscode/settings.json (optional)
 
-Expected names are derived from `.github/agents/*.agent.md` plus required
-runtime names that are not represented as `.agent.md` files.
+The `chat.tools.subagent.autoApprove` block is a *policy* (which agents are
+auto-approved), not a registry of all available agents. This script validates:
+
+- Any auto-approved names are valid (exist in `.github/agents/*.agent.md`).
+- A small baseline set is present in the primary workspace settings.
 """
 
 from __future__ import annotations
@@ -28,8 +31,13 @@ SETTINGS_FILES = [
     },
 ]
 
-REQUIRED_RUNTIME_NAMES = {
-    "AUTOMATIONS",
+REQUIRED_BASELINE_APPROVALS = {
+    "create-issue",
+    "resolve-issue",
+    "close-issue",
+    "pr-merge",
+    "Plan",
+    "tutorial",
 }
 
 
@@ -44,13 +52,8 @@ def _load_jsonc(path: Path) -> dict:
     return json.loads(_strip_jsonc(raw))
 
 
-def _expected_subagent_names() -> set[str]:
-    names = {
-        path.name.removesuffix(".agent.md")
-        for path in AGENTS_DIR.glob("*.agent.md")
-    }
-    names.update(REQUIRED_RUNTIME_NAMES)
-    return names
+def _available_subagent_names() -> set[str]:
+    return {path.name.removesuffix(".agent.md") for path in AGENTS_DIR.glob("*.agent.md")}
 
 
 def _approved_names(settings: dict) -> set[str]:
@@ -61,11 +64,11 @@ def _approved_names(settings: dict) -> set[str]:
 
 
 def main() -> int:
-    expected = _expected_subagent_names()
+    available = _available_subagent_names()
     errors: list[str] = []
 
-    if not expected:
-        print("⚠️ No expected subagent names discovered.")
+    if not available:
+        print("⚠️ No agent definitions discovered in .github/agents.")
         return 1
 
     for settings_meta in SETTINGS_FILES:
@@ -82,19 +85,24 @@ def main() -> int:
         settings = _load_jsonc(settings_path)
         approved = _approved_names(settings)
 
-        missing = sorted(expected - approved)
-        extra = sorted(approved - expected)
+        unknown = sorted(approved - available)
+        if unknown:
+            message = f"{settings_path}: unknown auto-approved agents: {', '.join(unknown)}"
+            if required:
+                errors.append(message)
+            else:
+                print(f"ℹ️ Optional settings mismatch (allowed): {message}")
 
-        if missing:
+        missing_baseline = sorted(REQUIRED_BASELINE_APPROVALS - approved)
+        if missing_baseline:
             message = (
-                f"{settings_path}: missing subagent auto-approvals: {', '.join(missing)}"
+                f"{settings_path}: missing required baseline auto-approvals: "
+                f"{', '.join(missing_baseline)}"
             )
             if required:
                 errors.append(message)
             else:
                 print(f"ℹ️ Optional settings mismatch (allowed): {message}")
-        if extra:
-            print(f"ℹ️ {settings_path}: extra approved names (allowed): {', '.join(extra)}")
 
     if errors:
         print("❌ Subagent auto-approve consistency check failed")
@@ -103,7 +111,7 @@ def main() -> int:
         return 1
 
     print("✅ Subagent auto-approve consistency check passed")
-    print(f"Expected names: {', '.join(sorted(expected))}")
+    print(f"Available agents: {', '.join(sorted(available))}")
     return 0
 
 
