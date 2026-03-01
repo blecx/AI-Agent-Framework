@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Validate VS Code subagent auto-approve settings against .github/agents.
 
-Checks both workspace settings files:
-- .vscode/settings.json
-- _external/AI-Agent-Framework-Client/.vscode/settings.json
+Checks the primary workspace settings file and, when present, the external
+client workspace settings file:
+- .vscode/settings.json (required)
+- _external/AI-Agent-Framework-Client/.vscode/settings.json (optional)
 
 Expected names are derived from `.github/agents/*.agent.md` plus required
 runtime names that are not represented as `.agent.md` files.
@@ -20,8 +21,11 @@ ROOT = Path(__file__).resolve().parents[1]
 AGENTS_DIR = ROOT / ".github" / "agents"
 
 SETTINGS_FILES = [
-    ROOT / ".vscode" / "settings.json",
-    ROOT / "_external" / "AI-Agent-Framework-Client" / ".vscode" / "settings.json",
+    {"path": ROOT / ".vscode" / "settings.json", "required": True},
+    {
+        "path": ROOT / "_external" / "AI-Agent-Framework-Client" / ".vscode" / "settings.json",
+        "required": False,
+    },
 ]
 
 REQUIRED_RUNTIME_NAMES = {
@@ -64,9 +68,15 @@ def main() -> int:
         print("⚠️ No expected subagent names discovered.")
         return 1
 
-    for settings_path in SETTINGS_FILES:
+    for settings_meta in SETTINGS_FILES:
+        settings_path = settings_meta["path"]
+        required = settings_meta["required"]
+
         if not settings_path.exists():
-            errors.append(f"Missing settings file: {settings_path}")
+            if required:
+                errors.append(f"Missing settings file: {settings_path}")
+            else:
+                print(f"ℹ️ Optional settings file not found (skipping): {settings_path}")
             continue
 
         settings = _load_jsonc(settings_path)
