@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+from agents.tooling.gh_throttle import run_gh_throttled
+
 
 class BaseAgent(ABC):
     """Base class for all custom AI agents."""
@@ -186,7 +188,12 @@ class BaseAgent(ABC):
 
         # Check GitHub CLI
         try:
-            subprocess.run(["gh", "--version"], capture_output=True, check=True)
+            run_gh_throttled(
+                ["gh", "--version"],
+                capture_output=True,
+                check=True,
+                min_interval_seconds=0,
+            )
         except (subprocess.CalledProcessError, FileNotFoundError):
             self.log("GitHub CLI (gh) not installed", "error")
             return False
