@@ -85,3 +85,29 @@ def test_run_gh_throttled_check_true_raises_after_retries(monkeypatch):
         pass
 
     assert run_calls["count"] == 2
+
+
+def test_run_gh_throttled_enforces_minimum_interval(monkeypatch):
+    monkeypatch.setattr(gh_throttle, "_LAST_GH_CALL_TS", None)
+
+    monotonic_values = iter([100.0, 100.0, 101.0, 101.0])
+    sleep_calls = []
+
+    def _fake_monotonic():
+        return next(monotonic_values)
+
+    def _fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    def _fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(gh_throttle.time, "monotonic", _fake_monotonic)
+    monkeypatch.setattr(gh_throttle.time, "sleep", _fake_sleep)
+    monkeypatch.setattr(subprocess, "run", _fake_run)
+
+    gh_throttle.run_gh_throttled(["gh", "issue", "list"], text=True, min_interval_seconds=3)
+    gh_throttle.run_gh_throttled(["gh", "issue", "list"], text=True, min_interval_seconds=3)
+
+    assert sleep_calls
+    assert sleep_calls[0] == 3.0
