@@ -6,9 +6,12 @@ COMPOSE_FILE="${ROOT_DIR}/docker-compose.mcp-bash-gateway.yml"
 UNIT_NAME="bash-gateway-mcp.service"
 UNIT_PATH="/etc/systemd/system/${UNIT_NAME}"
 ENV_FILE="/etc/default/bash-gateway-mcp"
+AUDIT_DIR_HOST="${ROOT_DIR}/.tmp/agent-script-runs"
 DOCKER_BIN="$(command -v docker || true)"
 SYSTEMCTL_BIN="$(command -v systemctl || true)"
 SUDO_BIN="$(command -v sudo || true)"
+OWNER_USER="${SUDO_USER:-$USER}"
+OWNER_GROUP="$(id -gn "${OWNER_USER}")"
 
 if [[ -z "${DOCKER_BIN}" ]]; then
   echo "docker command not found. Install Docker first."
@@ -50,6 +53,10 @@ EOF
   echo "Created ${ENV_FILE} template."
 fi
 
+sudo mkdir -p "${AUDIT_DIR_HOST}"
+sudo chown "${OWNER_USER}:${OWNER_GROUP}" "${AUDIT_DIR_HOST}"
+sudo chmod 0775 "${AUDIT_DIR_HOST}"
+
 sudo tee "${UNIT_PATH}" >/dev/null <<EOF
 [Unit]
 Description=Bash Gateway MCP Docker Service
@@ -83,3 +90,4 @@ echo "Environment file: ${ENV_FILE}"
 echo "Check status with: sudo systemctl status ${UNIT_NAME}"
 echo "Enabled: $(sudo systemctl is-enabled "${UNIT_NAME}")"
 echo "Active: $(sudo systemctl is-active "${UNIT_NAME}")"
+echo "Audit dir owner: $(stat -c '%U:%G %a' "${AUDIT_DIR_HOST}")"

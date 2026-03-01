@@ -1,0 +1,65 @@
+profiles:
+  max:
+    scripts:
+      - setup.sh
+      - verify_agent_system.sh
+      - next-issue
+      - next-pr
+      - scripts/prmerge
+      - scripts/archive-goals.sh
+      - scripts/close-issue.sh
+      - scripts/validate-pr-template.sh
+      - scripts/validate_issue_specs.sh
+      - scripts/install-context7-systemd.sh
+      - scripts/install-all-mcp-systemd.sh
+      - scripts/install-bash-gateway-mcp-systemd.sh
+      - scripts/install-devops-mcp-systemd.sh
+      - scripts/install-github-ops-mcp-systemd.sh
+      - scripts/install-offline-docs-mcp-systemd.sh
+      - scripts/install-repo-fundamentals-mcp-systemd.sh
+      - scripts/mcp_smoke_test.sh
+      - scripts/mcp_smoke_test_compose.sh
+      - scripts/setup-low-approval.sh
+      - scripts/setup-autoapprove.sh
+      - scripts/continue-backend.sh
+      - scripts/work-issue.py
+      - scripts/bash-gateway-exec.sh
+    default_timeout_sec: 600
+    max_timeout_sec: 7200
+    default_dry_run: false
+
+  issue:
+    scripts:
+      - setup.sh
+      - verify_agent_system.sh
+      - next-issue
+      - next-pr
+      - scripts/prmerge
+      - scripts/archive-goals.sh
+      - scripts/close-issue.sh
+      - scripts/validate-pr-template.sh
+      - scripts/validate_issue_specs.sh
+      - scripts/install-context7-systemd.sh
+      - scripts/bash-gateway-exec.sh
+    default_timeout_sec: 300
+    max_timeout_sec: 1800
+    default_dry_run: false
+
+  ci:
+    scripts:
+      - verify_agent_system.sh
+      - scripts/validate-pr-template.sh
+      - scripts/validate_issue_specs.sh
+      - scripts/bash-gateway-exec.sh
+    default_timeout_sec: 180
+    max_timeout_sec: 1800
+    default_dry_run: false
+
+  ops:
+    scripts:
+      - scripts/install-context7-systemd.sh
+      - scripts/archive-goals.sh
+      - scripts/bash-gateway-exec.sh
+    default_timeout_sec: 300
+    max_timeout_sec: 3600
+    default_dry_run: false
