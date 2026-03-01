@@ -11,12 +11,11 @@
     "no:playwright"
   ],
   "task.allowAutomaticTasks": "on",
-  "issueagent.customAgent": "agents.custom.resolve_issue:ResolveIssueAgent",
+  "issueagent.customAgent": "resolve-issue",
   "chat.allowAnonymousAccess": true,
   "chat.checkpoints.showFileChanges": true,
   "chat.customAgentInSubagent.enabled": true,
   "chat.tools.subagent.autoApprove": {
-    "AUTOMATIONS": true,
     "agents-catalog-maintainer": true,
     "autonomous": true,
     "blecs-ux-authority": true,
@@ -28,7 +27,7 @@
     "Plan": true,
     "pr-merge": true,
     "ralph-agent": true,
-    "resolve-issue-dev": true,
+    "resolve-issue": true,
     "tutorial": true,
     "workflow": true
   },

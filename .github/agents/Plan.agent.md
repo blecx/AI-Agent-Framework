@@ -26,5 +26,5 @@ Follow the canonical planner workflow:
 
 ## Completion Contract
 
-Return a concise plan summary plus step list ready for `resolve-issue-dev` execution.
+Return a concise plan summary plus step list ready for `resolve-issue` execution.
 ```

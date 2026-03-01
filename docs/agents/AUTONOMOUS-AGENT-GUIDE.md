@@ -56,16 +56,12 @@ source .venv/bin/activate
 Open VS Code chat and type:
 
 ```
-@issueagent
+@resolve-issue /run
 ```
 
 This will automatically select the next issue and run the agent with real-time progress streaming.
 
 See [.vscode/extensions/issueagent/README.md](../../.vscode/extensions/issueagent/README.md) for details.
-
-### 4. Or Use VS Code Tasks
-
-Press `Ctrl+Shift+P` → **Tasks: Run Task** → **🤖 Work on Issue (Autonomous)**
 
 ---
 
@@ -330,23 +326,7 @@ The agent has access to 11 tools (defined in `agents/tools.py`):
 
 ## VS Code Integration
 
-### Available Tasks
-
-Press `Ctrl+Shift+P` → **Tasks: Run Task**:
-
-- 🤖 **Work on Issue (Autonomous)** - Full automation
-- 🔍 **Work on Issue (Dry Run)** - Analysis only
-- 💬 **Work on Issue (Interactive)** - With conversation
-- 📋 **Select Next Issue** - Use next-issue selector
-
-### Task Configuration
-
-Tasks are defined in `.vscode/tasks.json` and automatically:
-
-- Activate Python virtual environment
-- Pass issue number as input
-- Show output in dedicated terminal
-- Allow easy re-running
+The recommended VS Code entrypoint is the chat participant (`@resolve-issue /run`), which selects the next issue and streams progress in chat.
 
 ---
 

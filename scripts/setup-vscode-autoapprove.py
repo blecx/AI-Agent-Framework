@@ -32,7 +32,7 @@ AUTO_APPROVE_SETTINGS = {
     "chat.customAgentInSubagent.enabled": True,
     "chat.tools.subagent.autoApprove": {
         "create-issue": True,
-        "resolve-issue-dev": True,
+        "resolve-issue": True,
         "close-issue": True,
         "pr-merge": True,
         "Plan": True,

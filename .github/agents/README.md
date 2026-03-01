@@ -4,7 +4,7 @@ This directory contains repository custom agents (`*.agent.md`) discoverable by 
 
 ## Available Agents
 
-- **[resolve-issue-dev.agent.md](./resolve-issue-dev.agent.md)** - Implement backend/client issues with plan-first execution and validation gates.
+- **[resolve-issue.agent.md](./resolve-issue.agent.md)** - Issue → PR agent with plan-first execution and validation gates.
 - **[pr-merge.agent.md](./pr-merge.agent.md)** - Merge PRs safely with CI checks and issue closure workflow.
 - **[close-issue.agent.md](./close-issue.agent.md)** - Close issues with template-backed, traceable resolution comments.
 - **[tutorial.agent.md](./tutorial.agent.md)** - Create Markdown-only tutorials with strict visual evidence, feature-gap reporting, and duplicate-content audits.
@@ -21,7 +21,7 @@ This directory contains repository custom agents (`*.agent.md`) discoverable by 
 
 ## Automation Inventory
 
-- **[AUTOMATIONS.md](./AUTOMATIONS.md)** is the canonical map of:
+- **[AUTOMATIONS.md](./AUTOMATIONS.md)** is documentation (an inventory), not a selectable Copilot custom agent. It maps:
 	- runtime agents (Python classes + aliases),
 	- custom chat agents (`*.agent.md`),
 	- prompt workflows (`.github/prompts/agents/*.md`),

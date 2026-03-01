@@ -12,7 +12,7 @@ Draft and create high-quality GitHub issues (template-compliant, testable, and t
 
 ## When Not to Use
 
-- Implementing code or opening PRs (use `resolve-issue-dev`).
+- Implementing code or opening PRs (use `resolve-issue`).
 - Merging PRs (use `pr-merge`).
 - Closing completed issues (use `close-issue`).
 

@@ -27,8 +27,6 @@ source .venv/bin/activate
 
 # Run agent on an issue
 ./scripts/work-issue.py --issue 26
-
-# Or use VS Code: Ctrl+Shift+P → Run Task → "🤖 Work on Issue (Autonomous)"
 ```
 
 ### What It Does

@@ -22,7 +22,7 @@ Merge a ready PR safely, close the linked issue with traceability, and clean tem
 
 ## Constraints
 
-- Never fix PR content here; delegate to `resolve-issue-dev`.
+- Never fix PR content here; delegate to `resolve-issue`.
 - Prefer `gh pr merge --squash --delete-branch`.
 - Use `.tmp/` (never `/tmp`) for transient files.
 - Apply UX delegation policy from `../modules/ux/delegation-policy.md` (canonical source).

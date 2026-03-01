@@ -20,7 +20,7 @@ To enable auto-approve globally across all VS Code instances (not just this work
   "chat.checkpoints.showFileChanges": true,
   "chat.customAgentInSubagent.enabled": true,
   "chat.tools.subagent.autoApprove": {
-    "resolve-issue-dev": true,
+    "resolve-issue": true,
     "close-issue": true,
     "pr-merge": true,
     "Plan": true,
@@ -108,7 +108,7 @@ To enable auto-approve globally across all VS Code instances (not just this work
 ### Subagent Auto-Approve
 
 - **`chat.tools.subagent.autoApprove`**: Automatically approves running specific agent modes without prompting
-  - `resolve-issue-dev`: Auto-approves the issue resolution agent (see `.github/prompts/agents/resolve-issue-dev.md`)
+  - `resolve-issue`: Auto-approves the issue resolution agent
   - `close-issue`: Auto-approves issue closing operations (see `.github/prompts/agents/close-issue.md`)
   - `pr-merge`: Auto-approves PR merge operations (see `.github/prompts/agents/pr-merge.md`)
   - `Plan`: Auto-approves planning agent operations (see `.github/prompts/agents/Plan.md`)
@@ -187,7 +187,7 @@ The auto-approved agents listed above use optimized workflows that implement:
 
 For detailed workflow documentation:
 
-- `.github/prompts/agents/resolve-issue-dev.md` - Issue resolution workflow (9 steps)
+- `.github/prompts/agents/resolve-issue-dev.md` - Issue resolution workflow prompt (legacy filename; used by `resolve-issue`)
 - `.github/prompts/agents/pr-merge.md` - PR merge with admin bypass (6 steps)
 - `.github/prompts/agents/close-issue.md` - Issue closure workflow (4 steps)
 - `.github/prompts/agents/Plan.md` - Research agent with limited scope (5 steps)

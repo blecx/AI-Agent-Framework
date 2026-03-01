@@ -12,7 +12,7 @@ AGENT_ALIASES = {
     "default": "agents.autonomous_workflow_agent:AutonomousWorkflowAgent",
     "ralph": "agents.ralph_agent:RalphAgent",
     "ralph-agent": "agents.ralph_agent:RalphAgent",
-    "resolve-issue": "agents.ralph_agent:RalphAgent",
+    "resolve-issue": "agents.autonomous_workflow_agent:AutonomousWorkflowAgent",
 }
 
 

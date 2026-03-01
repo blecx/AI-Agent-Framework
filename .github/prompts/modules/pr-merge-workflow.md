@@ -12,5 +12,5 @@
 ## Guardrails
 
 - Do not fix failing code/tests in this workflow.
-- Delegate implementation changes to `resolve-issue-dev`.
+- Delegate implementation changes to `resolve-issue`.
 - Document any admin override rationale.

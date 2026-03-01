@@ -267,7 +267,7 @@ To regenerate workspace settings (backend + client) and verify no drift:
 
 This configures auto-approve for:
 
-- **Subagents**: `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`
+- **Subagents**: `resolve-issue`, `close-issue`, `pr-merge`, `Plan`
 - **Terminal commands**: Git, npm, Python, Docker, and 60+ common commands
 - **All workspaces**: Backend, client, and global VS Code settings
 

@@ -67,7 +67,8 @@ source .venv/bin/activate
 ./next-issue
 ./scripts/work-issue.py --issue 26
 
-# Or VS Code: Ctrl+Shift+P → Run Task → "🤖 Work on Issue (Autonomous)"
+# Or from VS Code Chat:
+#   @resolve-issue /run
 ```
 
 ### Key Features
@@ -173,7 +174,7 @@ The agent is production-ready! Three ways to use it:
 ### Option 1: VS Code Chat (New! Easiest)
 
 ```
-@issueagent
+@resolve-issue /run
 ```
 
 Automatically selects next issue and runs agent with real-time progress in chat!
@@ -199,7 +200,7 @@ See [ISSUEAGENT-CHAT-SETUP.md](ISSUEAGENT-CHAT-SETUP.md) for quick setup.
 
 ### Option 3: VS Code Tasks
 
-Press `Ctrl+Shift+P` → **Tasks: Run Task** → **🤖 Work on Issue (Autonomous)**
+(Optional) If you prefer a terminal-driven workflow, you can run the same CLI via `./scripts/work-issue.py`.
 
 3. **Watch it work**:
    - Analyzes issue

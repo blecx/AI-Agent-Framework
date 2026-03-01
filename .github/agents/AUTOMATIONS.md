@@ -17,7 +17,7 @@ Alias mapping in `agents/agent_registry.py`:
 - `default` -> `AutonomousWorkflowAgent`
 - `ralph` -> `RalphAgent`
 - `ralph-agent` -> `RalphAgent`
-- `resolve-issue` -> `RalphAgent`
+- `resolve-issue` -> `AutonomousWorkflowAgent`
 
 Execution entrypoints:
 
@@ -28,7 +28,7 @@ Execution entrypoints:
 
 Authority + lifecycle agents:
 
-- `resolve-issue-dev.agent.md`
+- `resolve-issue.agent.md`
 - `pr-merge.agent.md`
 - `close-issue.agent.md`
 - `tutorial.agent.md`
@@ -65,14 +65,13 @@ These are canonical workflow prompts that drive agent behavior:
 From `.vscode/settings.json`:
 
 - `chat.tools.subagent.autoApprove` includes:
-  - `create-issue`, `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`, `tutorial`
-- `issueagent.customAgent`: `agents.custom.resolve_issue:ResolveIssueAgent`
+  - `create-issue`, `resolve-issue`, `close-issue`, `pr-merge`, `Plan`, `tutorial`
+- `issueagent.customAgent`: `resolve-issue`
 
 From `.vscode/tasks.json` (selected automation tasks):
 
-- `🤖 Work on Issue (Autonomous)` -> `scripts/work-issue.py`
-- `🔍 Work on Issue (Dry Run)` -> `scripts/work-issue.py --dry-run`
-- `💬 Work on Issue (Interactive)` -> `scripts/work-issue.py --interactive`
+(Tasks exist as convenience wrappers around the CLI workflows; the primary VS Code entrypoint is the chat participant `@resolve-issue /run`.)
+
 - `📋 Select Next Issue` -> `next-issue`
 - `📦 Select Next PR` -> `next-pr`
 - `🔀 Merge PR` -> `scripts/prmerge`

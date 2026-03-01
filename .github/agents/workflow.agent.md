@@ -13,5 +13,5 @@ This profile maps to the legacy workflow orchestration entrypoint:
 
 - Run autonomous workflow automation for issue/PR lifecycle tasks when explicitly requested.
 - Preserve deterministic execution and guardrail policies.
-- Defer repo-specific issue implementation to `resolve-issue-dev`/`autonomous` profiles when needed.
+- Defer repo-specific issue implementation to `resolve-issue`/`autonomous` profiles when needed.
 ```
