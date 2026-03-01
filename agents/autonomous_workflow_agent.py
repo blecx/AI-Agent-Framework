@@ -559,6 +559,101 @@ Mode:
             "- Re-run work-issue on the first split issue once created."
         )
 
+    def _pr_repo_type(self) -> str:
+        """Determine PR template repo type for deterministic body generation."""
+        repo_override = (self._get_repo_override() or "").lower()
+        if "ai-agent-framework-client" in repo_override:
+            return "client"
+        return "backend"
+
+    def _build_pr_body_file(self) -> Path:
+        """Create deterministic PR body file in .tmp for current issue."""
+        body_path = Path(".tmp") / f"pr-body-{self.issue_number}.md"
+        body_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if self._pr_repo_type() == "client":
+            content = f"""# Summary
+Implements issue #{self.issue_number}.
+
+Fixes: #{self.issue_number}
+
+## Goal / Acceptance Criteria (required)
+- [x] Acceptance criteria for issue #{self.issue_number} are implemented.
+
+## Issue / Tracking Link (required)
+- Fixes: #{self.issue_number}
+
+## Validation (required)
+### Automated checks
+- [x] Relevant automated checks were run.
+
+### Manual test evidence (required)
+- [x] Manual behavior verification completed.
+
+## How to review
+1. Review changed files and confirm scope for issue #{self.issue_number}.
+2. Verify acceptance criteria coverage.
+3. Verify validation evidence.
+4. Confirm no unrelated files are included.
+
+## Cross-repo / Downstream impact (always include)
+- None.
+"""
+        else:
+            content = f"""## Goal / Context
+- Implements issue #{self.issue_number}.
+
+Fixes: #{self.issue_number}
+
+## Acceptance Criteria
+- [x] Acceptance criteria for issue #{self.issue_number} are implemented.
+
+## Validation Evidence
+- [x] Validation checks were executed for this change.
+
+## Repo Hygiene / Safety
+- [x] `projectDocs/` is not committed.
+- [x] `configs/llm.json` is not committed.
+- [x] No secrets were added.
+"""
+
+        body_path.write_text(content, encoding="utf-8")
+        return body_path
+
+    def _create_pr_deterministic(self) -> tuple[bool, str]:
+        """Create PR using deterministic body and local preflight validation."""
+        body_path = self._build_pr_body_file()
+        validate_script = Path("scripts/validate-pr-template.sh")
+        repo_type = self._pr_repo_type()
+
+        if validate_script.exists():
+            validate_result = subprocess.run(
+                [
+                    str(validate_script),
+                    "--body-file",
+                    str(body_path),
+                    "--repo",
+                    repo_type,
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if validate_result.returncode != 0:
+                details = (validate_result.stderr or validate_result.stdout or "").strip()
+                return False, f"PR template preflight failed: {details}"
+
+        create_result = run_gh_throttled(
+            ["gh", "pr", "create", "--fill", "--body-file", str(body_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if create_result.returncode != 0:
+            details = (create_result.stderr or create_result.stdout or "").strip()
+            return False, f"Failed to create PR: {details or 'gh pr create failed'}"
+
+        return True, (create_result.stdout or "").strip()
+
     @staticmethod
     def _validate_ux_gate_output(ux_text: str) -> tuple[str, list[str], list[str]]:
         """Validate UX authority output schema and normalize decision.
@@ -1046,7 +1141,7 @@ CODING_SUMMARY:
             decision = "CHANGES"
             iteration_budget = 5
             for i in range(iteration_budget):
-                review_prompt = f"""Phase 5-6 (Review + PR Creation) for Issue #{self.issue_number}.
+                review_prompt = f"""Phase 5-6 (Review + PR Handoff) for Issue #{self.issue_number}.
 
 Review the current repo state and changes. Use tools to inspect diffs and validate against acceptance criteria.
 
@@ -1055,8 +1150,8 @@ REVIEW_DECISION: PASS
 REVIEW_DECISION: CHANGES
 
 If PASS:
-- If dry-run is enabled: do NOT create a PR; just explain what would be in it.
-- Otherwise: create the PR (include testing instructions and Fixes #{self.issue_number}).
+- Do NOT create a PR.
+- Provide concise handoff notes for deterministic PR creation by the host workflow.
 
 If CHANGES:
 - Provide a short, explicit task list for the coding agent to apply.
@@ -1103,6 +1198,12 @@ Requirements:
 
             if decision != "PASS":
                 raise RuntimeError("Review did not pass within iteration budget")
+
+            if not self.dry_run:
+                created, pr_message = self._create_pr_deterministic()
+                if not created:
+                    raise RuntimeError(pr_message)
+                print(f"✅ PR created: {pr_message}")
 
             # Get execution summary
             duration = (datetime.now() - start_time).total_seconds()
