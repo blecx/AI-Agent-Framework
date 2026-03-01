@@ -21,20 +21,6 @@
       }
     },
     {
-      "label": "🤖 Work on Issue (Autonomous)",
-      "type": "shell",
-      "command": "${workspaceFolder}/scripts/work-issue.py",
-      "args": ["--issue", "${input:issueNumber}"],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "focus": true,
-        "clear": true
-      },
-      "group": "none"
-    },
-    {
       "label": "🔍 Work on Issue (Dry Run)",
       "type": "shell",
       "command": "${workspaceFolder}/scripts/work-issue.py",
