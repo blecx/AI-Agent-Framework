@@ -9,7 +9,7 @@ Parent chain:
 - #446 (this slice) → parent #442
 - #442 → parent #440 → parent #437
 
-Parent #442 was a planning/spec traceability slice in this backend repository (see `docs/issues/issue-442-context.md`). The underlying UI work described in the chain (sidebar/navigation) lives in the client repository.
+Parent #442 was a planning/spec traceability slice in this backend repository. The underlying UI work described in the chain (sidebar/navigation) lives in the client repository.
 
 ## Why this slice is a closeout doc
 

@@ -26,7 +26,7 @@ Chat exports are comprehensive Markdown documents that capture:
 - Technical context (files changed, commits, metrics)
 - Problem resolution details with root causes and solutions
 
-**Example:** [2026-01-18-issue25-prmerge-enhancements-complete-workflow.md](../chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md)
+**Example:** [2026-01-18-step1-hybrid-workflow-creation.md](../chat/2026-01-18-step1-hybrid-workflow-creation.md)
 
 ### Restoration Methods
 
@@ -36,7 +36,7 @@ Use the chat export as context in a new conversation:
 
 ```bash
 # Copy the export to your workspace
-cp docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md /tmp/context.md
+cp docs/chat/2026-01-18-step1-hybrid-workflow-creation.md /tmp/context.md
 
 # Start a new agent session with the context
 # In GitHub Copilot Chat or similar:
@@ -51,7 +51,7 @@ cp docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md /tmp/c
 
 **Cons:**
 
-- Large context window usage (542 lines = ~15KB)
+- Large context window usage (487 lines = ~15KB)
 - May need to reference specific sections
 
 #### Method 2: Section-Based Restoration
@@ -61,12 +61,12 @@ Extract specific sections for targeted context:
 ```bash
 # Extract specific phase
 sed -n '/## Phase 2: Issue #25 Implementation/,/## Phase 3:/p' \
-  docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md \
+    docs/chat/2026-01-18-step1-hybrid-workflow-creation.md \
   > /tmp/phase2-context.md
 
 # Extract commands reference
 sed -n '/## Commands Reference/,/## Final Summary/p' \
-  docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md \
+    docs/chat/2026-01-18-step1-hybrid-workflow-creation.md \
   > /tmp/commands-context.md
 ```
 
@@ -126,7 +126,7 @@ def extract_learnings(export_file):
     return learnings
 
 # Usage
-learnings = extract_learnings('docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md')
+learnings = extract_learnings('docs/chat/2026-01-18-step1-hybrid-workflow-creation.md')
 with open('.issue-resolution-knowledge.json', 'r') as f:
     kb = json.load(f)
     kb['structured_learnings'] = learnings
@@ -145,7 +145,7 @@ with open('.issue-resolution-knowledge.json', 'w') as f:
 
 - Use for: Complete workflow recreation, comprehensive understanding
 - Best for: Claude Sonnet 4.5 (200K context), GPT-4 Turbo (128K context)
-- Command: `@workspace #file:docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md`
+- Command: `@workspace #file:docs/chat/2026-01-18-step1-hybrid-workflow-creation.md`
 
 **Selective Context (50-200 lines):**
 
@@ -172,7 +172,7 @@ with open('.issue-resolution-knowledge.json', 'w') as f:
 
 ## Relevant Experience
 
-Based on: docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md
+Based on: docs/chat/2026-01-18-step1-hybrid-workflow-creation.md
 
 ### Key Learnings Applied
 
@@ -285,7 +285,7 @@ class WorkflowAgent:
             print(f"▶️  Resuming from Phase {phase_num}")
 
 # Usage
-agent = WorkflowAgent('docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md')
+agent = WorkflowAgent('docs/chat/2026-01-18-step1-hybrid-workflow-creation.md')
 agent.execute_phase(1, {"issue_number": 26})
 ````
 
@@ -353,7 +353,7 @@ class ReviewAgent:
         # Check each criterion
 
 # Usage
-review_agent = ReviewAgent('docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md')
+review_agent = ReviewAgent('docs/chat/2026-01-18-step1-hybrid-workflow-creation.md')
 issues = review_agent.review_changes(['src/pages/Chat.tsx', 'src/App.tsx'])
 ```
 
@@ -373,11 +373,11 @@ issues = review_agent.review_changes(['src/pages/Chat.tsx', 'src/App.tsx'])
 ```bash
 #!/bin/bash
 # scripts/pr-merge-agent.sh
-# Agent that automates PR merge with learnings from Issue #25
+# Agent that automates PR merge with learnings from a known-good export
 
 source_chat_export() {
     # Extract prmerge logic from chat export
-    EXPORT_FILE="docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md"
+    EXPORT_FILE="docs/chat/2026-01-18-step1-hybrid-workflow-creation.md"
 
     # Parse validation rules
     VALIDATION_RULES=$(sed -n '/validate_pr_template/,/^}/p' "$EXPORT_FILE")
@@ -389,7 +389,7 @@ source_chat_export() {
 validate_pr_template_agent() {
     local pr_num=$1
 
-    echo "🔍 Agent: Validating PR template (learned from Issue #25)..."
+    echo "🔍 Agent: Validating PR template (learned from export)..."
 
     # Get PR body
     PR_BODY=$(gh pr view "$pr_num" --json body --jq '.body')
@@ -409,7 +409,7 @@ validate_pr_template_agent() {
         fi
     done
 
-    # Check evidence format (critical learning from Issue #25)
+    # Check evidence format (critical learning from exports)
     if echo "$PR_BODY" | grep -q "^- Evidence.*:$"; then
         echo "⚠️  Evidence on separate line (will fail CI)"
         echo "   Fix: Move evidence summary to same line as field"
@@ -642,8 +642,8 @@ class MultiRepoAgent:
 """
 workflow_agent.py - AI agent trained on Issue #25 workflow
 
-This agent automates the 6-phase issue resolution workflow learned from
-docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md
+This agent automates a strict issue resolution workflow learned from
+docs/chat/2026-01-18-step1-hybrid-workflow-creation.md
 
 Usage:
     ./scripts/workflow_agent.py --issue 26
@@ -669,7 +669,7 @@ class WorkflowAgent:
     - Mandatory self-review (Step 7)
     """
 
-    def __init__(self, issue_num, export_path='docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md'):
+    def __init__(self, issue_num, export_path='docs/chat/2026-01-18-step1-hybrid-workflow-creation.md'):
         self.issue_num = issue_num
         self.export_path = Path(export_path)
         self.checkpoint_file = Path(f'.workflow-checkpoint-{issue_num}.json')
@@ -907,7 +907,7 @@ chmod +x scripts/workflow_agent.py
 
 **Next Steps:**
 
-1. Review the [Issue #25 export](../chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md)
+1. Review the example export [2026-01-18-step1-hybrid-workflow-creation.md](../chat/2026-01-18-step1-hybrid-workflow-creation.md)
 2. Extract principles relevant to your use case
 3. Start with simple command automation
 4. Build up to full workflow agents
@@ -915,7 +915,7 @@ chmod +x scripts/workflow_agent.py
 
 **Resources:**
 
-- [Issue #25 Complete Export](../chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md)
+- [Example Export](../chat/2026-01-18-step1-hybrid-workflow-creation.md)
 - [Workflow Documentation](../WORK-ISSUE-WORKFLOW.md)
 - [Next Issue Command](../NEXT-ISSUE-COMMAND.md)
 - [prmerge Enhancements](../prmerge-enhancements-issue25.md)
