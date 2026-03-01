@@ -15,9 +15,11 @@ This directory contains repository custom agents (`*.agent.md`) discoverable by 
 - **[continue-backend.agent.md](./continue-backend.agent.md)** - Run backend-only continuation loops with guarded PR/merge flow.
 - **[continue-phase-2.agent.md](./continue-phase-2.agent.md)** - Run phase-2 continuation loops with review-before-merge policy.
 - **[ralph-agent.agent.md](./ralph-agent.agent.md)** - Execute strict spec-kit style issue resolution with specialist review gates.
-- **[autonomous.agent.md](./autonomous.agent.md)** - Canonical autonomous issue worker profile for `scripts/work-issue.py`.
 - **[workflow.agent.md](./workflow.agent.md)** - Legacy workflow-agent wrapper profile for scripted batch runs.
-- **[agents-catalog-maintainer.agent.md](./agents-catalog-maintainer.agent.md)** - Boosted maintainer prompt to inventory and convert all agent workflows into `.github/agents` with quality checks.
+
+## Documentation-Only (Not Selectable Agents)
+
+- **[agents-catalog-maintainer.md](./agents-catalog-maintainer.md)** - Maintainer playbook/prompt for keeping `.github/agents` and the automation inventory in sync.
 
 ## Automation Inventory
 

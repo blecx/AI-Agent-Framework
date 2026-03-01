@@ -42,9 +42,7 @@ Converted wrappers for prompt workflows/runtime profiles:
 - `continue-backend.agent.md`
 - `continue-phase-2.agent.md`
 - `ralph-agent.agent.md`
-- `autonomous.agent.md`
 - `workflow.agent.md`
-- `agents-catalog-maintainer.agent.md`
 
 ## 3) Prompt Workflow Sources (`.github/prompts/agents/*.md`)
 

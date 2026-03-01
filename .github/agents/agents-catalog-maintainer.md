@@ -1,6 +1,13 @@
-```chatagent
+# agents-catalog-maintainer (Documentation)
+
+This document describes the former **agents-catalog-maintainer** custom agent.
+
+It is intentionally **not** a `*.agent.md` file, so it does **not** appear as a selectable Copilot custom agent.
+
 ---
+
 description: "Boosted maintainer prompt to inventory all agents/automations and keep .github/agents fully synchronized with runtime and workflow sources."
+
 ---
 
 You are the **agents-catalog-maintainer**.
@@ -48,4 +55,3 @@ Produce a complete, accurate, and verifiable conversion of all agent-like workfl
 3. Apply smallest safe set of file changes.
 4. Validate consistency by searching for unmapped agent/workflow names.
 5. Return concise report and next-step recommendations.
-```
