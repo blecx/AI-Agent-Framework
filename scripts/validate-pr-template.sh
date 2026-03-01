@@ -85,7 +85,7 @@ if [[ ! -f "$PR_BODY_FILE" ]]; then
 fi
 
 if [[ "$REPO_TYPE" != "backend" && "$REPO_TYPE" != "client" ]]; then
-    echo -e "${RED}Error: --repo must be 'backend' or 'client'${NC}"
+    echo -e "${RED}Error: invalid --repo value '$REPO_TYPE' (expected: backend|client)${NC}"
     exit 1
 fi
 
@@ -121,6 +121,19 @@ validate_required_sections() {
 
     if [[ "$REPO_TYPE" == "backend" ]]; then
         section_labels=(
+            "## Goal / Context"
+            "## Acceptance Criteria"
+            "## Validation Evidence"
+            "## Repo Hygiene / Safety"
+        )
+        section_patterns=(
+            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Context[[:space:]]*$'
+            '^##[[:space:]]+Acceptance[[:space:]]+Criteria[[:space:]]*$'
+            '^##[[:space:]]+Validation[[:space:]]+Evidence[[:space:]]*$'
+            '^##[[:space:]]+Repo[[:space:]]+Hygiene[[:space:]]*/[[:space:]]*Safety[[:space:]]*$'
+        )
+    else
+        section_labels=(
             "# Summary"
             "## Goal / Acceptance Criteria (required)"
             "## Issue / Tracking Link (required)"
@@ -129,29 +142,12 @@ validate_required_sections() {
             "## Manual test evidence (required)"
         )
         section_patterns=(
-            '^#{1,2}[[:space:]]+Summary[[:space:]]*$'
+            '^#[[:space:]]+Summary[[:space:]]*$'
             '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Acceptance[[:space:]]+Criteria[[:space:]]*\(required\)[[:space:]]*$'
             '^##[[:space:]]+Issue[[:space:]]*/[[:space:]]*Tracking[[:space:]]+Link[[:space:]]*\(required\)[[:space:]]*$'
             '^##[[:space:]]+Validation[[:space:]]*\(required\)[[:space:]]*$'
-            '^##[[:space:]]+Automated[[:space:]]+checks[[:space:]]*$'
-            '^##[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence[[:space:]]*\(required\)[[:space:]]*$'
-        )
-    else
-        section_labels=(
-            "Summary heading (# or ##)"
-            "Goal / Acceptance Criteria"
-            "Issue / Tracking Link"
-            "Validation"
-            "Automated checks"
-            "Manual test evidence"
-        )
-        section_patterns=(
-            '^#{1,2}[[:space:]]+Summary([[:space:]]*\(required\))?[[:space:]]*$'
-            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Acceptance[[:space:]]+Criteria([[:space:]]*\(required\))?[[:space:]]*$'
-            '^##[[:space:]]+Issue[[:space:]]*/[[:space:]]*Tracking[[:space:]]+Link([[:space:]]*\(required\))?[[:space:]]*$'
-            '^##[[:space:]]+Validation([[:space:]]*\(required\))?[[:space:]]*$'
-            '^##[[:space:]]+Automated[[:space:]]+checks([[:space:]]*\(required\))?[[:space:]]*$'
-            '^##[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence([[:space:]]*\(required\))?[[:space:]]*$'
+            '^##+[[:space:]]+Automated[[:space:]]+checks[[:space:]]*$'
+            '^##+[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence[[:space:]]*\(required\)[[:space:]]*$'
         )
     fi
 
@@ -208,7 +204,8 @@ validate_checkboxes() {
         if [[ $total_checked -eq 0 ]]; then
             error "Found $total_checkboxes unchecked boxes. All must be checked before PR creation."
         else
-            warning "Found $total_checkboxes total checkboxes, $total_checked checked, $((total_checkboxes)) unchecked."
+            local unchecked_boxes=$((total_checkboxes - total_checked))
+            warning "Found $total_checkboxes total checkboxes, $total_checked checked, $unchecked_boxes unchecked."
             echo "  → Verify all boxes should be checked per PR review gate"
         fi
     else

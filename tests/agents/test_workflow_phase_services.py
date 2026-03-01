@@ -277,3 +277,56 @@ def test_testing_phase_service_fallback_uses_canonical_backend_defaults():
 
     assert result.success is True
     assert result.output["commands"] == get_validation_commands("backend", "full")
+
+
+class _PrMergeAgentStub:
+    def __init__(self, repo_type: str, returncode: int = 0):
+        self.cross_repo_context = _RepoContextStub(repo_type)
+        self.returncode = returncode
+        self.commands = []
+
+    def log(self, _message, _level):
+        return None
+
+    def run_command(self, command, _description, check=False):
+        self.commands.append(command)
+
+        class _Result:
+            stdout = ""
+            stderr = ""
+
+        result = _Result()
+        result.returncode = self.returncode
+        return result
+
+
+def test_pr_merge_phase_service_builds_backend_pr_body(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    service = PrMergePhaseService()
+    agent = _PrMergeAgentStub("backend")
+
+    body_path = service._build_pr_body(agent, 600)
+    content = body_path.read_text(encoding="utf-8")
+
+    assert body_path.name == "pr-body-600.md"
+    assert "## Goal / Context" in content
+    assert "## Acceptance Criteria" in content
+    assert "## Validation Evidence" in content
+    assert "## Repo Hygiene / Safety" in content
+    assert "Fixes: #600" in content
+
+
+def test_pr_merge_phase_service_preflight_uses_repo_type(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    (scripts_dir / "validate-pr-template.sh").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+
+    service = PrMergePhaseService()
+    agent = _PrMergeAgentStub("client", returncode=0)
+    body_path = service._build_pr_body(agent, 601)
+
+    ok = service._preflight_pr_body(agent, body_path)
+
+    assert ok is True
+    assert any("--repo client" in command for command in agent.commands)
