@@ -1,0 +1,113 @@
+# Automation Inventory
+
+Canonical inventory of agents, custom agents, and automation entrypoints for this repository.
+
+## 1) Runtime Agents (Python)
+
+Primary source files:
+
+- `agents/autonomous_workflow_agent.py`
+- `agents/ralph_agent.py`
+- `agents/workflow_agent.py`
+- `agents/agent_registry.py`
+
+Alias mapping in `agents/agent_registry.py`:
+
+- `autonomous` -> `AutonomousWorkflowAgent`
+- `default` -> `AutonomousWorkflowAgent`
+- `ralph` -> `RalphAgent`
+- `ralph-agent` -> `RalphAgent`
+- `resolve-issue` -> `RalphAgent`
+
+Execution entrypoints:
+
+- `./scripts/work-issue.py --issue <n> [--agent <alias>]`
+- `scripts/agents/workflow` (wrapper to `agents/workflow_agent.py`)
+
+## 2) Custom Chat Agents (`.github/agents/*.agent.md`)
+
+Authority + lifecycle agents:
+
+- `resolve-issue-dev.agent.md`
+- `pr-merge.agent.md`
+- `close-issue.agent.md`
+- `tutorial.agent.md`
+- `blecs-ux-authority.agent.md`
+- `blecs-workflow-authority.agent.md`
+
+Converted wrappers for prompt workflows/runtime profiles:
+
+- `create-issue.agent.md`
+- `Plan.agent.md`
+- `continue-backend.agent.md`
+- `continue-phase-2.agent.md`
+- `ralph-agent.agent.md`
+- `autonomous.agent.md`
+- `workflow.agent.md`
+- `agents-catalog-maintainer.agent.md`
+
+## 3) Prompt Workflow Sources (`.github/prompts/agents/*.md`)
+
+These are canonical workflow prompts that drive agent behavior:
+
+- `create-issue.md`
+- `Plan.md`
+- `continue-backend.md`
+- `continue-phase-2.md`
+- `resolve-issue-dev.md`
+- `ralph-agent.md`
+- `pr-merge.md`
+- `close-issue.md`
+- `tutorial.md`
+
+## 4) VS Code Agent/Automation Wiring
+
+From `.vscode/settings.json`:
+
+- `chat.tools.subagent.autoApprove` includes:
+  - `create-issue`, `resolve-issue-dev`, `close-issue`, `pr-merge`, `Plan`, `tutorial`
+- `issueagent.customAgent`: `agents.custom.resolve_issue:ResolveIssueAgent`
+
+From `.vscode/tasks.json` (selected automation tasks):
+
+- `🤖 Work on Issue (Autonomous)` -> `scripts/work-issue.py`
+- `🔍 Work on Issue (Dry Run)` -> `scripts/work-issue.py --dry-run`
+- `💬 Work on Issue (Interactive)` -> `scripts/work-issue.py --interactive`
+- `📋 Select Next Issue` -> `next-issue`
+- `📦 Select Next PR` -> `next-pr`
+- `🔀 Merge PR` -> `scripts/prmerge`
+- `🚀 Dev Stack: Supervised` -> `scripts/dev_stack_supervisor.py`
+
+## 5) Scripted Workflow Automations
+
+Core orchestration scripts:
+
+- `scripts/work-issue.py`
+- `scripts/prmerge`
+- `scripts/close-issue.sh`
+- `scripts/next-issue.py` (via `./next-issue`)
+- `scripts/next-pr.py` (via `./next-pr`)
+- `scripts/continue-phase-2.sh`
+- `continue-backend` (root command)
+
+## 6) CI/CD Automation
+
+Main backend workflows in `.github/workflows/`:
+
+- `ci.yml`
+- `ci-backend.yml`
+- `ci-web-ui.yml`
+- `cd-backend.yml`
+- `cd-smoke.yml`
+- `rollback-backend.yml`
+- `reusable-client-api-integration.yml`
+- `reusable-ghcr-publish.yml`
+
+## 7) Conversion Policy
+
+When a new workflow prompt or runtime profile is added, do all of the following in the same change:
+
+1. Add/update corresponding `.github/agents/*.agent.md` wrapper.
+2. Update `.github/agents/README.md`.
+3. Update this inventory file.
+4. Keep prompt logic canonical in `.github/prompts/agents/` and shared modules.

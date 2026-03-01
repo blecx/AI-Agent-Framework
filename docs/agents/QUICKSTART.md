@@ -98,6 +98,22 @@ Readiness Assessment:
 
 ## Using the Workflow Agent
 
+### Ralph Agent (recommended strict profile)
+
+Run Ralph directly from CLI:
+
+```bash
+./scripts/work-issue.py --issue 26 --agent ralph
+```
+
+Run Ralph from VS Code chat:
+
+```text
+@ralph /run
+```
+
+Ralph enforces skill-based acceptance criteria and specialist review gates before PR handoff.
+
 ### First Issue (Supervised Mode)
 
 For your first issue with the agent, monitor each phase:

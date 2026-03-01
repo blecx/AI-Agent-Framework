@@ -36,6 +36,9 @@ jobs:
       - name: Validate continue-phase-2 policy
         run: python ./scripts/check_continue_phase2_policy.py
 
+      - name: Validate subagent auto-approve consistency
+        run: python ./scripts/check_subagent_autoapprove.py
+
       - name: Validate Step 2 backend queue governance
         env:
           GH_TOKEN: ${{ github.token }}

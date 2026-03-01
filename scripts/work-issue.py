@@ -32,7 +32,7 @@ async def main():
     _ensure_venv_and_reexec()
 
     # Import after venv re-exec so dependencies are available
-    from agents.autonomous_workflow_agent import AutonomousWorkflowAgent
+    from agents.agent_registry import create_issue_agent
     from scripts.work_issue_split import generate_split_issue_stubs
 
     parser = argparse.ArgumentParser(
@@ -54,6 +54,9 @@ Examples:
 
     # Dry run - initialize only (no LLM calls, no changes)
   ./scripts/work-issue.py --issue 26 --dry-run
+
+        # Run with Ralph agent profile
+        ./scripts/work-issue.py --issue 26 --agent ralph
 
     # Plan-only - Phase 1-2 planning only (LLM required, no changes)
     ./scripts/work-issue.py --issue 26 --plan-only
@@ -87,6 +90,16 @@ Token Budget Mode:
 
     parser.add_argument(
         "--issue", type=int, required=True, help="GitHub issue number to work on"
+    )
+
+    parser.add_argument(
+        "--agent",
+        type=str,
+        default="autonomous",
+        help=(
+            "Agent alias or class spec. Examples: 'autonomous', 'ralph', "
+            "or 'module.path:ClassName'."
+        ),
     )
 
     parser.add_argument(
@@ -194,9 +207,12 @@ Token Budget Mode:
                 )
                 sys.exit(1)
 
-        agent = AutonomousWorkflowAgent(
+        selected_agent = args.agent.strip()
+        print(f"🧠 Agent profile: {selected_agent}")
+
+        agent = create_issue_agent(
+            agent_name_or_spec=selected_agent,
             issue_number=args.issue,
-            # plan-only should also behave as read-only inside the agent
             dry_run=bool(args.dry_run or args.plan_only),
         )
 

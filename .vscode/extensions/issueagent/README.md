@@ -1,8 +1,8 @@
-# Issue Agent - VS Code Chat Integration
+# Resolve Issue - VS Code Chat Integration
 
 ## Overview
 
-The `/issueagent` chat command provides an interactive way to run the autonomous AI agent directly from VS Code chat. It automatically:
+The `@resolve-issue` chat participant provides an interactive way to run the autonomous AI agent directly from VS Code chat. It automatically:
 
 1. **Selects the next issue** from GitHub using the priority order defined in documentation
 2. **Runs the autonomous agent** on that issue
@@ -18,21 +18,24 @@ The `/issueagent` chat command provides an interactive way to run the autonomous
 3. **GitHub authentication:** `gh auth login` must be complete
 4. **Extension installed:** The issueagent extension must be loaded
 
-### Installing the Extension
+### Installing the Extension (best practice)
 
-The extension is included in the workspace. To enable it:
+VS Code does not reliably load “workspace extensions” just because a folder exists under `.vscode/`.
+Install it as a normal extension using the provided script (packages a VSIX and installs via the VS Code CLI):
 
 ```bash
-# The extension is in .vscode/extensions/issueagent/
-# VS Code should auto-detect it when you open the workspace
+./scripts/vscode/install-resolve-issue-chat.sh
 ```
 
-Or manually install:
+Then run **Developer: Reload Window**.
 
-1. Open Command Palette (`Ctrl+Shift+P`)
-2. Run: `Developer: Install Extension from Location...`
-3. Select: `.vscode/extensions/issueagent`
+## Smoke Test (recommended)
 
+Run this to validate prerequisites + packaging + installation + manifest consistency:
+
+```bash
+./scripts/vscode/smoke-test-resolve-issue-chat.sh
+```
 ## Usage
 
 ### Basic Command
@@ -40,13 +43,13 @@ Or manually install:
 In the VS Code chat panel, type:
 
 ```
-@issueagent /run
+@resolve-issue /run
 ```
 
 or simply:
 
 ```
-@issueagent
+@resolve-issue
 ```
 
 The agent will:
@@ -55,6 +58,16 @@ The agent will:
 - Run the autonomous workflow
 - Stream updates to chat
 - Show final success/failure status
+
+### Ralph Command (Spec-Kit style)
+
+In the VS Code chat panel, type:
+
+```
+@ralph /run
+```
+
+Ralph uses the same execution flow, but runs the `ralph` profile (`scripts/work-issue.py --agent ralph`) with explicit skill-based acceptance criteria and specialist review gates.
 
 ### What You'll See
 
@@ -183,7 +196,7 @@ Please check:
 ### How It Works
 
 1. **Chat Participant Registration**
-   - Registers `@issueagent` participant
+  - Registers `@resolve-issue` and `@ralph` participants
    - Provides `/run` command
    - Sets up chat handler
 
@@ -194,7 +207,7 @@ Please check:
    - Handles errors gracefully
 
 3. **Agent Execution** (`runAgent`)
-   - Spawns `scripts/work-issue.py --issue N`
+  - Spawns `scripts/work-issue.py --issue N --agent <profile>`
    - Detects phase transitions (Analysis, Planning, etc.)
    - Streams important messages to chat
    - Returns success/failure status
@@ -209,7 +222,8 @@ Please check:
 
 | Method                 | Interactive | Progress Visible   | IDE Integrated | Best For                             |
 | ---------------------- | ----------- | ------------------ | -------------- | ------------------------------------ |
-| **Chat `/issueagent`** | ✅ Yes      | ✅ Real-time       | ✅ Yes         | Interactive use, monitoring progress |
+| **Chat `/resolve-issue`** | ✅ Yes   | ✅ Real-time       | ✅ Yes         | Standard issue workflow execution    |
+| **Chat `/ralph`**      | ✅ Yes      | ✅ Real-time       | ✅ Yes         | Strict Spec-Kit + skill/review gates |
 | **VS Code Task**       | ❌ No       | ⚠️ Terminal only   | ✅ Yes         | Quick automation, keyboard shortcuts |
 | **CLI Script**         | ⚠️ Optional | ✅ Terminal output | ❌ No          | Scripting, automation                |
 
@@ -249,13 +263,13 @@ The agent itself uses:
 - `agents/knowledge/` - Learning database
 - `.github/copilot-instructions.md` - Project conventions
 
-See [docs/agents/AUTONOMOUS-AGENT-GUIDE.md](../../docs/agents/AUTONOMOUS-AGENT-GUIDE.md) for agent configuration.
+See [docs/agents/AUTONOMOUS-AGENT-GUIDE.md](https://github.com/blecx/AI-Agent-Framework/blob/main/docs/agents/AUTONOMOUS-AGENT-GUIDE.md) for agent configuration.
 
 ## Troubleshooting
 
 ### Extension Not Found
 
-**Problem:** `@issueagent` doesn't appear in chat
+**Problem:** `@resolve-issue` doesn't appear in chat
 
 **Solution:**
 
@@ -399,19 +413,19 @@ Possible improvements:
 
 ## Related Documentation
 
-- **[AUTONOMOUS-AGENT-GUIDE.md](../../docs/agents/AUTONOMOUS-AGENT-GUIDE.md)** - Complete agent documentation
-- **[WORK-ISSUE-WORKFLOW.md](../../docs/WORK-ISSUE-WORKFLOW.md)** - 6-phase workflow details
-- **[agents/README.md](../../agents/README.md)** - Agent system overview
+- **[AUTONOMOUS-AGENT-GUIDE.md](https://github.com/blecx/AI-Agent-Framework/blob/main/docs/agents/AUTONOMOUS-AGENT-GUIDE.md)** - Complete agent documentation
+- **[WORK-ISSUE-WORKFLOW.md](https://github.com/blecx/AI-Agent-Framework/blob/main/docs/WORK-ISSUE-WORKFLOW.md)** - 6-phase workflow details
+- **[agents/README.md](https://github.com/blecx/AI-Agent-Framework/blob/main/agents/README.md)** - Agent system overview
 
 ## Support
 
 For issues or questions:
 
-1. Check [AUTONOMOUS-AGENT-GUIDE.md](../../docs/agents/AUTONOMOUS-AGENT-GUIDE.md) troubleshooting section
+1. Check [AUTONOMOUS-AGENT-GUIDE.md](https://github.com/blecx/AI-Agent-Framework/blob/main/docs/agents/AUTONOMOUS-AGENT-GUIDE.md) troubleshooting section
 2. Run agent manually to isolate the issue: `./scripts/work-issue.py --issue N --dry-run`
 3. Check Python environment: `source .venv/bin/activate && python3 --version`
 4. Verify GitHub auth: `gh auth status`
 
 ---
 
-**Ready to start?** Open chat and type: `@issueagent` 🚀
+**Ready to start?** Open chat and type: `@resolve-issue /run` or `@ralph /run` 🚀

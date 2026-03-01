@@ -10,6 +10,22 @@ This directory contains repository custom agents (`*.agent.md`) discoverable by 
 - **[tutorial.agent.md](./tutorial.agent.md)** - Create Markdown-only tutorials with strict visual evidence, feature-gap reporting, and duplicate-content audits.
 - **[blecs-ux-authority.agent.md](./blecs-ux-authority.agent.md)** - Master authority for UX/navigation/graphical design and responsive/a11y guardrails.
 - **[blecs-workflow-authority.agent.md](./blecs-workflow-authority.agent.md)** - Workflow source-of-truth agent that normalizes process context for implementation and UX agents.
+- **[create-issue.agent.md](./create-issue.agent.md)** - Create template-compliant issues only (no implementation), with clear acceptance criteria and validation steps.
+- **[Plan.agent.md](./Plan.agent.md)** - Produce compact, actionable implementation plans with bounded discovery and issue sizing.
+- **[continue-backend.agent.md](./continue-backend.agent.md)** - Run backend-only continuation loops with guarded PR/merge flow.
+- **[continue-phase-2.agent.md](./continue-phase-2.agent.md)** - Run phase-2 continuation loops with review-before-merge policy.
+- **[ralph-agent.agent.md](./ralph-agent.agent.md)** - Execute strict spec-kit style issue resolution with specialist review gates.
+- **[autonomous.agent.md](./autonomous.agent.md)** - Canonical autonomous issue worker profile for `scripts/work-issue.py`.
+- **[workflow.agent.md](./workflow.agent.md)** - Legacy workflow-agent wrapper profile for scripted batch runs.
+- **[agents-catalog-maintainer.agent.md](./agents-catalog-maintainer.agent.md)** - Boosted maintainer prompt to inventory and convert all agent workflows into `.github/agents` with quality checks.
+
+## Automation Inventory
+
+- **[AUTOMATIONS.md](./AUTOMATIONS.md)** is the canonical map of:
+	- runtime agents (Python classes + aliases),
+	- custom chat agents (`*.agent.md`),
+	- prompt workflows (`.github/prompts/agents/*.md`),
+	- command/script automations, VS Code task automations, and CI workflows.
 
 ## Spec Kit-Compatible Command Prompts
 

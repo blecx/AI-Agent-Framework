@@ -38,7 +38,7 @@ Boot-time setup helper (all MCP services):
 ```
 
 - 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels
-- � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run autonomous agent from VS Code chat
+- 🤖 **[Resolve-Issue Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run resolve-issue and Ralph agents from VS Code chat
 - 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
 - 📖 **[Documentation Hub](docs/README.md)** - Complete documentation index
 
