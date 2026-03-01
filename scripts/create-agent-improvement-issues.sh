@@ -4,14 +4,23 @@
 set -e
 
 REPO="blecx/AI-Agent-Framework"
+GH_API_SLEEP_SECONDS="${GH_API_SLEEP_SECONDS:-1}"
+
+gh_t() {
+  gh "$@"
+  if [[ "${GH_API_SLEEP_SECONDS}" != "0" ]]; then
+    sleep "${GH_API_SLEEP_SECONDS}"
+  fi
+}
 
 echo "Creating 15 agent improvement issues..."
+echo "GitHub API throttle: ${GH_API_SLEEP_SECONDS}s between requests"
 echo ""
 
 # Phase 1 Issues (Priority 1)
 
 echo "Phase 1.1: PR Template Validation"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Proactive PR Template Validation" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -32,7 +41,7 @@ Add pre-PR validation phase to catch template errors before PR creation, reducin
 4 hours"
 
 echo "Phase 1.2: Cross-Repo Context Loader"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Cross-Repo Context Loader" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -53,7 +62,7 @@ Add automatic context detection when working across backend and client repos. El
 6 hours"
 
 echo "Phase 1.3: CI Workflow Behavior Training"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] CI Workflow Behavior Training Module" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -75,7 +84,7 @@ Add explicit CI behavior knowledge to prevent PR #128-type confusion where agent
 2 hours"
 
 echo "Phase 1.4: Smart Retry with Exponential Backoff"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Smart Retry with Exponential Backoff" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -97,7 +106,7 @@ Implement exponential backoff for CI status checking. Agent currently polls ever
 3 hours"
 
 echo "Phase 1.5: Parallel Validation Execution"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Parallel Validation Execution" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -120,7 +129,7 @@ Run independent validations in parallel instead of sequentially. Current: lint (
 
 echo ""
 echo "Phase 2.6: Incremental Knowledge Base Updates"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Incremental Knowledge Base Updates" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -139,7 +148,7 @@ Update knowledge base after each phase (not just end of workflow). Enable agent 
 4 hours"
 
 echo "Phase 2.7: Smart File Change Detection"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Smart File Change Detection" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -160,7 +169,7 @@ Detect change scope and run targeted validation. Don't run full test suite for d
 4 hours"
 
 echo "Phase 2.8: Auto-Recovery from Common Errors"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Auto-Recovery from Common Errors" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -182,7 +191,7 @@ Implement auto-recovery for known error patterns. Stop asking user for TypeScrip
 6 hours"
 
 echo "Phase 2.9: Pre-Flight Issue Readiness Checks"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Pre-Flight Issue Readiness Checks" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -202,7 +211,7 @@ Validate issue quality before starting work. Prevent starting issues missing acc
 3 hours"
 
 echo "Phase 2.10: Automated Documentation Updates"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Automated Documentation Updates" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -226,7 +235,7 @@ Auto-detect documentation impact and update docs. Agent forgets to update README
 
 echo ""
 echo "Phase 3.11: Cached Command Results"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Cached Command Results" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -246,7 +255,7 @@ Cache command results within issue scope. Agent runs 'npm install' 3 times (Phas
 2 hours"
 
 echo "Phase 3.12: Predictive Time Estimation (ML)"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Predictive Time Estimation with ML" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -267,7 +276,7 @@ Train simple ML model on historical data for better time estimates. Current: sim
 8 hours"
 
 echo "Phase 3.13: Comprehensive Test Coverage Analyzer"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Comprehensive Test Coverage Analyzer" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -288,7 +297,7 @@ Analyze coverage diff and enforce minimum coverage. Agent doesn't verify coverag
 5 hours"
 
 echo "Phase 3.14: Multi-Stage Commit Strategy"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Multi-Stage Commit Strategy" \
   --label "enhancement" \
   --body "## Goal / Context
@@ -311,7 +320,7 @@ Create logical commit sequence instead of single large commit. Hard to review/re
 4 hours"
 
 echo "Phase 3.15: Learning Confidence Scoring"
-gh issue create --repo "$REPO" \
+gh_t issue create --repo "$REPO" \
   --title "[Agent] Learning Confidence Scoring" \
   --label "enhancement" \
   --body "## Goal / Context

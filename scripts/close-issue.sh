@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# GitHub API pacing for gh CLI calls in this script.
+GH_MIN_INTERVAL_SECONDS="${GH_MIN_INTERVAL_SECONDS:-1}"
+__GH_LAST_CALL_TS=""
+
+gh() {
+  local min_interval
+  min_interval="${GH_MIN_INTERVAL_SECONDS:-0}"
+
+  if [[ -n "${__GH_LAST_CALL_TS}" && "${min_interval}" != "0" ]]; then
+    local now elapsed
+    now="$(date +%s)"
+    elapsed="$(( now - __GH_LAST_CALL_TS ))"
+    if [[ "$elapsed" -lt "$min_interval" ]]; then
+      sleep "$(( min_interval - elapsed ))"
+    fi
+  fi
+
+  command gh "$@"
+  __GH_LAST_CALL_TS="$(date +%s)"
+}
+
 usage() {
   cat <<'USAGE'
 close-issue.sh - Close a GitHub issue using a repo-managed message template.

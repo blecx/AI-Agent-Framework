@@ -4,6 +4,7 @@ import subprocess
 from typing import Optional
 
 from agents.tooling.contracts import ToolResult
+from agents.tooling.gh_throttle import run_gh_throttled
 
 
 def fetch_github_issue_typed(
@@ -24,7 +25,7 @@ def fetch_github_issue_typed(
         if repo:
             cmd.extend(["--repo", repo])
 
-        result = subprocess.run(
+        result = run_gh_throttled(
             cmd,
             capture_output=True,
             text=True,
@@ -55,7 +56,7 @@ def create_github_pr_typed(
 ) -> ToolResult[str]:
     """Create GitHub pull request with gh CLI."""
     try:
-        result = subprocess.run(
+        result = run_gh_throttled(
             ["gh", "pr", "create", "--title", title, "--body", body],
             capture_output=True,
             text=True,
@@ -116,7 +117,7 @@ def list_github_issues_typed(
         if search:
             cmd.extend(["--search", search])
 
-        result = subprocess.run(
+        result = run_gh_throttled(
             cmd,
             capture_output=True,
             text=True,

@@ -8,6 +8,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -17,11 +18,33 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_GLOB = "planning/issues/*.yml"
 DEFAULT_MAP_PATH = ROOT / "planning/issues/.published-map.json"
+DEFAULT_SLEEP_SECONDS = 1.0
+
+_GH_SLEEP_SECONDS = DEFAULT_SLEEP_SECONDS
+_last_gh_call_monotonic: float | None = None
 
 REPO_MAP = {
     "AI-Agent-Framework": "blecx/AI-Agent-Framework",
     "AI-Agent-Framework-Client": "blecx/AI-Agent-Framework-Client",
 }
+
+
+def _set_gh_sleep_seconds(seconds: float) -> None:
+    global _GH_SLEEP_SECONDS
+    _GH_SLEEP_SECONDS = max(0.0, float(seconds))
+
+
+def _throttle_gh() -> None:
+    global _last_gh_call_monotonic
+    if _GH_SLEEP_SECONDS <= 0:
+        return
+
+    now = time.monotonic()
+    if _last_gh_call_monotonic is not None:
+        elapsed = now - _last_gh_call_monotonic
+        if elapsed < _GH_SLEEP_SECONDS:
+            time.sleep(_GH_SLEEP_SECONDS - elapsed)
+    _last_gh_call_monotonic = time.monotonic()
 
 
 @dataclass(frozen=True)
@@ -44,6 +67,7 @@ class IssueSpec:
 
 
 def _run_gh_json(args: list[str]) -> Any:
+    _throttle_gh()
     proc = subprocess.run(["gh", *args], capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"gh {' '.join(args)} failed")
@@ -51,6 +75,7 @@ def _run_gh_json(args: list[str]) -> Any:
 
 
 def _run_gh_text(args: list[str]) -> str:
+    _throttle_gh()
     proc = subprocess.run(["gh", *args], capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"gh {' '.join(args)} failed")
@@ -316,7 +341,15 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(REPO_MAP.values()),
         help="Optional single target repo filter",
     )
+    parser.add_argument(
+        "--sleep-seconds",
+        type=float,
+        default=DEFAULT_SLEEP_SECONDS,
+        help="Minimum delay between GitHub CLI requests (default: 1.0)",
+    )
     args = parser.parse_args(argv)
+
+    _set_gh_sleep_seconds(args.sleep_seconds)
 
     files = _collect_files(args.paths)
     if not files:
@@ -332,6 +365,7 @@ def main(argv: list[str] | None = None) -> int:
     mapping = _load_map(map_path)
     logs, mapping = publish(specs, mapping, apply=args.apply, repo_filter=args.repo_filter)
 
+    print(f"ℹ️  GitHub request throttle: {_GH_SLEEP_SECONDS:.2f}s between requests")
     for line in logs:
         print(line)
 
