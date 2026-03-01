@@ -16,12 +16,21 @@
   "chat.checkpoints.showFileChanges": true,
   "chat.customAgentInSubagent.enabled": true,
   "chat.tools.subagent.autoApprove": {
-    "create-issue": true,
-    "resolve-issue-dev": true,
+    "AUTOMATIONS": true,
+    "agents-catalog-maintainer": true,
+    "autonomous": true,
+    "blecs-ux-authority": true,
+    "blecs-workflow-authority": true,
     "close-issue": true,
-    "pr-merge": true,
+    "continue-backend": true,
+    "continue-phase-2": true,
+    "create-issue": true,
     "Plan": true,
-    "tutorial": true
+    "pr-merge": true,
+    "ralph-agent": true,
+    "resolve-issue-dev": true,
+    "tutorial": true,
+    "workflow": true
   },
   "chat.tools.terminal.autoApprove": {
     "bash": true,
