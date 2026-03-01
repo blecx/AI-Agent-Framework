@@ -3,7 +3,7 @@
 # Validates PR body before creation to prevent CI failures
 # Part of Agent Improvement Plan - Phase 1.1 (Issue #159)
 
-set -e
+set -euo pipefail
 
 # Configuration
 DRY_RUN=false
@@ -44,10 +44,18 @@ EOF
 while [[ $# -gt 0 ]]; do
     case $1 in
         --body-file)
+            if [[ $# -lt 2 || "$2" == --* ]]; then
+                echo -e "${RED}Error: --body-file requires a file path${NC}"
+                exit 1
+            fi
             PR_BODY_FILE="$2"
             shift 2
             ;;
         --repo)
+            if [[ $# -lt 2 || "$2" == --* ]]; then
+                echo -e "${RED}Error: --repo requires a value (backend|client)${NC}"
+                exit 1
+            fi
             REPO_TYPE="$2"
             shift 2
             ;;
@@ -107,18 +115,25 @@ info() {
 
 validate_required_sections() {
     info "Checking required sections..."
-    
-    local required_sections=()
-    
+
+    local section_labels=()
+    local section_patterns=()
+
     if [[ "$REPO_TYPE" == "backend" ]]; then
-        required_sections=(
+        section_labels=(
             "## Goal / Context"
             "## Acceptance Criteria"
             "## Validation Evidence"
             "## Repo Hygiene / Safety"
         )
+        section_patterns=(
+            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Context[[:space:]]*$'
+            '^##[[:space:]]+Acceptance[[:space:]]+Criteria[[:space:]]*$'
+            '^##[[:space:]]+Validation[[:space:]]+Evidence[[:space:]]*$'
+            '^##[[:space:]]+Repo[[:space:]]+Hygiene[[:space:]]*/[[:space:]]*Safety[[:space:]]*$'
+        )
     else
-        required_sections=(
+        section_labels=(
             "# Summary"
             "## Goal / Acceptance Criteria (required)"
             "## Issue / Tracking Link (required)"
@@ -126,22 +141,40 @@ validate_required_sections() {
             "## Automated checks"
             "## Manual test evidence (required)"
         )
+        section_patterns=(
+            '^#[[:space:]]+Summary[[:space:]]*$'
+            '^##[[:space:]]+Goal[[:space:]]*/[[:space:]]*Acceptance[[:space:]]+Criteria[[:space:]]*\(required\)[[:space:]]*$'
+            '^##[[:space:]]+Issue[[:space:]]*/[[:space:]]*Tracking[[:space:]]+Link[[:space:]]*\(required\)[[:space:]]*$'
+            '^##[[:space:]]+Validation[[:space:]]*\(required\)[[:space:]]*$'
+            '^##+[[:space:]]+Automated[[:space:]]+checks[[:space:]]*$'
+            '^##+[[:space:]]+Manual[[:space:]]+test[[:space:]]+evidence[[:space:]]*\(required\)[[:space:]]*$'
+        )
     fi
-    
-    for section in "${required_sections[@]}"; do
-        if grep -q "^$section" "$PR_BODY_FILE"; then
-            success "Found: $section"
+
+    local idx
+    for idx in "${!section_labels[@]}"; do
+        local label="${section_labels[$idx]}"
+        local pattern="${section_patterns[$idx]}"
+
+        if grep -Eqi "$pattern" "$PR_BODY_FILE"; then
+            success "Found: $label"
         else
-            error "Missing required section: $section"
+            error "Missing required section: $label"
         fi
     done
 }
 
 validate_evidence_format() {
     info "Checking evidence format..."
-    
-    # Check for code block evidence (bad)
-    if grep -Pzo '## (Validation Evidence|Manual test evidence)[^\#]*```' "$PR_BODY_FILE" >/dev/null 2>&1; then
+
+    # Check for fenced code blocks inside validation/manual evidence sections (bad)
+    if awk '
+        BEGIN { in_section=0; bad=0 }
+        /^##[[:space:]]+(Validation( Evidence)?|Manual test evidence)/ { in_section=1; next }
+        /^##[[:space:]]+/ { in_section=0 }
+        in_section && /```/ { bad=1 }
+        END { exit bad ? 0 : 1 }
+    ' "$PR_BODY_FILE"; then
         error 'Evidence must be in inline format, not code blocks (```).'
         echo "  → Use: ✅ npm test -- PASS (10 tests), ✅ npm run lint -- OK"
         echo "  → Not: \`\`\`bash ... \`\`\`"
