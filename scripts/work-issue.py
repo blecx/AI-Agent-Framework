@@ -522,8 +522,9 @@ def _check_prerequisites() -> bool:
     else:
         checks.append(("Python virtualenv (.venv)", "❌ Run ./setup.sh to create"))
 
-    # Check Node/npm if frontend or client repo exists
-    client_repo = Path("_external/AI-Agent-Framework-Client")
+    # Check Node/npm if frontend or standalone client repo exists
+    project_root = Path(__file__).resolve().parent.parent
+    client_repo = project_root.parent / "AI-Agent-Framework-Client"
     frontend_repo = client_repo / "client"
     if frontend_repo.exists():
         if shutil.which("node"):

@@ -105,13 +105,19 @@ class AutonomousWorkflowAgent:
 
     def _load_client_repo_context(self) -> str:
         """Load a small, token-bounded summary of the client repo for multi-repo issues."""
-        client_root = Path("_external/AI-Agent-Framework-Client")
+        backend_root = Path(__file__).resolve().parent.parent
+        client_root = Path(
+            os.environ.get(
+                "AI_AGENT_FRAMEWORK_CLIENT_REPO",
+                str((backend_root.parent / "AI-Agent-Framework-Client").resolve()),
+            )
+        )
         if not client_root.exists():
             return ""
 
         parts: list[str] = []
         parts.append(
-            "This workspace also contains the UX repo at _external/AI-Agent-Framework-Client (React/TypeScript + Vite)."
+            f"This workspace also contains the UX repo at {client_root} (React/TypeScript + Vite)."
         )
 
         try:
@@ -126,7 +132,7 @@ class AutonomousWorkflowAgent:
         client_app = client_root / "client"
         if client_app.exists():
             parts.append(
-                "Client app directory: _external/AI-Agent-Framework-Client/client (use this for npm dev/lint/build/test)."
+                f"Client app directory: {client_app} (use this for npm dev/lint/build/test)."
             )
 
             try:
@@ -155,7 +161,7 @@ class AutonomousWorkflowAgent:
 
         parts.append(
             "Typical client commands:\n"
-            "- cd _external/AI-Agent-Framework-Client/client && npm install\n"
+            "- cd ../AI-Agent-Framework-Client/client && npm install\n"
             "- npm run dev   (Vite dev server, usually http://localhost:5173)\n"
             "- npm run lint  (must pass if client code changed)\n"
             "- npm run build (must succeed before PR)\n"
@@ -406,7 +412,7 @@ Mission:
 - Never hallucinate file state; read before edit.
 
 Rules:
-- Backend repo root: AI-Agent-Framework; client repo root: _external/AI-Agent-Framework-Client.
+- Backend repo root: AI-Agent-Framework; client repo root: ../AI-Agent-Framework-Client.
 - Run relevant validations for changed scope before review.
 - Enforce UX authority checks for UI/UX-affecting changes.
 - Include Fixes #{self.issue_number} in PR body when creating PR.
@@ -464,7 +470,8 @@ Mode:
 
         hints = [
             "apps/web",
-            "_external/ai-agent-framework-client",
+            "../ai-agent-framework-client",
+            "ai-agent-framework-client",
             "client/src",
             ".css",
             ".tsx",

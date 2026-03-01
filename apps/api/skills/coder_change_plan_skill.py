@@ -30,7 +30,7 @@ class CoderChangePlanSkill:
 
         yaml_stub = (
             "issues:\n"
-            f"  - title: \"{feature}: implementation slice\"\n"
+            f'  - title: "{feature}: implementation slice"\n'
             "    size: S\n"
             "    labels:\n"
             "      - enhancement\n"

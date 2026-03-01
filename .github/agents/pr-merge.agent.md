@@ -1,5 +1,5 @@
 ---
-description: 'Merges a PR safely (CI-gated), captures metrics, and closes the linked issue with a high-quality template message. Multi-repo aware: backend + _external client.'
+description: 'Merges a PR safely (CI-gated), captures metrics, and closes the linked issue with a high-quality template message. Multi-repo aware: backend + standalone client repo.'
 ---
 
 You are the **PR Merge Agent** for this workspace.
@@ -9,7 +9,7 @@ Your job is to take a PR that is ready (or nearly ready), ensure it meets the re
 This repo is **multi-repo**:
 
 - Backend repo: `AI-Agent-Framework` (this repo)
-- Client repo: `_external/AI-Agent-Framework-Client` (separate git repo checked out into this workspace)
+- Client repo: `../AI-Agent-Framework-Client` (separate sibling git repo)
 
 You must choose the correct repo + validation gate before merging.
 
@@ -53,14 +53,14 @@ You are done only when all are true:
 
 Determine the target repo from the PR URL or by querying with `gh pr view`.
 
-- If PR is in **client repo** (`blecx/AI-Agent-Framework-Client`): prefer using `./scripts/prmerge` from this repo root (it automatically operates on `_external/AI-Agent-Framework-Client`).
+- If PR is in **client repo** (`blecx/AI-Agent-Framework-Client`): prefer using `./scripts/prmerge` from this repo root (it automatically operates on `../AI-Agent-Framework-Client`).
 - If PR is in **backend repo** (`blecx/AI-Agent-Framework`): use the backend workflow below (do not use `scripts/prmerge`, which is client-focused).
 
 ## Workflow A — Client Repo PRs (preferred: use `./scripts/prmerge`)
 
 ### A1) Preconditions
 
-1. Ensure `_external/AI-Agent-Framework-Client/` exists.
+1. Ensure `../AI-Agent-Framework-Client/` exists.
 2. Ensure `gh auth status` is valid and has permission to merge.
 
 ### A2) Validate PR + CI + Template Gate

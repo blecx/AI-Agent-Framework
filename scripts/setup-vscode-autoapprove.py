@@ -5,7 +5,7 @@ Setup VS Code auto-approve settings for Copilot agents.
 This script automatically configures auto-approve settings in:
 1. Global VS Code user settings (~/.config/Code/User/settings.json)
 2. Backend workspace (.vscode/settings.json)
-3. Client workspace (_external/AI-Agent-Framework-Client/.vscode/settings.json)
+3. Client workspace (../AI-Agent-Framework-Client/.vscode/settings.json)
 
 Run this script to enable auto-approve for all Copilot agent commands
 without manual copy-paste.
@@ -418,7 +418,7 @@ def main():
             success_count += 1
     
     # 3. Update client workspace settings
-    client_workspace = Path(__file__).parent.parent / "_external/AI-Agent-Framework-Client/.vscode/settings.json"
+    client_workspace = Path(__file__).parent.parent.parent / "AI-Agent-Framework-Client/.vscode/settings.json"
     total_count += 1
     if args.check:
         if verify_settings(client_workspace, "Client workspace", settings_payload, profile):

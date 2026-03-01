@@ -362,7 +362,7 @@ Before running `gh pr create`, verify ALL of these:
 ## CI acceptance & strict testing (reduce rework)
 
 - **Hard rule: do not open/declare a PR “ready” until local validation has been run and documented**.
-  - Client repo (`_external/AI-Agent-Framework-Client`): must run `npm run lint`, `npm run test -- --run`, `npm run build`.
+  - Client repo (`../AI-Agent-Framework-Client`): must run `npm run lint`, `npm run test -- --run`, `npm run build`.
   - Backend repo (this repo): must run `python -m black apps/api/`, `python -m flake8 apps/api/`, `pytest`.
 - **On CI failure, do log-first triage before changing code**:
   - Use `env GH_PAGER=cat PAGER=cat gh pr checks <PR>` then `env GH_PAGER=cat PAGER=cat gh run view <RUN_ID> --log-failed`.
@@ -388,7 +388,7 @@ Before running `gh pr create`, verify ALL of these:
 This project is multi-repo:
 
 - Backend: this repo (AI-Agent-Framework)
-- UX/client: `_external/AI-Agent-Framework-Client`
+- UX/client: `../AI-Agent-Framework-Client`
 
 For every issue, you must explicitly analyze whether the fix requires:
 

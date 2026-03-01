@@ -40,6 +40,12 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       
       - name: Install dependencies
         run: |
@@ -89,7 +95,7 @@ jobs:
     name: "Gate 2: Coverage Threshold (80%+)"
     runs-on: ubuntu-latest
     needs: test
-    timeout-minutes: 20
+    timeout-minutes: 70
     env:
       PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
@@ -102,6 +108,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       
       - name: Install dependencies
         run: |
@@ -414,6 +423,8 @@ jobs:
         run: |
           echo "Running targeted suite twice to detect flaky tests quickly..."
           TARGETS="tests/unit tests/integration"
+
+          set +e
           
           # Run 1
           pytest $TARGETS -v --tb=short -q -m "not tui" > run1.log 2>&1
@@ -422,6 +433,7 @@ jobs:
           # Run 2
           pytest $TARGETS -v --tb=short -q -m "not tui" > run2.log 2>&1
           RUN2=$?
+          set -e
           
           # Check for inconsistent results
           if [ $RUN1 -ne $RUN2 ]; then

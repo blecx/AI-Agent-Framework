@@ -291,7 +291,7 @@ Canonical UX governance links:
 1. **Install Dependencies** (if needed)
 
    ```bash
-   cd _external/AI-Agent-Framework-Client  # or apps/web
+   cd ../AI-Agent-Framework-Client  # or apps/web
    npm install <package>
    ```
 
@@ -369,7 +369,7 @@ Canonical UX governance links:
    python -m flake8 .
 
    # Frontend (JavaScript/TypeScript)
-   cd apps/web  # or _external/AI-Agent-Framework-Client
+   cd apps/web  # or ../AI-Agent-Framework-Client
    npm run lint
    npm run type-check  # if TypeScript
    ```
@@ -815,7 +815,7 @@ Fixes: #42
 
 **For AI-Agent-Framework-Client issues:**
 
-- All commands run from `_external/AI-Agent-Framework-Client/`
+- All commands run from `../AI-Agent-Framework-Client/`
 - Use frontend quality checks (npm lint, npm test)
 - Push to `blecx/AI-Agent-Framework-Client` repo
 - Create PR in client repo

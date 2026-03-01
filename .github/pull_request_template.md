@@ -32,7 +32,7 @@ Backend:
 
 Frontend (if changed):
 
-- [ ] `cd _external/AI-Agent-Framework-Client/client && npm install`
+- [ ] `cd ../AI-Agent-Framework-Client/client && npm install`
 - [ ] `npm run lint`
 - [ ] `npm run build`
 

@@ -498,7 +498,7 @@ Your goal: Apply these principles to Issue #{{issue_num}}
       "semantic_search '{{search_query}}'"
     ],
     "phase3_validation": [
-      "cd _external/AI-Agent-Framework-Client",
+            "cd ../AI-Agent-Framework-Client",
       "npm run build",
       "npx vitest run --reporter=verbose"
     ],
@@ -831,11 +831,11 @@ class WorkflowAgent:
 
         # Build check
         print("   Building...")
-        subprocess.run(['npm', 'run', 'build'], cwd='_external/AI-Agent-Framework-Client')
+        subprocess.run(['npm', 'run', 'build'], cwd='../AI-Agent-Framework-Client')
 
         # Test check
         print("   Running tests...")
-        subprocess.run(['npx', 'vitest', 'run'], cwd='_external/AI-Agent-Framework-Client')
+        subprocess.run(['npx', 'vitest', 'run'], cwd='../AI-Agent-Framework-Client')
 
         self.state["checkpoints"]["phase4"] = {"completed": True}
 
