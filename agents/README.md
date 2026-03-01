@@ -182,6 +182,37 @@ run_command("git commit -m 'msg'", "/path", use_cache=False)
 
 ---
 
+## 🧠 Ralph Agent (Spec-Kit strict profile)
+
+Ralph is a high-discipline profile built on the autonomous runtime with:
+
+- Skill-based acceptance criteria
+- Specialist reviewer gates (architecture, quality, security, UX when needed)
+- Bounded review/fix iteration loop
+
+### Files
+
+- `ralph_agent.py` - Ralph profile overlay
+- `agent_registry.py` - Alias/spec resolver (`ralph`, `autonomous`, `module:Class`)
+- `.github/prompts/agents/ralph-agent.md` - Spec-Kit style workflow prompt
+- `.github/prompts/modules/ralph-skills-review.md` - Skills + review matrix
+
+### Usage
+
+```bash
+./scripts/work-issue.py --issue 26 --agent ralph
+```
+
+VS Code chat:
+
+```text
+@ralph /run
+```
+
+**📖 Guide:** [docs/agents/ralph-agent.md](../docs/agents/ralph-agent.md)
+
+---
+
 ## 📋 Manual Workflow Agent (OLD - Deprecated)
 
 **Manual checklist-based workflow tracker**

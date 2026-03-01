@@ -6,21 +6,15 @@ on:
     paths:
       - 'docker/web/**'
       - 'docker-compose.yml'
-      - '.gitmodules'
-      - '.gitignore'
       - 'README.md'
       - 'QUICKSTART.md'
-      - '_external/AI-Agent-Framework-Client'
   push:
     branches: [main]
     paths:
       - 'docker/web/**'
       - 'docker-compose.yml'
-      - '.gitmodules'
-      - '.gitignore'
       - 'README.md'
       - 'QUICKSTART.md'
-      - '_external/AI-Agent-Framework-Client'
 
 jobs:
   guardrails:
@@ -29,8 +23,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          repository: blecx/AI-Agent-Framework-Client
+          path: AI-Agent-Framework-Client
 
       - name: Enforce canonical UI sources
         shell: bash
@@ -41,13 +38,8 @@ jobs:
             exit 1
           fi
 
-          if ! git submodule status _external/AI-Agent-Framework-Client >/dev/null 2>&1; then
-            echo "_external/AI-Agent-Framework-Client must be a git submodule"
-            exit 1
-          fi
-
-          if ! test -f .gitmodules; then
-            echo ".gitmodules missing; client submodule not configured"
+          if ! test -f AI-Agent-Framework-Client/client/package.json; then
+            echo "AI-Agent-Framework-Client checkout missing expected client package.json"
             exit 1
           fi
 
@@ -56,12 +48,12 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: _external/AI-Agent-Framework-Client/client/package-lock.json
+          cache-dependency-path: AI-Agent-Framework-Client/client/package-lock.json
 
       - name: Install client dependencies
-        working-directory: _external/AI-Agent-Framework-Client/client
+        working-directory: AI-Agent-Framework-Client/client
         run: npm ci
 
       - name: Build client
-        working-directory: _external/AI-Agent-Framework-Client/client
+        working-directory: AI-Agent-Framework-Client/client
         run: npm run build

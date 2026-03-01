@@ -25,7 +25,7 @@ Strict validation guidance:
 
 - In the Step 1 “Validation” bullet, list exact commands you will run (lint/tests/build) for each repo you touch.
 - Default hard-rule command sets:
-  - Client: `cd _external/AI-Agent-Framework-Client && npm run lint && npm run test -- --run && npm run build`
+   - Client: `cd ../AI-Agent-Framework-Client && npm run lint && npm run test -- --run && npm run build`
   - Backend: `python -m black apps/api/ && python -m flake8 apps/api/ && pytest`
 - Assume CI will be strict: if the repo has PR description gates, plan to use the required PR template sections from the start.
 
@@ -143,7 +143,7 @@ Reference `/home/sw/work/AI-Agent-Framework/agents/knowledge/issue_resolution_be
    - Import types from `../types` consistently
 
 5. **Pre-PR Validation Commands** (run in correct working directory):
-   - Client: `cd _external/AI-Agent-Framework-Client && npm run lint && npm test -- --run && npm run build`
+   - Client: `cd ../AI-Agent-Framework-Client && npm run lint && npm test -- --run && npm run build`
    - Backend: `source .venv/bin/activate && python -m black apps/api/ && python -m flake8 apps/api/ && pytest`
 
 6. **Infrastructure Checking**:

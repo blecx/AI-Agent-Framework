@@ -213,7 +213,7 @@ cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload  # 
 **Frontend (optional, 2-3 min):**
 
 ```bash
-cd _external/AI-Agent-Framework-Client/client && npm install  # ~4s
+cd ../AI-Agent-Framework-Client/client && npm install  # ~4s
 npm run dev  # http://localhost:5173
 npm run build  # ~120ms
 ```
@@ -264,7 +264,7 @@ docker compose up --build  # Web: :8080, API: :8000
 4. **Test Frontend** (if changed)
 
    ```bash
-   cd _external/AI-Agent-Framework-Client/client
+   cd ../AI-Agent-Framework-Client/client
    npm install
    npm run lint
    npm run build  # Should complete in ~120ms
@@ -289,7 +289,7 @@ docker compose up --build  # Web: :8080, API: :8000
 
 **Backend (apps/api/):** main.py (76L, FastAPI app), **domain/** (18 files, DDD architecture: 7 domains averaging 82L), models.py (76L, backward-compat facade), services/ (command_service.py 291L, git_manager.py 193L, llm_service.py 94L), routers/ (projects.py 78L, commands.py 71L, artifacts.py 48L). Two requirements.txt: root=dev+test deps, apps/api/=runtime only (Docker).
 
-**Frontend (_external/AI-Agent-Framework-Client/client):** React/Vite app with AppNavigation, ProjectList, ProjectView, Guided Builder, and Help docs.
+**Frontend (../AI-Agent-Framework-Client/client):** React/Vite app with AppNavigation, ProjectList, ProjectView, Guided Builder, and Help docs.
 
 **Config:** configs/llm.default.json (LM Studio default), templates/prompts/iso21500/_.j2 (Jinja2), templates/output/iso21500/_.md (Markdown), docker/ (Dockerfiles + nginx.conf).
 
@@ -308,7 +308,7 @@ docker compose up --build  # Web: :8080, API: :8000
 
 **Manual testing:** Also validate via API docs (/docs) or web UI for interactive verification.
 
-**Linting (optional):** `python -m black apps/api/`, `python -m flake8 apps/api/`, `cd _external/AI-Agent-Framework-Client/client && npm run lint`.
+**Linting (optional):** `python -m black apps/api/`, `python -m flake8 apps/api/`, `cd ../AI-Agent-Framework-Client/client && npm run lint`.
 
 **Validation:** Test API health (`curl localhost:8000/health`), create project via POST /projects, check git log in projectDocs/, run commands via web UI or API.
 
@@ -342,7 +342,7 @@ When adding Python dependencies:
 
 When adding JavaScript dependencies:
 
-- Run from `_external/AI-Agent-Framework-Client/client`: `npm install <package>`
+- Run from `../AI-Agent-Framework-Client/client`: `npm install <package>`
 - Commit updated `package.json` and `package-lock.json`
 - Test build: `npm run build`
 
@@ -451,17 +451,17 @@ For breaking changes, coordinate timing with client maintainers.
 cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 
 # Run frontend dev server
-cd _external/AI-Agent-Framework-Client/client && npm install && npm run dev
+cd ../AI-Agent-Framework-Client/client && npm install && npm run dev
 
 # Build frontend for production
-cd _external/AI-Agent-Framework-Client/client && npm run build
+cd ../AI-Agent-Framework-Client/client && npm run build
 
 # Docker deployment
 mkdir -p projectDocs && docker compose up --build
 
 # Lint code
 python -m black apps/api/ && python -m flake8 apps/api/  # Python
-cd _external/AI-Agent-Framework-Client/client && npm run lint  # JavaScript
+cd ../AI-Agent-Framework-Client/client && npm run lint  # JavaScript
 
 # Check API health
 curl http://localhost:8000/health

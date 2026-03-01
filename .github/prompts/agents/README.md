@@ -16,6 +16,7 @@ Do not use these files as generic end-user docs; they are operator rails for age
 - `Plan.md`
 - `continue-phase-2.md`
 - `resolve-issue-dev.md`
+- `ralph-agent.md`
 - `pr-merge.md`
 - `close-issue.md`
 - `tutorial.md`

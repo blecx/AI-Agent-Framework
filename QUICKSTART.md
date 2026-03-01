@@ -3,7 +3,7 @@
 This guide gives you the fastest path to run the AI-Agent-Framework with:
 
 - **Backend API** (`apps/api`)
-- **Web client** (`_external/AI-Agent-Framework-Client/client`)
+- **Web client** (`../AI-Agent-Framework-Client/client`)
 - Optional terminal clients (`client/`, `apps/tui`)
 
 For the full installation + LLM guide (Docker images, local setup, troubleshooting), see:
@@ -30,10 +30,12 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-1. Initialize the canonical web client submodule:
+1. Ensure the standalone client repo exists as a sibling directory:
 
 ```bash
-git submodule update --init --recursive
+cd ..
+git clone https://github.com/blecx/AI-Agent-Framework-Client.git
+cd AI-Agent-Framework
 ```
 
 1. (Optional) Create a custom LLM config:
@@ -88,10 +90,12 @@ git clone https://github.com/blecx/AI-Agent-Framework.git
 cd AI-Agent-Framework
 ```
 
-1. Initialize the canonical web client submodule:
+1. Ensure the standalone client repo exists as a sibling directory:
 
 ```bash
-git submodule update --init --recursive
+cd ..
+git clone https://github.com/blecx/AI-Agent-Framework-Client.git
+cd AI-Agent-Framework
 ```
 
 1. Setup Python environment:
@@ -118,7 +122,7 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 1. Start web client in another terminal:
 
 ```bash
-cd _external/AI-Agent-Framework-Client/client
+cd ../AI-Agent-Framework-Client/client
 npm install
 npm run dev
 ```

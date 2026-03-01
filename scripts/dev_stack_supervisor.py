@@ -58,12 +58,12 @@ BACKEND_PATTERNS = [
 ]
 
 FRONTEND_PATTERNS = [
-    "_external/AI-Agent-Framework-Client/client/src/**/*",
-    "_external/AI-Agent-Framework-Client/client/public/**/*",
-    "_external/AI-Agent-Framework-Client/client/vite.config.*",
-    "_external/AI-Agent-Framework-Client/client/package.json",
-    "_external/AI-Agent-Framework-Client/client/tsconfig*.json",
-    "_external/AI-Agent-Framework-Client/client/.env*",
+    "../AI-Agent-Framework-Client/client/src/**/*",
+    "../AI-Agent-Framework-Client/client/public/**/*",
+    "../AI-Agent-Framework-Client/client/vite.config.*",
+    "../AI-Agent-Framework-Client/client/package.json",
+    "../AI-Agent-Framework-Client/client/tsconfig*.json",
+    "../AI-Agent-Framework-Client/client/.env*",
 ]
 
 
@@ -142,7 +142,7 @@ def _backend_process() -> subprocess.Popen:
 
 
 def _frontend_process() -> subprocess.Popen:
-    frontend_cwd = PROJECT_ROOT / "_external" / "AI-Agent-Framework-Client" / "client"
+    frontend_cwd = PROJECT_ROOT.parent / "AI-Agent-Framework-Client" / "client"
     frontend_log = _env_path("DEV_STACK_FRONTEND_LOG", TMP_DIR / "dev-frontend.log")
 
     log_file = _open_log(frontend_log)

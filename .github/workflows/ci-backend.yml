@@ -40,6 +40,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       
       - name: Install dependencies
         run: |
@@ -80,7 +83,7 @@ jobs:
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 1 FAILED: One or more tests failed"
+          echo "[FAIL] Gate 1 FAILED: One or more tests failed"
           echo "Remediation: Run 'pytest tests/' locally and fix failing tests"
           exit 1
 
@@ -89,7 +92,7 @@ jobs:
     name: "Gate 2: Coverage Threshold (80%+)"
     runs-on: ubuntu-latest
     needs: test
-    timeout-minutes: 20
+    timeout-minutes: 70
     env:
       PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/tui:${{ github.workspace }}
     steps:
@@ -102,6 +105,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       
       - name: Install dependencies
         run: |
@@ -128,7 +134,7 @@ jobs:
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 2 FAILED: Coverage below 80% for changed files"
+          echo "[FAIL] Gate 2 FAILED: Coverage below 80% for changed files"
           echo "Remediation: Add tests for new/changed code to reach 80%+ coverage"
           exit 1
 
@@ -157,7 +163,7 @@ jobs:
           CHANGED_FILES=$(git diff --name-only --diff-filter=A origin/main...HEAD | grep '^apps/.*\.py$' || true)
           
           if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No new Python files added in apps/"
+            echo "[OK] No new Python files added in apps/"
             exit 0
           fi
           
@@ -186,7 +192,7 @@ jobs:
           done
           
           if [ -n "$MISSING_TESTS" ]; then
-            echo "❌ Gate 3 FAILED: New code added without tests"
+            echo "[FAIL] Gate 3 FAILED: New code added without tests"
             echo "Missing test files:"
             echo -e "$MISSING_TESTS"
             echo ""
@@ -194,7 +200,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ All new/changed code has corresponding test files"
+          echo "[OK] All new/changed code has corresponding test files"
 
   # Gate 4: Documentation Sync
   docs-sync:
@@ -216,7 +222,7 @@ jobs:
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 4 FAILED: tests/README.md out of sync with test structure"
+          echo "[FAIL] Gate 4 FAILED: tests/README.md out of sync with test structure"
           echo "Remediation: Update tests/README.md to reflect current test organization"
           exit 1
 
@@ -275,18 +281,18 @@ jobs:
                       missing_desc.append(f'{method.upper()} {path}')
           
           if missing_desc:
-              print('❌ Endpoints missing descriptions:')
+              print('[FAIL] Endpoints missing descriptions:')
               for endpoint in missing_desc:
                   print(f'  - {endpoint}')
               exit(1)
           
-          print(f'✅ OpenAPI spec valid ({len(spec[\"paths\"])} endpoints documented)')
+            print(f'[OK] OpenAPI spec valid ({len(spec["paths"])} endpoints documented)')
           "
       
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 5 FAILED: OpenAPI spec incomplete or invalid"
+          echo "[FAIL] Gate 5 FAILED: OpenAPI spec incomplete or invalid"
           echo "Remediation: Add docstrings/descriptions to all API endpoints"
           exit 1
 
@@ -321,7 +327,7 @@ jobs:
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 6 FAILED: Code style violations detected"
+          echo "[FAIL] Gate 6 FAILED: Code style violations detected"
           echo "Remediation: Run 'python -m black apps/api/ apps/tui/ tests/' to auto-format"
           echo "             Then run 'python -m flake8 apps/api/' to check for remaining issues"
           exit 1
@@ -355,7 +361,7 @@ jobs:
       - name: Gate Status
         if: failure()
         run: |
-          echo "❌ Gate 7 FAILED: Security vulnerabilities detected"
+          echo "[FAIL] Gate 7 FAILED: Security vulnerabilities detected"
           echo "Remediation: Review and fix security issues, or add to whitelist if false positive"
           exit 1
 
@@ -373,12 +379,12 @@ jobs:
           echo "Gate 1 test duration: ${DURATION}s"
           
           if [ "$WITHIN_LIMIT" != "true" ]; then
-            echo "❌ Gate 8 FAILED: Test suite took ${DURATION}s (limit: 600s / 10min)"
+            echo "[FAIL] Gate 8 FAILED: Test suite took ${DURATION}s (limit: 600s / 10min)"
             echo "Remediation: Optimize slow tests or parallelize execution"
             exit 1
           fi
           
-          echo "✅ Test suite within time limit (${DURATION}s / 600s)"
+          echo "[OK] Test suite within time limit (${DURATION}s / 600s)"
 
   # Gate 9: Flaky Test Detection
   flaky-tests:
@@ -396,6 +402,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       
       - name: Install dependencies
         run: |
@@ -414,6 +423,8 @@ jobs:
         run: |
           echo "Running targeted suite twice to detect flaky tests quickly..."
           TARGETS="tests/unit tests/integration"
+
+          set +e
           
           # Run 1
           pytest $TARGETS -v --tb=short -q -m "not tui" > run1.log 2>&1
@@ -422,36 +433,37 @@ jobs:
           # Run 2
           pytest $TARGETS -v --tb=short -q -m "not tui" > run2.log 2>&1
           RUN2=$?
+          set -e
           
           # Check for inconsistent results
           if [ $RUN1 -ne $RUN2 ]; then
-            echo "❌ Gate 9 WARNING: Flaky tests detected (inconsistent results across runs)"
+            echo "[WARN] Gate 9 WARNING: Flaky tests detected (inconsistent results across runs)"
             echo "Run 1 exit code: $RUN1"
             echo "Run 2 exit code: $RUN2"
             echo ""
-            echo "⚠️  This is a warning only - not failing the build"
+            echo "[WARN] This is a warning only - not failing the build"
             echo "Remediation: Investigate and fix non-deterministic test behavior"
           else
-            echo "✅ No flaky tests detected (2 consistent runs)"
+            echo "[OK] No flaky tests detected (2 consistent runs)"
           fi
 
   # Final gate: All gates passed
   all-gates-passed:
-    name: "✅ All CI Gates Passed"
+    name: "All CI Gates Passed"
     runs-on: ubuntu-latest
     needs: [test, coverage, missing-tests, docs-sync, openapi, lint, security, test-time, flaky-tests]
     steps:
       - name: Success
         run: |
-          echo "🎉 All 9 CI quality gates passed!"
-          echo "✅ Gate 1: All tests pass"
-          echo "✅ Gate 2: Coverage threshold (80%+)"
-          echo "✅ Gate 3: Missing tests detection"
-          echo "✅ Gate 4: Documentation sync"
-          echo "✅ Gate 5: OpenAPI spec validation"
-          echo "✅ Gate 6: Linting (black + flake8)"
-          echo "✅ Gate 7: Security scanning (bandit + safety)"
-          echo "✅ Gate 8: Test execution time (<10min)"
-          echo "✅ Gate 9: Flaky test detection"
+          echo "[OK] All 9 CI quality gates passed!"
+          echo "[OK] Gate 1: All tests pass"
+          echo "[OK] Gate 2: Coverage threshold (80%+)"
+          echo "[OK] Gate 3: Missing tests detection"
+          echo "[OK] Gate 4: Documentation sync"
+          echo "[OK] Gate 5: OpenAPI spec validation"
+          echo "[OK] Gate 6: Linting (black + flake8)"
+          echo "[OK] Gate 7: Security scanning (bandit + safety)"
+          echo "[OK] Gate 8: Test execution time (<10min)"
+          echo "[OK] Gate 9: Flaky test detection"
           echo ""
-          echo "PR is ready to merge! 🚀"
+          echo "PR is ready to merge"

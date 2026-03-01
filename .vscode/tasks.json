@@ -238,7 +238,7 @@
       "command": "npm",
       "args": ["run", "dev"],
       "options": {
-        "cwd": "${workspaceFolder}/_external/AI-Agent-Framework-Client/client"
+        "cwd": "${workspaceFolder}/../AI-Agent-Framework-Client/client"
       },
       "isBackground": true,
       "problemMatcher": {
@@ -299,7 +299,7 @@
       "command": "npm",
       "args": ["run", "build"],
       "options": {
-        "cwd": "${workspaceFolder}/_external/AI-Agent-Framework-Client/client"
+        "cwd": "${workspaceFolder}/../AI-Agent-Framework-Client/client"
       },
       "problemMatcher": [],
       "presentation": {
@@ -319,7 +319,7 @@
       "command": "npm",
       "args": ["run", "lint"],
       "options": {
-        "cwd": "${workspaceFolder}/_external/AI-Agent-Framework-Client/client"
+        "cwd": "${workspaceFolder}/../AI-Agent-Framework-Client/client"
       },
       "problemMatcher": ["$eslint-stylish"],
       "presentation": {

@@ -33,6 +33,7 @@ See `agents/README.md` for specialized agent workflows.
 - `modules/tutorial-review-workflow.md`
 - `modules/cross-repo-coordination-checklist.md`
 - `modules/multi-step-planning-checklist.md`
+- `modules/ralph-skills-review.md`
 
 Additional modules can be introduced incrementally during prompt refactor slices.
 

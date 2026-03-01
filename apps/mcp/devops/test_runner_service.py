@@ -59,13 +59,13 @@ class TestRunnerService:
             ),
             "frontend.lint": TestProfile(
                 name="frontend.lint",
-                cwd="_external/AI-Agent-Framework-Client/client",
+                cwd="../AI-Agent-Framework-Client/client",
                 command=["npm", "run", "lint"],
                 timeout_sec=1200,
             ),
             "frontend.build": TestProfile(
                 name="frontend.build",
-                cwd="_external/AI-Agent-Framework-Client/client",
+                cwd="../AI-Agent-Framework-Client/client",
                 command=["npm", "run", "build"],
                 timeout_sec=1200,
             ),
@@ -93,7 +93,11 @@ class TestRunnerService:
         try:
             cwd.relative_to(self.repo_root)
         except ValueError as exc:
-            raise ValueError("Profile cwd escapes repository root") from exc
+            sibling_root = self.repo_root.parent
+            try:
+                cwd.relative_to(sibling_root)
+            except ValueError:
+                raise ValueError("Profile cwd escapes allowed repository roots") from exc
 
         run_id = uuid.uuid4().hex
         start = time.perf_counter()

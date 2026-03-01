@@ -57,7 +57,7 @@ AI-Agent-Framework/
 
 ### Client Repository: AI-Agent-Framework-Client
 
-**Location:** `/home/sw/work/AI-Agent-Framework/_external/AI-Agent-Framework-Client`
+**Location:** `/home/sw/work/AI-Agent-Framework-Client`
 
 **Purpose:** React/TypeScript web UI for project management
 
@@ -408,7 +408,7 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 **Client:**
 
 ```bash
-cd _external/AI-Agent-Framework-Client
+cd ../AI-Agent-Framework-Client
 npm run dev
 # Web: http://localhost:5173
 ```

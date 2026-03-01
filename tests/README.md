@@ -8,6 +8,7 @@ These are the test directories that contain Python test files (used by CI Gate 4
 
 - `tests/unit/` (unit tests)
 - `tests/unit/test_commands/` (TUI command unit tests)
+- `tests/unit/services/`
 - `tests/unit/domain/templates/`
 - `tests/unit/domain/blueprints/`
 - `tests/unit/domain/proposals/`
@@ -104,15 +105,6 @@ Run the docs-sync gate locally before pushing changes that touch tests or test d
 `tests/e2e/tui/` starts a session-scoped backend for the suite and binds it to a dynamically chosen free localhost port (to avoid CI port conflicts).
 
 For deterministic baseline verification (Issue #388 acceptance), run `pytest tests/e2e/tui -k workflow_spine -q` three consecutive times and ensure all runs pass.
-
-For the audit fix-cycle E2E slice (Issue #551), run:
-
-```bash
-pytest tests/e2e/tui/test_audit_fix_cycle.py -q
-pytest tests/e2e/tui/test_proposal_workflow.py -q
-```
-
-The audit fix-cycle tests intentionally build deterministic fixture state directly under the temporary docs repository and assert rule-filtered audit counts (no timing sleeps).
 
 For cross-repo E2E harness usage, prefer invoking the runner as a module (avoids hardcoding paths):
 

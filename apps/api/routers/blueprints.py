@@ -86,7 +86,9 @@ async def get_blueprint(blueprint_id: str, request: Request):
     service = _get_blueprint_service(request)
     blueprint = service.get_blueprint(blueprint_id)
     if not blueprint:
-        raise HTTPException(status_code=404, detail=not_found("Blueprint", blueprint_id))
+        raise HTTPException(
+            status_code=404, detail=not_found("Blueprint", blueprint_id)
+        )
     return blueprint
 
 

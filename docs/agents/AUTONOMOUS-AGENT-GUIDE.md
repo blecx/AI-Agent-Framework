@@ -256,12 +256,12 @@ SPLIT_RECOMMENDATION: <short split plan when SPLIT_REQUIRED is YES>
 This agent may operate across multiple repos:
 
 - **Backend repo (this workspace)**: AI-Agent-Framework (Python)
-- **UX repo**: \_external/AI-Agent-Framework-Client (React/TypeScript)
+- **UX repo**: ../AI-Agent-Framework-Client (React/TypeScript)
 
 Use the repo-native environment for every command:
 
 - Backend: activate `.venv` before Python commands.
-- UX repo: run npm commands inside `_external/AI-Agent-Framework-Client`.
+- UX repo: run npm commands inside `../AI-Agent-Framework-Client`.
 
 ### Validation (Best-Practice Test Suites)
 

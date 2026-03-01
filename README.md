@@ -38,7 +38,7 @@ Boot-time setup helper (all MCP services):
 ```
 
 - 📚 **[Tutorials](docs/tutorials/README.md)** - NEW! Step-by-step learning paths for all skill levels
-- � **[Issue Agent Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run autonomous agent from VS Code chat
+- 🤖 **[Resolve-Issue Chat](ISSUEAGENT-CHAT-SETUP.md)** - Run resolve-issue and Ralph agents from VS Code chat
 - 🤝 **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to the project
 - 📖 **[Documentation Hub](docs/README.md)** - Complete documentation index
 
@@ -296,7 +296,7 @@ cd apps/api && PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 In another terminal (optional web dev UI):
 
 ```bash
-cd _external/AI-Agent-Framework-Client/client
+cd ../AI-Agent-Framework-Client/client
 npm install
 npm run dev
 ```
@@ -422,10 +422,9 @@ AI-Agent-Framework/
 │   │   │   ├── llm_service.py # LLM integration
 │   │   │   └── command_service.py # Command handling
 │   │   └── routers/           # API routes
-├── _external/
-│   └── AI-Agent-Framework-Client/
-│       └── client/            # Canonical React/Vite web UI
-│           └── src/
+├── ../AI-Agent-Framework-Client/
+│   └── client/                # Canonical React/Vite web UI
+│       └── src/
 ├── docker/
 │   ├── api/                   # API Dockerfile
 │   └── web/                   # Web Dockerfile + nginx config
@@ -528,7 +527,7 @@ For detailed local development setup, see the [Local Development Setup](#local-d
 
 4. **Run the Web UI (optional):**
    ```bash
-   cd _external/AI-Agent-Framework-Client/client
+   cd ../AI-Agent-Framework-Client/client
    npm install
    npm run dev
    ```
@@ -555,7 +554,7 @@ For detailed local development setup, see the [Local Development Setup](#local-d
 2. Create prompt template in `templates/prompts/iso21500/`
 3. Create output template in `templates/output/iso21500/`
 4. Update frontend `CommandPanel.jsx` with new command
-   (canonical UI repo path: `_external/AI-Agent-Framework-Client/client/src`)
+   (canonical UI repo path: `../AI-Agent-Framework-Client/client/src`)
 
 ### Testing
 

@@ -34,8 +34,7 @@ FRONTEND_PORT = 15173
 
 BACKEND_TOUCH = PROJECT_ROOT / "apps" / "api" / ".dev_stack_smoke_touch.py"
 FRONTEND_TOUCH = (
-    PROJECT_ROOT
-    / "_external"
+    PROJECT_ROOT.parent
     / "AI-Agent-Framework-Client"
     / "client"
     / "src"

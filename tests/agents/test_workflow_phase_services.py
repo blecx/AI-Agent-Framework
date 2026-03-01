@@ -213,7 +213,7 @@ def test_testing_phase_service_uses_client_repo_context_for_validation_scope():
     assert result.success is True
     assert agent.smart_validation.repo_type == "client"
     assert any(
-        command.startswith("cd _external/AI-Agent-Framework-Client &&")
+        command.startswith("cd ../AI-Agent-Framework-Client &&")
         for command in agent.commands
     )
 
@@ -227,7 +227,7 @@ def test_testing_phase_service_uses_backend_repo_context_for_validation_scope():
     assert result.success is True
     assert agent.smart_validation.repo_type == "backend"
     assert all(
-        not command.startswith("cd _external/AI-Agent-Framework-Client &&")
+        not command.startswith("cd ../AI-Agent-Framework-Client &&")
         for command in agent.commands
     )
 
@@ -336,7 +336,9 @@ def test_pr_merge_phase_service_builds_backend_pr_body(tmp_path, monkeypatch):
     assert "Fixes: #600" in content
 
 
-def test_implementation_phase_service_raises_copilot_review_request(tmp_path, monkeypatch):
+def test_implementation_phase_service_raises_copilot_review_request(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     service = ImplementationPhaseService()
     agent = _ImplementationAgentStub(dry_run=False)
@@ -345,15 +347,21 @@ def test_implementation_phase_service_raises_copilot_review_request(tmp_path, mo
 
     assert result.success is True
     assert any(
-        command.startswith("gh issue comment 601 --body-file .tmp/copilot-pre-implementation-review-601.md")
+        command.startswith(
+            "gh issue comment 601 --body-file .tmp/copilot-pre-implementation-review-601.md"
+        )
         for command in agent.commands
     )
     artifact = Path(".tmp/copilot-pre-implementation-review-601.md")
     assert artifact.exists()
-    assert "Copilot pre-implementation review request" in artifact.read_text(encoding="utf-8")
+    assert "Copilot pre-implementation review request" in artifact.read_text(
+        encoding="utf-8"
+    )
 
 
-def test_implementation_phase_service_dry_run_skips_issue_comment(tmp_path, monkeypatch):
+def test_implementation_phase_service_dry_run_skips_issue_comment(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     service = ImplementationPhaseService()
     agent = _ImplementationAgentStub(dry_run=True)
@@ -369,7 +377,9 @@ def test_pr_merge_phase_service_preflight_uses_repo_type(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     scripts_dir = tmp_path / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
-    (scripts_dir / "validate-pr-template.sh").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (scripts_dir / "validate-pr-template.sh").write_text(
+        "#!/bin/sh\nexit 0\n", encoding="utf-8"
+    )
 
     service = PrMergePhaseService()
     agent = _PrMergeAgentStub("client", returncode=0)

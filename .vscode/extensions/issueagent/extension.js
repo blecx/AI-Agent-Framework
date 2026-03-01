@@ -15,14 +15,55 @@ const path = require('path');
 function activate(context) {
   console.log('Issue Agent extension activated');
 
-  registerIssueAgentParticipant(context);
+  registerResolveIssueParticipant(context);
   registerCreateIssueParticipant(context);
+  registerRalphParticipant(context);
 }
 
-function registerIssueAgentParticipant(context) {
+function getConfiguredAgentProfile(defaultProfile) {
+  const cfg = vscode.workspace
+    .getConfiguration()
+    .get('issueagent.customAgent');
+  const configured = (cfg || '').toString().trim();
+  return configured || defaultProfile;
+}
+
+function registerRalphParticipant(context) {
+  const participant = vscode.chat.createChatParticipant(
+    'ralph.chat',
+    async (request, chatContext, stream, token) => {
+      try {
+        if (token.isCancellationRequested) {
+          return;
+        }
+
+        const command = request.command || 'run';
+
+        if (command === 'run') {
+          await handleRalphRunCommand(stream, token);
+        } else {
+          stream.markdown(
+            `Unknown command: \`${command}\`. Use \`/ralph\` or \`/ralph run\``,
+          );
+        }
+      } catch (error) {
+        stream.markdown(`❌ **Error:** ${error.message}`);
+        console.error('Ralph participant error:', error);
+      }
+    },
+  );
+
+  participant.iconPath = vscode.Uri.file(
+    path.join(context.extensionPath, 'icon.png'),
+  );
+
+  context.subscriptions.push(participant);
+}
+
+function registerResolveIssueParticipant(context) {
   // Register chat participant
   const participant = vscode.chat.createChatParticipant(
-    'issueagent.chat',
+    'resolve-issue.chat',
     async (request, chatContext, stream, token) => {
       try {
         // Check for cancellation
@@ -37,7 +78,7 @@ function registerIssueAgentParticipant(context) {
           await handleRunCommand(request, stream, token);
         } else {
           stream.markdown(
-            `Unknown command: \`${command}\`. Use \`/issueagent\` or \`/issueagent run\``,
+            `Unknown command: \`${command}\`. Use \`/run\`.`,
           );
         }
       } catch (error) {
@@ -47,9 +88,7 @@ function registerIssueAgentParticipant(context) {
     },
   );
 
-  participant.iconPath = vscode.Uri.file(
-    path.join(context.extensionPath, 'icon.png'),
-  );
+  participant.iconPath = new vscode.ThemeIcon('run');
 
   context.subscriptions.push(participant);
 }
@@ -85,9 +124,7 @@ function registerCreateIssueParticipant(context) {
     },
   );
 
-  participant.iconPath = vscode.Uri.file(
-    path.join(context.extensionPath, 'icon.png'),
-  );
+  participant.iconPath = new vscode.ThemeIcon('new-file');
 
   context.subscriptions.push(participant);
 }
@@ -171,7 +208,9 @@ async function handleRunCommand(request, stream, token) {
       ? path.join(venvPath, 'Scripts', 'python.exe')
       : path.join(venvPath, 'bin', 'python3');
 
-  stream.markdown('🤖 **Autonomous Issue Agent Starting...**\n\n');
+  const agentProfile = getConfiguredAgentProfile('resolve-issue');
+
+  stream.markdown('🤖 **Resolve-Issue Agent Starting...**\n\n');
 
   // Step 1: Select next issue
   stream.markdown('### 📋 Phase 1: Issue Selection\n');
@@ -200,7 +239,9 @@ async function handleRunCommand(request, stream, token) {
 
   // Step 2: Run autonomous agent
   stream.markdown('### 🚀 Phase 2: Autonomous Agent Execution\n');
-  stream.markdown(`Running agent on issue #${issueNumber}...\n\n`);
+  stream.markdown(
+    `Running agent on issue #${issueNumber} with profile \`${agentProfile}\`...\n\n`,
+  );
 
   const success = await runAgent(
     repoRoot,
@@ -208,6 +249,87 @@ async function handleRunCommand(request, stream, token) {
     issueNumber,
     stream,
     token,
+    agentProfile,
+  );
+
+  // Step 3: Report results
+  stream.markdown('\n---\n\n');
+
+  if (success) {
+    stream.markdown('### ✅ **Issue Completed Successfully!**\n\n');
+    stream.markdown(`The agent has successfully:\n`);
+    stream.markdown(`- ✅ Analyzed issue #${issueNumber}\n`);
+    stream.markdown(`- ✅ Created implementation plan\n`);
+    stream.markdown(`- ✅ Written tests and code\n`);
+    stream.markdown(`- ✅ Verified all tests pass\n`);
+    stream.markdown(`- ✅ Created pull request\n`);
+    stream.markdown(`- ✅ Updated knowledge base\n\n`);
+    stream.markdown(`Check GitHub for the new PR!`);
+  } else {
+    stream.markdown('### ❌ **Issue Resolution Failed**\n\n');
+    stream.markdown(
+      `The agent encountered errors while working on issue #${issueNumber}.\n\n`,
+    );
+    stream.markdown(`Please check:\n`);
+    stream.markdown(`- Agent logs in the terminal\n`);
+    stream.markdown(`- GitHub issue for any automated comments\n`);
+    stream.markdown(`- Local git status for uncommitted changes\n`);
+  }
+}
+
+async function handleRalphRunCommand(stream, token) {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+
+  if (!workspaceFolder) {
+    stream.markdown(
+      '❌ No workspace folder open. Please open the AI-Agent-Framework workspace.',
+    );
+    return;
+  }
+
+  const repoRoot = workspaceFolder.uri.fsPath;
+  const venvPath = path.join(repoRoot, '.venv');
+  const pythonPath =
+    process.platform === 'win32'
+      ? path.join(venvPath, 'Scripts', 'python.exe')
+      : path.join(venvPath, 'bin', 'python3');
+
+  stream.markdown('🧠 **Ralph Agent Starting...**\n\n');
+  stream.markdown('### 📋 Phase 1: Issue Selection\n');
+  stream.markdown('Running `next-issue.py` to find the next issue...\n\n');
+
+  const issueNumber = await selectNextIssue(
+    repoRoot,
+    pythonPath,
+    stream,
+    token,
+  );
+
+  if (!issueNumber) {
+    stream.markdown(
+      '❌ **Failed:** Could not select next issue. Check that GitHub CLI is authenticated.\n',
+    );
+    return;
+  }
+
+  if (token.isCancellationRequested) {
+    stream.markdown('⚠️ Cancelled by user.\n');
+    return;
+  }
+
+  stream.markdown(`✅ Selected issue: **#${issueNumber}**\n\n`);
+  stream.markdown('### 🚀 Phase 2: Ralph Execution\n');
+  stream.markdown(
+    `Running Ralph agent on issue #${issueNumber} (skill + reviewer gates)...\n\n`,
+  );
+
+  const success = await runAgent(
+    repoRoot,
+    pythonPath,
+    issueNumber,
+    stream,
+    token,
+    'ralph',
   );
 
   // Step 3: Report results
@@ -319,18 +441,29 @@ async function selectNextIssue(repoRoot, pythonPath, stream, token) {
  * Run the autonomous agent on the selected issue
  * Returns true on success, false on failure
  */
-async function runAgent(repoRoot, pythonPath, issueNumber, stream, token) {
+async function runAgent(
+  repoRoot,
+  pythonPath,
+  issueNumber,
+  stream,
+  token,
+  agentProfile,
+) {
   return new Promise((resolve) => {
     const scriptPath = path.join(repoRoot, 'scripts', 'work-issue.py');
 
-    const proc = spawn(
-      pythonPath,
-      [scriptPath, '--issue', issueNumber.toString()],
-      {
-        cwd: repoRoot,
-        env: { ...process.env },
-      },
-    );
+    const args = [
+      scriptPath,
+      '--issue',
+      issueNumber.toString(),
+      '--agent',
+      agentProfile || 'autonomous',
+    ];
+
+    const proc = spawn(pythonPath, args, {
+      cwd: repoRoot,
+      env: { ...process.env },
+    });
 
     let phaseEmojis = {
       Analysis: '🔍',

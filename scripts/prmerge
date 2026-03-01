@@ -16,7 +16,7 @@
 #
 # Multi-repo support:
 # - Automatically detects if running in AI-Agent-Framework or AI-Agent-Framework-Client
-# - Works with client repo when invoked from backend root (uses _external/ path)
+# - Works with client repo when invoked from backend root (uses sibling repo path)
 #
 # Example:
 #   prmerge 24 7.5
@@ -242,14 +242,14 @@ wait_for_required_ci_checks() {
 detect_repo() {
     local current_dir="$(pwd)"
     
-    # Check if we're in the client repo or _external/AI-Agent-Framework-Client
+    # Check if we're in the client repo
     if [[ "$current_dir" == *"AI-Agent-Framework-Client"* ]]; then
         echo "client"
         return 0
     fi
     
-    # Check if _external/AI-Agent-Framework-Client exists (backend invoking client PR)
-    if [[ -d "_external/AI-Agent-Framework-Client" ]]; then
+    # Check if ../AI-Agent-Framework-Client exists (backend invoking client PR)
+    if [[ -d "../AI-Agent-Framework-Client" ]]; then
         echo "backend-with-client"
         return 0
     fi
@@ -267,7 +267,7 @@ get_repo_path() {
             echo "$(pwd)"
             ;;
         backend-with-client)
-            echo "$(pwd)/_external/AI-Agent-Framework-Client"
+            echo "$(pwd)/../AI-Agent-Framework-Client"
             ;;
         backend)
             echo "$(pwd)"
@@ -768,7 +768,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Backend repo root is always REPO_ROOT when this script lives in backend.
 MAIN_REPO="$REPO_ROOT"
-CLIENT_REPO="$REPO_ROOT/_external/AI-Agent-Framework-Client"
+CLIENT_REPO="$REPO_ROOT/../AI-Agent-Framework-Client"
 
 BACKEND_REPO_NAME="blecx/AI-Agent-Framework"
 CLIENT_REPO_NAME="blecx/AI-Agent-Framework-Client"
@@ -1038,7 +1038,7 @@ else
     if echo "$PR_CHANGED_FILES" | grep -Eq 'tests/|apps/api/|agents/|scripts/'; then
         echo "  - Backend scope detected: run focused pytest for touched domain before merge"
     fi
-    if echo "$PR_CHANGED_FILES" | grep -Eq '^"_external/AI-Agent-Framework-Client/client/|^"client/|\.tsx"$|\.jsx"$'; then
+    if echo "$PR_CHANGED_FILES" | grep -Eq '^"client/|\.tsx"$|\.jsx"$'; then
         echo "  - Frontend scope detected: run npm lint/build or focused UI tests before merge"
     fi
     if echo "$PR_CHANGED_FILES" | grep -Eq '\.md"$|docs/'; then

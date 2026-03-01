@@ -1,11 +1,11 @@
-# /issueagent Chat Command - Quick Setup
+# Resolve-Issue Chat Participant - Quick Setup
 
 ## What This Does
 
-Type `@issueagent` in VS Code chat to:
+Type `@resolve-issue` in VS Code chat to:
 
 1. ✅ Auto-select next GitHub issue
-2. ✅ Run autonomous AI agent
+2. ✅ Run issue-resolution AI agent
 3. ✅ See real-time progress
 4. ✅ Get success/failure report
 
@@ -41,7 +41,7 @@ This opens the workflow prompt (`.github/prompts/agents/create-issue.md`) and sh
 ### Step 2: Verify It Works
 
 1. Open VS Code Chat (sidebar or `Ctrl+Alt+I`)
-2. Type: `@issueagent`
+2. Type: `@resolve-issue /run`
 3. You should see the participant respond!
 
 ## Usage
@@ -49,7 +49,7 @@ This opens the workflow prompt (`.github/prompts/agents/create-issue.md`) and sh
 ### Basic Command
 
 ```text
-@issueagent
+@resolve-issue /run
 ```
 
 That's it! The agent will:
@@ -62,13 +62,13 @@ That's it! The agent will:
 ### What You'll See
 
 ```text
-🤖 Autonomous Issue Agent Starting...
+🤖 Resolve-Issue Agent Starting...
 
 📋 Phase 1: Issue Selection
 → Next issue: #26
 ✅ Selected issue: #26
 
-🚀 Phase 2: Autonomous Agent Execution
+🚀 Phase 2: Agent Execution
 
 🔍 Analysis Phase
 → Fetching issue #26 from GitHub
@@ -135,7 +135,7 @@ cp configs/llm.github.json.example configs/llm.json
 
 | Method   | How to Run                           | Best For               |
 | -------- | ------------------------------------ | ---------------------- |
-| **Chat** | `@issueagent`                        | Interactive monitoring |
+| **Chat** | `@resolve-issue /run`                | Interactive monitoring |
 | **Task** | `Ctrl+Shift+P` → Run Task            | Keyboard shortcuts     |
 | **CLI**  | `./scripts/work-issue.py --issue 26` | Automation/scripting   |
 
@@ -151,4 +151,4 @@ See [.vscode/extensions/issueagent/README.md](.vscode/extensions/issueagent/READ
 
 ---
 
-**Ready?** Open chat and type: `@issueagent` 🚀
+**Ready?** Open chat and type: `@resolve-issue /run` 🚀

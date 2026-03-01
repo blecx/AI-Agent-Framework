@@ -306,7 +306,7 @@ class TestingPhaseService:
 
         start_time = time.time()
 
-        client_dir = Path("_external/AI-Agent-Framework-Client")
+        client_dir = Path("../AI-Agent-Framework-Client")
         repo_type = _detect_validation_repo_type(agent)
 
         agent.log("🔍 Analyzing changes for smart validation...", "progress")
