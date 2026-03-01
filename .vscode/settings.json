@@ -16,6 +16,7 @@
   "chat.checkpoints.showFileChanges": true,
   "chat.customAgentInSubagent.enabled": true,
   "chat.tools.subagent.autoApprove": {
+    "AUTOMATIONS": true,
     "agents-catalog-maintainer": true,
     "autonomous": true,
     "blecs-ux-authority": true,

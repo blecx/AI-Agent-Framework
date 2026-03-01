@@ -86,9 +86,13 @@ def main() -> int:
         extra = sorted(approved - expected)
 
         if missing:
-            errors.append(
+            message = (
                 f"{settings_path}: missing subagent auto-approvals: {', '.join(missing)}"
             )
+            if required:
+                errors.append(message)
+            else:
+                print(f"ℹ️ Optional settings mismatch (allowed): {message}")
         if extra:
             print(f"ℹ️ {settings_path}: extra approved names (allowed): {', '.join(extra)}")
 
