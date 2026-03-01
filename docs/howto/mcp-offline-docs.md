@@ -8,7 +8,14 @@ by indexing local repository docs into a SQLite full-text index.
 ## Start with Docker Compose
 
 ```bash
+OFFLINE_DOCS_UID=$(id -u) OFFLINE_DOCS_GID=$(id -g) \
 docker compose -f docker-compose.mcp-offline-docs.yml up -d --build
+```
+
+If you previously ran the service as `root`, you may need a one-time cleanup so the container can write the DB as your user:
+
+```bash
+sudo rm -rf .tmp/mcp-offline-docs
 ```
 
 ## Endpoint check
