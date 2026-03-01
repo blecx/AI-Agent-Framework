@@ -5,12 +5,21 @@
 set -e
 
 REPO="blecx/AI-Agent-Framework-Client"
+GH_API_SLEEP_SECONDS="${GH_API_SLEEP_SECONDS:-1}"
+
+gh_t() {
+  gh "$@"
+  if [[ "${GH_API_SLEEP_SECONDS}" != "0" ]]; then
+    sleep "${GH_API_SLEEP_SECONDS}"
+  fi
+}
 
 echo "🔄 Updating GitHub issues to reflect chat-first hybrid approach..."
+echo "GitHub API throttle: ${GH_API_SLEEP_SECONDS}s between requests"
 echo ""
 
 # Issue #32: RAID List View
-gh issue edit 32 --repo "$REPO" --body "## 📋 Description
+gh_t issue edit 32 --repo "$REPO" --body "## 📋 Description
 
 **Browse RAID items created via AI chat or UI quick-add.**
 
@@ -49,7 +58,7 @@ Display RAID (Risks, Assumptions, Issues, Dependencies) items in a table with:
 echo "✅ Updated Issue #32: RAID List View (chat-first context)"
 
 # Issue #34: RAID Detail/Edit View
-gh issue edit 34 --repo "$REPO" --body "## 📋 Description
+gh_t issue edit 34 --repo "$REPO" --body "## 📋 Description
 
 **View and edit RAID items using chat OR UI.**
 
@@ -91,7 +100,7 @@ Detail view/modal for individual RAID items with:
 echo "✅ Updated Issue #34: RAID Detail/Edit View (hybrid editing)"
 
 # Issue #35: RAID Create Modal
-gh issue edit 35 --repo "$REPO" --title "Optional quick-add RAID form (alternative to chat)" --body "## 📋 Description
+gh_t issue edit 35 --repo "$REPO" --title "Optional quick-add RAID form (alternative to chat)" --body "## 📋 Description
 
 **Quick-add form for simple RAID items (alternative to AI chat).**
 
@@ -132,7 +141,7 @@ Modal/form with:
 echo "✅ Updated Issue #35: RAID Create Modal (optional quick-add)"
 
 # Issue #40: Workflow Transition UI
-gh issue edit 40 --repo "$REPO" --body "## 📋 Description
+gh_t issue edit 40 --repo "$REPO" --body "## 📋 Description
 
 **Support workflow transitions via BOTH chat commands AND UI buttons.**
 
@@ -175,7 +184,7 @@ UI Component:
 echo "✅ Updated Issue #40: Workflow Transition UI (hybrid support)"
 
 # Issue #42: Refactor WorkflowPanel
-gh issue edit 42 --repo "$REPO" --title "Clarify WorkflowPanel purpose + add ISO 21500 indicator" --body "## 📋 Description
+gh_t issue edit 42 --repo "$REPO" --title "Clarify WorkflowPanel purpose + add ISO 21500 indicator" --body "## 📋 Description
 
 **Clarification: WorkflowPanel is CORRECT as-is!**
 
@@ -214,7 +223,7 @@ gh issue edit 42 --repo "$REPO" --title "Clarify WorkflowPanel purpose + add ISO
 echo "✅ Updated Issue #42: WorkflowPanel clarification (keep as-is)"
 
 # Issue #44: Project Creation Flow
-gh issue edit 44 --repo "$REPO" --title "Optional quick-add project form (alternative to chat)" --body "## 📋 Description
+gh_t issue edit 44 --repo "$REPO" --title "Optional quick-add project form (alternative to chat)" --body "## 📋 Description
 
 **Quick-add form for simple projects (alternative to AI chat).**
 
@@ -253,7 +262,7 @@ Multi-step form with:
 echo "✅ Updated Issue #44: Project Creation Flow (optional quick-add)"
 
 # Issue #52-53: E2E Tests
-gh issue edit 52 --repo "$REPO" --body "## 📋 Description
+gh_t issue edit 52 --repo "$REPO" --body "## 📋 Description
 
 **End-to-end tests for chat AND UI artifact creation flows.**
 
@@ -296,7 +305,7 @@ Full user journey tests using Playwright covering:
 echo "✅ Updated Issue #52: E2E Tests (hybrid flows)"
 
 # Issue #56: Update Client README
-gh issue edit 56 --repo "$REPO" --body "## 📋 Description
+gh_t issue edit 56 --repo "$REPO" --body "## 📋 Description
 
 **Update client README to accurately describe chat-first hybrid approach.**
 

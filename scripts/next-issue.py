@@ -21,13 +21,18 @@ to match GitHub state, never the other way around.
 
 Usage:
     ./scripts/next-issue.py [--verbose] [--dry-run] [--skip-reconcile]
+
+Environment:
+    NEXT_ISSUE_GH_MIN_INTERVAL  Minimum seconds between GitHub CLI requests (default: 1.0)
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
 import signal
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -351,6 +356,19 @@ class GitHubClient:
         self.repo = repo
         self.verbose = verbose
         self._cache = {}  # Simple cache to avoid repeated queries
+        self._min_interval_seconds = max(0.0, float(os.getenv("NEXT_ISSUE_GH_MIN_INTERVAL", "1.0")))
+        self._last_request_monotonic: Optional[float] = None
+
+    def _throttle_request(self) -> None:
+        if self._min_interval_seconds <= 0:
+            return
+
+        now = time.monotonic()
+        if self._last_request_monotonic is not None:
+            elapsed = now - self._last_request_monotonic
+            if elapsed < self._min_interval_seconds:
+                time.sleep(self._min_interval_seconds - elapsed)
+        self._last_request_monotonic = time.monotonic()
     
     def _run_gh_command(self, args: List[str], timeout: int = DEFAULT_TIMEOUT, cache_key: str = None) -> Optional[Dict]:
         """
@@ -374,6 +392,8 @@ class GitHubClient:
             cmd = ["gh"] + args + ["--repo", self.repo]
             if self.verbose:
                 print(f"[DEBUG] Running: {' '.join(cmd[:5])}...", file=sys.stderr)
+
+            self._throttle_request()
             
             result = subprocess.run(
                 cmd,

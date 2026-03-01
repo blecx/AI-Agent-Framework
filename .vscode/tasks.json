@@ -2,10 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "⚙️ Auto: Apply Safe Approval",
+      "label": "⚙️ Auto: Apply Low-Friction Approval",
       "type": "shell",
       "command": "bash",
-      "args": ["${workspaceFolder}/scripts/setup-low-approval.sh", "safe"],
+      "args": ["${workspaceFolder}/scripts/setup-low-approval.sh", "low-friction"],
       "options": {
         "cwd": "${workspaceFolder}"
       },

@@ -41,6 +41,25 @@ PRMERGE_CI_WATCH_INTERVAL_SECONDS=${PRMERGE_CI_WATCH_INTERVAL_SECONDS:-15}
 PRMERGE_LONGRUNNER_MAX_MINUTES=${PRMERGE_LONGRUNNER_MAX_MINUTES:-25}
 PRMERGE_CANCEL_LONGRUNNERS=${PRMERGE_CANCEL_LONGRUNNERS:-1}
 PRMERGE_ALLOW_NO_REQUIRED_CHECKS=${PRMERGE_ALLOW_NO_REQUIRED_CHECKS:-0}
+PRMERGE_GH_MIN_INTERVAL_SECONDS=${PRMERGE_GH_MIN_INTERVAL_SECONDS:-1}
+__PRMERGE_GH_LAST_CALL_TS=""
+
+gh() {
+    local min_interval
+    min_interval="${PRMERGE_GH_MIN_INTERVAL_SECONDS:-0}"
+
+    if [ -n "$__PRMERGE_GH_LAST_CALL_TS" ] && [ "$min_interval" != "0" ]; then
+        local now elapsed
+        now=$(date +%s)
+        elapsed=$((now - __PRMERGE_GH_LAST_CALL_TS))
+        if [ "$elapsed" -lt "$min_interval" ]; then
+            sleep $((min_interval - elapsed))
+        fi
+    fi
+
+    command gh "$@"
+    __PRMERGE_GH_LAST_CALL_TS=$(date +%s)
+}
 
 # Helper functions (must be defined before first use)
 info() {

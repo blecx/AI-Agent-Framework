@@ -12,6 +12,27 @@ export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-3200}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# API-friendly pacing for gh CLI calls in this script.
+GH_MIN_INTERVAL_SECONDS="${GH_MIN_INTERVAL_SECONDS:-1}"
+__GH_LAST_CALL_TS=""
+
+gh() {
+  local min_interval
+  min_interval="${GH_MIN_INTERVAL_SECONDS:-0}"
+
+  if [[ -n "${__GH_LAST_CALL_TS}" && "${min_interval}" != "0" ]]; then
+    local now elapsed
+    now="$(date +%s)"
+    elapsed="$(( now - __GH_LAST_CALL_TS ))"
+    if [[ "$elapsed" -lt "$min_interval" ]]; then
+      sleep "$(( min_interval - elapsed ))"
+    fi
+  fi
+
+  command gh "$@"
+  __GH_LAST_CALL_TS="$(date +%s)"
+}
+
 usage() {
   cat <<'EOF'
 Usage: ./scripts/continue-phase-3.sh [options]

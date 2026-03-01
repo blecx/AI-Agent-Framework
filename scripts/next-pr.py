@@ -13,14 +13,19 @@ Usage:
   ./scripts/next-pr.py --repo backend|client|both
   ./scripts/next-pr.py --limit 20
   ./scripts/next-pr.py --json
+
+Environment:
+    NEXT_PR_GH_MIN_INTERVAL   Minimum seconds between gh requests (default: 1.0)
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal
@@ -33,6 +38,9 @@ REPOS: dict[RepoKey, str] = {
     "backend": "blecx/AI-Agent-Framework",
     "client": "blecx/AI-Agent-Framework-Client",
 }
+
+DEFAULT_GH_MIN_INTERVAL_SECONDS = 1.0
+_GH_LAST_REQUEST_TS: float | None = None
 
 
 @dataclass(frozen=True)
@@ -53,6 +61,7 @@ class PrCandidate:
 
 
 def _run_gh_json(args: list[str]) -> Any:
+    _throttle_gh_requests()
     cmd = ["gh", *args]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
@@ -63,6 +72,26 @@ def _run_gh_json(args: list[str]) -> Any:
     if not raw:
         return None
     return json.loads(raw)
+
+
+def _throttle_gh_requests() -> None:
+    global _GH_LAST_REQUEST_TS
+
+    min_interval = max(
+        0.0,
+        float(os.getenv("NEXT_PR_GH_MIN_INTERVAL", str(DEFAULT_GH_MIN_INTERVAL_SECONDS))),
+    )
+    if min_interval <= 0:
+        _GH_LAST_REQUEST_TS = time.monotonic()
+        return
+
+    now = time.monotonic()
+    if _GH_LAST_REQUEST_TS is not None:
+        elapsed = now - _GH_LAST_REQUEST_TS
+        if elapsed < min_interval:
+            time.sleep(min_interval - elapsed)
+
+    _GH_LAST_REQUEST_TS = time.monotonic()
 
 
 def _parse_iso(ts: str) -> datetime:

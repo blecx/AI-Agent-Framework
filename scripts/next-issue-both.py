@@ -23,9 +23,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -34,6 +36,8 @@ REPO_ROOT = Path(__file__).parent.parent
 
 CLIENT_REPO = "blecx/AI-Agent-Framework-Client"
 BACKEND_REPO = "blecx/AI-Agent-Framework"
+DEFAULT_GH_MIN_INTERVAL_SECONDS = 1.0
+_GH_LAST_REQUEST_TS: float | None = None
 
 
 @dataclass(frozen=True)
@@ -44,6 +48,9 @@ class Candidate:
 
 
 def _run(cmd: list[str], timeout: int = 60, cwd: Optional[Path] = None) -> subprocess.CompletedProcess[str]:
+    if cmd and cmd[0] == "gh":
+        _throttle_gh_requests()
+
     return subprocess.run(
         cmd,
         capture_output=True,
@@ -51,6 +58,26 @@ def _run(cmd: list[str], timeout: int = 60, cwd: Optional[Path] = None) -> subpr
         timeout=timeout,
         cwd=str(cwd) if cwd else None,
     )
+
+
+def _throttle_gh_requests() -> None:
+    global _GH_LAST_REQUEST_TS
+
+    min_interval = max(
+        0.0,
+        float(os.getenv("NEXT_ISSUE_BOTH_GH_MIN_INTERVAL", str(DEFAULT_GH_MIN_INTERVAL_SECONDS))),
+    )
+    if min_interval <= 0:
+        _GH_LAST_REQUEST_TS = time.monotonic()
+        return
+
+    now = time.monotonic()
+    if _GH_LAST_REQUEST_TS is not None:
+        elapsed = now - _GH_LAST_REQUEST_TS
+        if elapsed < min_interval:
+            time.sleep(min_interval - elapsed)
+
+    _GH_LAST_REQUEST_TS = time.monotonic()
 
 
 def _check_gh() -> None:

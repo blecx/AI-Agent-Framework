@@ -29,12 +29,35 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
+# API-friendly pacing for all gh calls in this script.
+# Uses a minimum interval between requests to avoid bursty traffic.
+GH_MIN_INTERVAL_SECONDS="${GH_MIN_INTERVAL_SECONDS:-1}"
+__GH_LAST_CALL_TS=""
+
+gh() {
+  local min_interval
+  min_interval="${GH_MIN_INTERVAL_SECONDS:-0}"
+
+  if [[ -n "${__GH_LAST_CALL_TS}" && "${min_interval}" != "0" ]]; then
+    local now elapsed
+    now="$(date +%s)"
+    elapsed="$(( now - __GH_LAST_CALL_TS ))"
+    if [[ "$elapsed" -lt "$min_interval" ]]; then
+      sleep "$(( min_interval - elapsed ))"
+    fi
+  fi
+
+  command gh "$@"
+  __GH_LAST_CALL_TS="$(date +%s)"
+}
+
 # Note: Milestones must be created via web UI
 # We'll create issues without milestones and add them later
 
 echo ""
 echo -e "${GREEN}Creating issues...${NC}"
 echo "(Note: Add issues to milestone manually via web UI)"
+echo "(GitHub throttle: ${GH_MIN_INTERVAL_SECONDS}s min interval)"
 echo ""
 
 # Infrastructure Issues (1-6)

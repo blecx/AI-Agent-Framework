@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 mkdir -p "$ROOT_DIR/.tmp"
 
-PROFILE="${1:-safe}"
+PROFILE="${1:-low-friction}"
 
 if [[ "$PROFILE" == "--low-friction" || "$PROFILE" == "low-friction" ]]; then
 	python3 "$SCRIPT_DIR/setup-vscode-autoapprove.py" --workspace-only --profile low-friction
