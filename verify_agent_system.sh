@@ -51,8 +51,9 @@ echo ""
 # Test 4: Extraction with real export (if available)
 echo "📋 Test 4: Real Export Extraction"
 echo "---------------------------------"
-if [ -f "docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md" ]; then
-    if ./scripts/extract_learnings.py --export docs/chat/2026-01-18-issue25-prmerge-enhancements-complete-workflow.md --no-merge > /dev/null 2>&1; then
+REAL_EXPORT=$(ls docs/chat/*.md 2>/dev/null | head -n 1)
+if [ -n "${REAL_EXPORT}" ] && [ -f "${REAL_EXPORT}" ]; then
+    if ./scripts/extract_learnings.py --export "${REAL_EXPORT}" --no-merge > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Real export extraction PASSED${NC}"
     else
         echo -e "${RED}❌ Real export extraction FAILED${NC}"
