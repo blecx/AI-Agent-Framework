@@ -233,8 +233,45 @@ class ImplementationPhaseService:
 
     phase_key = "Phase 3"
 
+    def _raise_copilot_pre_implementation_review(
+        self, agent: Any, issue_num: int
+    ) -> None:
+        """Raise a Copilot review request before implementation work starts."""
+
+        review_body = (
+            "Copilot pre-implementation review request\n\n"
+            f"Issue: #{issue_num}\n"
+            "Workflow guardrail: perform Copilot review before implementation updates.\n"
+            "Please review scope, acceptance criteria, and likely risks before code changes."
+        )
+
+        artifact_path = Path(".tmp") / f"copilot-pre-implementation-review-{issue_num}.md"
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_text(review_body + "\n", encoding="utf-8")
+        agent.log(f"Created pre-implementation review artifact: {artifact_path}", "info")
+
+        if agent.dry_run:
+            agent.log("Dry-run: skipped GitHub Copilot review request comment", "info")
+            return
+
+        result = agent.run_command(
+            f"gh issue comment {issue_num} --body-file {artifact_path}",
+            "Requesting Copilot pre-implementation review",
+            check=False,
+        )
+
+        if result.returncode == 0:
+            agent.log("✅ Copilot pre-implementation review request raised", "success")
+        else:
+            agent.log(
+                "⚠️  Could not post Copilot pre-implementation review request; continuing with local artifact",
+                "warning",
+            )
+
     def execute(self, agent: Any, issue_num: int) -> PhaseExecutionResult:
         agent.log("🔨 Implementation phase", "progress")
+
+        self._raise_copilot_pre_implementation_review(agent, issue_num)
 
         agent.log("Key principle: Test-first approach", "info")
         agent.log("Write or update tests before implementing changes", "info")

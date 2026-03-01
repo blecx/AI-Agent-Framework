@@ -300,6 +300,26 @@ class _PrMergeAgentStub:
         return result
 
 
+class _ImplementationAgentStub:
+    def __init__(self, dry_run: bool):
+        self.dry_run = dry_run
+        self.interactive = False
+        self.commands = []
+
+    def log(self, _message, _level):
+        return None
+
+    def run_command(self, command, _description, check=False):
+        self.commands.append(command)
+
+        class _Result:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        return _Result()
+
+
 def test_pr_merge_phase_service_builds_backend_pr_body(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     service = PrMergePhaseService()
@@ -314,6 +334,35 @@ def test_pr_merge_phase_service_builds_backend_pr_body(tmp_path, monkeypatch):
     assert "## Validation Evidence" in content
     assert "## Repo Hygiene / Safety" in content
     assert "Fixes: #600" in content
+
+
+def test_implementation_phase_service_raises_copilot_review_request(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    service = ImplementationPhaseService()
+    agent = _ImplementationAgentStub(dry_run=False)
+
+    result = service.execute(agent, 601)
+
+    assert result.success is True
+    assert any(
+        command.startswith("gh issue comment 601 --body-file .tmp/copilot-pre-implementation-review-601.md")
+        for command in agent.commands
+    )
+    artifact = Path(".tmp/copilot-pre-implementation-review-601.md")
+    assert artifact.exists()
+    assert "Copilot pre-implementation review request" in artifact.read_text(encoding="utf-8")
+
+
+def test_implementation_phase_service_dry_run_skips_issue_comment(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    service = ImplementationPhaseService()
+    agent = _ImplementationAgentStub(dry_run=True)
+
+    result = service.execute(agent, 602)
+
+    assert result.success is True
+    assert all(not command.startswith("gh issue comment") for command in agent.commands)
+    assert Path(".tmp/copilot-pre-implementation-review-602.md").exists()
 
 
 def test_pr_merge_phase_service_preflight_uses_repo_type(tmp_path, monkeypatch):
