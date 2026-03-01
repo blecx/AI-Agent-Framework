@@ -44,6 +44,9 @@ fi
 if [[ ! -f "${ENV_FILE}" ]]; then
   sudo tee "${ENV_FILE}" >/dev/null <<'EOF'
 # Optional overrides for Offline Docs MCP service
+# Run the container as a specific numeric UID/GID to avoid root-owned files in the bind-mounted workspace.
+# OFFLINE_DOCS_UID=1000
+# OFFLINE_DOCS_GID=1000
 # OFFLINE_DOCS_INDEX_SOURCES=docs,README.md,QUICKSTART.md,templates
 # OFFLINE_DOCS_INDEX_DB=/workspace/.tmp/mcp-offline-docs/docs_index.db
 EOF
