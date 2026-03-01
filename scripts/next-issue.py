@@ -39,6 +39,10 @@ from typing import Dict, List, Optional, Tuple
 
 # Repository root
 REPO_ROOT = Path(__file__).parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from agents.tooling.gh_throttle import run_gh_throttled
 
 
 def _resolve_step1_file(primary: Path, fallback: Path) -> Path:
@@ -395,11 +399,12 @@ class GitHubClient:
 
             self._throttle_request()
             
-            result = subprocess.run(
+            result = run_gh_throttled(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=timeout
+                timeout=timeout,
+                min_interval_seconds=0,
             )
             
             if result.returncode == 0 and result.stdout.strip():
@@ -886,7 +891,13 @@ def _main_impl(args):
     """Main implementation (separated for timeout handling)"""
     # Check if gh CLI is available
     try:
-        subprocess.run(["gh", "--version"], capture_output=True, check=True, timeout=5)
+        run_gh_throttled(
+            ["gh", "--version"],
+            capture_output=True,
+            check=True,
+            timeout=5,
+            min_interval_seconds=0,
+        )
     except (FileNotFoundError, subprocess.CalledProcessError):
         print("❌ Error: 'gh' CLI not found or not authenticated.")
         print("\nInstall: https://cli.github.com/")

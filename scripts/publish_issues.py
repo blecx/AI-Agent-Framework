@@ -16,6 +16,11 @@ from typing import Any, Callable
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from agents.tooling.gh_throttle import run_gh_throttled
+
 DEFAULT_GLOB = "planning/issues/*.yml"
 DEFAULT_MAP_PATH = ROOT / "planning/issues/.published-map.json"
 DEFAULT_SLEEP_SECONDS = 1.0
@@ -68,7 +73,7 @@ class IssueSpec:
 
 def _run_gh_json(args: list[str]) -> Any:
     _throttle_gh()
-    proc = subprocess.run(["gh", *args], capture_output=True, text=True)
+    proc = run_gh_throttled(["gh", *args], capture_output=True, text=True, min_interval_seconds=0)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"gh {' '.join(args)} failed")
     return json.loads(proc.stdout)
@@ -76,7 +81,7 @@ def _run_gh_json(args: list[str]) -> Any:
 
 def _run_gh_text(args: list[str]) -> str:
     _throttle_gh()
-    proc = subprocess.run(["gh", *args], capture_output=True, text=True)
+    proc = run_gh_throttled(["gh", *args], capture_output=True, text=True, min_interval_seconds=0)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"gh {' '.join(args)} failed")
     return proc.stdout.strip()
