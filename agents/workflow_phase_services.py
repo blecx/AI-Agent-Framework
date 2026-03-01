@@ -426,23 +426,103 @@ class PrMergePhaseService:
 
     phase_key = "Phase 6"
 
+    def _build_pr_body(self, agent: Any, issue_num: int) -> Path:
+        """Create a repository-compliant PR body in .tmp and return its path."""
+
+        repo_type = _detect_validation_repo_type(agent)
+        body_path = Path(".tmp") / f"pr-body-{issue_num}.md"
+        body_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if repo_type == "client":
+            body = f"""# Summary
+Implements issue #{issue_num}.
+
+Fixes: #{issue_num}
+
+## Goal / Acceptance Criteria (required)
+- [x] Acceptance criteria for issue #{issue_num} are implemented.
+
+## Issue / Tracking Link (required)
+- Fixes: #{issue_num}
+
+## Validation (required)
+### Automated checks
+- [x] Relevant automated checks were run.
+
+### Manual test evidence (required)
+- [x] Manual behavior verification completed.
+
+## How to review
+1. Review changed files and confirm scope for issue #{issue_num}.
+2. Verify acceptance criteria coverage.
+3. Verify validation evidence.
+4. Confirm no unrelated files are included.
+
+## Cross-repo / Downstream impact (always include)
+- None.
+"""
+        else:
+            body = f"""## Goal / Context
+- Implements issue #{issue_num}.
+
+Fixes: #{issue_num}
+
+## Acceptance Criteria
+- [x] Acceptance criteria for issue #{issue_num} are implemented.
+
+## Validation Evidence
+- [x] Validation checks were executed for this change.
+
+## Repo Hygiene / Safety
+- [x] `projectDocs/` is not committed.
+- [x] `configs/llm.json` is not committed.
+- [x] No secrets were added.
+"""
+
+        body_path.write_text(body, encoding="utf-8")
+        return body_path
+
+    def _preflight_pr_body(self, agent: Any, body_path: Path) -> bool:
+        """Validate generated PR body against template gate before PR creation."""
+
+        validate_script = Path("scripts/validate-pr-template.sh")
+        if not validate_script.exists():
+            agent.log("PR template validator script not found; skipping preflight", "warning")
+            return True
+
+        repo_type = _detect_validation_repo_type(agent)
+        result = agent.run_command(
+            f"{validate_script} --body-file {body_path} --repo {repo_type}",
+            "Validating PR template preflight",
+            check=False,
+        )
+        return result.returncode == 0
+
     def execute(self, agent: Any, issue_num: int) -> PhaseExecutionResult:
         agent.log("🚀 Creating PR and merging", "progress")
 
         prmerge_script = Path("scripts/prmerge")
 
         if agent.dry_run:
-            agent.log("Would create PR with gh pr create --fill", "info")
+            body_file = self._build_pr_body(agent, issue_num)
+            agent.log(f"Would create PR with gh pr create --fill --body-file {body_file}", "info")
             agent.log("Would run prmerge validation and merge", "info")
             return PhaseExecutionResult(True, {})
 
+        pr_body_file = self._build_pr_body(agent, issue_num)
+        if not self._preflight_pr_body(agent, pr_body_file):
+            agent.log("PR template preflight failed; aborting PR creation", "error")
+            return PhaseExecutionResult(False, {})
+
         print("\n📋 Creating Pull Request...")
-        print("Next step: gh pr create --fill")
+        print(f"Next step: gh pr create --fill --body-file {pr_body_file}")
 
         _pause_or_continue(agent, "Press Enter to create PR...")
 
         result = agent.run_command(
-            "gh pr create --fill", "Creating pull request", check=False
+            f"gh pr create --fill --body-file {pr_body_file}",
+            "Creating pull request",
+            check=False,
         )
 
         if result.returncode != 0:
