@@ -172,7 +172,7 @@ If auto-approve doesn't work in a fresh chat:
 ## Related Files
 
 - Backend workspace: `/home/sw/work/AI-Agent-Framework/.vscode/settings.json`
-- Client workspace: `/home/sw/work/AI-Agent-Framework/_external/AI-Agent-Framework-Client/.vscode/settings.json`
+- Client workspace: `/home/sw/work/AI-Agent-Framework-Client/.vscode/settings.json`
 - This guide: `/home/sw/work/AI-Agent-Framework/docs/VSCODE-GLOBAL-SETTINGS.md`
 
 ## Agent Workflow References

@@ -10,7 +10,7 @@ Issue #449 describes client-side navigation/sidebar UX work (a â€œsecond sliceâ€
 - additional responsive polish
 - dedicated UI-focused tests
 
-This UI implementation belongs to `blecx/AI-Agent-Framework-Client` (vendored here as `_external/AI-Agent-Framework-Client`), not this backend repository.
+This UI implementation belongs to `blecx/AI-Agent-Framework-Client` (`../AI-Agent-Framework-Client` in local multi-repo setups), not this backend repository.
 
 ## Migration Outcome
 

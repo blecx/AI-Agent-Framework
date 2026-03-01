@@ -11,7 +11,7 @@ Parent chain:
 
 Parent #440’s scope is UI-focused (“sidebar” grouping/order + type/state visual distinction).
 
-This repository is the backend; the UI implementation for this chain lives in the client repo (vendored here as `_external/AI-Agent-Framework-Client`). This slice records a small, deterministic planning/spec artifact so follow-up slices stay reviewable and automation doesn’t need to guess.
+This repository is the backend; the UI implementation for this chain lives in the client repo (`../AI-Agent-Framework-Client`). This slice records a small, deterministic planning/spec artifact so follow-up slices stay reviewable and automation doesn’t need to guess.
 
 ## Goal
 
@@ -43,7 +43,7 @@ From repository root:
 
 ```bash
 ls -la docs/issues/issue-442-context.md
-ls -la _external/AI-Agent-Framework-Client/client/src/components/AppNavigation.tsx
+ls -la ../AI-Agent-Framework-Client/client/src/components/AppNavigation.tsx
 git status --short
 ```
 

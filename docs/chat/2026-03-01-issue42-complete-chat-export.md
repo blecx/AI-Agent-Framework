@@ -2906,11 +2906,11 @@ Read [](file:///home/sw/work/AI-Agent-Framework/scripts/work-issue.py#140-140), 
 
 Read [](file:///home/sw/work/AI-Agent-Framework/agents/custom/resolve_issue.py#80-80), lines 80 to 220
 
-Searched for regex `AI-Agent-Framework-Client|_external/AI-Agent-Framework-Client` (`**/*.py`), 3 results
+Searched for regex `AI-Agent-Framework-Client|../AI-Agent-Framework-Client` (`**/*.py`), 3 results
 
 Read [](file:///home/sw/work/AI-Agent-Framework/agents/workflow_agent.py#250-250), lines 250 to 310
 
-Read [](file:///home/sw/work/AI-Agent-Framework/_external/AI-Agent-Framework-Client/package.json)
+Read [](file:///home/sw/work/AI-Agent-Framework-Client/package.json)
 
 Using "Apply Patch"
 
@@ -2963,7 +2963,7 @@ Made changes.
 
 User: create an issue in AI-Agent-Framework take a comprehensive description and name. Put everything there. Then we just do a PR and merge it manually. Dont't affect existing issues or enlarge there scope!
 
-GitHub Copilot: Ran terminal command: gh issue create --title "Align resolve-issue agent environment parity + multi-repo test suites" --body "## Summary\nAlign the resolve-issue hybrid agent so its execution environment and test suites match both repos in the multi-repo setup (AI-Agent-Framework + AI-Agent-Framework-Client).\n\n## Background\nWe operate in a multi-repo environment with a Python backend (AI-Agent-Framework) and a Node/React/TypeScript UX repo (\_external/AI-Agent-Framework-Client). The agent must handle issues that touch one or both repos and must run the same test suites those repos use.\n\n## Scope (Do Not Expand)\n- Ensure the agent explicitly handles both repos when required.\n- Ensure environment parity for Python + Node across repos.\n- Ensure the validation suite equals the repos' best-practice test suites.\n- Documentation updates only for the above (no unrelated changes).\n\n## Out of Scope\n- Changing existing issues or expanding their scope.\n- Changing product features or workflows unrelated to environment parity or testing alignment.\n\n## Requirements\n1. **Multi-repo handling**\n - Agent must detect/plan for changes in one or both repos.\n - If both repos are touched, run validation suites for each.\n\n2. **Environment parity**\n - Backend: use Python 3.10+ with .venv in AI-Agent-Framework.\n - UX repo: use Node + npm in \_external/AI-Agent-Framework-Client.\n - No cross-repo command execution from the wrong working directory.\n\n3. **Test suite alignment (must match repo best practices)**\n - Backend changes: `python -m black apps/api/`, `python -m flake8 apps/api/`, `pytest`.\n - apps/web changes: `npm install`, `npm run lint`, `npm run build`.\n - UX repo changes: `npm install`, `npm run build`, `npm run test`.\n\n## Acceptance Criteria\n- Agent instructions or tooling clearly enforce multi-repo handling.\n- Agent runs the correct test suites for each impacted repo.\n- Documentation reflects the multi-repo environment + test-suite alignment.\n- No changes to existing issue scopes.\n\n## Validation Steps\n- Dry-run an issue that touches backend only; verify only backend suites are invoked.\n- Dry-run an issue that touches UX repo only; verify only UX suites are invoked.\n- Dry-run an issue that touches both; verify all relevant suites are invoked.\n\n## Notes\n- Keep changes minimal and focused on environment parity + test alignment.\n- Do not modify any existing open issues.\n"
+GitHub Copilot: Ran terminal command: gh issue create --title "Align resolve-issue agent environment parity + multi-repo test suites" --body "## Summary\nAlign the resolve-issue hybrid agent so its execution environment and test suites match both repos in the multi-repo setup (AI-Agent-Framework + AI-Agent-Framework-Client).\n\n## Background\nWe operate in a multi-repo environment with a Python backend (AI-Agent-Framework) and a Node/React/TypeScript UX repo (../AI-Agent-Framework-Client). The agent must handle issues that touch one or both repos and must run the same test suites those repos use.\n\n## Scope (Do Not Expand)\n- Ensure the agent explicitly handles both repos when required.\n- Ensure environment parity for Python + Node across repos.\n- Ensure the validation suite equals the repos' best-practice test suites.\n- Documentation updates only for the above (no unrelated changes).\n\n## Out of Scope\n- Changing existing issues or expanding their scope.\n- Changing product features or workflows unrelated to environment parity or testing alignment.\n\n## Requirements\n1. **Multi-repo handling**\n - Agent must detect/plan for changes in one or both repos.\n - If both repos are touched, run validation suites for each.\n\n2. **Environment parity**\n - Backend: use Python 3.10+ with .venv in AI-Agent-Framework.\n - UX repo: use Node + npm in ../AI-Agent-Framework-Client.\n - No cross-repo command execution from the wrong working directory.\n\n3. **Test suite alignment (must match repo best practices)**\n - Backend changes: `python -m black apps/api/`, `python -m flake8 apps/api/`, `pytest`.\n - apps/web changes: `npm install`, `npm run lint`, `npm run build`.\n - UX repo changes: `npm install`, `npm run build`, `npm run test`.\n\n## Acceptance Criteria\n- Agent instructions or tooling clearly enforce multi-repo handling.\n- Agent runs the correct test suites for each impacted repo.\n- Documentation reflects the multi-repo environment + test-suite alignment.\n- No changes to existing issue scopes.\n\n## Validation Steps\n- Dry-run an issue that touches backend only; verify only backend suites are invoked.\n- Dry-run an issue that touches UX repo only; verify only UX suites are invoked.\n- Dry-run an issue that touches both; verify all relevant suites are invoked.\n\n## Notes\n- Keep changes minimal and focused on environment parity + test alignment.\n- Do not modify any existing open issues.\n"
 
 Issue created: AI-Agent-Framework #42.  
 Link: https://github.com/blecx/AI-Agent-Framework/issues/42
@@ -2977,7 +2977,7 @@ Align the resolve-issue hybrid agent so its execution environment and test suite
 
 ## Background
 
-We operate in a multi-repo environment with a Python backend (AI-Agent-Framework) and a Node/React/TypeScript UX repo (\_external/AI-Agent-Framework-Client). The agent must handle issues that touch one or both repos and must run the same test suites those repos use.
+We operate in a multi-repo environment with a Python backend (AI-Agent-Framework) and a Node/React/TypeScript UX repo (../AI-Agent-Framework-Client). The agent must handle issues that touch one or both repos and must run the same test suites those repos use.
 
 ## Scope (Do Not Expand)
 
@@ -2999,7 +2999,7 @@ We operate in a multi-repo environment with a Python backend (AI-Agent-Framework
 
 2. **Environment parity**
    - Backend: use Python 3.10+ with .venv in AI-Agent-Framework.
-   - UX repo: use Node + npm in \_external/AI-Agent-Framework-Client.
+  - UX repo: use Node + npm in ../AI-Agent-Framework-Client.
    - No cross-repo command execution from the wrong working directory.
 
 3. **Test suite alignment (must match repo best practices)**

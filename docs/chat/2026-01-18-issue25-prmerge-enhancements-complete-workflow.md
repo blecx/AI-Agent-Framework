@@ -366,7 +366,7 @@ gh api repos/blecx/AI-Agent-Framework-Client/pulls/61 --jq '.body'
 ### Repository Navigation
 ```bash
 cd /home/sw/work/AI-Agent-Framework
-cd /home/sw/work/AI-Agent-Framework/_external/AI-Agent-Framework-Client
+cd /home/sw/work/AI-Agent-Framework-Client
 ```
 
 ### File Operations
@@ -455,9 +455,9 @@ PROJECT_DOCS_PATH=../../projectDocs uvicorn main:app --reload
 - docs/WORK-ISSUE-WORKFLOW.md (831 lines)
 - docs/issues/issue-25-context.md (planning doc)
 - docs/prmerge-enhancements-issue25.md (298 lines)
-- _external/AI-Agent-Framework-Client/src/pages/Chat.tsx (209 lines)
-- _external/AI-Agent-Framework-Client/src/components/Breadcrumb.tsx (43 lines)
-- _external/AI-Agent-Framework-Client/src/contexts/ProjectContext.tsx (30 lines)
+- ../AI-Agent-Framework-Client/src/pages/Chat.tsx (209 lines)
+- ../AI-Agent-Framework-Client/src/components/Breadcrumb.tsx (43 lines)
+- ../AI-Agent-Framework-Client/src/contexts/ProjectContext.tsx (30 lines)
 - Multiple test files, placeholder pages
 
 **Modified:**

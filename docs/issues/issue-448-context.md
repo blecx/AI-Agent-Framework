@@ -8,7 +8,7 @@ Issue #448 describes client-side navigation/sidebar UX work:
 - baseline responsive behavior (collapsible sidebar, toggles)
 - basic ARIA roles/attributes
 
-This UI implementation belongs to `blecx/AI-Agent-Framework-Client` (vendored here as `_external/AI-Agent-Framework-Client`), not this backend repository.
+This UI implementation belongs to `blecx/AI-Agent-Framework-Client` (`../AI-Agent-Framework-Client` in local multi-repo setups), not this backend repository.
 
 ## Migration Outcome
 
