@@ -1,6 +1,6 @@
 """Proposal domain models for propose/apply workflow."""
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from enum import Enum
 from datetime import datetime, timezone
 from typing import Optional
@@ -64,6 +64,15 @@ class Proposal(BaseModel):
             }
         }
     )
+
+    @model_validator(mode="after")
+    def validate_lifecycle_fields(self):
+        """Validate lifecycle field combinations for deterministic state rules."""
+        if self.status == ProposalStatus.ACCEPTED and self.applied_at is None:
+            raise ValueError("applied_at is required when status is accepted")
+        if self.status != ProposalStatus.ACCEPTED and self.applied_at is not None:
+            raise ValueError("applied_at can only be set when status is accepted")
+        return self
 
 
 class ProposalCreate(BaseModel):

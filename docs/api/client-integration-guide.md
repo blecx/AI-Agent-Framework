@@ -254,6 +254,8 @@ This section maps common client workflows to their required API endpoints, ensur
 | -------------------- | ----------------------------------------- | ------ | -------- |
 | List artifacts       | `/api/v1/projects/{key}/artifacts`        | GET    | ✅       |
 | Get artifact content | `/api/v1/projects/{key}/artifacts/{path}` | GET    | ✅       |
+| Generate from template | `/api/v1/projects/{key}/artifacts/generate` | POST | ✅ |
+| Generate from blueprint | `/api/v1/projects/{key}/artifacts/generate-from-blueprint` | POST | ✅ |
 
 **Expected Flow:**
 
@@ -262,6 +264,38 @@ This section maps common client workflows to their required API endpoints, ensur
    → Display artifact list
 2. GET /api/v1/projects/{key}/artifacts/{path}
    → Display artifact content
+3. POST /api/v1/projects/{key}/artifacts/generate
+   with {template_id, context}
+   → Generate one artifact from a template
+4. POST /api/v1/projects/{key}/artifacts/generate-from-blueprint
+   with {blueprint_id, context}
+   → Generate all required artifacts from a blueprint
+```
+
+**Generation Examples:**
+
+```bash
+# Generate one artifact from template
+curl -X POST http://localhost:8000/api/v1/projects/PROJ001/artifacts/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "tpl-12345678",
+    "context": {
+      "title": "Project Charter",
+      "author": "pm@example.com"
+    }
+  }'
+
+# Generate artifacts from blueprint
+curl -X POST http://localhost:8000/api/v1/projects/PROJ001/artifacts/generate-from-blueprint \
+  -H "Content-Type: application/json" \
+  -d '{
+    "blueprint_id": "bp-standard",
+    "context": {
+      "title": "Q2 Initiative",
+      "author": "pm@example.com"
+    }
+  }'
 ```
 
 ---

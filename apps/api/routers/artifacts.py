@@ -204,13 +204,22 @@ async def generate_artifact(
         400: Invalid context data (validation error)
         422: Invalid request body
     """
-    from services.artifact_generation_service import (
-        ArtifactGenerationService,
-        ArtifactGenerationError,
-        ValidationError,
-    )
-    from services.template_service import TemplateService
-    from services.blueprint_service import BlueprintService
+    try:
+        from ..services.artifact_generation_service import (
+            ArtifactGenerationService,
+            ArtifactGenerationError,
+            ValidationError,
+        )
+        from ..services.template_service import TemplateService
+        from ..services.blueprint_service import BlueprintService
+    except ImportError:
+        from services.artifact_generation_service import (
+            ArtifactGenerationService,
+            ArtifactGenerationError,
+            ValidationError,
+        )
+        from services.template_service import TemplateService
+        from services.blueprint_service import BlueprintService
 
     git_manager = request.app.state.git_manager
 
@@ -264,12 +273,20 @@ async def generate_from_blueprint(
         404: Project or blueprint not found
         400: Generation errors (partial failures included in response)
     """
-    from services.artifact_generation_service import (
-        ArtifactGenerationService,
-        ArtifactGenerationError,
-    )
-    from services.template_service import TemplateService
-    from services.blueprint_service import BlueprintService
+    try:
+        from ..services.artifact_generation_service import (
+            ArtifactGenerationService,
+            ArtifactGenerationError,
+        )
+        from ..services.template_service import TemplateService
+        from ..services.blueprint_service import BlueprintService
+    except ImportError:
+        from services.artifact_generation_service import (
+            ArtifactGenerationService,
+            ArtifactGenerationError,
+        )
+        from services.template_service import TemplateService
+        from services.blueprint_service import BlueprintService
 
     git_manager = request.app.state.git_manager
 

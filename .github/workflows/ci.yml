@@ -1,5 +1,10 @@
 name: Backend CI
 
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
 on:
   push:
     branches: [main]
@@ -30,6 +35,16 @@ jobs:
 
       - name: Validate continue-phase-2 policy
         run: python ./scripts/check_continue_phase2_policy.py
+
+      - name: Validate Step 2 backend queue governance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python ./scripts/step2_backend_queue.py \
+            --dry-run \
+            --sync-tracker \
+            --fail-on-drift \
+            --sleep-seconds 1.0
 
   backend-ci:
     runs-on: ubuntu-latest

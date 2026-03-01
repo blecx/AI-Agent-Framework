@@ -6,12 +6,22 @@ Aligned with DDD architecture - thin controller pattern.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
-from domain.templates.models import (
-    Template,
-    TemplateCreate,
-    TemplateUpdate,
-)
-from services.template_service import TemplateService
+try:
+    from ..domain.templates.models import (
+        Template,
+        TemplateCreate,
+        TemplateUpdate,
+    )
+    from ..domain.errors import not_found
+    from ..services.template_service import TemplateService
+except ImportError:
+    from domain.templates.models import (
+        Template,
+        TemplateCreate,
+        TemplateUpdate,
+    )
+    from domain.errors import not_found
+    from services.template_service import TemplateService
 
 
 router = APIRouter()
@@ -76,8 +86,6 @@ async def get_template(template_id: str, request: Request):
     service = _get_template_service(request)
     template = service.get_template(template_id)
     if not template:
-        from domain.errors import not_found
-
         raise HTTPException(status_code=404, detail=not_found("Template", template_id))
     return template
 
@@ -104,8 +112,6 @@ async def update_template(
     try:
         updated = service.update_template(template_id, template_update)
         if not updated:
-            from domain.errors import not_found
-
             raise HTTPException(
                 status_code=404, detail=not_found("Template", template_id)
             )
@@ -128,7 +134,5 @@ async def delete_template(template_id: str, request: Request):
     service = _get_template_service(request)
     success = service.delete_template(template_id)
     if not success:
-        from domain.errors import not_found
-
         raise HTTPException(status_code=404, detail=not_found("Template", template_id))
     return None

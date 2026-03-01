@@ -11,13 +11,24 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from domain.blueprints.models import (
-    Blueprint,
-    BlueprintCreate,
-    BlueprintUpdate,
-)
-from services.git_manager import GitManager
-from services.template_service import TemplateService
+try:
+    from ..domain.blueprints.models import (
+        Blueprint,
+        BlueprintCreate,
+        BlueprintUpdate,
+    )
+    from ..domain.errors import not_found, reference_not_found
+    from .git_manager import GitManager
+    from .template_service import TemplateService
+except ImportError:
+    from domain.blueprints.models import (
+        Blueprint,
+        BlueprintCreate,
+        BlueprintUpdate,
+    )
+    from domain.errors import not_found, reference_not_found
+    from services.git_manager import GitManager
+    from services.template_service import TemplateService
 
 
 class BlueprintService:
@@ -139,8 +150,6 @@ class BlueprintService:
         # Get existing blueprint
         existing = self._get_blueprint_by_id(blueprint_id)
         if not existing:
-            from domain.errors import not_found
-
             raise ValueError(not_found("Blueprint", blueprint_id))
 
         # Apply updates
@@ -192,8 +201,6 @@ class BlueprintService:
         # Check blueprint exists
         existing = self._get_blueprint_by_id(blueprint_id)
         if not existing:
-            from domain.errors import not_found
-
             raise ValueError(not_found("Blueprint", blueprint_id))
 
         # Delete file
@@ -247,6 +254,4 @@ class BlueprintService:
         for template_id in template_ids:
             template = self.template_service.get_template(template_id)
             if not template:
-                from domain.errors import reference_not_found
-
                 raise ValueError(reference_not_found("template", template_id))

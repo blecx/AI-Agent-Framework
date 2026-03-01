@@ -4,11 +4,16 @@ import pytest
 from fastapi.testclient import TestClient
 import tempfile
 import shutil
+import os
+import sys
 
-from apps.api.main import app
-from apps.api.services.git_manager import GitManager
-from apps.api.domain.templates.models import TemplateCreate
-from apps.api.services.template_service import TemplateService
+# Add apps/api to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../apps/api"))
+
+from main import app  # noqa: E402
+from services.git_manager import GitManager  # noqa: E402
+from domain.templates.models import TemplateCreate  # noqa: E402
+from services.template_service import TemplateService  # noqa: E402
 
 
 @pytest.fixture

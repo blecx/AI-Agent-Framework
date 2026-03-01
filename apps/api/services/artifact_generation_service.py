@@ -14,9 +14,14 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List
 from jinja2 import Environment, select_autoescape
 
-from services.template_service import TemplateService
-from services.blueprint_service import BlueprintService
-from services.git_manager import GitManager
+try:
+    from .template_service import TemplateService
+    from .blueprint_service import BlueprintService
+    from .git_manager import GitManager
+except ImportError:
+    from services.template_service import TemplateService
+    from services.blueprint_service import BlueprintService
+    from services.git_manager import GitManager
 
 
 class ArtifactGenerationError(Exception):

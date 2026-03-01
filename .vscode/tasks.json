@@ -406,6 +406,52 @@
         "clear": true
       },
       "group": "test"
+    },
+    {
+      "label": "🧭 Step2 Queue: Check (Dry Run)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/scripts/step2_backend_queue.py",
+        "--dry-run",
+        "--sync-tracker",
+        "--sleep-seconds",
+        "1.0"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "clear": true
+      },
+      "group": "test"
+    },
+    {
+      "label": "🧭 Step2 Queue: Apply + Sync",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/scripts/step2_backend_queue.py",
+        "--apply",
+        "--sync-tracker",
+        "--sleep-seconds",
+        "1.0"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "clear": true
+      },
+      "group": "none"
     }
   ],
   "inputs": [
