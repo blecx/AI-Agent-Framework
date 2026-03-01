@@ -76,6 +76,11 @@ if [[ ! -f "$PR_BODY_FILE" ]]; then
     exit 1
 fi
 
+if [[ "$REPO_TYPE" != "backend" && "$REPO_TYPE" != "client" ]]; then
+    echo -e "${RED}Error: invalid --repo value '$REPO_TYPE' (expected: backend|client)${NC}"
+    exit 1
+fi
+
 # Validation state
 ERRORS=0
 WARNINGS=0
@@ -166,7 +171,8 @@ validate_checkboxes() {
         if [[ $total_checked -eq 0 ]]; then
             error "Found $total_checkboxes unchecked boxes. All must be checked before PR creation."
         else
-            warning "Found $total_checkboxes total checkboxes, $total_checked checked, $((total_checkboxes)) unchecked."
+            local unchecked_boxes=$((total_checkboxes - total_checked))
+            warning "Found $total_checkboxes total checkboxes, $total_checked checked, $unchecked_boxes unchecked."
             echo "  → Verify all boxes should be checked per PR review gate"
         fi
     else
