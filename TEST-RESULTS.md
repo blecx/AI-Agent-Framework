@@ -166,7 +166,7 @@ python3 tests/agents/test_setup.py && \
 
 Tested with real exports from `docs/chat/`:
 
-1. **2026-01-18-issue25-prmerge-enhancements-complete-workflow.md**
+1. **2026-01-18-step1-hybrid-workflow-creation.md**
    - ✅ Successfully extracted
    - ✅ Knowledge base updated
    - ✅ Recommendations generated
