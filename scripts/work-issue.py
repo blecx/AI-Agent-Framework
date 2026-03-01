@@ -209,7 +209,7 @@ Token Budget Mode:
             return
 
         max_attempts = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_RETRIES", "4"))
-        base_delay = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_DELAY", "30"))
+        base_delay = int(os.environ.get("WORK_ISSUE_RATE_LIMIT_DELAY", "120"))
 
         if args.plan_only:
             _ = await _run_with_rate_limit_retry(

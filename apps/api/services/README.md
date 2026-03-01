@@ -403,6 +403,38 @@ class TemplateService:
         logger.debug("Template created successfully: %s", template.id)
 ```
 
+### 6. Template Persistence Contract
+
+`TemplateService` persists templates under each project repository using a stable JSON-file layout:
+
+- Directory: `.templates/`
+- File pattern: `.templates/{template_id}.json`
+- Serialization: `Template.model_dump()` JSON with `indent=2`
+- Commit model: one commit per create/update/delete operation with `[TEMPLATE]` prefix
+
+This format is intentionally simple and deterministic so downstream readers, migrations, and audits can rely on predictable paths and payload shape.
+
+### 7. Artifact Generation Flow
+
+`ArtifactGenerationService` orchestrates template/blueprint-driven rendering with validation and persistence.
+
+**Required inputs (`generate_from_template`)**
+- `template_id`: existing template identifier
+- `project_key`: target project repository key
+- `context`: JSON-serializable payload satisfying the template JSON Schema
+
+**Flow**
+1. Resolve template by `template_id`
+2. Sanitize and enrich context (`project_key`, `generated_at`)
+3. Validate context against template schema
+4. Render markdown via Jinja2
+5. Persist to `artifacts/{artifact_type}.md`
+6. Commit generated artifact through `GitManager`
+
+**Blueprint mode (`generate_from_blueprint`)**
+- Resolves the blueprint, iterates required template IDs, and generates each artifact.
+- Missing references or validation/rendering failures are returned as actionable error entries per template.
+
 ## Related Documentation
 
 ### Domain Layer

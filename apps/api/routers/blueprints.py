@@ -6,12 +6,22 @@ Aligned with DDD architecture - thin controller pattern.
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
-from domain.blueprints.models import (
-    Blueprint,
-    BlueprintCreate,
-    BlueprintUpdate,
-)
-from services.blueprint_service import BlueprintService
+try:
+    from ..domain.blueprints.models import (
+        Blueprint,
+        BlueprintCreate,
+        BlueprintUpdate,
+    )
+    from ..domain.errors import not_found
+    from ..services.blueprint_service import BlueprintService
+except ImportError:
+    from domain.blueprints.models import (
+        Blueprint,
+        BlueprintCreate,
+        BlueprintUpdate,
+    )
+    from domain.errors import not_found
+    from services.blueprint_service import BlueprintService
 
 
 router = APIRouter()
@@ -76,9 +86,7 @@ async def get_blueprint(blueprint_id: str, request: Request):
     service = _get_blueprint_service(request)
     blueprint = service.get_blueprint(blueprint_id)
     if not blueprint:
-        raise HTTPException(
-            status_code=404, detail=f"Blueprint '{blueprint_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=not_found("Blueprint", blueprint_id))
     return blueprint
 
 

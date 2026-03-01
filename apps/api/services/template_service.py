@@ -11,12 +11,20 @@ import json
 import uuid
 from typing import List, Optional
 
-from domain.templates.models import (
-    Template,
-    TemplateCreate,
-    TemplateUpdate,
-)
-from services.git_manager import GitManager
+try:
+    from ..domain.templates.models import (
+        Template,
+        TemplateCreate,
+        TemplateUpdate,
+    )
+    from .git_manager import GitManager
+except ImportError:
+    from domain.templates.models import (
+        Template,
+        TemplateCreate,
+        TemplateUpdate,
+    )
+    from services.git_manager import GitManager
 
 
 class TemplateService:

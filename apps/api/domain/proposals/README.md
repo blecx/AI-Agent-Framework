@@ -45,6 +45,22 @@ Request model for creating a proposal (no `id` field, system generates it).
 - `ACCEPTED`: Proposal approved and applied
 - `REJECTED`: Proposal declined
 
+### Proposal Lifecycle State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> ACCEPTED: apply
+    PENDING --> REJECTED: reject
+    ACCEPTED --> [*]
+    REJECTED --> [*]
+```
+
+Transition constraints:
+- `PENDING`: `applied_at` must be `null`
+- `ACCEPTED`: `applied_at` is required
+- `REJECTED`: `applied_at` must be `null`
+
 ### ChangeType Enum
 
 - `CREATE`: New artifact creation

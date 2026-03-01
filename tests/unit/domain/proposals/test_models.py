@@ -170,6 +170,48 @@ class TestProposal:
         assert accepted.status == ProposalStatus.ACCEPTED
         assert accepted.applied_at is not None
 
+    def test_pending_with_applied_at_is_rejected(self):
+        """Test invalid state: pending proposal cannot have applied_at."""
+        with pytest.raises(ValidationError):
+            Proposal(
+                id="prop-invalid-1",
+                project_key="PRJ-INV",
+                target_artifact="artifacts/test.md",
+                change_type=ChangeType.UPDATE,
+                diff="test diff",
+                rationale="invalid state",
+                status=ProposalStatus.PENDING,
+                applied_at=datetime.now(timezone.utc),
+            )
+
+    def test_accepted_without_applied_at_is_rejected(self):
+        """Test invalid state: accepted proposal must have applied_at."""
+        with pytest.raises(ValidationError):
+            Proposal(
+                id="prop-invalid-2",
+                project_key="PRJ-INV",
+                target_artifact="artifacts/test.md",
+                change_type=ChangeType.UPDATE,
+                diff="test diff",
+                rationale="invalid state",
+                status=ProposalStatus.ACCEPTED,
+                applied_at=None,
+            )
+
+    def test_rejected_with_applied_at_is_rejected(self):
+        """Test invalid state: rejected proposal cannot have applied_at."""
+        with pytest.raises(ValidationError):
+            Proposal(
+                id="prop-invalid-3",
+                project_key="PRJ-INV",
+                target_artifact="artifacts/test.md",
+                change_type=ChangeType.UPDATE,
+                diff="test diff",
+                rationale="invalid state",
+                status=ProposalStatus.REJECTED,
+                applied_at=datetime.now(timezone.utc),
+            )
+
     def test_json_serialization(self):
         """Test proposal can be serialized to JSON."""
         proposal = Proposal(

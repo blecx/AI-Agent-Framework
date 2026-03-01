@@ -1,0 +1,5 @@
+#!/bin/bash
+# Step 2 backend queue governance helper
+
+cd "$(dirname "$0")"
+exec ./scripts/step2_backend_queue.py "$@"

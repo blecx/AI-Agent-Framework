@@ -10,7 +10,7 @@ _LAST_GH_CALL_TS: Optional[float] = None
 def _resolve_min_interval_seconds(override: Optional[int]) -> int:
     if override is not None:
         return int(override)
-    return int(os.environ.get("GH_MIN_INTERVAL_SECONDS", "1") or "1")
+    return int(os.environ.get("GH_MIN_INTERVAL_SECONDS", "3") or "3")
 
 
 def run_gh_throttled(
