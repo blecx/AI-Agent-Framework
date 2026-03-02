@@ -569,6 +569,24 @@ Mode:
                 )
             )
 
+        def _is_model_not_found_error(exc: Exception) -> bool:
+            """Detect 'model not found' / invalid model errors so we can fall back immediately."""
+            text = _collect_exception_text(exc).lower()
+            collapsed = " ".join(text.split())
+            return any(
+                token in collapsed
+                for token in (
+                    "model not found",
+                    "no such model",
+                    "invalid model",
+                    "unknown model",
+                    "error code: 404",
+                    "404",
+                    "does not exist",
+                    "model_not_found",
+                )
+            )
+
         max_attempts = _parse_int_env("WORK_ISSUE_LLM_MAX_ATTEMPTS", 6)
         base_backoff = _parse_float_env("WORK_ISSUE_LLM_BACKOFF_SECONDS", 20.0)
         max_backoff = _parse_float_env("WORK_ISSUE_LLM_MAX_BACKOFF_SECONDS", 300.0)
@@ -611,6 +629,35 @@ Mode:
                 return "".join(chunks)
             except Exception as exc:
                 last_exc = exc
+                # Model-not-found errors: switch to fallback model immediately (attempt 1).
+                if (
+                    _is_model_not_found_error(exc)
+                    and self._is_planning_stream(agent, label)
+                ):
+                    switched = self._switch_planning_model_for_rate_limit(
+                        planning_fallback_model
+                    )
+                    if switched and self.planning_agent is not None:
+                        print(
+                            "\n🔄 Planning model not found; switching to fallback model: "
+                            f"{self._planning_model_id}\n"
+                        )
+                        prompt = self._truncate_for_prompt(
+                            prompt,
+                            limit=current_planning_prompt_chars,
+                        )
+                        agent = self.planning_agent
+                        thread = self.planning_thread or self.planning_agent.get_new_thread()
+                        attempt = 1
+                        max_attempts = planning_fallback_max_attempts
+                        continue
+                    # No fallback available — surface a clear error immediately.
+                    raise RuntimeError(
+                        f"Planning model '{self._planning_model_id}' not found on the API and no "
+                        f"fallback model was configured (set WORK_ISSUE_PLANNING_FALLBACK_MODEL). "
+                        f"Original error: {exc}"
+                    ) from exc
+
                 if (
                     _is_rate_limited(exc)
                     and self._is_planning_stream(agent, label)
@@ -949,12 +996,15 @@ First line must be exactly one of:
 UX_DECISION: PASS
 UX_DECISION: CHANGES
 
-Then include:
-- Navigation Plan:
-- Responsive Rules:
-- Grouping Decisions:
-- A11y Baseline:
-- Required Changes: (only if CHANGES)
+Then include ALL of the following sections (each on its own line, exact spelling):
+Navigation Plan:
+Responsive Rules:
+Grouping Decisions:
+A11y Baseline:
+Requirement Check:
+Requirement Gaps:
+Risk Notes:
+Required Changes: (include only if decision is CHANGES; write 'None' if PASS)
 """
 
         ux_text = await self._run_agent_stream(
@@ -1357,6 +1407,8 @@ CODING_SUMMARY:
 """
 
             coding_thread = self.coding_agent.get_new_thread()
+            # Keep self.thread in sync so continue_conversation / learnings use this execution context.
+            self.thread = coding_thread
             _ = await self._run_agent_stream(
                 self.coding_agent,
                 coding_thread,

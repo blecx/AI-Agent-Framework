@@ -11,17 +11,12 @@ Scenarios:
 - Validate audit history and compliance tracking
 """
 
-import pytest
-import json
 import re
-from pathlib import Path
 
 import httpx
+import pytest
 
-
-def _write_json(path: Path, payload: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+from e2e.tui.helpers import write_json
 
 
 def _extract_total_issues(output: str) -> int:
@@ -34,42 +29,36 @@ def _extract_total_issues(output: str) -> int:
 def test_audit_fix_cycle_foundation(tui, unique_project_key):
     """Test audit infrastructure foundation."""
 
-    # Create project
     result = tui.create_project(key=unique_project_key, name="Audit Cycle Test")
     assert result.success
 
-    # Verify project created
     result = tui.list_projects()
     assert result.success
     assert unique_project_key in result.stdout
 
-    # Run audit command for existing project
     result = tui.execute_command(["audit", "--project", unique_project_key])
     assert result.success, f"Audit command failed: {result.stderr}"
     assert "Audit completed" in result.stdout
     assert "Issue Counts by" in result.stdout
     assert "Total issues" in result.stdout
 
-    print(f"✓ Audit cycle foundation validated for {unique_project_key}")
-
 
 @pytest.mark.tui
-def test_audit_detects_missing_fields(tui, unique_project_key, temp_docs_dir):
+def test_audit_detects_missing_fields(tui, tui_workspace):
     """Test audit detects missing required fields in artifacts."""
-    result = tui.create_project(key=unique_project_key, name="Missing Fields Test")
+    result = tui.create_project(key=tui_workspace.project_key, name="Missing Fields Test")
     assert result.success
 
-    metadata_path = Path(temp_docs_dir) / unique_project_key / "metadata.json"
-    _write_json(
-        metadata_path,
+    write_json(
+        tui_workspace.metadata_path,
         {
-            "key": unique_project_key,
+            "key": tui_workspace.project_key,
             "name": "Missing Fields Test",
         },
     )
 
     result = tui.execute_command(
-        ["audit", "--project", unique_project_key, "--rule", "required_fields"]
+        ["audit", "--project", tui_workspace.project_key, "--rule", "required_fields"]
     )
     assert result.success, f"Audit command failed: {result.stderr}"
     assert "required_fields" in result.stdout, result.stdout
@@ -79,82 +68,78 @@ def test_audit_detects_missing_fields(tui, unique_project_key, temp_docs_dir):
 
 
 @pytest.mark.tui
-def test_audit_fix_and_reaudit(tui, unique_project_key, temp_docs_dir):
+def test_audit_fix_and_reaudit(tui, tui_workspace):
     """Test full audit → fix → re-audit cycle."""
-    result = tui.create_project(key=unique_project_key, name="Audit Re-Audit Test")
+    result = tui.create_project(key=tui_workspace.project_key, name="Audit Re-Audit Test")
     assert result.success
 
-    metadata_path = Path(temp_docs_dir) / unique_project_key / "metadata.json"
-
-    _write_json(
-        metadata_path,
+    write_json(
+        tui_workspace.metadata_path,
         {
-            "key": unique_project_key,
+            "key": tui_workspace.project_key,
             "name": "Audit Re-Audit Test",
         },
     )
 
     first_audit = tui.execute_command(
-        ["audit", "--project", unique_project_key, "--rule", "required_fields"]
+        ["audit", "--project", tui_workspace.project_key, "--rule", "required_fields"]
     )
     assert first_audit.success, f"Initial audit failed: {first_audit.stderr}"
     assert _extract_total_issues(first_audit.stdout) == 7, first_audit.stdout
 
-    project_path = Path(temp_docs_dir) / unique_project_key
-    _write_json(
-        metadata_path,
+    write_json(
+        tui_workspace.metadata_path,
         {
-            "key": unique_project_key,
+            "key": tui_workspace.project_key,
             "name": "Audit Re-Audit Test",
             "description": "Deterministic metadata payload",
             "start_date": "2026-01-15",
             "blueprint": "bp-core-v1",
         },
     )
-    _write_json(
-        project_path / "artifacts" / "pmp.json",
+    write_json(
+        tui_workspace.artifact_path("pmp"),
         {
             "deliverables": [{"id": "DEL-001", "dependencies": []}],
             "milestones": [{"id": "MS-001", "due_date": "2026-02-15"}],
         },
     )
-    _write_json(
-        project_path / "artifacts" / "raid.json",
+    write_json(
+        tui_workspace.artifact_path("raid"),
         {
             "items": [{"id": "RISK-001", "related_milestones": ["MS-001"]}],
         },
     )
-    _write_json(
-        project_path / "artifacts" / "governance.json",
+    write_json(
+        tui_workspace.artifact_path("governance"),
         {
             "team": [{"id": "owner-1", "name": "Owner One"}],
             "roles": [{"id": "role-1", "name": "Sponsor"}],
         },
     )
-    _write_json(
-        project_path / "workflow" / "state.json",
+    write_json(
+        tui_workspace.workflow_path("state"),
         {
             "current_phase": "planning",
         },
     )
 
     second_audit = tui.execute_command(
-        ["audit", "--project", unique_project_key, "--rule", "required_fields"]
+        ["audit", "--project", tui_workspace.project_key, "--rule", "required_fields"]
     )
     assert second_audit.success, f"Re-audit failed: {second_audit.stderr}"
     assert _extract_total_issues(second_audit.stdout) == 0, second_audit.stdout
 
 
 @pytest.mark.tui
-def test_audit_validates_cross_references(tui, unique_project_key, temp_docs_dir):
+def test_audit_validates_cross_references(tui, tui_workspace):
     """Test audit validates cross-references between artifacts."""
-    result = tui.create_project(key=unique_project_key, name="Cross Ref Test")
+    result = tui.create_project(key=tui_workspace.project_key, name="Cross Ref Test")
     assert result.success
 
-    project_path = Path(temp_docs_dir) / unique_project_key
-    _write_json(project_path / "artifacts" / "pmp.json", {"deliverables": []})
-    _write_json(
-        project_path / "artifacts" / "raid.json",
+    write_json(tui_workspace.artifact_path("pmp"), {"deliverables": []})
+    write_json(
+        tui_workspace.artifact_path("raid"),
         {
             "items": [
                 {
@@ -166,17 +151,17 @@ def test_audit_validates_cross_references(tui, unique_project_key, temp_docs_dir
     )
 
     result = tui.execute_command(
-        ["audit", "--project", unique_project_key, "--rule", "cross_reference"]
+        ["audit", "--project", tui_workspace.project_key, "--rule", "cross_reference"]
     )
     assert result.success, f"Audit command failed: {result.stderr}"
     assert _extract_total_issues(result.stdout) == 2, result.stdout
     assert "D-404" in result.stdout, result.stdout
     assert "cross_reference" in result.stdout, result.stdout
 
+
 def test_audit_error_handling(tui, unique_project_key):
     """Test audit handles errors gracefully (e.g., project not found)."""
 
-    # Try to audit non-existent project
     result = tui.execute_command(["audit", "--project", "NONEXISTENT-999"], check=False)
 
     assert result is not None, "Audit command should handle errors gracefully"

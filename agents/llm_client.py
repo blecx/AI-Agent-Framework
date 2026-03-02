@@ -78,7 +78,8 @@ class LLMClientFactory:
     _shared_request_throttle: Optional[_LLMRequestThrottle] = None
     _shared_request_throttle_key: Optional[tuple[float, float]] = None
     _default_role_models = {
-        "planning": "openai/gpt-5.2",
+        # gpt-5.2 does not exist on GitHub Models; use gpt-4o as the capable default.
+        "planning": "openai/gpt-4o",
         "coding": "openai/gpt-4o-mini",
         "review": "openai/gpt-4o-mini",
     }
@@ -399,7 +400,7 @@ class LLMClientFactory:
         Get recommended model for autonomous agent work.
 
         For planning/execution split:
-        - planning: GPT-5 class model (default: openai/gpt-5.2)
+        - planning: capable model (default: openai/gpt-4o)
         - coding/review: free-tier capable smaller models (default: openai/gpt-4o-mini)
 
         Returns:
