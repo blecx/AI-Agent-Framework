@@ -5,8 +5,21 @@ Contains all Pydantic models for artifact templates.
 Following DDD principles: domain layer, SRP, no infrastructure dependencies.
 """
 
+import warnings
+
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Dict, Any, Optional
+
+# Suppress Pydantic v2 UserWarning about the 'schema' field name shadowing the
+# legacy Pydantic v1 .schema() class method.  The field is intentionally named
+# 'schema' to match the JSON/API contract; protected_namespaces=() already
+# opted out of namespace guards, but this specific legacy-method warning
+# requires an explicit filter.
+warnings.filterwarnings(
+    "ignore",
+    message=".*Field name.*schema.*shadows an attribute in parent.*BaseModel.*",
+    category=UserWarning,
+)
 
 from ..shared.validators import validate_enum_value, validate_dict_structure
 
