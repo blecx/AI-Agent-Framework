@@ -208,7 +208,7 @@ async def test_route_returns_routing_decision(mock_mcp):
     assert decision.run_id == "run-abc-123"
     assert decision.issue_number == 42
     assert decision.repo == "owner/repo"
-    assert decision.model_tier in ("mini", "full")
+    assert decision.coder_model_tier in ("mini", "full")
     assert 0 <= decision.complexity_score <= 10
 
 
@@ -222,7 +222,7 @@ async def test_route_low_complexity_assigns_mini(mock_mcp):
     ]
     agent = RouterAgent(mock_mcp)
     decision = await agent.route(1, "Fix typo", "Fix typo in README.md", "r/r")
-    assert decision.model_tier == "mini"
+    assert decision.coder_model_tier == "mini"
     assert decision.complexity_score <= 5
 
 
@@ -242,7 +242,7 @@ async def test_route_high_complexity_assigns_full(mock_mcp):
     ]
     agent = RouterAgent(mock_mcp)
     decision = await agent.route(99, "Complex refactor", body, "r/r")
-    assert decision.model_tier == "full"
+    assert decision.coder_model_tier == "full"
     assert decision.complexity_score >= 6
 
 

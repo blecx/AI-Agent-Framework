@@ -36,8 +36,9 @@ class RoutingDecision:
     issue_number: int
     repo: str
     complexity_score: int
-    model_tier: str                    # "mini" | "full"
+    coder_model_tier: str              # "mini" | "full"
     score_breakdown: dict[str, Any]   # per-dimension scores from ComplexityScorer
+    planning_model_tier: str = "full"  # always premium for planning
     similar_issues: list[dict[str, Any]] = field(default_factory=list)
     memory_adjustment: int = 0        # ±adjustment applied from memory lookup
     estimated_minutes: Optional[int] = None
@@ -125,7 +126,7 @@ class RouterAgent:
             issue_number=issue_number,
             repo=repo,
             complexity_score=raw_score,
-            model_tier=tier,
+            coder_model_tier=tier,
             score_breakdown={
                 "file_count": breakdown.file_count_score,
                 "cross_service": breakdown.cross_service_score,

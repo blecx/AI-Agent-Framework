@@ -160,7 +160,7 @@ class MaestroOrchestrator:
             # ── 2. Code ───────────────────────────────────────────────
             coder = CoderAgent(
                 mcp,
-                model_tier=decision.model_tier,
+                model_tier=decision.coder_model_tier,
                 llm_client=self._llm,
                 workspace_root=self._root,
             )
@@ -172,7 +172,7 @@ class MaestroOrchestrator:
                     repo=repo,
                     run_id=decision.run_id,
                     complexity_score=decision.complexity_score,
-                    model_tier=decision.model_tier,
+                    model_tier=decision.coder_model_tier,
                     error=coder_result.error,
                 )
 
@@ -205,7 +205,7 @@ class MaestroOrchestrator:
                 pr_url=pr_url,
                 files_changed=coder_result.files_changed,
                 complexity_score=decision.complexity_score,
-                model_tier=decision.model_tier,
+                model_tier=decision.coder_model_tier,
                 tests_passed=coder_result.tests_passed,
             )
 
@@ -263,13 +263,13 @@ class MaestroOrchestrator:
         tags = [
             repo,
             f"issue-{issue_number}",
-            f"tier-{decision.model_tier}",
+            f"tier-{decision.coder_model_tier}",
             f"score-{decision.complexity_score}",
             outcome,
         ]
         insight = (
             f"Issue #{issue_number} in {repo}: "
-            f"complexity={decision.complexity_score} ({decision.model_tier}), "
+            f"complexity={decision.complexity_score} ({decision.coder_model_tier}), "
             f"outcome={outcome}, "
             f"files={len(coder_result.files_changed)}"
             + (f", pr={pr_url}" if pr_url else "")
@@ -279,7 +279,7 @@ class MaestroOrchestrator:
                 "issue_number": issue_number,
                 "repo": repo,
                 "complexity_score": decision.complexity_score,
-                "model_used": decision.model_tier,
+                "model_used": decision.coder_model_tier,
                 "outcome": outcome,
                 "tags": tags,
                 "insight": insight,

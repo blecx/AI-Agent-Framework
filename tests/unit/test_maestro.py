@@ -164,7 +164,7 @@ class TestStoreLesson:
         orq = MaestroOrchestrator()
         decision = RoutingDecision(
             run_id="r1", issue_number=5, repo="x/y",
-            complexity_score=3, model_tier="mini",
+            complexity_score=3, coder_model_tier="mini",
             score_breakdown={},
         )
         coder_result = CoderResult(run_id="r1", tests_passed=True, files_changed=["a.py"])
@@ -186,7 +186,7 @@ class TestStoreLesson:
         orq = MaestroOrchestrator()
         decision = RoutingDecision(
             run_id="r1", issue_number=5, repo="x/y",
-            complexity_score=3, model_tier="mini",
+            complexity_score=3, coder_model_tier="mini",
             score_breakdown={},
         )
         coder_result = CoderResult(run_id="r1", tests_passed=False)
@@ -210,7 +210,7 @@ class TestOrchestratorPipeline:
             issue_number=42,
             repo="x/y",
             complexity_score=4,
-            model_tier="mini",
+            coder_model_tier="mini",
             score_breakdown={"file_count_score": 2},
         )
         coder_result = CoderResult(
@@ -260,7 +260,7 @@ class TestOrchestratorPipeline:
             issue_number=1,
             repo="x/y",
             complexity_score=2,
-            model_tier="mini",
+            coder_model_tier="mini",
             score_breakdown={},
         )
         coder_result = CoderResult(
@@ -297,7 +297,7 @@ class TestOrchestratorPipeline:
             issue_number=7,
             repo="x/y",
             complexity_score=5,
-            model_tier="mini",
+            coder_model_tier="mini",
             score_breakdown={},
         )
         coder_result = CoderResult(run_id="run-err", error="LLM quota exceeded")
