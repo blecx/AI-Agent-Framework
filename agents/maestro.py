@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 from agents.mcp_client import MCPMultiClient
 from agents.router_agent import RouterAgent, RoutingDecision
+from agents.planner_agent import PlannerAgent
 from agents.coder_agent import CoderAgent, CoderResult
 
 
@@ -156,6 +157,15 @@ class MaestroOrchestrator:
                 repo=repo,
                 changed_files=changed_files,
             )
+
+            # ── 1.5. Plan ─────────────────────────────────────────────
+            planner = PlannerAgent(
+                mcp,
+                model_tier=decision.planning_model_tier,
+                llm_client=self._llm,
+                workspace_root=self._root,
+            )
+            await planner.run(decision.run_id, issue_body)
 
             # ── 2. Code ───────────────────────────────────────────────
             coder = CoderAgent(
