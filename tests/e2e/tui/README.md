@@ -76,6 +76,26 @@ for i in 1 2 3; do
 done
 ```
 
+### Run Audit Fix-Cycle Scenario (Deterministic)
+
+The audit fix-cycle scenario validates the full `audit → detect issues → fix → re-audit → clean`
+state transition using deterministic, state-based assertions (no `sleep()` calls).
+
+```bash
+# Run audit fix-cycle scenario tests
+TERM=xterm-256color pytest tests/e2e/tui -k audit -m tui -q
+
+# Acceptance check: run 3 consecutive times to confirm determinism
+for i in 1 2 3; do
+  TERM=xterm-256color pytest tests/e2e/tui -k audit -m tui -q
+done
+```
+
+> **Note on markers**: Audit fix-cycle tests carry both `@pytest.mark.tui` and
+> `@pytest.mark.e2e`.  The default `pytest.ini` addopts excludes `e2e` tests
+> from routine unit/integration runs via `-m "not gui and not e2e"`.  Use
+> `-m tui` (or `-m "tui and e2e"`) on the command line to run them explicitly.
+
 ### Run Workflow Spine Scenario (Deterministic)
 
 The spine scenario is the canonical "happy-path" backbone test: project creation
@@ -274,6 +294,7 @@ pytest tests/e2e/tui/ -v --tb=short --maxfail=3
 
 - [ ] Extend `tui_workspace` with artifact scaffolding helpers (requires TUI artifact commands)
 - [x] Add full proposal apply/reject assertions — completed in `test_proposal_review.py` (S3R-BE-03)
+- [x] Add audit fix-cycle deterministic scenario — completed in `test_audit_fix_cycle.py` (S3R-BE-04)
 - [ ] Add RAID item management tests (requires TUI raid commands)
 - [ ] Parallel test execution (pytest-xdist)
 - [ ] Test duration tracking and alerting
