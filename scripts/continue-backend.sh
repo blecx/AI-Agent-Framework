@@ -159,9 +159,17 @@ fi
 
 if [[ "$MAX_ISSUES" -gt "$MAX_ISSUES_CAP" ]]; then
   echo "Requested --max-issues=$MAX_ISSUES exceeds hard baseline ($MAX_ISSUES_CAP)."
-  read -r -p "Override baseline and continue with $MAX_ISSUES issues? (y/N): " override_cap
-  if [[ ! "$override_cap" =~ ^[Yy]$ ]]; then
-    echo "Cancelled. Re-run with --max-issues $MAX_ISSUES_CAP or confirm override."
+  if [[ "${CONTINUE_PHASE_ASSUME_YES:-}" == "1" ]]; then
+    echo "CONTINUE_PHASE_ASSUME_YES=1: overriding baseline without prompt."
+  elif [[ -t 0 ]]; then
+    read -r -p "Override baseline and continue with $MAX_ISSUES issues? (y/N): " override_cap
+    if [[ ! "$override_cap" =~ ^[Yy]$ ]]; then
+      echo "Cancelled. Re-run with --max-issues $MAX_ISSUES_CAP or confirm override."
+      exit 1
+    fi
+  else
+    echo "Non-interactive stdin; cannot prompt for override confirmation." >&2
+    echo "Re-run with --max-issues $MAX_ISSUES_CAP, or set CONTINUE_PHASE_ASSUME_YES=1 to override." >&2
     exit 1
   fi
 fi
@@ -510,7 +518,7 @@ while true; do
 
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "[dry-run] Would run: ./scripts/work-issue.py --issue $issue --create-split-issues"
-    echo "[dry-run] Would run: ./scripts/prmerge $issue"
+    echo "[dry-run] Would run: PRMERGE_ASSUME_YES=1 ./scripts/prmerge $issue"
   else
     set +e
     run_work_issue_with_retry "$issue"
@@ -525,7 +533,7 @@ while true; do
       exit "$work_rc"
     fi
 
-    ./scripts/prmerge "$issue"
+    PRMERGE_ASSUME_YES=1 ./scripts/prmerge "$issue"
   fi
 
   count=$((count + 1))
