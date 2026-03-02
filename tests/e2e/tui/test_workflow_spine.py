@@ -1,23 +1,32 @@
 """
 TUI E2E Test: Workflow Spine
 
-Tests the complete workflow from project creation through audit validation.
+Deterministic backbone scenario: project creation → command execution → artifact
+verification.  No arbitrary sleep() calls — every assertion waits on observable
+state transitions or API responses.
 
-Scenario:
-1. Create project via TUI
-2. Generate PMP/RAID artifacts via TUI
-3. Edit an artifact (manual proposal)
-4. Create and apply proposal via TUI
-5. Run audit via TUI
-6. Verify audit results show compliance
+Scenario
+--------
+1. Backend health check (validates API connectivity)
+2. Create project via TUI
+3. List projects (assert deterministic output)
+4. Verify workspace paths resolve correctly
 
-This test validates the core "happy path" workflow spine using only TUI commands.
+These tests are marked @pytest.mark.tui and @pytest.mark.e2e.  They are
+intentionally excluded from the default pytest run (addopts = -m "not e2e") and
+must be run explicitly::
+
+    pytest tests/e2e/tui -k workflow_spine -m tui -q
+
+The `tui` fixture skips automatically when the TUI binary is unavailable so that
+CI does not fail on environments lacking the CLI.
 """
 
 import pytest
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_workflow_spine_full_cycle(tui, unique_project_key):
     """Test complete workflow: create → generate → edit → propose → apply → audit."""
 
@@ -40,8 +49,9 @@ def test_workflow_spine_full_cycle(tui, unique_project_key):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_project_lifecycle_operations(tui, unique_project_key):
-    """Test basic project CRUD operations via TUI."""
+    """Deterministic CRUD lifecycle: create → list → verify idempotent output."""
 
     # Create
     result = tui.create_project(key=unique_project_key, name="Lifecycle Test Project")
@@ -60,8 +70,9 @@ def test_project_lifecycle_operations(tui, unique_project_key):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_deterministic_execution(tui, project_factory):
-    """Test that TUI commands execute deterministically (same input → same output)."""
+    """Verify same TUI command produces reproducible output across 3 consecutive calls (no sleep)."""
 
     # Run health check multiple times
     results = [tui.health_check() for _ in range(3)]

@@ -60,6 +60,27 @@ pytest tests/e2e/tui/test_workflow_spine.py -v
 pytest tests/e2e/tui/test_workflow_spine.py::test_workflow_spine_full_cycle -v
 ```
 
+### Run Workflow Spine Scenario (Deterministic)
+
+The spine scenario is the canonical "happy-path" backbone test: project creation
+→ command execution → deterministic output verification.  It contains **no
+arbitrary `sleep()` calls** — all assertions target observable API state.
+
+```bash
+# Run spine scenario tests (explicit marker override required — see note below)
+pytest tests/e2e/tui -k workflow_spine -m tui -q
+
+# Acceptance check: run 3 consecutive times to confirm determinism
+for i in 1 2 3; do
+  pytest tests/e2e/tui -k workflow_spine -m tui -q
+done
+```
+
+> **Note on markers**: Spine tests carry both `@pytest.mark.tui` and
+> `@pytest.mark.e2e`.  The default `pytest.ini` addopts excludes `e2e` tests
+> from routine unit/integration runs via `-m "not gui and not e2e"`.  Use
+> `-m tui` (or `-m "tui and e2e"`) on the command line to run them explicitly.
+
 ### Skip Slow Tests
 
 ```bash
