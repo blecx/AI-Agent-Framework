@@ -18,6 +18,7 @@ fi
 export WORK_ISSUE_COMPACT="${WORK_ISSUE_COMPACT:-1}"
 export WORK_ISSUE_MAX_PROMPT_CHARS="${WORK_ISSUE_MAX_PROMPT_CHARS:-3200}"
 export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
+export LLM_CONFIG_PATH="${LLM_CONFIG_PATH:-configs/llm.workflow.json}"
 
 # LLM-friendly defaults (GitHub Models can rate-limit aggressively; keep retries gentle).
 export WORK_ISSUE_LLM_MAX_ATTEMPTS="${WORK_ISSUE_LLM_MAX_ATTEMPTS:-10}"
@@ -28,9 +29,6 @@ export WORK_ISSUE_PLANNING_FALLBACK_MODEL="${WORK_ISSUE_PLANNING_FALLBACK_MODEL:
 export WORK_ISSUE_PLANNING_FALLBACK_AFTER_ATTEMPT="${WORK_ISSUE_PLANNING_FALLBACK_AFTER_ATTEMPT:-3}"
 export WORK_ISSUE_PLANNING_FALLBACK_MAX_ATTEMPTS="${WORK_ISSUE_PLANNING_FALLBACK_MAX_ATTEMPTS:-6}"
 export WORK_ISSUE_PLANNING_FALLBACK_PROMPT_CHARS="${WORK_ISSUE_PLANNING_FALLBACK_PROMPT_CHARS:-1400}"
-
-# Unbuffered Python output helps long-running loops show progress promptly.
-export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
 
 # GitHub Models can enforce burst/secondary throttles even at low average RPS.
 # Default to a conservative outbound LLM pace for this long-running loop.
@@ -222,6 +220,7 @@ echo "📝 Logging to: $LOG_FILE"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 count=0
+last_issue=""
 
 while true; do
   issue=""
@@ -238,6 +237,12 @@ while true; do
     echo "No open backend step:3 issues available; stopping phase-3 loop."
     break
   fi
+
+  if [[ "$DRY_RUN" == "1" && "$issue" == "$last_issue" ]]; then
+    echo "Dry-run selected the same issue (#$issue) again; stopping to avoid duplicate preview output."
+    break
+  fi
+  last_issue="$issue"
 
   echo "============================================================"
   echo "/continue-phase-3 :: Processing Backend Issue #$issue"

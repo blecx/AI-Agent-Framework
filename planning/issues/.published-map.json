@@ -33,6 +33,50 @@
       "title": "Phase 3 \u2014 Align client UX evidence checks with requirement-gap contract",
       "title_hash": "c73a2c960d5f"
     },
+    "blecx/AI-Agent-Framework-Client|S3R-UX-01": {
+      "issue_number": 267,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/267",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-UX-01",
+      "status": "created",
+      "title": "Step 3R \u2014 Client E2E deterministic fixture baseline",
+      "title_hash": "165d0c6cbe60"
+    },
+    "blecx/AI-Agent-Framework-Client|S3R-UX-02": {
+      "issue_number": 268,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/268",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-UX-02",
+      "status": "created",
+      "title": "Step 3R \u2014 Client form validation consistency pass",
+      "title_hash": "de11c2f78bcb"
+    },
+    "blecx/AI-Agent-Framework-Client|S3R-UX-03": {
+      "issue_number": 269,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/269",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-UX-03",
+      "status": "created",
+      "title": "Step 3R \u2014 Client API error fallback consistency",
+      "title_hash": "329279b17186"
+    },
+    "blecx/AI-Agent-Framework-Client|S3R-UX-04": {
+      "issue_number": 270,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework-Client/issues/270",
+      "repo": "blecx/AI-Agent-Framework-Client",
+      "repo_alias": "AI-Agent-Framework-Client",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-UX-04",
+      "status": "created",
+      "title": "Step 3R \u2014 Client test-doc freshness CI check",
+      "title_hash": "984ac1c131ac"
+    },
     "blecx/AI-Agent-Framework|P2-BE-01": {
       "issue_number": 375,
       "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/375",
@@ -109,6 +153,105 @@
       "status": "created",
       "title": "Phase 3 \u2014 Align prompt modules and workflow docs to single UX authority contract",
       "title_hash": "54289fec2534"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-01": {
+      "issue_number": 680,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/680",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-01",
+      "status": "created",
+      "title": "Step 3R \u2014 Establish deterministic TUI E2E fixture baseline",
+      "title_hash": "252e51408ba5"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-02": {
+      "issue_number": 681,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/681",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-02",
+      "status": "created",
+      "title": "Step 3R \u2014 TUI E2E spine scenario stabilization",
+      "title_hash": "7168959fa962"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-03": {
+      "issue_number": 682,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/682",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-03",
+      "status": "created",
+      "title": "Step 3R \u2014 Proposal apply/review E2E stabilization",
+      "title_hash": "466bc0e83bc5"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-04": {
+      "issue_number": 683,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/683",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-04",
+      "status": "created",
+      "title": "Step 3R \u2014 Audit fix-cycle E2E stabilization",
+      "title_hash": "dd0bdcc7e8b6"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-05": {
+      "issue_number": 684,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/684",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-05",
+      "status": "created",
+      "title": "Step 3R \u2014 Audit rule: cross-reference consistency",
+      "title_hash": "3357ca10f837"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-06": {
+      "issue_number": 685,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/685",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-06",
+      "status": "created",
+      "title": "Step 3R \u2014 Audit rule: date-window consistency",
+      "title_hash": "fc743c9f1a84"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-07": {
+      "issue_number": 686,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/686",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-07",
+      "status": "created",
+      "title": "Step 3R \u2014 Deterministic diff ordering and normalization",
+      "title_hash": "e5d8501c8b4f"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-08": {
+      "issue_number": 687,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/687",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-08",
+      "status": "created",
+      "title": "Step 3R \u2014 Backend test-doc freshness checker script",
+      "title_hash": "b6ed726531d6"
+    },
+    "blecx/AI-Agent-Framework|S3R-BE-09": {
+      "issue_number": 688,
+      "issue_url": "https://github.com/blecx/AI-Agent-Framework/issues/688",
+      "repo": "blecx/AI-Agent-Framework",
+      "repo_alias": "AI-Agent-Framework",
+      "source_file": "planning/issues/step-3.yml",
+      "source_id": "S3R-BE-09",
+      "status": "created",
+      "title": "Step 3R \u2014 Backend CI wiring for Step 3 quality checks",
+      "title_hash": "ffc79ddb1d7c"
     },
     "blecx/AI-Agent-Framework|S4-BE-01": {
       "issue_number": 481,
