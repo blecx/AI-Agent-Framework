@@ -168,6 +168,11 @@ Token Budget Mode:
     if args.llm_config:
         os.environ["LLM_CONFIG_PATH"] = args.llm_config
 
+    os.environ.setdefault("WORK_ISSUE_PLANNING_FALLBACK_MODEL", "openai/gpt-4o-mini")
+    os.environ.setdefault("WORK_ISSUE_PLANNING_FALLBACK_AFTER_ATTEMPT", "3")
+    os.environ.setdefault("WORK_ISSUE_PLANNING_FALLBACK_MAX_ATTEMPTS", "6")
+    os.environ.setdefault("WORK_ISSUE_PLANNING_FALLBACK_PROMPT_CHARS", "1400")
+
     archive_enabled = (
         not args.no_goal_archive
         and os.environ.get("WORK_ISSUE_GOAL_ARCHIVE", "1") != "0"
@@ -270,8 +275,7 @@ Token Budget Mode:
             for created_issue in created:
                 print(f"- {created_issue}")
             print("⏸️  Execution paused after split issue creation.")
-            exit_code = 2
-            return
+            raise SystemExit(2)
 
         # Interactive mode
         if args.interactive and success:

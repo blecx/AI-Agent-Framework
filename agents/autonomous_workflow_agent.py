@@ -18,6 +18,7 @@ import asyncio
 import json
 import os
 import re
+import random
 import subprocess
 import sys
 from datetime import datetime
@@ -61,6 +62,11 @@ class AutonomousWorkflowAgent:
         self.last_split_recommendation: str = ""
         self.last_ux_feedback: str = ""
         self.last_ux_validation_error: str = ""
+        self._system_instructions: str = ""
+        self._planning_tools = []
+        self._execution_tools = []
+        self._planning_model_id: str = ""
+        self._planning_fallback_applied: bool = False
 
         # Load project context
         self.project_instructions = self._load_copilot_instructions()
@@ -335,6 +341,7 @@ class AutonomousWorkflowAgent:
 
         # Build system instructions
         system_instructions = self._build_system_instructions()
+        self._system_instructions = system_instructions
 
         # Create role-based chat clients
         print("🔗 Connecting LLM clients (planning/coding/review)...")
@@ -345,6 +352,8 @@ class AutonomousWorkflowAgent:
         planning_model_id = LLMClientFactory.get_model_id_for_role("planning")
         coding_model_id = LLMClientFactory.get_model_id_for_role("coding")
         review_model_id = LLMClientFactory.get_model_id_for_role("review")
+        self._planning_model_id = planning_model_id
+        self._planning_fallback_applied = False
 
         planning_chat = OpenAIChatClient(
             async_client=planning_client, model_id=planning_model_id
@@ -363,6 +372,8 @@ class AutonomousWorkflowAgent:
             tools = get_all_tools()
             planning_tools = tools
             execution_tools = tools
+        self._planning_tools = planning_tools
+        self._execution_tools = execution_tools
         print(f"🧱 Prompt mode: {'compact' if self.compact_mode else 'full'}")
 
         self.planning_agent = ChatAgent(
@@ -393,6 +404,45 @@ class AutonomousWorkflowAgent:
         self.thread = self.coding_thread
 
         print("✅ Agent initialized and ready\n")
+
+    def _is_planning_stream(self, agent: Optional[ChatAgent], label: str) -> bool:
+        if agent is self.planning_agent:
+            return True
+        return "planning" in (label or "").lower()
+
+    def _switch_planning_model_for_rate_limit(self, fallback_model_id: str) -> bool:
+        fallback_model = (fallback_model_id or "").strip()
+        if not fallback_model:
+            return False
+
+        current_model = self._planning_model_id or LLMClientFactory.get_model_id_for_role(
+            "planning"
+        )
+        if fallback_model == current_model:
+            return False
+
+        if self._planning_fallback_applied:
+            return False
+
+        try:
+            planning_client = LLMClientFactory.create_client_for_role("planning")
+            planning_chat = OpenAIChatClient(
+                async_client=planning_client,
+                model_id=fallback_model,
+            )
+            self.planning_agent = ChatAgent(
+                chat_client=planning_chat,
+                name="PlanningAgent",
+                instructions=self._system_instructions or self._build_system_instructions(),
+                tools=self._planning_tools or get_shell_only_tools(),
+            )
+            self.planning_thread = self.planning_agent.get_new_thread()
+            self._planning_model_id = fallback_model
+            self._planning_fallback_applied = True
+            return True
+        except Exception as exc:
+            print(f"⚠️  Failed to switch planning model fallback: {exc}")
+            return False
 
     def _build_system_instructions(self) -> str:
         """Build token-budget-safe system instructions for the agent."""
@@ -447,14 +497,175 @@ Mode:
         print(f"🧩 {label}")
         print(f"{'=' * 70}\n")
 
-        chunks = []
-        print("🤖 Agent: ", end="", flush=True)
-        async for chunk in agent.run_stream(prompt, thread=thread):
-            if chunk.text:
-                chunks.append(chunk.text)
-                print(chunk.text, end="", flush=True)
-        print("\n")
-        return "".join(chunks)
+        def _parse_int_env(name: str, default: int) -> int:
+            raw = (os.environ.get(name) or "").strip()
+            try:
+                value = int(raw)
+                return value if value > 0 else default
+            except ValueError:
+                return default
+
+        def _parse_float_env(name: str, default: float) -> float:
+            raw = (os.environ.get(name) or "").strip()
+            try:
+                value = float(raw)
+                return value if value > 0 else default
+            except ValueError:
+                return default
+
+        def _collect_exception_text(exc: BaseException, max_depth: int = 6) -> str:
+            parts: list[str] = []
+            cur: BaseException | None = exc
+            depth = 0
+            while cur is not None and depth < max_depth:
+                parts.append(str(cur))
+                cur = getattr(cur, "__cause__", None) or getattr(cur, "__context__", None)
+                depth += 1
+            return "\n".join(p for p in parts if p)
+
+        def _is_rate_limited(exc: Exception) -> bool:
+            text = _collect_exception_text(exc).lower()
+            # Normalize: collapse whitespace + also remove it entirely to catch wrapped line breaks.
+            collapsed = " ".join(text.split())
+            no_space = "".join(text.split())
+
+            # Most common markers from GitHub Models / OpenAI wrappers.
+            return any(
+                token in collapsed
+                for token in (
+                    "rate limit",
+                    "ratelimit",
+                    "too many requests",
+                    "http 429",
+                    " 429 ",
+                    "429",
+                )
+            ) or any(
+                token in no_space
+                for token in (
+                    "toomanyrequests",
+                    "ratelimit",
+                    "http429",
+                    "429",
+                )
+            )
+
+        def _is_token_limit_error(exc: Exception) -> bool:
+            text = _collect_exception_text(exc).lower()
+            collapsed = " ".join(text.split())
+            return any(
+                token in collapsed
+                for token in (
+                    "tokens_limit_reached",
+                    "request body too large",
+                    "max size",
+                    "error code: 413",
+                    "413",
+                )
+            )
+
+        max_attempts = _parse_int_env("WORK_ISSUE_LLM_MAX_ATTEMPTS", 6)
+        base_backoff = _parse_float_env("WORK_ISSUE_LLM_BACKOFF_SECONDS", 20.0)
+        max_backoff = _parse_float_env("WORK_ISSUE_LLM_MAX_BACKOFF_SECONDS", 300.0)
+        jitter_ratio = min(
+            max(_parse_float_env("WORK_ISSUE_LLM_BACKOFF_JITTER", 0.15), 0.0),
+            1.0,
+        )
+        planning_fallback_model = (
+            os.environ.get("WORK_ISSUE_PLANNING_FALLBACK_MODEL", "openai/gpt-4o-mini")
+            or ""
+        ).strip()
+        planning_fallback_after_attempt = _parse_int_env(
+            "WORK_ISSUE_PLANNING_FALLBACK_AFTER_ATTEMPT", 3
+        )
+        planning_fallback_max_attempts = _parse_int_env(
+            "WORK_ISSUE_PLANNING_FALLBACK_MAX_ATTEMPTS", 6
+        )
+        planning_fallback_prompt_chars = _parse_int_env(
+            "WORK_ISSUE_PLANNING_FALLBACK_PROMPT_CHARS", 1400
+        )
+        current_planning_prompt_chars = planning_fallback_prompt_chars
+
+        attempt = 1
+        last_exc: Optional[Exception] = None
+        while attempt <= max_attempts:
+            chunks: list[str] = []
+            # Avoid duplicating partial output across retries.
+            if attempt == 1:
+                local_thread = thread
+            else:
+                local_thread = agent.get_new_thread()
+
+            try:
+                print("🤖 Agent: ", end="", flush=True)
+                async for chunk in agent.run_stream(prompt, thread=local_thread):
+                    if chunk.text:
+                        chunks.append(chunk.text)
+                        print(chunk.text, end="", flush=True)
+                print("\n")
+                return "".join(chunks)
+            except Exception as exc:
+                last_exc = exc
+                if (
+                    _is_rate_limited(exc)
+                    and self._is_planning_stream(agent, label)
+                    and attempt >= planning_fallback_after_attempt
+                ):
+                    switched = self._switch_planning_model_for_rate_limit(
+                        planning_fallback_model
+                    )
+                    if switched and self.planning_agent is not None:
+                        print(
+                            "\n🔄 Planning model fallback activated due to repeated rate limits: "
+                            f"{self._planning_model_id}\n"
+                        )
+                        prompt = self._truncate_for_prompt(
+                            prompt,
+                            limit=current_planning_prompt_chars,
+                        )
+                        agent = self.planning_agent
+                        thread = self.planning_thread or self.planning_agent.get_new_thread()
+                        attempt = 1
+                        max_attempts = planning_fallback_max_attempts
+                        continue
+
+                if (
+                    _is_token_limit_error(exc)
+                    and self._is_planning_stream(agent, label)
+                ):
+                    current_planning_prompt_chars = max(
+                        300,
+                        current_planning_prompt_chars // 2,
+                    )
+                    prompt = self._truncate_for_prompt(
+                        prompt,
+                        limit=current_planning_prompt_chars,
+                    )
+                    print(
+                        "\n✂️  Planning prompt trimmed for token limits; "
+                        f"retrying with ~{current_planning_prompt_chars} chars.\n"
+                    )
+                    attempt = 1
+                    continue
+
+                # If this isn't a rate-limit style error, or we're out of retries, surface it.
+                if not _is_rate_limited(exc) or attempt >= max_attempts:
+                    raise
+
+                backoff = min(max_backoff, base_backoff * (2 ** (attempt - 1)))
+                jitter = random.uniform(0.0, backoff * jitter_ratio) if jitter_ratio else 0.0
+                sleep_seconds = backoff + jitter
+                print(
+                    f"\n⏳ LLM rate limit detected; retrying in {sleep_seconds:.1f}s "
+                    f"(attempt {attempt + 1}/{max_attempts})\n"
+                )
+                await asyncio.sleep(sleep_seconds)
+                attempt += 1
+
+        # Defensive fallback: should never reach here.
+        if last_exc is not None:
+            raise last_exc
+        return ""
 
     @property
     def learning_writes_disabled(self) -> bool:
@@ -714,6 +925,9 @@ Fixes: #{self.issue_number}
 
     async def _run_ux_gate(self, context_text: str, stage_label: str) -> str:
         """Run mandatory UX authority gate and return PASS/CHANGES decision."""
+        if not self.review_agent or not self.review_thread:
+            raise RuntimeError("Review agent not initialized. Call initialize() first.")
+
         ux_prompt = f"""You are acting as the blecs UX authority gate for Issue #{self.issue_number}.
 
 Stage: {stage_label}
@@ -1232,6 +1446,19 @@ Requirements:
             return True
 
         except Exception as e:
+            message = str(e).lower()
+            if any(
+                token in message
+                for token in [
+                    "too many requests",
+                    "rate limit",
+                    "ratelimit",
+                    "429",
+                ]
+            ):
+                # Let the caller's retry/backoff wrapper handle transient rate limits.
+                raise
+
             print(f"\n\n❌ Error during execution: {e}")
             import traceback
 
