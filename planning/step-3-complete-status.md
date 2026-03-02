@@ -1,263 +1,33 @@
-# Step 3: Planning Complete - Ready for Implementation
+# Step 3 (Recreated): Backlog Reset Status
 
-**Status:** ✅ **PLANNING COMPLETE** - All 6 issues ready, requirements validated, ready to start development
+**Status:** ✅ Recreated with smaller issues and explicit tags  
+**Date:** 2026-03-02
 
-**Date:** 2026-02-01  
-**Planning Duration:** 1 session  
-**Issues to Create:** 6 (3 backend + 3 client)  
-**Requirements Coverage:** 100% (6/6 requirements fully scoped)
+## What was reset
 
----
+- Old Step 3 planning artifacts were replaced with a new compact backlog definition.
+- The new spec decomposes work into smaller, execution-friendly slices.
+- Every new issue includes size + priority + status labels.
 
-## Summary
+## New issue shape
 
-Step 3 planning is **complete and ready for implementation**. All requirements have been:
+- Backend: 9 small issues (`S3R-BE-01` ... `S3R-BE-09`)
+- Client: 4 small issues (`S3R-UX-01` ... `S3R-UX-04`)
+- Total: 13 issues, mostly `size:S`, ordered by `status:ready` then `status:blocked`.
 
-1. ✅ Broken down into clear, implementable issues (M/L size)
-2. ✅ Organized for concurrent development (3 parallel phases)
-3. ✅ Documented with comprehensive acceptance criteria
-4. ✅ Validated against master plan (100% coverage)
-5. ✅ Quality-checked for completeness and accuracy
+## Tagging strategy
 
----
+- Shared: `step:3`
+- Backend track: `track:step3-backend`
+- Priority: `priority:P1`/`priority:P2`
+- Size: `size:S`
+- Execution order: `status:ready` for the first slice per track, all others `status:blocked`
 
-## All Issues Created ✅
+## Publish/Execution notes
 
-### Backend (blecx/AI-Agent-Framework)
-
-- [x] #85 - Step 3.01 — TUI-driven deterministic E2E test suite (backend)
-- [x] #92 - Step 3.02 — Enhanced cross-artifact audit rules + diff stability (backend)
-- [x] #93 - Step 3.03 — CI quality gates + documentation enforcement (backend)
-
-### Client (blecx/AI-Agent-Framework-Client)
-
-- [x] #110 - Step 3.04 — Client E2E test suite (Web UI)
-- [x] #111 - Step 3.05 — Client-side validation and error handling hardening (client)
-- [x] #112 - Step 3.06 — Client CI quality gates + documentation (client)
-
-**Total:** 6 issues = 3 backend + 3 client  
-**Status:** ✅ **ALL ISSUES CREATED** (2026-02-01)
-
----
-
-## Requirements Coverage: 100% ✅
-
-| #   | Requirement                | Issues         | Status  |
-| --- | -------------------------- | -------------- | ------- |
-| R1  | TUI E2E Test Suite         | #85 (BE)       | ✅ 100% |
-| R2  | Enhanced Audit Rules       | #92 (BE-part1) | ✅ 100% |
-| R3  | Diff Stability             | #92 (BE-part2) | ✅ 100% |
-| R4  | Client E2E Test Suite      | #110 (UX)      | ✅ 100% |
-| R5  | Client Validation & Errors | #111 (UX)      | ✅ 100% |
-| R6  | CI Quality Gates (Backend) | #93 (BE)       | ✅ 100% |
-| R6  | CI Quality Gates (Client)  | #112 (UX)      | ✅ 100% |
-
-**No gaps identified:** All quality hardening capabilities are scoped in the 6 issues.
-
----
-
-## Architecture Validation
-
-**Step 2 ↔ Step 3 Consistency:** ✅ **NO BREAKS**
-
-| Aspect           | Step 2                                           | Step 3                                         | Status        |
-| ---------------- | ------------------------------------------------ | ---------------------------------------------- | ------------- |
-| Domain Layer     | `domain/{templates,blueprints,proposals,audit}/` | No changes (test infrastructure uses existing) | ✅ Consistent |
-| Service Layer    | `services/{template,proposal,audit}/`            | Enhancements (audit rules, diff stability)     | ✅ Consistent |
-| API Layer        | `routers/{templates,proposals,artifacts,audit}/` | No new endpoints (quality hardening only)      | ✅ Consistent |
-| Testing Strategy | Unit → Integration → Basic E2E                   | **Enhanced:** Comprehensive deterministic E2E  | ✅ Enhanced   |
-| CI/CD            | Manual testing, no gates                         | **New:** CI quality gates enforcing standards  | ✅ Enhanced   |
-
-**Key principles maintained:**
-
-- Domain-Driven Design (DDD) - Test infrastructure follows DDD patterns
-- Single Responsibility Principle (SRP) - Test helpers focused on one task
-- Type Safety - Test fixtures are typed
-- No breaking changes - Step 3 enhances, doesn't replace
-
----
-
-## Implementation Plan
-
-### Phase 1: Testing Infrastructure (Weeks 1-2)
-
-**Concurrent work (2 devs):**
-
-```text
-Dev 1 (Backend):
-  Week 1: #85 part 1 (TUI automation framework, fixtures, helpers)
-  Week 2: #85 part 2 (E2E scenarios: workflow spine, proposal, audit fix)
-
-Dev 2 (Client):
-  Week 1-2: #110 (Playwright setup, page objects, full workflow E2E, visual regression)
-```
-
-**Deliverables:**
-
-- ✅ TUI E2E framework operational with 3 scenarios
-- ✅ Web UI E2E framework operational with full workflow coverage
-- ✅ Both frameworks integrated with CI (headless mode)
-- ✅ Test execution time acceptable (Backend < 5min, Client < 10min)
-
-**Success criteria:**
-
-- Tests run reliably (5 consecutive passes)
-- Documentation complete (`tests/README.md` updated)
-- CI integration working (automated execution on PRs)
-
----
-
-### Phase 2: Quality Hardening (Weeks 3-4)
-
-**Concurrent work (2 devs):**
-
-```text
-Dev 1 (Backend):
-  Week 3: #92 part 1 (9 enhanced audit rules + unit tests)
-  Week 4: #92 part 2 (Diff stability + conflict detection + property tests)
-
-Dev 2 (Client):
-  Week 3: #111 part 1 (Validation framework + real-time feedback)
-  Week 4: #111 part 2 (Error handling + accessibility + network recovery)
-```
-
-**Deliverables:**
-
-- ✅ 9 audit rules implemented and tested
-- ✅ Diff generation is deterministic (1000 iterations pass)
-- ✅ Concurrent proposals handled with conflict detection
-- ✅ Client validation matches backend schemas
-- ✅ Network errors handled gracefully with retry
-- ✅ Accessibility score ≥ 90 (Lighthouse)
-
-**Success criteria:**
-
-- All unit tests pass (80%+ coverage)
-- Integration tests cover all rule types and error scenarios
-- E2E tests validate complex workflows
-
----
-
-### Phase 3: CI Gates & Documentation (Week 5)
-
-**Concurrent work (2 devs):**
-
-```text
-Dev 1 (Backend):
-  Week 5: #93 (9 CI gates: coverage, docs, security, linting, performance)
-
-Dev 2 (Client):
-  Week 5: #112 (10 CI gates: coverage, bundle size, Lighthouse, visual regression)
-```
-
-**Deliverables:**
-
-- ✅ Backend CI configuration (`.github/workflows/ci-backend.yml`)
-- ✅ Client CI configuration (`.github/workflows/ci-client.yml`)
-- ✅ Coverage enforcement (80%+ for new code)
-- ✅ Documentation validation (fail if out of sync)
-- ✅ Security scanning (bandit, safety, npm audit)
-- ✅ Bundle size limits enforced (< 500KB gzipped)
-- ✅ Lighthouse CI integration (performance ≥ 80, accessibility ≥ 90)
-
-**Success criteria:**
-
-- CI fails appropriately for missing tests or docs
-- Clear failure messages with remediation steps
-- Fast feedback (< 10min total CI time)
-
----
-
-### Total Estimated Time: 5 weeks (with 2 devs)
-
-**Critical path:**
-
-- Phase 1 → Phase 2 → Phase 3 (sequential, but internal work is concurrent)
-- CI gates (Phase 3) depend on E2E tests (Phase 1) being operational
-
-**Resource allocation:**
-
-- 1 backend dev: BE-17 → BE-18 → BE-19
-- 1 frontend dev: UX-17 → UX-18 → UX-19
-
----
-
-## Dependency Analysis
-
-### Issue Dependencies
-
-```text
-Backend:
-  #85 (TUI E2E) - No dependencies (foundational)
-    ↓
-  #92 (Audit + Diff) - Concurrent with #85 week 2 (uses existing APIs)
-    ↓
-  #93 (CI gates) - Depends on #85 (needs tests to validate)
-
-Client:
-  #110 (Web E2E) - No dependencies (uses existing Step 2 APIs)
-    ↓
-  #111 (Validation + Errors) - Concurrent with #110 week 2 (uses existing components)
-    ↓
-  #112 (CI gates) - Depends on #110 (needs tests to validate)
-```
-
-**No cross-repo blocking:** Backend and client work streams are independent.
-
-**Concurrency opportunities:**
-
-- Phase 1: Both devs working on E2E frameworks (fully parallel)
-- Phase 2: Both devs working on quality hardening (fully parallel)
-- Phase 3: Both devs working on CI gates (fully parallel)
-
----
-
-## Quality Validation
-
-### Completeness Checklist
-
-**Requirements:**
-
-- [x] All 6 requirements have clear acceptance criteria
-- [x] All requirements mapped to specific issues
-- [x] Dependencies identified and documented
-- [x] Scope boundaries clear (in/out of Step 3)
-- [x] Validation commands provided for all requirements
-- [x] Success criteria defined (testable)
-
-**Issues (to be created):**
-
-- [x] Each issue template includes Goal, Scope, Acceptance Criteria
-- [x] Each issue has Technical Approach and Testing Requirements
-- [x] Each issue has Documentation Updates section
-- [x] Each issue has Estimated Effort (M/L)
-- [x] Each issue has appropriate Labels (step:3, backend/client, tests/e2e, ci/cd)
-
-**Architecture:**
-
-- [x] DDD principles maintained (test infrastructure follows domain patterns)
-- [x] SRP for test helpers (one responsibility per helper class)
-- [x] Type safety (typed test fixtures, no `any` types)
-- [x] Service pattern (TUI automation service, page object service)
-- [x] No breaking changes to Step 2 APIs or structure
-
-**Documentation:**
-
-- [x] STEP-3-REQUIREMENTS.md complete (26 pages, comprehensive)
-- [x] step-3-requirements-coverage.md complete (100% coverage validated)
-- [x] step-3-complete-status.md complete (this document)
-- [x] Implementation plan clear (3 phases, 5 weeks, 2 devs)
-
-**Cross-Repo Coordination:**
-
-- [x] Backend and client work streams identified
-- [x] No blocking cross-repo dependencies
-- [x] Shared standards documented (80% coverage, documentation validation)
-- [x] Coordination points identified (weekly sync, schema alignment)
-
----
-
-## Risk Assessment
+- Source of truth: `planning/issues/step-3.yml`
+- Backend publisher path: `scripts/continue-phase-3.sh` → `scripts/publish_issues.py --paths planning/issues/step-3.yml --repo blecx/AI-Agent-Framework --apply`
+- Existing open Step 3 issues from prior backlog should be closed as superseded before executing the new queue.
 
 ### Risk 1: Flaky E2E Tests
 

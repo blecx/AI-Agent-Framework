@@ -1,245 +1,544 @@
-# Step 3 — Hardening with strict token-budgeted issue specs.
-# Constraint: each issue body stays compact to fit free-tier execution models.
+# Step 3 (Recreated) — smaller, execution-friendly issues with strict tagging.
 
 AI-Agent-Framework:
-  - number: "S3-BE-01"
+  - number: "S3R-BE-01"
     size_estimate: "S"
-    title: "Step 3 — TUI deterministic E2E spine baseline (backend)"
+    title: "Step 3R — Establish deterministic TUI E2E fixture baseline"
     labels:
       - step:3
+      - track:step3-backend
       - tests/e2e
       - backend/tui
       - size:S
+      - priority:P1
+      - status:ready
     body: |
       ## Goal / Problem Statement
-      Add a minimal deterministic TUI E2E baseline so CI can run one stable end-to-end workflow.
+      Create deterministic fixture/setup primitives for backend TUI E2E tests to remove flaky environment variance.
 
       ## Scope
       ### In Scope
-      - Add one backbone E2E scenario under `tests/e2e/tui/`.
-      - Add deterministic helper fixture/wait utilities (no sleep-based timing).
-      - Add `tests/README.md` section for TUI E2E run instructions.
+      - Add deterministic project/workspace fixture utilities for TUI E2E tests.
+      - Remove arbitrary sleeps from fixture bootstrap paths.
+      - Provide one helper API for setup/teardown used by subsequent Step 3 tests.
       ### Out of Scope
-      - Full multi-scenario suite expansion.
-      - New product features.
+      - Full scenario implementation.
+      - CI policy changes.
       ### Dependencies
-      - Existing TUI command flows.
+      - Existing `tests/e2e/tui` structure.
 
       ## Acceptance Criteria
-      - [ ] `tests/e2e/tui/test_workflow_spine.py` exists and runs in CI.
-      - [ ] Test is deterministic across 3 consecutive local runs.
-      - [ ] `tests/README.md` includes setup + run command.
+      - [ ] Fixture helper module exists and is reusable by multiple test files.
+      - [ ] Setup/teardown is deterministic across 3 consecutive local runs.
+      - [ ] No new `sleep()` calls are introduced in fixture setup path.
 
       ## Technical Approach
-      - Create one focused workflow-spine test and shared deterministic helper.
-      - Keep fixtures local to `tests/e2e/tui/`.
+      - Introduce focused fixture helper and reuse existing test factories.
+      - Standardize temp path handling and cleanup lifecycle.
 
       ## Testing Requirements
-      - `pytest tests/e2e/tui/test_workflow_spine.py -q`
-      - `pytest tests/e2e/tui/test_workflow_spine.py -q -x`
+      - `pytest tests/e2e/tui -k fixture -q`
 
       ## Documentation Updates
-      - [ ] Update `tests/README.md` with TUI E2E baseline instructions.
+      - [ ] Add fixture usage note in `tests/README.md`.
 
       ## Cross-Repository Coordination
       None.
 
-  - number: "S3-BE-02"
+  - number: "S3R-BE-02"
     size_estimate: "S"
-    title: "Step 3 — Cross-artifact audit rule pack v1 (backend)"
+    title: "Step 3R — TUI E2E spine scenario stabilization"
     labels:
       - step:3
+      - track:step3-backend
+      - tests/e2e
+      - backend/tui
+      - size:S
+      - priority:P1
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Deliver a deterministic workflow-spine E2E scenario using the new fixture baseline.
+
+      ## Scope
+      ### In Scope
+      - Implement one backbone scenario with deterministic assertions.
+      - Replace timing-sensitive waits with state-based waits.
+      - Keep the scenario single-purpose and reproducible.
+      ### Out of Scope
+      - Proposal/audit fix-cycle scenarios.
+      - Broad scenario matrix expansion.
+      ### Dependencies
+      - S3R-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] One spine scenario passes 3 consecutive local runs.
+      - [ ] Scenario contains no arbitrary sleep-based waits.
+      - [ ] Failure output is actionable (clear assertion context).
+
+      ## Technical Approach
+      - Rework scenario execution with deterministic checkpoints.
+
+      ## Testing Requirements
+      - `pytest tests/e2e/tui -k workflow_spine -q`
+
+      ## Documentation Updates
+      - [ ] Document deterministic run command in `tests/README.md`.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-03"
+    size_estimate: "S"
+    title: "Step 3R — Proposal apply/review E2E stabilization"
+    labels:
+      - step:3
+      - track:step3-backend
+      - tests/e2e
+      - backend/tui
+      - size:S
+      - priority:P1
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Stabilize one proposal review/apply E2E path with deterministic state transitions.
+
+      ## Scope
+      ### In Scope
+      - Add one proposal review/apply scenario with stable checkpoints.
+      - Normalize assertions around proposal diff state.
+      - Reuse fixture baseline and avoid duplicate setup logic.
+      ### Out of Scope
+      - Conflict/multi-proposal matrix.
+      ### Dependencies
+      - S3R-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] Proposal scenario passes 3 consecutive runs.
+      - [ ] Assertions verify deterministic proposal state transitions.
+      - [ ] Setup logic reuses shared fixture helper.
+
+      ## Technical Approach
+      - Isolate scenario flow into deterministic helper steps.
+
+      ## Testing Requirements
+      - `pytest tests/e2e/tui -k proposal -q`
+
+      ## Documentation Updates
+      - [ ] Add proposal scenario command to `tests/README.md`.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-04"
+    size_estimate: "S"
+    title: "Step 3R — Audit fix-cycle E2E stabilization"
+    labels:
+      - step:3
+      - track:step3-backend
+      - tests/e2e
+      - backend/tui
+      - size:S
+      - priority:P1
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Stabilize one audit->fix->re-audit E2E flow for deterministic quality feedback loops.
+
+      ## Scope
+      ### In Scope
+      - Add deterministic audit fix-cycle scenario.
+      - Verify state transition from failing audit to passing audit.
+      - Keep test surface minimal and stable.
+      ### Out of Scope
+      - Full audit rule matrix.
+      ### Dependencies
+      - S3R-BE-01.
+
+      ## Acceptance Criteria
+      - [ ] Audit fix-cycle test passes 3 consecutive runs.
+      - [ ] Scenario validates deterministic before/after audit status.
+      - [ ] No sleep-based waits in scenario.
+
+      ## Technical Approach
+      - Reuse deterministic fixture utilities and explicit state checks.
+
+      ## Testing Requirements
+      - `pytest tests/e2e/tui -k audit -q`
+
+      ## Documentation Updates
+      - [ ] Add audit fix-cycle command to `tests/README.md`.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-05"
+    size_estimate: "S"
+    title: "Step 3R — Audit rule: cross-reference consistency"
+    labels:
+      - step:3
+      - track:step3-backend
       - backend/api/tui
       - size:S
+      - priority:P2
+      - status:blocked
     body: |
       ## Goal / Problem Statement
-      Implement a small first pack of cross-artifact audit checks with deterministic outputs.
+      Add one deterministic audit rule for cross-reference consistency across key artifacts.
 
       ## Scope
       ### In Scope
-      - Add 2-3 high-value rules (reference consistency + date consistency).
-      - Ensure deterministic error ordering/messages.
-      - Add unit tests for each new rule.
+      - Implement one cross-reference consistency rule.
+      - Add pass/fail unit tests for this rule.
+      - Ensure deterministic message ordering for this rule output.
       ### Out of Scope
-      - Full audit engine redesign.
-      - Bulk multi-project auditing.
+      - Additional rule families.
       ### Dependencies
-      - Existing audit service/rule interfaces.
+      - S3R-BE-02.
 
       ## Acceptance Criteria
-      - [ ] New rules execute in current audit flow.
-      - [ ] Rule outputs are deterministic for identical input.
-      - [ ] Unit tests cover pass/fail paths.
+      - [ ] Rule executes in current audit flow.
+      - [ ] Unit tests cover positive and negative cases.
+      - [ ] Output ordering is deterministic.
 
       ## Technical Approach
-      - Extend current audit rule registry with compact rule implementations.
-      - Normalize result sorting before return.
+      - Extend current audit rule registry with one focused rule implementation.
 
       ## Testing Requirements
-      - `pytest tests/unit -k "audit and cross" -q`
-      - `pytest tests/integration -k audit -q`
+      - `pytest tests/unit -k "audit and cross_reference" -q`
 
       ## Documentation Updates
-      - [ ] Add short rule summary to `docs/` audit documentation.
+      - [ ] Document rule behavior in audit docs.
 
       ## Cross-Repository Coordination
       None.
 
-  - number: "S3-BE-03"
+  - number: "S3R-BE-06"
     size_estimate: "S"
-    title: "Step 3 — Backend CI gate for test-doc freshness"
+    title: "Step 3R — Audit rule: date-window consistency"
     labels:
       - step:3
+      - track:step3-backend
+      - backend/api/tui
+      - size:S
+      - priority:P2
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Add one deterministic audit rule validating date-window consistency.
+
+      ## Scope
+      ### In Scope
+      - Implement one date-window consistency rule.
+      - Add targeted unit tests for pass/fail behavior.
+      - Keep rule output deterministic.
+      ### Out of Scope
+      - Date normalization redesign.
+      ### Dependencies
+      - S3R-BE-02.
+
+      ## Acceptance Criteria
+      - [ ] Rule is executed within existing audit pipeline.
+      - [ ] Unit tests cover boundary conditions.
+      - [ ] Messages are deterministic for identical inputs.
+
+      ## Technical Approach
+      - Add one focused rule with stable sort key.
+
+      ## Testing Requirements
+      - `pytest tests/unit -k "audit and date" -q`
+
+      ## Documentation Updates
+      - [ ] Add date consistency rule note in docs.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-07"
+    size_estimate: "S"
+    title: "Step 3R — Deterministic diff ordering and normalization"
+    labels:
+      - step:3
+      - track:step3-backend
+      - backend/api/tui
+      - size:S
+      - priority:P2
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Remove non-deterministic diff ordering for stable proposal previews.
+
+      ## Scope
+      ### In Scope
+      - Normalize deterministic ordering in diff output.
+      - Add focused tests for deterministic output across repeated runs.
+      - Keep existing diff format stable.
+      ### Out of Scope
+      - Full diff engine redesign.
+      ### Dependencies
+      - S3R-BE-03.
+
+      ## Acceptance Criteria
+      - [ ] Identical input yields identical diff ordering.
+      - [ ] Regression tests cover deterministic ordering.
+      - [ ] Existing public diff format remains compatible.
+
+      ## Technical Approach
+      - Add stable ordering normalization at diff assembly boundary.
+
+      ## Testing Requirements
+      - `pytest tests/unit -k "diff and deterministic" -q`
+
+      ## Documentation Updates
+      - [ ] Update diff determinism note in docs.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-08"
+    size_estimate: "S"
+    title: "Step 3R — Backend test-doc freshness checker script"
+    labels:
+      - step:3
+      - track:step3-backend
       - ci/cd
       - docs
       - size:S
+      - priority:P2
+      - status:blocked
     body: |
       ## Goal / Problem Statement
-      Prevent drift between backend test layout and `tests/README.md` by enforcing a CI gate.
+      Add a lightweight backend checker that fails when test docs drift from required sections.
 
       ## Scope
       ### In Scope
-      - Add a lightweight check script for required README sections/paths.
-      - Wire script into CI quality gates.
-      - Provide actionable failure messages.
+      - Implement one deterministic checker script for required test doc sections.
+      - Add clear remediation output.
+      - Keep checker focused on Step 3 test docs only.
       ### Out of Scope
-      - Full doc style linting platform.
-      - Cross-repo documentation checks.
+      - Full docs lint framework.
       ### Dependencies
-      - Existing backend CI workflow.
+      - S3R-BE-04.
 
       ## Acceptance Criteria
-      - [ ] CI fails when required test-doc sections are missing.
-      - [ ] CI passes when docs are aligned.
-      - [ ] Local command is documented for contributors.
+      - [ ] Checker fails on missing required sections.
+      - [ ] Checker passes on valid docs.
+      - [ ] Output includes actionable remediation.
 
       ## Technical Approach
-      - Add deterministic checker script under `scripts/`.
-      - Add focused CI step with explicit remediation text.
+      - Add small script under `scripts/` with deterministic checks.
 
       ## Testing Requirements
-      - `./.venv/bin/python scripts/<checker>.py`
-      - `pytest tests/unit -k "doc or checker" -q`
+      - `python scripts/check_test_docs_freshness.py`
+      - `pytest tests/unit -k "docs and freshness" -q`
 
       ## Documentation Updates
-      - [ ] Update `tests/README.md` and `docs/development.md` with gate usage.
+      - [ ] Document checker usage in `docs/development.md`.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-BE-09"
+    size_estimate: "S"
+    title: "Step 3R — Backend CI wiring for Step 3 quality checks"
+    labels:
+      - step:3
+      - track:step3-backend
+      - ci/cd
+      - size:S
+      - priority:P2
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Wire Step 3 backend checks into CI with clear gate behavior.
+
+      ## Scope
+      ### In Scope
+      - Add CI step for deterministic E2E smoke and docs freshness checker.
+      - Ensure gate fails fast with actionable output.
+      - Keep CI additions minimal and bounded.
+      ### Out of Scope
+      - Full CI pipeline redesign.
+      ### Dependencies
+      - S3R-BE-08.
+
+      ## Acceptance Criteria
+      - [ ] CI runs Step 3 backend checks automatically.
+      - [ ] Failure output includes remediation guidance.
+      - [ ] No unrelated CI workflow changes are introduced.
+
+      ## Technical Approach
+      - Add focused workflow/job updates for Step 3 checks only.
+
+      ## Testing Requirements
+      - `python scripts/check_test_docs_freshness.py`
+      - `pytest tests/e2e/tui -k "workflow_spine or proposal or audit" -q`
+
+      ## Documentation Updates
+      - [ ] Add CI gate note to backend development docs.
 
       ## Cross-Repository Coordination
       None.
 
 AI-Agent-Framework-Client:
-  - number: "S3-UX-01"
+  - number: "S3R-UX-01"
     size_estimate: "S"
-    title: "Step 3 — Client E2E happy-path baseline"
+    title: "Step 3R — Client E2E deterministic fixture baseline"
     labels:
       - step:3
       - tests/e2e
       - webui/ux
       - size:S
+      - priority:P1
+      - status:ready
     body: |
       ## Goal / Problem Statement
-      Add one deterministic client E2E happy-path scenario to establish a stable baseline.
+      Introduce deterministic client E2E fixture setup for stable baseline execution.
 
       ## Scope
       ### In Scope
-      - Add one end-to-end happy-path test under `tests/e2e/`.
-      - Capture failure screenshot/log artifact.
-      - Document local/CI run command.
+      - Add one deterministic fixture/setup helper for client E2E tests.
+      - Remove arbitrary waits in fixture setup path.
+      - Keep helper scoped for Step 3 baseline scenarios.
       ### Out of Scope
-      - Full workflow matrix coverage.
+      - Full scenario matrix.
       ### Dependencies
-      - Existing client test harness.
+      - Existing client E2E test harness.
 
       ## Acceptance Criteria
-      - [ ] Baseline E2E test runs headless in CI.
-      - [ ] Failure artifacts are captured.
-      - [ ] Docs updated.
+      - [ ] Deterministic fixture helper is reusable by multiple tests.
+      - [ ] Baseline fixture passes 3 repeated runs.
+      - [ ] No sleep-based setup waits remain in new helper.
 
       ## Technical Approach
-      - Create one stable scenario with deterministic waits.
+      - Add focused fixture utility and explicit wait conditions.
 
       ## Testing Requirements
-      - `npm --prefix client run test:e2e -- --grep baseline`
+      - `npm run test:e2e -- --grep fixture`
 
       ## Documentation Updates
-      - [ ] Update client `tests/README.md`.
-
-      ## Cross-Repository Coordination
-      May require backend test fixtures alignment.
-
-  - number: "S3-UX-02"
-    size_estimate: "S"
-    title: "Step 3 — Client validation/error pattern hardening v1"
-    labels:
-      - step:3
-      - webui/ux
-      - size:S
-    body: |
-      ## Goal / Problem Statement
-      Standardize a small set of client validation/error handling patterns for consistent UX.
-
-      ## Scope
-      ### In Scope
-      - Normalize validation message rendering for one core form flow.
-      - Add network error fallback messaging for one API path.
-      - Add focused tests.
-      ### Out of Scope
-      - Whole-app validation rewrite.
-      ### Dependencies
-      - Current form/error utility modules.
-
-      ## Acceptance Criteria
-      - [ ] Selected form path has consistent validation UX.
-      - [ ] One API error path has deterministic fallback handling.
-      - [ ] Tests cover success + error scenarios.
-
-      ## Technical Approach
-      - Reuse existing utility abstractions; no new framework.
-
-      ## Testing Requirements
-      - `npm --prefix client run test -- --runInBand`
-
-      ## Documentation Updates
-      - [ ] Update usage notes in client README/docs.
+      - [ ] Add fixture usage note in client test docs.
 
       ## Cross-Repository Coordination
       None.
 
-  - number: "S3-UX-03"
+  - number: "S3R-UX-02"
     size_estimate: "S"
-    title: "Step 3 — Client CI gate for test-doc freshness"
+    title: "Step 3R — Client form validation consistency pass"
+    labels:
+      - step:3
+      - webui/ux
+      - size:S
+      - priority:P2
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Standardize one key form validation path for predictable UX behavior.
+
+      ## Scope
+      ### In Scope
+      - Normalize validation display for one core form flow.
+      - Add focused unit/integration tests for this flow.
+      - Ensure deterministic validation messaging.
+      ### Out of Scope
+      - Full application-wide validation rewrite.
+      ### Dependencies
+      - S3R-UX-01.
+
+      ## Acceptance Criteria
+      - [ ] Selected form path has consistent validation behavior.
+      - [ ] Tests cover success/validation-error outcomes.
+      - [ ] Message ordering/content is deterministic.
+
+      ## Technical Approach
+      - Reuse existing client validation utilities.
+
+      ## Testing Requirements
+      - `npm run test -- --runInBand --grep validation`
+
+      ## Documentation Updates
+      - [ ] Document selected validation flow behavior.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-UX-03"
+    size_estimate: "S"
+    title: "Step 3R — Client API error fallback consistency"
+    labels:
+      - step:3
+      - webui/ux
+      - size:S
+      - priority:P2
+      - status:blocked
+    body: |
+      ## Goal / Problem Statement
+      Harden one client API error path with deterministic fallback handling.
+
+      ## Scope
+      ### In Scope
+      - Implement one deterministic API error fallback path.
+      - Add tests for error display and retry behavior.
+      - Keep flow scoped to one critical API interaction.
+      ### Out of Scope
+      - Global error-handling rewrite.
+      ### Dependencies
+      - S3R-UX-01.
+
+      ## Acceptance Criteria
+      - [ ] One API path has deterministic error fallback behavior.
+      - [ ] Retry/error states are covered by tests.
+      - [ ] User-facing messaging is consistent.
+
+      ## Technical Approach
+      - Reuse current error boundary + request wrappers.
+
+      ## Testing Requirements
+      - `npm run test -- --runInBand --grep error`
+
+      ## Documentation Updates
+      - [ ] Add fallback behavior note in client docs.
+
+      ## Cross-Repository Coordination
+      None.
+
+  - number: "S3R-UX-04"
+    size_estimate: "S"
+    title: "Step 3R — Client test-doc freshness CI check"
     labels:
       - step:3
       - ci/cd
       - docs
       - size:S
+      - priority:P2
+      - status:blocked
     body: |
       ## Goal / Problem Statement
-      Add a client CI guard that fails when test docs and test structure diverge.
+      Add a small client CI guard to prevent test documentation drift.
 
       ## Scope
       ### In Scope
-      - Add lightweight docs checker script.
+      - Add deterministic docs freshness checker.
       - Wire checker into client CI.
-      - Add remediation guidance in failure output.
+      - Provide clear remediation text.
       ### Out of Scope
-      - Full documentation lint framework.
+      - Full docs lint framework.
       ### Dependencies
-      - Existing client CI workflow.
+      - S3R-UX-01.
 
       ## Acceptance Criteria
-      - [ ] CI gate fails for stale/missing test-doc sections.
-      - [ ] CI gate passes when docs are current.
-      - [ ] Local command is documented.
+      - [ ] CI fails on missing/outdated required test-doc sections.
+      - [ ] CI passes when docs are aligned.
+      - [ ] Local checker command is documented.
 
       ## Technical Approach
-      - Implement deterministic checker with a small required-section contract.
+      - Implement a small required-section contract checker.
 
       ## Testing Requirements
-      - `npm --prefix client run check:docs`
+      - `npm run check:docs`
 
       ## Documentation Updates
-      - [ ] Update client `README.md` and test docs.
+      - [ ] Update client README/test docs with checker command.
 
       ## Cross-Repository Coordination
       None.
