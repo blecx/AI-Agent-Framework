@@ -5,6 +5,15 @@ Provides fixtures and configuration that apply to all test directories.
 """
 
 import os
+import sys
+from pathlib import Path
+
+# Ensure the workspace root is on sys.path so that `import agents.*` and
+# `import apps.*` work when pytest is invoked directly (without PYTHONPATH=.).
+_WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+if str(_WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(_WORKSPACE_ROOT))
+
 import pytest
 from prometheus_client import REGISTRY
 
