@@ -16,7 +16,7 @@ import re
 import httpx
 import pytest
 
-from e2e.tui.helpers import write_json
+from e2e.tui.fixture_helper import write_json
 
 
 def _extract_total_issues(output: str) -> int:
@@ -26,6 +26,7 @@ def _extract_total_issues(output: str) -> int:
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_fix_cycle_foundation(tui, unique_project_key):
     """Test audit infrastructure foundation."""
 
@@ -44,6 +45,7 @@ def test_audit_fix_cycle_foundation(tui, unique_project_key):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_detects_missing_fields(tui, tui_workspace):
     """Test audit detects missing required fields in artifacts."""
     result = tui.create_project(key=tui_workspace.project_key, name="Missing Fields Test")
@@ -68,6 +70,7 @@ def test_audit_detects_missing_fields(tui, tui_workspace):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_fix_and_reaudit(tui, tui_workspace):
     """Test full audit → fix → re-audit cycle."""
     result = tui.create_project(key=tui_workspace.project_key, name="Audit Re-Audit Test")
@@ -132,6 +135,7 @@ def test_audit_fix_and_reaudit(tui, tui_workspace):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_validates_cross_references(tui, tui_workspace):
     """Test audit validates cross-references between artifacts."""
     result = tui.create_project(key=tui_workspace.project_key, name="Cross Ref Test")
@@ -159,6 +163,8 @@ def test_audit_validates_cross_references(tui, tui_workspace):
     assert "cross_reference" in result.stdout, result.stdout
 
 
+@pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_error_handling(tui, unique_project_key):
     """Test audit handles errors gracefully (e.g., project not found)."""
 
@@ -171,6 +177,7 @@ def test_audit_error_handling(tui, unique_project_key):
 
 
 @pytest.mark.tui
+@pytest.mark.e2e
 def test_audit_history_tracking(tui, unique_project_key):
     """Test audit maintains history of runs and results."""
     result = tui.create_project(key=unique_project_key, name="Audit History Test")
@@ -183,7 +190,7 @@ def test_audit_history_tracking(tui, unique_project_key):
     assert second_audit.success, f"Second audit failed: {second_audit.stderr}"
 
     response = httpx.get(
-        f"{tui.api_base_url}/projects/{unique_project_key}/audit/history",
+        f"{tui.api_base_url}/api/v1/projects/{unique_project_key}/audit/history",
         params={"limit": 10},
         timeout=10.0,
     )
