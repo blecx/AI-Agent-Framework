@@ -5,7 +5,7 @@ Handles conflict detection and ensures diff preview accuracy.
 
 import difflib
 import hashlib
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 
 class DiffService:
@@ -54,6 +54,90 @@ class DiffService:
         )
 
         return "\n".join(diff)
+
+    def generate_proposal_diff(
+        self,
+        changes: Dict[str, Tuple[str, str]],
+        context_lines: int = 3,
+        normalize_whitespace: bool = True,
+    ) -> str:
+        """
+        Generate a deterministic multi-file unified diff for proposal previews.
+
+        Entries are sorted by file path (lexicographic) before assembly,
+        ensuring identical output for identical input regardless of dict
+        insertion order or runtime environment.
+
+        Args:
+            changes: Mapping of ``{file_path: (old_content, new_content)}``
+            context_lines: Number of context lines per hunk (default 3)
+            normalize_whitespace: Strip trailing whitespace (default True)
+
+        Returns:
+            Concatenated unified diff string, sections ordered by file path.
+        """
+        if not changes:
+            return ""
+
+        # Sort by file path for stable, deterministic ordering
+        sorted_paths: List[str] = sorted(changes.keys())
+
+        sections: List[str] = []
+        for file_path in sorted_paths:
+            old_content, new_content = changes[file_path]
+            section = self.generate_diff(
+                old_content,
+                new_content,
+                context_lines=context_lines,
+                normalize_whitespace=normalize_whitespace,
+            )
+            if section:
+                # Replace generic filenames with the actual file path
+                section = section.replace(
+                    "--- a/artifact", f"--- a/{file_path}", 1
+                ).replace("+++ b/artifact", f"+++ b/{file_path}", 1)
+                sections.append(section)
+
+        return "\n".join(sections)
+
+    def normalize_diff_sections(self, diff_str: str) -> str:
+        """
+        Normalize an existing multi-file unified diff for stable ordering.
+
+        Splits the diff into per-file sections and re-joins them sorted by
+        the ``--- a/<path>`` filename header.  Within each section the hunk
+        order (ascending line numbers) is preserved as produced by
+        ``difflib.unified_diff``.
+
+        Args:
+            diff_str: Existing unified diff string (may be multi-file)
+
+        Returns:
+            Normalized diff string with sections sorted by file path.
+        """
+        if not diff_str:
+            return diff_str
+
+        # Split into per-file sections on the "--- " boundary
+        raw_sections: List[str] = []
+        current: List[str] = []
+        for line in diff_str.splitlines():
+            if line.startswith("--- ") and current:
+                raw_sections.append("\n".join(current))
+                current = [line]
+            else:
+                current.append(line)
+        if current:
+            raw_sections.append("\n".join(current))
+
+        # Sort sections by the filename extracted from the "--- a/<path>" header
+        def _section_key(section: str) -> str:
+            first_line = section.splitlines()[0] if section else ""
+            # Handles "--- a/path" and "--- path" formats
+            return first_line.replace("--- a/", "").replace("--- ", "").strip()
+
+        raw_sections.sort(key=_section_key)
+        return "\n".join(raw_sections)
 
     def apply_diff(self, old_content: str, diff_str: str) -> str:
         """
