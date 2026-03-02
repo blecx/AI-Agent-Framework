@@ -39,6 +39,8 @@ _DEFAULT_SERVERS = {
     "mcp-memory": "http://localhost:3030",
     "mcp-agent-bus": "http://localhost:3031",
     "mcp-github-ops": "http://localhost:3018",
+    "mcp-search": "http://localhost:3013",
+    "mcp-filesystem": "http://localhost:3014",
 }
 
 
@@ -48,6 +50,8 @@ def _load_server_urls_from_env() -> dict[str, str]:
         "mcp-memory": "MAESTRO_MEMORY_URL",
         "mcp-agent-bus": "MAESTRO_BUS_URL",
         "mcp-github-ops": "MAESTRO_GITHUB_URL",
+        "mcp-search": "MAESTRO_SEARCH_URL",
+        "mcp-filesystem": "MAESTRO_FILESYSTEM_URL",
     }
     result: dict[str, str] = {}
     for name, env_key in mapping.items():

@@ -221,8 +221,9 @@ class TestOrchestratorPipeline:
         )
 
         with patch("agents.maestro.MCPMultiClient") as MockMCP, \
-             patch("agents.maestro.RouterAgent") as MockRouter, \
+             patch("agents.maestro.RouterAgent") as MockRouter, patch("agents.maestro.PlannerAgent") as MockPlanner, \
              patch("agents.maestro.CoderAgent") as MockCoder:
+            MockPlanner.return_value.run = AsyncMock()
 
             # async context manager
             mock_mcp_instance = AsyncMock()
@@ -233,6 +234,9 @@ class TestOrchestratorPipeline:
             mock_router_instance = MockRouter.return_value
             mock_router_instance.route = AsyncMock(return_value=routing_decision)
 
+            
+            mock_planner = MockPlanner.return_value
+            mock_planner.run = AsyncMock()
             # CoderAgent.run()
             mock_coder_instance = MockCoder.return_value
             mock_coder_instance.run = AsyncMock(return_value=coder_result)
@@ -270,8 +274,9 @@ class TestOrchestratorPipeline:
         )
 
         with patch("agents.maestro.MCPMultiClient") as MockMCP, \
-             patch("agents.maestro.RouterAgent") as MockRouter, \
+             patch("agents.maestro.RouterAgent") as MockRouter, patch("agents.maestro.PlannerAgent") as MockPlanner, \
              patch("agents.maestro.CoderAgent") as MockCoder:
+            MockPlanner.return_value.run = AsyncMock()
 
             mock_mcp_instance = AsyncMock()
             MockMCP.return_value.__aenter__ = AsyncMock(return_value=mock_mcp_instance)
@@ -303,8 +308,9 @@ class TestOrchestratorPipeline:
         coder_result = CoderResult(run_id="run-err", error="LLM quota exceeded")
 
         with patch("agents.maestro.MCPMultiClient") as MockMCP, \
-             patch("agents.maestro.RouterAgent") as MockRouter, \
+             patch("agents.maestro.RouterAgent") as MockRouter, patch("agents.maestro.PlannerAgent") as MockPlanner, \
              patch("agents.maestro.CoderAgent") as MockCoder:
+            MockPlanner.return_value.run = AsyncMock()
 
             mock_mcp_instance = AsyncMock()
             MockMCP.return_value.__aenter__ = AsyncMock(return_value=mock_mcp_instance)
