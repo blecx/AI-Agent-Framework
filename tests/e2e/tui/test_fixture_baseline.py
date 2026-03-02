@@ -84,3 +84,41 @@ def test_tui_workspace_artifact_and_workflow_paths(tui_workspace):
     assert pmp_path.name == "pmp.json"
     assert raid_path.name == "raid.json"
     assert workflow_path.name == "state.json"
+
+
+@pytest.mark.tui
+def test_fixture_helper_module_exports_public_api():
+    """fixture_helper.py must export the canonical public API (issue #695)."""
+    import e2e.tui.fixture_helper as fh
+
+    expected = [
+        "TuiE2EWorkspace",
+        "build_tui_workspace",
+        "reset_tui_workspace",
+        "reserve_local_port",
+        "resolve_python_executable",
+        "start_backend_server",
+        "stop_backend_server",
+        "wait_for_http_ok",
+        "write_json",
+    ]
+    for name in expected:
+        assert hasattr(fh, name), f"fixture_helper is missing public symbol: {name}"
+
+
+@pytest.mark.tui
+def test_fixture_helper_symbols_identical_to_helpers():
+    """Symbols exported by fixture_helper must be the same objects as in helpers."""
+    import e2e.tui.helpers as helpers_mod
+    import e2e.tui.fixture_helper as fh
+
+    shared = [
+        "build_tui_workspace",
+        "reset_tui_workspace",
+        "wait_for_http_ok",
+        "write_json",
+    ]
+    for name in shared:
+        assert getattr(fh, name) is getattr(helpers_mod, name), (
+            f"{name} in fixture_helper must be the same object as in helpers"
+        )
