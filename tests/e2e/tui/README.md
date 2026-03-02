@@ -14,7 +14,9 @@ This test suite validates complete workflows using the TUI CLI:
 
 ```
 tests/e2e/tui/
-├── conftest.py                     # Pytest fixtures (backend server, TUI automation)
+├── conftest.py                     # Pytest fixtures (backend server, TUI automation, tui_workspace)
+├── helpers.py                      # Deterministic fixture helper utilities
+├── test_fixture_baseline.py        # Fixture infrastructure smoke tests
 ├── test_workflow_spine.py          # Core workflow scenarios
 ├── test_proposal_workflow.py       # Proposal lifecycle tests
 └── test_audit_fix_cycle.py         # Audit and fix cycle tests
@@ -22,8 +24,9 @@ tests/e2e/tui/
 
 Supporting infrastructure:
 
-- `tests/helpers/tui_automation.py` - TUI command execution service
-- `tests/fixtures/factories.py` - Test data builders (Project, Artifact, Proposal, RAID)
+- `tests/e2e/tui/helpers.py` — deterministic workspace setup/teardown, port reservation, server lifecycle
+- `tests/helpers/tui_automation.py` — TUI command execution service
+- `tests/fixtures/factories.py` — Test data builders (Project, Artifact, Proposal, RAID)
 
 ## Running Tests
 
@@ -79,7 +82,13 @@ project = ProjectFactory().with_seed(12345).build()
 
 ### `backend_server` (session scope)
 
-Starts the FastAPI backend on `http://localhost:8000` for the test session. Automatically terminates after all tests complete.
+Starts the FastAPI backend on a reserved local port for the test session.
+Automatically terminates after all tests complete.
+
+### `temp_docs_dir` (session scope)
+
+Creates a temporary directory for project documents shared across the session.
+Deleted on session teardown.
 
 ### `tui` (function scope)
 
@@ -97,6 +106,45 @@ def test_example(tui):
 ### `unique_project_key` (function scope)
 
 Generates a unique project key for each test to avoid collisions.
+
+### `tui_workspace` (function scope)
+
+Provides a `TuiE2EWorkspace` instance with deterministic paths for a unique
+project directory under `temp_docs_dir`. Resets the project directory after
+each test to keep tests isolated.
+
+**Usage:**
+
+```python
+from e2e.tui.helpers import write_json
+
+def test_example(tui, tui_workspace):
+    result = tui.create_project(
+        key=tui_workspace.project_key, name="Example"
+    )
+    assert result.success
+
+    # Write deterministic fixture data
+    write_json(tui_workspace.metadata_path, {"key": tui_workspace.project_key})
+
+    result = tui.execute_command(
+        ["audit", "--project", tui_workspace.project_key]
+    )
+    assert result.success
+```
+
+### Helper utilities (`helpers.py`)
+
+The `helpers` module provides low-level building blocks:
+
+- `build_tui_workspace(temp_docs_dir, project_key)` — create a `TuiE2EWorkspace`
+- `reset_tui_workspace(workspace)` — delete the project directory for teardown
+- `write_json(path, payload)` — write deterministic JSON fixture files
+- `start_backend_server(...)` — start uvicorn, wait for `/health`
+- `stop_backend_server(process)` — graceful terminate + force kill
+- `wait_for_http_ok(url, ...)` — poll until HTTP 200 or raise `TimeoutError`
+- `reserve_local_port()` — bind a free OS port, return the number
+- `resolve_python_executable(project_root)` — prefer `.venv/bin/python`
 
 ## Writing New Tests
 
@@ -185,9 +233,8 @@ pytest tests/e2e/tui/ -v --tb=short --maxfail=3
 
 ## Future Enhancements
 
-- [ ] Add artifact generation tests (requires TUI artifact commands)
-- [ ] Add proposal apply/reject tests (requires TUI propose commands)
-- [ ] Add audit run tests (requires TUI audit command)
+- [ ] Extend `tui_workspace` with artifact scaffolding helpers (requires TUI artifact commands)
+- [ ] Add full proposal apply/reject assertions (requires TUI propose/apply commands)
 - [ ] Add RAID item management tests (requires TUI raid commands)
 - [ ] Parallel test execution (pytest-xdist)
 - [ ] Test duration tracking and alerting
