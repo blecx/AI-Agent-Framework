@@ -14,6 +14,13 @@ _WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 if str(_WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(_WORKSPACE_ROOT))
 
+# Also add apps/api to sys.path so that bare `domain.*` imports used inside
+# the API package (e.g. `from domain.audit.constants import ...`) resolve
+# correctly when tests are run from the workspace root.
+_API_ROOT = _WORKSPACE_ROOT / "apps" / "api"
+if str(_API_ROOT) not in sys.path:
+    sys.path.insert(0, str(_API_ROOT))
+
 import pytest
 from prometheus_client import REGISTRY
 

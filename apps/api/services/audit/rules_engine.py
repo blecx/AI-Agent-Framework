@@ -35,6 +35,7 @@ class AuditRulesEngine:
         """
         available_rules = {
             "cross_reference": self._audit_cross_references,
+            "cross_reference_consistency": self._audit_cross_reference_consistency,
             "date_consistency": self._audit_date_consistency,
             "owner_validation": self._audit_owner_validation,
             "dependency_cycles": self._audit_dependency_cycles,
@@ -438,6 +439,80 @@ class AuditRulesEngine:
 
         except (json.JSONDecodeError, KeyError):
             pass
+
+        return issues
+
+    def _audit_cross_reference_consistency(
+        self, project_key: str, git_manager
+    ) -> List[Dict[str, Any]]:
+        """Validate PMP deliverable risk references are consistent with RAID.
+
+        Checks that each deliverable in pmp.json whose ``related_risks`` field
+        references a RAID item ID actually resolves to an item present in
+        artifacts/raid.json.  This is the reverse direction of the existing
+        ``cross_reference`` rule (RAID → PMP) and together they enforce
+        bidirectional cross-reference consistency.
+        """
+        issues: List[Dict[str, Any]] = []
+        project_path = git_manager.get_project_path(project_key)
+
+        pmp_path = project_path / "artifacts" / "pmp.json"
+        raid_path = project_path / "artifacts" / "raid.json"
+
+        if not pmp_path.exists():
+            return issues
+
+        # Collect valid RAID item IDs (empty set when raid.json is absent)
+        valid_raid_ids: set = set()
+        if raid_path.exists():
+            try:
+                raid_data = json.loads(raid_path.read_text())
+                valid_raid_ids = {
+                    item.get("id")
+                    for item in raid_data.get("items", [])
+                    if item.get("id") is not None
+                }
+            except (json.JSONDecodeError, KeyError) as exc:
+                issues.append(
+                    {
+                        "rule": "cross_reference_consistency",
+                        "severity": "error",
+                        "message": f"Failed to parse RAID data: {exc}",
+                        "artifact": "artifacts/raid.json",
+                    }
+                )
+                return issues
+
+        try:
+            pmp_data = json.loads(pmp_path.read_text())
+            deliverables = pmp_data.get("deliverables", [])
+
+            for deliverable in sorted(deliverables, key=lambda d: str(d.get("id", ""))):
+                deliverable_id = deliverable.get("id", "unknown")
+                for risk_id in sorted(deliverable.get("related_risks", [])):
+                    if risk_id not in valid_raid_ids:
+                        issues.append(
+                            {
+                                "rule": "cross_reference_consistency",
+                                "severity": "error",
+                                "message": (
+                                    f"Deliverable {deliverable_id} references "
+                                    f"non-existent RAID item {risk_id}"
+                                ),
+                                "artifact": "artifacts/pmp.json",
+                                "item_id": deliverable_id,
+                            }
+                        )
+
+        except (json.JSONDecodeError, KeyError) as exc:
+            issues.append(
+                {
+                    "rule": "cross_reference_consistency",
+                    "severity": "error",
+                    "message": f"Failed to parse PMP data: {exc}",
+                    "artifact": "artifacts/pmp.json",
+                }
+            )
 
         return issues
 
