@@ -24,7 +24,13 @@
       "label": "🔍 Work on Issue (Dry Run)",
       "type": "shell",
       "command": "${workspaceFolder}/scripts/work-issue.py",
-      "args": ["--issue", "${input:issueNumber}", "--dry-run"],
+      "args": [
+        "--issue",
+        "${input:issueNumber}",
+        "--dry-run",
+        "--llm-config",
+        "configs/llm.workflow.json"
+      ],
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -38,7 +44,13 @@
       "label": "💬 Work on Issue (Interactive)",
       "type": "shell",
       "command": "${workspaceFolder}/scripts/work-issue.py",
-      "args": ["--issue", "${input:issueNumber}", "--interactive"],
+      "args": [
+        "--issue",
+        "${input:issueNumber}",
+        "--interactive",
+        "--llm-config",
+        "configs/llm.workflow.json"
+      ],
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
