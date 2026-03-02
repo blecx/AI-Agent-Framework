@@ -3,20 +3,20 @@
 from importlib import import_module
 from typing import Type
 
-from agents.autonomous_workflow_agent import AutonomousWorkflowAgent
+from agents.maestro_adapter import MaestroAdapter
 from agents.ralph_agent import RalphAgent
 
 
 AGENT_ALIASES = {
-    "autonomous": "agents.autonomous_workflow_agent:AutonomousWorkflowAgent",
-    "default": "agents.autonomous_workflow_agent:AutonomousWorkflowAgent",
+    "autonomous": "agents.maestro_adapter:MaestroAdapter",
+    "default": "agents.maestro_adapter:MaestroAdapter",
     "ralph": "agents.ralph_agent:RalphAgent",
     "ralph-agent": "agents.ralph_agent:RalphAgent",
-    "resolve-issue": "agents.autonomous_workflow_agent:AutonomousWorkflowAgent",
+    "resolve-issue": "agents.maestro_adapter:MaestroAdapter",
 }
 
 
-def _load_agent_class(spec: str) -> Type[AutonomousWorkflowAgent]:
+def _load_agent_class(spec: str) -> Type[MaestroAdapter]:
     if ":" not in spec:
         raise ValueError(
             f"Invalid agent spec '{spec}'. Expected format 'module.path:ClassName'."
@@ -27,9 +27,9 @@ def _load_agent_class(spec: str) -> Type[AutonomousWorkflowAgent]:
     cls = getattr(module, class_name, None)
     if cls is None:
         raise ValueError(f"Agent class '{class_name}' not found in module '{module_name}'.")
-    if not issubclass(cls, AutonomousWorkflowAgent):
+    if not issubclass(cls, MaestroAdapter):
         raise ValueError(
-            f"Agent class '{class_name}' must inherit AutonomousWorkflowAgent."
+            f"Agent class '{class_name}' must inherit MaestroAdapter."
         )
     return cls
 
@@ -46,7 +46,7 @@ def create_issue_agent(
     agent_name_or_spec: str,
     issue_number: int,
     dry_run: bool,
-) -> AutonomousWorkflowAgent:
+) -> MaestroAdapter:
     spec = resolve_agent_spec(agent_name_or_spec)
     cls = _load_agent_class(spec)
     return cls(issue_number=issue_number, dry_run=dry_run)
