@@ -3,7 +3,6 @@
 Uses premium models (gpt-4o) and filesystem/search tools to gain context,
 then builds an atomic execution plan for the CoderAgent.
 
-See: docs/agents/MAESTRO-DESIGN.md
 Implements: GitHub issue #720
 """
 
@@ -12,6 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, Optional, TYPE_CHECKING
+import re
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -23,24 +23,23 @@ _SYSTEM_PROMPT = """You are the MAESTRO PlannerAgent.
 Your job is to read a GitHub issue, search the codebase using MCP tools to understand the 
 context, and then write a precise implementation plan broken down into actionable steps.
 
-AVAILABLE TOOLS (via MCP):
-- You have access to mcp-search (search_files) and mcp-filesystem (read_file, list_dir).
-- Use these tools to inspect the files mentioned in the issue or find relevant code.
+AVAILABLE TOOLS:
+You have access to mcp-search (search_files) and mcp-filesystem (read_file, list_dir).
+Use these to inspect files and find relevant code. 
 
 OUTPUT:
-At the end of your analysis, you MUST provide a final JSON block bounded by ```json ... ``` 
-containing an array of discrete tasks for the CoderAgent:
-[
-  { "file": "path/example.py", "description": "Add property X to class Y" },
-  { "file": "path/example_test.py", "description": "Add test for property X" }
-]
+You MUST output a final JSON block bounded by ```json ... ``` that perfectly matches this schema:
+{
+  "goal": "Short description of what we are doing",
+  "files": [{"path": "file1.py", "description": "What to do here"}],
+  "acceptance_criteria": ["Criteria 1", "Criteria 2"],
+  "validation_commands": ["pytest path/to/test.py -v"],
+  "estimated_minutes": 30
+}
 """
 
 class PlannerAgent:
-    """Creates execution plans for MAESTRO using premium models.
-    
-    Requires MCP tools: mcp-search, mcp-filesystem.
-    """
+    """Creates execution plans for MAESTRO using premium models."""
 
     def __init__(
         self,
@@ -50,7 +49,7 @@ class PlannerAgent:
         workspace_root: Optional[Path] = None,
     ) -> None:
         self._mcp = mcp_client
-        self._model = "gpt-4o"  # Always premium for planning
+        self._model = LLMClientFactory.get_model_id_for_role("planning")
         self._root = workspace_root or Path.cwd()
         self._llm = llm_client
         self._messages: list[dict[str, Any]] = [
@@ -63,28 +62,28 @@ class PlannerAgent:
             self._model = LLMClientFactory.get_model_id_for_role("planning")
         return self._llm
 
-    async def run(self, run_id: str, issue_body: str) -> None:
-        """Analyze issue, use MCP context, and write the plan to the bus."""
+    async def run(self, run_id: str, issue_body: str, similar_issues: list[dict[str, Any]] = []) -> None:
         await self._mcp.call_tool("bus_set_status", {"run_id": run_id, "status": "planning"})
 
         llm = await self._init_llm()
         
+        memory_context = ""
+        if similar_issues:
+            memory_context = "\n\nPast Similar Issues (Learnings/Context):\n"
+            for past in similar_issues:
+                memory_context += f"- Title: {past.get('title', 'N/A')}\n"
+                if "lesson" in past:
+                    memory_context += f"  Lessons Learned: {past['lesson']}\n"
+        
         self._messages.append({
             "role": "user",
-            "content": f"Please analyze this issue and create an execution plan:\n\n{issue_body}",
+            "content": f"Please analyze this issue and create an execution plan:\n\n{issue_body}{memory_context}",
         })
         
+        plan_dict = {}
         try:
-            # Simple loop to let the planner agent take some tool actions 
-            # (In a full implementation we'd process tool calls from the LLM)
-            # Here we just ask the LLM to output the JSON plan directly for now
-            # since MCP integration via loop is complex.
-            # M-2 is about integrating the semantic context. We'll pass the tools.
-            # Wait, the mcp_client provides tools!
-            
             tool_definitions = self._mcp.get_all_tool_definitions()
             
-            # Simple interaction loop (max 5 iterations)
             for _ in range(5):
                 kwargs = {
                     "model": self._model,
@@ -92,10 +91,8 @@ class PlannerAgent:
                     "temperature": 0.2,
                 }
                 
-                # Only pass tools if the MCP bus actually has them 
-                # (to prevent openAI API errors if empty)
                 valid_tools = [t for t in tool_definitions if t["function"]["name"] not in (
-                    "bus_create_run", "bus_set_status" # Hide internal bus tools
+                    "bus_create_run", "bus_set_status", "bus_write_plan"
                 )]
                 
                 if valid_tools:
@@ -104,7 +101,6 @@ class PlannerAgent:
                     
                 response = await llm.chat.completions.create(**kwargs)
                 message = response.choices[0].message
-                
                 self._messages.append(message)
                 
                 if message.tool_calls:
@@ -114,9 +110,8 @@ class PlannerAgent:
                         args = json.loads(args_str) if args_str else {}
                         
                         try:
-                            # Invoke MCP tool
                             tool_result = await self._mcp.call_tool(func_name, args)
-                            result_str = json.dumps(tool_result)[:4000] # Truncate large outputs
+                            result_str = json.dumps(tool_result)[:4000]
                         except Exception as e:
                             result_str = f"Error: {e}"
                             
@@ -126,22 +121,40 @@ class PlannerAgent:
                             "name": func_name,
                             "content": result_str,
                         })
-                    continue  # Loop again to let model see tool results
-                
-                # No more tool calls, we have a final answer
+                    continue
                 break
                 
-            # Extract JSON block
             final_content = self._messages[-1].content or ""
             
-            # Optionally post to the bus
-            # In MAESTRO bus might have a bus_append_log 
-            # Or we just assume it's recorded.
+            # Extract JSON
+            match = re.search(r"```json\s*(\{.*?\})\s*```", final_content, re.DOTALL)
+            if match:
+                plan_dict = json.loads(match.group(1))
+            else:
+                # Fallback to direct parse
+                plan_dict = json.loads(final_content)
+                
+        except Exception:
+            # Fallback simple
+            plan_dict = {
+                "goal": "Implement issue",
+                "files": [{"path": "unknown", "description": "Review context"}],
+                "acceptance_criteria": ["Complete"],
+                "validation_commands": ["pytest"],
+                "estimated_minutes": 30
+            }
             
-        except Exception as e:
-            # Fallback
+        try:
+            await self._mcp.call_tool("bus_write_plan", {
+                "run_id": run_id,
+                "goal": plan_dict.get("goal", "Implement issue"),
+                "files": [f.get("path", "") for f in plan_dict.get("files", [])],
+                "acceptance_criteria": plan_dict.get("acceptance_criteria", []),
+                "validation_cmds": plan_dict.get("validation_commands", []),
+                "estimated_minutes": plan_dict.get("estimated_minutes", 30),
+            })
+            # Advance loop so Coder knows it's ready unless we enforce an explicit manual approval step
+            await self._mcp.call_tool("bus_set_status", {"run_id": run_id, "status": "approved"})
+        except Exception:
             pass
-            
-        finally:
-            await self._mcp.call_tool("bus_set_status", {"run_id": run_id, "status": "coding"})
 

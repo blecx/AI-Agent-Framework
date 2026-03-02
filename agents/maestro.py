@@ -169,7 +169,7 @@ class MaestroOrchestrator:
                 llm_client=self._llm,
                 workspace_root=self._root,
             )
-            await planner.run(decision.run_id, issue_body)
+            await planner.run(decision.run_id, issue_body, decision.similar_issues)
 
             # ── 2. Code ───────────────────────────────────────────────
             coder = CoderAgent(
