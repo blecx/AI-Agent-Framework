@@ -1,14 +1,28 @@
-# Autonomous AI Agent - Complete Guide
+# Autonomous AI Agent - Complete Guide (v1)
 
 **REAL AI-Powered Agent using Microsoft Agent Framework + GitHub Models**
 
-**Last Updated:** January 19, 2026
+**Last Updated:** 2026-03-02  
+**Status:** v1 — superseded by MAESTRO design. v1 code remains fully functional while MAESTRO is implemented (issues #708–#715).
 
 ---
 
-## Overview
+## ⚠️ Architectural Evolution
 
-A **fully autonomous AI agent** that resolves GitHub issues end-to-end using GPT-5.1-codex for reasoning and code generation.
+This agent (v1) was analysed and a next-generation design called **MAESTRO** was produced based on observed failure modes:
+
+- **Context cap** — only 200 chars of project instructions reached the model
+- **Stateless phase handoffs** — planning context was lost by the time coding started
+- **No human gate** — bad plans went straight to implementation
+
+See **[MAESTRO-DESIGN.md](MAESTRO-DESIGN.md)** for the full design and implementation plan.  
+See GitHub label [`maestro`](https://github.com/blecx/AI-Agent-Framework/labels/maestro) for active issues.
+
+---
+
+## Overview (v1)
+
+A **fully autonomous AI agent** that resolves GitHub issues end-to-end using GPT-4o for reasoning and code generation.
 
 ### What This Agent Does
 

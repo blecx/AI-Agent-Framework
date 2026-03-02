@@ -1,10 +1,24 @@
 # AI Agents
 
-This directory contains two agent systems for issue resolution.
+This directory contains agent systems for issue resolution.
 
 ---
 
-## 🤖 Autonomous Workflow Agent (NEW - Recommended)
+## 🚀 MAESTRO — Next Generation (In Development)
+
+**Multi-Agent Execution System for Task Resolution and Orchestration**
+
+MAESTRO is the next-generation architecture replacing the v1 autonomous agent.  
+Key improvements: shared context bus (MCP), single-thread coder, knowledge graph memory, dynamic model routing.
+
+- **Design:** [`docs/agents/MAESTRO-DESIGN.md`](../docs/agents/MAESTRO-DESIGN.md)
+- **Issues:** GitHub label `maestro` (#708–#715)
+- **New files being added:** `mcp_client.py`, `router_agent.py`, `coder_agent.py`, `maestro.py`
+- **New MCP servers:** `apps/mcp/memory/`, `apps/mcp/agent_bus/`
+
+---
+
+## 🤖 Autonomous Workflow Agent (v1 — Stable)
 
 **AI-powered agent using Microsoft Agent Framework + GPT-5.1-codex**
 
