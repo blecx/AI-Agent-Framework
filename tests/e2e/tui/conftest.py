@@ -73,8 +73,15 @@ def backend_server(temp_docs_dir: str) -> str:
 
 @pytest.fixture
 def tui(backend_server: str) -> TUIAutomation:
-    """Create TUI automation instance connected to backend server."""
-    return TUIAutomation(api_base_url=backend_server, timeout=30)
+    """Create TUI automation instance connected to backend server.
+
+    Skips the test gracefully when the TUI binary is not present so that CI
+    environments without the CLI do not produce hard failures.
+    """
+    try:
+        return TUIAutomation(api_base_url=backend_server, timeout=30)
+    except FileNotFoundError as exc:
+        pytest.skip(f"TUI binary not available: {exc}")
 
 
 @pytest.fixture
