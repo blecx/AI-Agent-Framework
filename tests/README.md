@@ -104,6 +104,10 @@ Run the docs-sync gate locally before pushing changes that touch tests or test d
 
 `tests/e2e/tui/` starts a session-scoped backend for the suite and binds it to a dynamically chosen free localhost port (to avoid CI port conflicts).
 
+Deterministic fixture primitives live in the TUI E2E helper module; use `build_tui_workspace(...)` for stable project path setup and reuse shared session fixtures instead of introducing ad-hoc setup code.
+
+For per-test deterministic setup/teardown, prefer the shared `tui_workspace` fixture (it provisions via `build_tui_workspace(...)` and performs teardown with `reset_tui_workspace(...)`).
+
 For deterministic baseline verification (Issue #388 acceptance), run `pytest tests/e2e/tui -k workflow_spine -q` three consecutive times and ensure all runs pass.
 
 For cross-repo E2E harness usage, prefer invoking the runner as a module (avoids hardcoding paths):
