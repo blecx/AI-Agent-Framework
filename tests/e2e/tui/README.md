@@ -19,6 +19,7 @@ tests/e2e/tui/
 ├── helpers.py                      # Deterministic fixture helper utilities (implementation)
 ├── test_fixture_baseline.py        # Fixture infrastructure smoke tests
 ├── test_workflow_spine.py          # Core workflow scenarios
+├── test_proposal_review.py         # Proposal review/apply deterministic scenario (S3R-BE-03)
 ├── test_proposal_workflow.py       # Proposal lifecycle tests
 └── test_audit_fix_cycle.py         # Audit and fix cycle tests
 ```
@@ -58,6 +59,21 @@ pytest tests/e2e/tui/test_workflow_spine.py -v
 
 ```bash
 pytest tests/e2e/tui/test_workflow_spine.py::test_workflow_spine_full_cycle -v
+```
+
+### Run Proposal Review Scenario (Deterministic)
+
+The proposal review scenario validates the full `propose → pending → apply → accepted` state
+transition using deterministic assertions (no `sleep()` calls).
+
+```bash
+# Run proposal review scenario tests
+pytest tests/e2e/tui -k proposal_review -m tui -q
+
+# Acceptance check: run 3 consecutive times to confirm determinism
+for i in 1 2 3; do
+  pytest tests/e2e/tui -k proposal_review -m tui -q
+done
 ```
 
 ### Run Workflow Spine Scenario (Deterministic)
@@ -257,7 +273,7 @@ pytest tests/e2e/tui/ -v --tb=short --maxfail=3
 ## Future Enhancements
 
 - [ ] Extend `tui_workspace` with artifact scaffolding helpers (requires TUI artifact commands)
-- [ ] Add full proposal apply/reject assertions (requires TUI propose/apply commands)
+- [x] Add full proposal apply/reject assertions — completed in `test_proposal_review.py` (S3R-BE-03)
 - [ ] Add RAID item management tests (requires TUI raid commands)
 - [ ] Parallel test execution (pytest-xdist)
 - [ ] Test duration tracking and alerting
