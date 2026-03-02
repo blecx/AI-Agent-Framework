@@ -15,7 +15,8 @@ This test suite validates complete workflows using the TUI CLI:
 ```
 tests/e2e/tui/
 ├── conftest.py                     # Pytest fixtures (backend server, TUI automation, tui_workspace)
-├── helpers.py                      # Deterministic fixture helper utilities
+├── fixture_helper.py               # Public fixture-helper API (canonical entry-point, re-exports helpers)
+├── helpers.py                      # Deterministic fixture helper utilities (implementation)
 ├── test_fixture_baseline.py        # Fixture infrastructure smoke tests
 ├── test_workflow_spine.py          # Core workflow scenarios
 ├── test_proposal_workflow.py       # Proposal lifecycle tests
@@ -24,7 +25,8 @@ tests/e2e/tui/
 
 Supporting infrastructure:
 
-- `tests/e2e/tui/helpers.py` — deterministic workspace setup/teardown, port reservation, server lifecycle
+- `tests/e2e/tui/fixture_helper.py` — **canonical public API** for fixture helpers; import from here for stable, long-lived imports
+- `tests/e2e/tui/helpers.py` — implementation: workspace setup/teardown, port reservation, server lifecycle
 - `tests/helpers/tui_automation.py` — TUI command execution service
 - `tests/fixtures/factories.py` — Test data builders (Project, Artifact, Proposal, RAID)
 
