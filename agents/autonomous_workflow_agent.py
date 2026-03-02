@@ -32,6 +32,11 @@ from agent_framework.openai import OpenAIChatClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agents.tooling.gh_throttle import run_gh_throttled
+from agents.tooling.api_throttle import (
+    apply_rate_limit_penalty,
+    extract_retry_after_seconds,
+    reserve_api_slot,
+)
 
 from agents.llm_client import LLMClientFactory
 from agents.tools import get_all_tools, get_shell_only_tools
@@ -1537,12 +1542,39 @@ Begin now."""
         if not self.agent or not self.thread:
             raise RuntimeError("Agent not initialized or no active thread")
 
-        response_text = []
-        async for chunk in self.agent.run_stream(message, thread=self.thread):
-            if chunk.text:
-                response_text.append(chunk.text)
+        max_rate_limit_retries = int(
+            os.environ.get("WORK_ISSUE_RATE_LIMIT_MAX_RETRIES", "6")
+        )
+        attempt = 0
 
-        return "".join(response_text)
+        while True:
+            attempt += 1
+            throttle_wait = reserve_api_slot("llm")
+            if throttle_wait > 0:
+                await asyncio.sleep(throttle_wait)
+
+            response_text: list[str] = []
+            try:
+                async for chunk in self.agent.run_stream(message, thread=self.thread):
+                    if chunk.text:
+                        response_text.append(chunk.text)
+                return "".join(response_text)
+            except Exception as exc:
+                text = str(exc)
+                lowered = text.lower()
+                is_rate_limit = any(
+                    token in lowered
+                    for token in ("rate limit", "ratelimit", "too many requests", "429")
+                )
+                if is_rate_limit:
+                    retry_after = extract_retry_after_seconds(text)
+                    cooldown = apply_rate_limit_penalty("llm", retry_after)
+                    if not response_text and attempt <= max_rate_limit_retries:
+                        wait_seconds = reserve_api_slot("llm")
+                        wait_seconds = max(wait_seconds, cooldown)
+                        await asyncio.sleep(wait_seconds)
+                        continue
+                raise
 
     async def _extract_and_update_learnings(self, execution_data: dict):
         """
