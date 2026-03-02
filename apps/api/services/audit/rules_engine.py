@@ -37,6 +37,7 @@ class AuditRulesEngine:
             "cross_reference": self._audit_cross_references,
             "cross_reference_consistency": self._audit_cross_reference_consistency,
             "date_consistency": self._audit_date_consistency,
+            "date_window_consistency": self._audit_date_window_consistency,
             "owner_validation": self._audit_owner_validation,
             "dependency_cycles": self._audit_dependency_cycles,
             "completeness": self._audit_completeness,
@@ -186,6 +187,101 @@ class AuditRulesEngine:
                     "rule": "date_consistency",
                     "severity": "error",
                     "message": f"Failed to validate dates: {str(e)}",
+                }
+            )
+
+        return issues
+
+    def _audit_date_window_consistency(
+        self, project_key: str, git_manager
+    ) -> List[Dict[str, Any]]:
+        """Validate deliverable date windows are internally consistent and within project lifecycle.
+
+        Checks:
+        - planned_start <= planned_end for each deliverable (error if violated)
+        - planned_start >= project start_date (warning if before project start)
+        - planned_end <= project end_date (warning if after project end)
+
+        Deliverables are processed in sorted order to guarantee deterministic output.
+        """
+        issues: List[Dict[str, Any]] = []
+        project_path = git_manager.get_project_path(project_key)
+
+        pmp_path = project_path / "artifacts" / "pmp.json"
+        if not pmp_path.exists():
+            return issues
+
+        # Load optional project-level lifecycle boundaries
+        project_start: Optional[str] = None
+        project_end: Optional[str] = None
+        metadata_path = project_path / "metadata.json"
+        if metadata_path.exists():
+            try:
+                metadata = json.loads(metadata_path.read_text())
+                project_start = metadata.get("start_date")
+                project_end = metadata.get("end_date")
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        try:
+            pmp_data = json.loads(pmp_path.read_text())
+            deliverables = pmp_data.get("deliverables", [])
+
+            for deliverable in sorted(deliverables, key=lambda d: str(d.get("id", ""))):
+                d_id = deliverable.get("id", "unknown")
+                planned_start = deliverable.get("planned_start")
+                planned_end = deliverable.get("planned_end")
+
+                if planned_start and planned_end:
+                    if planned_start > planned_end:
+                        issues.append(
+                            {
+                                "rule": "date_window_consistency",
+                                "severity": "error",
+                                "message": (
+                                    f"Deliverable {d_id}: planned_start ({planned_start}) "
+                                    f"is after planned_end ({planned_end})"
+                                ),
+                                "artifact": "artifacts/pmp.json",
+                                "item_id": d_id,
+                            }
+                        )
+
+                if planned_start and project_start and planned_start < project_start:
+                    issues.append(
+                        {
+                            "rule": "date_window_consistency",
+                            "severity": "warning",
+                            "message": (
+                                f"Deliverable {d_id}: planned_start ({planned_start}) "
+                                f"is before project start ({project_start})"
+                            ),
+                            "artifact": "artifacts/pmp.json",
+                            "item_id": d_id,
+                        }
+                    )
+
+                if planned_end and project_end and planned_end > project_end:
+                    issues.append(
+                        {
+                            "rule": "date_window_consistency",
+                            "severity": "warning",
+                            "message": (
+                                f"Deliverable {d_id}: planned_end ({planned_end}) "
+                                f"is after project end ({project_end})"
+                            ),
+                            "artifact": "artifacts/pmp.json",
+                            "item_id": d_id,
+                        }
+                    )
+
+        except (json.JSONDecodeError, KeyError) as exc:
+            issues.append(
+                {
+                    "rule": "date_window_consistency",
+                    "severity": "error",
+                    "message": f"Failed to parse PMP data: {exc}",
+                    "artifact": "artifacts/pmp.json",
                 }
             )
 
