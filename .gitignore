@@ -29,10 +29,10 @@ configs/llm.json
 .tox/
 .coverage
 .coverage.*
+coverage.json
 coverage.xml
 htmlcov/
 *.cover
-# coverage.json is a committed project artifact — do NOT ignore it
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
