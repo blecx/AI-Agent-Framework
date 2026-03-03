@@ -9,7 +9,7 @@ client workspace settings file:
 The `chat.tools.subagent.autoApprove` block is a *policy* (which agents are
 auto-approved), not a registry of all available agents. This script validates:
 
-- Any auto-approved names are valid (exist in `.github/agents/*.agent.md`).
+- Any auto-approved names are valid (exist in `.github/agents/*.md`).
 - A small baseline set is present in the primary workspace settings.
 """
 
@@ -53,7 +53,7 @@ def _load_jsonc(path: Path) -> dict:
 
 
 def _available_subagent_names() -> set[str]:
-    return {path.name.removesuffix(".agent.md") for path in AGENTS_DIR.glob("*.agent.md")}
+    return {path.name.removesuffix(".md") for path in AGENTS_DIR.glob("*.md") if path.name not in ["README.md", "AUTOMATIONS.md", "agents-catalog-maintainer.md"]}
 
 
 def _approved_names(settings: dict) -> set[str]:

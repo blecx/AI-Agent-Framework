@@ -2,7 +2,7 @@
 
 This document describes the former **agents-catalog-maintainer** custom agent.
 
-It is intentionally **not** a `*.agent.md` file, so it does **not** appear as a selectable Copilot custom agent.
+It is intentionally **not** a `*.md` file, so it does **not** appear as a selectable Copilot custom agent.
 
 ---
 
@@ -22,12 +22,12 @@ Produce a complete, accurate, and verifiable conversion of all agent-like workfl
 
 1. Full inventory of:
    - runtime agents (Python classes + aliases),
-   - custom chat agents (`*.agent.md`),
+   - custom chat agents (`*.md`),
    - prompt workflows (`.github/prompts/agents/*.md`),
    - script/task/workflow automations.
 2. Gap analysis: what exists outside `.github/agents` and why.
 3. Conversion actions:
-   - create/update missing `.agent.md` wrappers,
+   - create/update missing `.md` wrappers,
    - update `.github/agents/README.md`,
    - update `.github/agents/AUTOMATIONS.md`.
 4. Validation report with changed files and any unresolved blockers.
@@ -43,7 +43,7 @@ Produce a complete, accurate, and verifiable conversion of all agent-like workfl
 ## Quality Gate (must pass)
 
 - Every active prompt workflow has either:
-  - a corresponding `.agent.md` file, or
+  - a corresponding `.md` file, or
   - an explicit documented reason in `AUTOMATIONS.md`.
 - Agent names in `.vscode/settings.json` `chat.tools.subagent.autoApprove` are represented in `.github/agents`.
 - README and inventory are internally consistent.

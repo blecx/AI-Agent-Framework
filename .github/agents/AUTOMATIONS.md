@@ -24,25 +24,25 @@ Execution entrypoints:
 - `./scripts/work-issue.py --issue <n> [--agent <alias>]`
 - `scripts/agents/workflow` (wrapper to `agents/workflow_agent.py`)
 
-## 2) Custom Chat Agents (`.github/agents/*.agent.md`)
+## 2) Custom Chat Agents (`.github/agents/*.md`)
 
 Authority + lifecycle agents:
 
-- `resolve-issue.agent.md`
-- `pr-merge.agent.md`
-- `close-issue.agent.md`
-- `tutorial.agent.md`
-- `blecs-ux-authority.agent.md`
-- `blecs-workflow-authority.agent.md`
+- `resolve-issue.md`
+- `pr-merge.md`
+- `close-issue.md`
+- `tutorial.md`
+- `blecs-ux-authority.md`
+- `blecs-workflow-authority.md`
 
 Converted wrappers for prompt workflows/runtime profiles:
 
-- `create-issue.agent.md`
-- `Plan.agent.md`
-- `continue-backend.agent.md`
-- `continue-phase-2.agent.md`
-- `ralph-agent.agent.md`
-- `workflow.agent.md`
+- `create-issue.md`
+- `Plan.md`
+- `continue-backend.md`
+- `continue-phase-2.md`
+- `ralph-agent.md`
+- `workflow.md`
 
 ## 3) Prompt Workflow Sources (`.github/prompts/agents/*.md`)
 
@@ -104,7 +104,7 @@ Main backend workflows in `.github/workflows/`:
 
 When a new workflow prompt or runtime profile is added, do all of the following in the same change:
 
-1. Add/update corresponding `.github/agents/*.agent.md` wrapper.
+1. Add/update corresponding `.github/agents/*.md` wrapper.
 2. Update `.github/agents/README.md`.
 3. Update this inventory file.
 4. Keep prompt logic canonical in `.github/prompts/agents/` and shared modules.
