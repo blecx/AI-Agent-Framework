@@ -1,6 +1,6 @@
 <skill>
 <name>tutorial-review-workflow</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/tutorial-review-workflow.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/tutorial-review-workflow/SKILL.md</description>
 <file>
 # Tutorial Review Workflow (Module)
 

@@ -1,6 +1,6 @@
 <skill>
 <name>pr-merge-workflow</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/pr-merge-workflow.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/pr-merge-workflow/SKILL.md</description>
 <file>
 # PR Merge Workflow (Module)
 

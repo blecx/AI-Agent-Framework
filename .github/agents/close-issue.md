@@ -161,4 +161,4 @@ JSON
 - Single state check (no polling)
 - Early exit for already-closed issues
 - No redundant validations
-- Use `.github/prompts/modules/ux/delegation-policy.md` for UX ownership rules
+- Use `.copilot/skills/ux-delegation-policy/SKILL.md` for UX ownership rules

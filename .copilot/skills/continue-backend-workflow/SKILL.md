@@ -1,6 +1,6 @@
 <skill>
 <name>continue-backend-workflow</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/continue-backend-workflow.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/continue-backend-workflow/SKILL.md</description>
 <file>
 # Continue Backend Workflow
 

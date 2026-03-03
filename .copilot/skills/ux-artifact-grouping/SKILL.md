@@ -1,6 +1,6 @@
 <skill>
 <name>ux-artifact-grouping</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/artifact-grouping.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-artifact-grouping/SKILL.md</description>
 <file>
 # UX Skill: Artifact Grouping
 

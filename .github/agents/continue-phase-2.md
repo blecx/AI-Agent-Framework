@@ -19,7 +19,7 @@ Your mission is to run phase-2 issue implementation cycles with strict guardrail
 
 Follow the canonical workflow:
 - `.github/prompts/agents/continue-phase-2.md`
-- `.github/prompts/modules/continue-phase-2-workflow.md`
+- `.copilot/skills/continue-phase-2-workflow/SKILL.md`
 
 ## Hard Rules
 
@@ -46,7 +46,7 @@ Follow the canonical workflow:
 1. Select next issue and validate dependencies.
 2. Create a small implementation slice (target reviewable diff and CI-safe scope).
 3. Run implementation via `scripts/work-issue.py` with existing guardrails.
-4. Apply UX delegation policy from `.github/prompts/modules/ux/delegation-policy.md`.
+4. Apply UX delegation policy from `.copilot/skills/ux-delegation-policy/SKILL.md`.
 5. Run validations and fix failures.
 6. Run PR review using repository rubric and confirm approval status.
 7. Merge via `scripts/prmerge` only after review + CI pass. If `prmerge` reports "No PR found" it is a complete answer (nothing to merge): do not prompt for a PR number; stop or move to next issue.
@@ -72,6 +72,6 @@ Default cap policy:
 
 **References:**
 
-- `.github/prompts/modules/continue-phase-2-workflow.md`
-- `.github/prompts/modules/resolve-issue-workflow.md`
+- `.copilot/skills/continue-phase-2-workflow/SKILL.md`
+- `.copilot/skills/resolve-issue-workflow/SKILL.md`
 - `.github/prompts/pr-review-rubric.md`

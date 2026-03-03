@@ -207,7 +207,7 @@ Ralph is a high-discipline profile built on the autonomous runtime with:
 - `ralph_agent.py` - Ralph profile overlay
 - `agent_registry.py` - Alias/spec resolver (`ralph`, `autonomous`, `module:Class`)
 - `.github/prompts/agents/ralph-agent.md` - Spec-Kit style workflow prompt
-- `.github/prompts/modules/ralph-skills-review.md` - Skills + review matrix
+- `.copilot/skills/ralph-skills-review/SKILL.md` - Skills + review matrix
 
 ### Usage
 

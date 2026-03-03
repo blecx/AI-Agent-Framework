@@ -1,6 +1,6 @@
 <skill>
 <name>ux-context-sources</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/context-sources.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-context-sources/SKILL.md</description>
 <file>
 # UX Skill: Context Sources
 

@@ -19,7 +19,7 @@ Your mission is to execute backend roadmap issues in small, CI-safe slices.
 
 Follow the canonical workflow:
 - `.github/prompts/agents/continue-backend.md`
-- `.github/prompts/modules/continue-backend-workflow.md`
+- `.copilot/skills/continue-backend-workflow/SKILL.md`
 
 ## Hard Rules
 
@@ -72,6 +72,6 @@ Default cap policy:
 
 **References:**
 
-- `.github/prompts/modules/continue-backend-workflow.md`
-- `.github/prompts/modules/resolve-issue-workflow.md`
+- `.copilot/skills/continue-backend-workflow/SKILL.md`
+- `.copilot/skills/resolve-issue-workflow/SKILL.md`
 - `scripts/continue-backend.sh`

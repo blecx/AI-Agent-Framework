@@ -1,51 +1,64 @@
 <skill>
 <name>blecs-ux-authority</name>
-<description>blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, and UX/a11y review.</description>
+<description>blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, modern React/Vite/Tailwind UI patterns, and UX/a11y review.</description>
 <file>
 ---
-description: "blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, and UX/a11y review."
+description: "blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, modern React/Vite/Tailwind UI patterns, and UX/a11y review."
 ---
 
 # blecs UX Authority Skill
 
-This skill defines the canonical constraints for UI/UX.
+This skill defines the canonical constraints for UI/UX and modern Web App Generation code. 
 
 You are the single authority for:
-- navigation and information architecture,
-- graphical layout and responsive behavior,
-- grouping of interacting artifacts/objects,
-- baseline accessibility UX requirements.
+- Navigation and information architecture
+- Graphical layout and responsive behavior
+- Modern styling (React, Vite, Tailwind CSS, shadcn/ui patterns)
+- Component generation standards and accessibility UX requirements
 
 ## Required Consultation Scope
 
 Any AI assistant or agent that plans, implements, reviews, or merges changes that affect UI/UX must consult this skill first.
+Consultation is mandatory for navigation structure changes, new/updated screens or panels, responsive layout changes, component grouping and interaction model changes, and PR reviews touching UX-sensitive paths.
 
-Consultation is mandatory for:
-- navigation structure changes,
-- new/updated screens or panels,
-- responsive layout changes,
-- component grouping and interaction model changes,
-- PR reviews touching UX-sensitive paths.
-
-## Core Rules
+## 1. Core Rules & Navigation Architecture
 
 1. Produce a **navigation plan first** (IA/sitemap + primary/secondary nav model).
 2. Reject "one tile per object" anti-patterns when object interactions require grouped flows.
 3. Enforce mobile-first responsive behavior with full-width usage and no cut-off content.
 4. Run an explicit requirement check (navigation, responsive, grouping, a11y, PR evidence).
 5. Treat unknown/missing evidence as requirement gaps.
-6. Require concise PASS/CHANGES outcomes with actionable remediation items.
+
+## 2. Modern UI Component Generation Constraints
+When writing UI components for React/Vite environments:
+- Use **Tailwind CSS** strictly for styling and layout. Do not write custom CSS or inline styles unless completely unavoidable.
+- Prefer **Lucide React** for icons (`lucide-react`).
+- Favor standard **shadcn/ui** or Radix-style functional layout patterns for base components (Cards, Dialogs, Inputs, Buttons) where feasible. Avoid heavy third-party UI framework vendor lock-in if standard Tailwind suffices.
+- Prefer semantic HTML5 elements: `<nav>`, `<main>`, `<article>`, `<aside>`, `<section>`, `<header>`, `<footer>`.
+- Default to **Flexbox** or **CSS Grid** for layout. Do not use floats or absolute positioning for standard document flow.
+
+## 3. Interaction and State Management
+- Ensure loading states include skeleton configurations or animated spinners.
+- Ensure error states gracefully inform the user and provide a recovery action.
+- Disable submit buttons during form mutations (`pending` states).
+- Follow optimistic UI updating best practices where data mutations execute in the background.
+
+## 4. Accessibility (A11y) Baseline
+- Ensure all interactive elements have highly visible `focus-visible` state rings with Tailwind (e.g., `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`).
+- Include `aria-label` or `sr-only` text tags for icon-only buttons.
+- Manage focus trapping inside modals and dialogs safely.
+- Meet WCAG AA contrast ratios minimum for text against backgrounds.
 
 ## Required Modules
 
 Use and enforce:
-- `.github/prompts/modules/ux/ia-navigation.md`
-- `.github/prompts/modules/ux/responsive.md`
-- `.github/prompts/modules/ux/artifact-grouping.md`
-- `.github/prompts/modules/ux/a11y-basics.md`
-- `.github/prompts/modules/ux/pr-checklist.md`
-- `.github/prompts/modules/ux/consult-request.md`
-- `.github/prompts/modules/ux/context-sources.md`
+- `.copilot/skills/ux-ia-navigation/SKILL.md`
+- `.copilot/skills/ux-responsive/SKILL.md`
+- `.copilot/skills/ux-artifact-grouping/SKILL.md`
+- `.copilot/skills/ux-a11y-basics/SKILL.md`
+- `.copilot/skills/ux-pr-checklist/SKILL.md`
+- `.copilot/skills/ux-consult-request/SKILL.md`
+- `.copilot/skills/ux-context-sources/SKILL.md`
 
 ## Output Contract
 
@@ -58,6 +71,7 @@ If CHANGES, include a short ordered remediation list and blocking severity.
 Required sections after decision header:
 - `Navigation Plan:`
 - `Responsive Rules:`
+- `Tailwind & Components:`
 - `Grouping Decisions:`
 - `A11y Baseline:`
 - `Requirement Check:`

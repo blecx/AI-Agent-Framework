@@ -55,5 +55,5 @@ Return:
 
 ## References
 
-- `.github/prompts/modules/cross-repo-coordination-checklist.md`
-- `.github/prompts/modules/prompt-quality-baseline.md`
+- `.copilot/skills/cross-repo-coordination-checklist/SKILL.md`
+- `.copilot/skills/prompt-quality-baseline/SKILL.md`

@@ -1,6 +1,6 @@
 <skill>
 <name>ux-pr-checklist</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/pr-checklist.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-pr-checklist/SKILL.md</description>
 <file>
 # UX Skill: PR Checklist
 

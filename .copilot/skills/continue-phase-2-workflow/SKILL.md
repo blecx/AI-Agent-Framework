@@ -1,6 +1,6 @@
 <skill>
 <name>continue-phase-2-workflow</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/continue-phase-2-workflow.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/continue-phase-2-workflow/SKILL.md</description>
 <file>
 # Continue Phase-2 Workflow
 
