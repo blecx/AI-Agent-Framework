@@ -1,6 +1,6 @@
 <skill>
 <name>ralph-skills-review</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ralph-skills-review.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ralph-skills-review/SKILL.md</description>
 <file>
 # Ralph Skills & Review Matrix
 

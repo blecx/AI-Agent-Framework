@@ -40,14 +40,14 @@ Date: 2026-02-21
 | 37 | `.github/prompts/agents/close-issue.md` |
 | 36 | `.github/prompts/tutorial-audit-strict.md` |
 | 32 | `.github/prompts/agents/README.md` |
-| 31 | `.github/prompts/modules/prompt-quality-baseline.md` |
+| 31 | `.copilot/skills/prompt-quality-baseline/SKILL.md` |
 | 27 | `.github/prompts/tutorial-default-prompt.md` |
-| 27 | `.github/prompts/modules/issue-creation-workflow.md` |
-| 24 | `.github/prompts/modules/tutorial-review-workflow.md` |
-| 23 | `.github/prompts/modules/resolve-issue-workflow.md` |
-| 21 | `.github/prompts/modules/multi-step-planning-checklist.md` |
-| 21 | `.github/prompts/modules/cross-repo-coordination-checklist.md` |
-| 16 | `.github/prompts/modules/pr-merge-workflow.md` |
+| 27 | `.copilot/skills/issue-creation-workflow/SKILL.md` |
+| 24 | `.copilot/skills/tutorial-review-workflow/SKILL.md` |
+| 23 | `.copilot/skills/resolve-issue-workflow/SKILL.md` |
+| 21 | `.copilot/skills/multi-step-planning-checklist/SKILL.md` |
+| 21 | `.copilot/skills/cross-repo-coordination-checklist/SKILL.md` |
+| 16 | `.copilot/skills/pr-merge-workflow/SKILL.md` |
 
 ## Quality Notes
 

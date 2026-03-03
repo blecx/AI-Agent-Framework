@@ -1,6 +1,6 @@
 <skill>
 <name>resolve-issue-workflow</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/resolve-issue-workflow.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/resolve-issue-workflow/SKILL.md</description>
 <file>
 # Resolve Issue Workflow (Module)
 

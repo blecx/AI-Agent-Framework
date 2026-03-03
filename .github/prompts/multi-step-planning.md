@@ -56,6 +56,6 @@ Return:
 
 ## References
 
-- `.github/prompts/modules/multi-step-planning-checklist.md`
-- `.github/prompts/modules/prompt-quality-baseline.md`
+- `.copilot/skills/multi-step-planning-checklist/SKILL.md`
+- `.copilot/skills/prompt-quality-baseline/SKILL.md`
 - `.github/prompts/planning-feature.md`

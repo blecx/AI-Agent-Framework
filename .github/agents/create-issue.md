@@ -24,7 +24,7 @@ Your job is to create high-quality GitHub issues only.
 
 Follow the canonical workflow:
 - `.github/prompts/agents/create-issue.md`
-- `.github/prompts/modules/issue-creation-workflow.md`
+- `.copilot/skills/issue-creation-workflow/SKILL.md`
 
 ## Completion Contract
 
@@ -105,4 +105,4 @@ Return:
 
 - `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `.github/prompts/drafting-issue.md`
-- `.github/prompts/modules/prompt-quality-baseline.md`
+- `.copilot/skills/prompt-quality-baseline/SKILL.md`

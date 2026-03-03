@@ -1,6 +1,6 @@
 <skill>
 <name>ux-a11y-basics</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/a11y-basics.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-a11y-basics/SKILL.md</description>
 <file>
 # UX Skill: A11y Baseline
 

@@ -1,6 +1,6 @@
 <skill>
 <name>multi-step-planning-checklist</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/multi-step-planning-checklist.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/multi-step-planning-checklist/SKILL.md</description>
 <file>
 # Multi-Step Planning Checklist (Module)
 

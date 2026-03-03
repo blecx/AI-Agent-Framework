@@ -1,6 +1,6 @@
 <skill>
 <name>ux-responsive</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/responsive.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-responsive/SKILL.md</description>
 <file>
 # UX Skill: Responsive Rules
 

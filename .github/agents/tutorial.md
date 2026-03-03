@@ -103,6 +103,6 @@ Return:
 
 ## References
 
-- `.github/prompts/modules/tutorial-review-workflow.md`
-- `.github/prompts/modules/ux/delegation-policy.md`
-- `.github/prompts/modules/prompt-quality-baseline.md`
+- `.copilot/skills/tutorial-review-workflow/SKILL.md`
+- `.copilot/skills/ux-delegation-policy/SKILL.md`
+- `.copilot/skills/prompt-quality-baseline/SKILL.md`

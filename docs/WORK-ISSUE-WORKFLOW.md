@@ -187,7 +187,7 @@ When running via the autonomous agent (`scripts/work-issue.py`), Phase 2 include
 
 Canonical UX governance links:
 
-- Delegation policy (source of truth): `.github/prompts/modules/ux/delegation-policy.md`
+- Delegation policy (source of truth): `.copilot/skills/ux-delegation-policy/SKILL.md`
 - Authority agent contract: `.github/agents/blecs-ux-authority.agent.md`
 - CI UX evidence gate: `.github/workflows/ci.yml` (`## UX / Navigation Review` requirement)
 
@@ -895,7 +895,7 @@ fi
 - [STEP-1-IMPLEMENTATION-WORKFLOW.md](../STEP-1-IMPLEMENTATION-WORKFLOW.md) - 10-step protocol (superset)
 - [Quality Gates (Issue #24)](https://github.com/blecx/AI-Agent-Framework-Client/issues/24) - CI/CD requirements
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - General contribution guidelines
-- [Canonical UX Delegation Policy](../.github/prompts/modules/ux/delegation-policy.md) - mandatory UI/UX delegation rules
+- [Canonical UX Delegation Policy](..copilot/skills/ux-delegation-policy/SKILL.md) - mandatory UI/UX delegation rules
 - [UX Authority Agent Contract](../.github/agents/blecs-ux-authority.agent.md) - PASS/CHANGES authority output contract
 
 ## Quick Reference

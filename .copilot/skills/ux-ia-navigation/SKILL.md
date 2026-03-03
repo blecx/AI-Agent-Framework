@@ -1,6 +1,6 @@
 <skill>
 <name>ux-ia-navigation</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/ia-navigation.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-ia-navigation/SKILL.md</description>
 <file>
 # UX Skill: IA & Navigation
 

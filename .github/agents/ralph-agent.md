@@ -41,7 +41,7 @@ Resolve one issue into one reviewable PR using a strict Spec-Kit loop with skill
 
 ## Skill Acceptance Criteria
 
-Use canonical matrix: `.github/prompts/modules/ralph-skills-review.md`.
+Use canonical matrix: `.copilot/skills/ralph-skills-review/SKILL.md`.
 
 Required skills to pass:
 - Dependency and impact analysis
@@ -91,8 +91,8 @@ Required skills to pass:
 
 Follow canonical rails:
 - `.github/prompts/agents/ralph-agent.md`
-- `.github/prompts/modules/ralph-skills-review.md`
-- `.github/prompts/modules/resolve-issue-workflow.md`
+- `.copilot/skills/ralph-skills-review/SKILL.md`
+- `.copilot/skills/resolve-issue-workflow/SKILL.md`
 ```
 
 
@@ -174,7 +174,7 @@ Required skills to pass:
 
 ## References
 
-- `.github/prompts/modules/resolve-issue-workflow.md`
-- `.github/prompts/modules/ralph-skills-review.md`
+- `.copilot/skills/resolve-issue-workflow/SKILL.md`
+- `.copilot/skills/ralph-skills-review/SKILL.md`
 - `.github/prompts/pr-review-rubric.md`
 - `.github/prompts/cross-repo-coordination.md`

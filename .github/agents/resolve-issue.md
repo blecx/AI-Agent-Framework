@@ -290,7 +290,7 @@ Return:
 
 ## References
 
-- `.github/prompts/modules/resolve-issue-workflow.md`
-- `.github/prompts/modules/ux/delegation-policy.md`
+- `.copilot/skills/resolve-issue-workflow/SKILL.md`
+- `.copilot/skills/ux-delegation-policy/SKILL.md`
 - `.github/prompts/pr-review-rubric.md`
-- `.github/prompts/modules/prompt-quality-baseline.md`
+- `.copilot/skills/prompt-quality-baseline/SKILL.md`

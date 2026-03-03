@@ -1,6 +1,6 @@
 <skill>
 <name>ux-delegation-policy</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/delegation-policy.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-delegation-policy/SKILL.md</description>
 <file>
 # UX Skill: Delegation Policy (Mandatory)
 

@@ -39,13 +39,13 @@ Consultation is mandatory for:
 ## Required Modules
 
 Use and enforce:
-- `.github/prompts/modules/ux/ia-navigation.md`
-- `.github/prompts/modules/ux/responsive.md`
-- `.github/prompts/modules/ux/artifact-grouping.md`
-- `.github/prompts/modules/ux/a11y-basics.md`
-- `.github/prompts/modules/ux/pr-checklist.md`
-- `.github/prompts/modules/ux/consult-request.md`
-- `.github/prompts/modules/ux/context-sources.md`
+- `.copilot/skills/ux-ia-navigation/SKILL.md`
+- `.copilot/skills/ux-responsive/SKILL.md`
+- `.copilot/skills/ux-artifact-grouping/SKILL.md`
+- `.copilot/skills/ux-a11y-basics/SKILL.md`
+- `.copilot/skills/ux-pr-checklist/SKILL.md`
+- `.copilot/skills/ux-consult-request/SKILL.md`
+- `.copilot/skills/ux-context-sources/SKILL.md`
 
 ## Output Contract
 

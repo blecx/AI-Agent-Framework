@@ -1,6 +1,6 @@
 <skill>
 <name>prompt-quality-baseline</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/prompt-quality-baseline.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/prompt-quality-baseline/SKILL.md</description>
 <file>
 # Prompt Quality Baseline
 

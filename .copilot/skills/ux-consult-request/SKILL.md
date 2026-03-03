@@ -1,6 +1,6 @@
 <skill>
 <name>ux-consult-request</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/ux/consult-request.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/ux-consult-request/SKILL.md</description>
 <file>
 # UX Skill: Consult Request Template
 

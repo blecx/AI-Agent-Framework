@@ -1,6 +1,6 @@
 <skill>
 <name>cross-repo-coordination-checklist</name>
-<description>Workflow or rule module extracted from .github/prompts/modules/cross-repo-coordination-checklist.md</description>
+<description>Workflow or rule module extracted from .copilot/skills/cross-repo-coordination-checklist/SKILL.md</description>
 <file>
 # Cross-Repo Coordination Checklist (Module)
 
