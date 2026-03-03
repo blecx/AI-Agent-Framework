@@ -137,6 +137,71 @@ class GitManager:
                     logger.exception(
                         "Failed to reinitialize repository at %s", self.base_path
                     )
+    def get_sync_status(self) -> Dict[str, Any]:
+        """Get the current synchronization status of the repository."""
+        self.ensure_repository()
+        
+        status = {
+            "is_synced": True,
+            "unsynced_commits": 0,
+            "untracked_changes": 0,
+            "has_conflicts": False,
+            "branch": "main",
+            "message": ""
+        }
+        
+        if not self.repo:
+            status["message"] = "Repository not initialized"
+            return status
+
+        try:
+            # Check current branch
+            status["branch"] = self.repo.active_branch.name
+
+            # Check for uncommitted changes
+            # Includes untracked, modified, deleted files
+            untracked_changes = len(self.repo.untracked_files)
+            modified_changes = len([item.a_path for item in self.repo.index.diff(None)])
+            staged_changes = len([item.a_path for item in self.repo.index.diff("HEAD")])
+            
+            total_uncommitted = untracked_changes + modified_changes + staged_changes
+            status["untracked_changes"] = total_uncommitted
+            
+            if total_uncommitted > 0:
+                status["is_synced"] = False
+                status["message"] = f"Found {total_uncommitted} uncommitted files."
+            
+            # Check for merge conflicts
+            try:
+                if self.repo.index.unmerged_blobs():
+                    status["has_conflicts"] = True
+                    status["is_synced"] = False
+                    status["message"] = "Repository has merge conflicts."
+            except Exception:
+                pass # Depending on gitpython version, unmerged_blobs might just be empty list
+
+            # Check unsynced commits (ahead of remote)
+            try:
+                if self.repo.remotes:
+                    remote = self.repo.remotes[0]
+                    # Make sure we fetch to get latest status if needed? 
+                    # Actually fetching might be slow, so we just check against local tracking branch
+                    # Count commits ahead
+                    tracking_branch = self.repo.active_branch.tracking_branch()
+                    if tracking_branch:
+                        commits_ahead = list(self.repo.iter_commits(f"{tracking_branch.name}..{self.repo.active_branch.name}"))
+                        status["unsynced_commits"] = len(commits_ahead)
+                        if len(commits_ahead) > 0:
+                            status["is_synced"] = False
+                            status["message"] = f"Ahead of remote by {len(commits_ahead)} commits."
+            except Exception:
+                pass
+
+        except Exception as e:
+            status["message"] = f"Error checking sync status: {str(e)}"
+            
+        return status
+
 
     def get_project_path(self, project_key: str) -> Path:
         """Get the path for a specific project."""
