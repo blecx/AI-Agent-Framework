@@ -2,4 +2,4 @@
 
 This directory contains Spec Kit-style command prompts (`speckit.*`) for Spec-Driven Development workflows.
 
-These files are intentionally separated from custom agent definitions (`*.agent.md`) in the parent directory to avoid format/discovery conflicts.
+These files are intentionally separated from custom agent definitions (`*.md`) in the parent directory to avoid format/discovery conflicts.

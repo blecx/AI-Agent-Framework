@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 from agents.mcp_client import MCPMultiClient
 from agents.router_agent import RouterAgent, RoutingDecision
+from agents.planner_agent import PlannerAgent
 from agents.coder_agent import CoderAgent, CoderResult
 
 
@@ -38,6 +39,8 @@ _DEFAULT_SERVERS = {
     "mcp-memory": "http://localhost:3030",
     "mcp-agent-bus": "http://localhost:3031",
     "mcp-github-ops": "http://localhost:3018",
+    "mcp-search": "http://localhost:3013",
+    "mcp-filesystem": "http://localhost:3014",
 }
 
 
@@ -47,6 +50,8 @@ def _load_server_urls_from_env() -> dict[str, str]:
         "mcp-memory": "MAESTRO_MEMORY_URL",
         "mcp-agent-bus": "MAESTRO_BUS_URL",
         "mcp-github-ops": "MAESTRO_GITHUB_URL",
+        "mcp-search": "MAESTRO_SEARCH_URL",
+        "mcp-filesystem": "MAESTRO_FILESYSTEM_URL",
     }
     result: dict[str, str] = {}
     for name, env_key in mapping.items():
@@ -157,10 +162,19 @@ class MaestroOrchestrator:
                 changed_files=changed_files,
             )
 
+            # ── 1.5. Plan ─────────────────────────────────────────────
+            planner = PlannerAgent(
+                mcp,
+                model_tier=decision.planning_model_tier,
+                llm_client=self._llm,
+                workspace_root=self._root,
+            )
+            await planner.run(decision.run_id, issue_body, decision.similar_issues)
+
             # ── 2. Code ───────────────────────────────────────────────
             coder = CoderAgent(
                 mcp,
-                model_tier=decision.model_tier,
+                model_tier=decision.coder_model_tier,
                 llm_client=self._llm,
                 workspace_root=self._root,
             )
@@ -172,7 +186,7 @@ class MaestroOrchestrator:
                     repo=repo,
                     run_id=decision.run_id,
                     complexity_score=decision.complexity_score,
-                    model_tier=decision.model_tier,
+                    model_tier=decision.coder_model_tier,
                     error=coder_result.error,
                 )
 
@@ -205,7 +219,7 @@ class MaestroOrchestrator:
                 pr_url=pr_url,
                 files_changed=coder_result.files_changed,
                 complexity_score=decision.complexity_score,
-                model_tier=decision.model_tier,
+                model_tier=decision.coder_model_tier,
                 tests_passed=coder_result.tests_passed,
             )
 
@@ -263,13 +277,13 @@ class MaestroOrchestrator:
         tags = [
             repo,
             f"issue-{issue_number}",
-            f"tier-{decision.model_tier}",
+            f"tier-{decision.coder_model_tier}",
             f"score-{decision.complexity_score}",
             outcome,
         ]
         insight = (
             f"Issue #{issue_number} in {repo}: "
-            f"complexity={decision.complexity_score} ({decision.model_tier}), "
+            f"complexity={decision.complexity_score} ({decision.coder_model_tier}), "
             f"outcome={outcome}, "
             f"files={len(coder_result.files_changed)}"
             + (f", pr={pr_url}" if pr_url else "")
@@ -279,7 +293,7 @@ class MaestroOrchestrator:
                 "issue_number": issue_number,
                 "repo": repo,
                 "complexity_score": decision.complexity_score,
-                "model_used": decision.model_tier,
+                "model_used": decision.coder_model_tier,
                 "outcome": outcome,
                 "tags": tags,
                 "insight": insight,
