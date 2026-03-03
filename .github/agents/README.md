@@ -15,6 +15,7 @@ These files have been consolidated from legacy duplicate folders to serve as the
 - **[continue-phase-2.md](./continue-phase-2.md)** - Run phase-2 continuation loops with review-before-merge policy.
 - **[ralph-agent.md](./ralph-agent.md)** - Execute strict spec-kit style issue resolution with specialist review gates.
 - **[workflow.md](./workflow.md)** - Legacy workflow-agent wrapper profile for scripted batch runs.
+- **[maestro-operator.md](./maestro-operator.md)** - Bridge agent that executes the underlying Python autonomous 'Maestro' workflow.
 
 ## Legacy Sub-Agents functioning as Pseudo-Skills (Soon to be moved to `.copilot/skills`)
 
