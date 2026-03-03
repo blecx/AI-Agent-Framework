@@ -1,12 +1,10 @@
 # Future Enhancements & Wishlist
 
-## 1. Enrich the "WebUI Designer" (blecs-ux-authority) Skill
-- **Action:** Perform internet research on modern frontend meta-prompts (e.g., Anthropic's Claude 3.5 Sonnet UI coding guides and vercel/v0 prompt leaks).
-- **Goal:** Upgrade the extracted UX skill to include state-of-the-art standards for React/Vite, Tailwind responsive design, and accessibility patterns.
+~~## 1. Enrich the "WebUI Designer" (blecs-ux-authority) Skill~~ (COMPLETED)
+- **Status:** Integrated UI standards for Tailwind/Vite/Accessibility explicitly into `blecs-ux-authority`.
 
-## 2. Elevate the "Tutorial Writer" System Prompt
-- **Action:** Pull in Microsoft's official technical writing guidelines and instructional design prompts.
-- **Goal:** Optimize the tutorial bot to not just document, but use interactive learning prompt strategies. The current state has scattered files (`tutorial.md`, `tutorial-audit-strict.md`, `tutorial-default-prompt.md`) that need to be unified into a cohesive "Skill Package".
+~~## 2. Elevate the "Tutorial Writer" System Prompt~~ (COMPLETED)
+- **Status:** Consolidated legacy prompts into `tutorial-writer-expert` dynamic skill with advanced learning methodologies.
 
 ~~## 3. Handle Auxiliary Modules (`.github/prompts/modules/`)~~ (COMPLETED)
 - **Status:** Extracted entirely into dynamic `.copilot/skills/`
@@ -20,6 +18,5 @@
 ~~## 6. Automate Regression Suite for Agent Settings~~ (COMPLETED)
 - **Status:** Hooked into Pytest suite natively via `tests/unit/test_agent_prompts_architecture.py`.
 
-## 7. Refine "maestro-operator.md" Bridging Logic (Agent <-> Terminal loop)
-- **Action:** The newly created Maestro Operator triggers python scripts but could be more resilient to runtime traceback outputs.
-- **Goal:** Write an instruction rule explicitly parsing any python exception traces and feeding them back structurally.
+~~## 7. Refine "maestro-operator.md" Bridging Logic (Agent <-> Terminal loop)~~ (COMPLETED)
+- **Status:** Wrote specific runtime traceback parsing directives to prevent silent stops on Python errors.
