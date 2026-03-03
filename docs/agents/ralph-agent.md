@@ -21,7 +21,7 @@ Ralph is a strict issue-resolution profile built for high-confidence delivery in
 
 ## Prompt Source of Truth
 
-- Agent prompt: `.github/prompts/agents/ralph-agent.md`
+- Agent prompt: `.github/agents/ralph-agent.md`
 - Skills/review matrix: `.copilot/skills/ralph-skills-review/SKILL.md`
 
 ## Acceptance Model

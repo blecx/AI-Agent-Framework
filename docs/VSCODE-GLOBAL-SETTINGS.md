@@ -1,6 +1,6 @@
 # VS Code Global Settings for AI Agent Framework
 
-This guide configures VS Code to auto-approve agent operations and terminal commands, enabling the optimized agent workflows defined in `.github/prompts/agents/` to run efficiently without user intervention.
+This guide configures VS Code to auto-approve agent operations and terminal commands, enabling the optimized agent workflows defined in `.github/agents/` to run efficiently without user intervention.
 
 To enable auto-approve globally across all VS Code instances (not just this workspace), add these settings to your **User Settings** (`~/.config/Code/User/settings.json` on Linux, `%APPDATA%\Code\User\settings.json` on Windows, `~/Library/Application Support/Code/User/settings.json` on macOS):
 
@@ -109,12 +109,12 @@ To enable auto-approve globally across all VS Code instances (not just this work
 
 - **`chat.tools.subagent.autoApprove`**: Automatically approves running specific agent modes without prompting
   - `resolve-issue`: Auto-approves the issue resolution agent
-  - `close-issue`: Auto-approves issue closing operations (see `.github/prompts/agents/close-issue.md`)
-  - `pr-merge`: Auto-approves PR merge operations (see `.github/prompts/agents/pr-merge.md`)
-  - `Plan`: Auto-approves planning agent operations (see `.github/prompts/agents/Plan.md`)
-  - `tutorial`: Auto-approves tutorial generation/audit agent runs (see `.github/prompts/agents/tutorial.md`)
+  - `close-issue`: Auto-approves issue closing operations (see `.github/agents/close-issue.md`)
+  - `pr-merge`: Auto-approves PR merge operations (see `.github/agents/pr-merge.md`)
+  - `Plan`: Auto-approves planning agent operations (see `.github/agents/Plan.md`)
+  - `tutorial`: Auto-approves tutorial generation/audit agent runs (see `.github/agents/tutorial.md`)
 
-**Note:** These agent names correspond to optimized workflow prompts in `.github/prompts/agents/` that implement early-exit conditions, batch operations, and eliminate polling loops to reduce resolution time from 30-45 minutes to 5-10 minutes.
+**Note:** These agent names correspond to optimized workflow prompts in `.github/agents/` that implement early-exit conditions, batch operations, and eliminate polling loops to reduce resolution time from 30-45 minutes to 5-10 minutes.
 
 ### Terminal Command Auto-Approve
 
@@ -187,9 +187,9 @@ The auto-approved agents listed above use optimized workflows that implement:
 
 For detailed workflow documentation:
 
-- `.github/prompts/agents/resolve-issue-dev.md` - Issue resolution workflow prompt (legacy filename; used by `resolve-issue`)
-- `.github/prompts/agents/pr-merge.md` - PR merge with admin bypass (6 steps)
-- `.github/prompts/agents/close-issue.md` - Issue closure workflow (4 steps)
-- `.github/prompts/agents/Plan.md` - Research agent with limited scope (5 steps)
-- `.github/prompts/agents/tutorial.md` - Tutorial authoring and strict audit workflow rails
-- `.github/prompts/agents/README.md` - Optimization principles and performance metrics
+- `.github/agents/resolve-issue-dev.md` - Issue resolution workflow prompt (legacy filename; used by `resolve-issue`)
+- `.github/agents/pr-merge.md` - PR merge with admin bypass (6 steps)
+- `.github/agents/close-issue.md` - Issue closure workflow (4 steps)
+- `.github/agents/Plan.md` - Research agent with limited scope (5 steps)
+- `.github/agents/tutorial.md` - Tutorial authoring and strict audit workflow rails
+- `.github/agents/README.md` - Optimization principles and performance metrics
