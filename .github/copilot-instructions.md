@@ -539,3 +539,10 @@ When in doubt, consult README.md, QUICKSTART.md, or docs/development.md for exte
 - `QUICKSTART.md` - Fast setup guide
 - `docs/development.md` - Detailed development guide
 - `docs/architecture/` - System design and ADRs
+
+## Custom Agent Skills & Architectures
+All Copilot context logic follows standard Github Spec Kit architectural guidelines. 
+- Static standalone personas strictly reside in `.github/agents/*.md` for global invocation (`@agentname`). 
+- Reusable constraint maps, design system guides, and execution logic meant to be read during task evaluation must reside completely inside `.copilot/skills/` formatted using `<skill>` tags or readable `.md` guides.
+- If you need UX standards, use read_file on `.copilot/skills/blecs-ux-authority/SKILL.md`.
+- Never attempt to manually edit python source code for `agents/` autonomous routines; instead, guide the user to `run_in_terminal` using `@maestro-operator` flows.

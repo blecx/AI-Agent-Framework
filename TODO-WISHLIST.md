@@ -25,3 +25,7 @@
 - **Context:** Renaming agents breaks `settings.json` and internal script expectations silently unless caught by `.venv/bin/python scripts/check_subagent_autoapprove.py` and `.venv/bin/python scripts/check_prompt_quality.py`.
 - **Action:** Introduce an automated pre-commit hook or explicit `.github/workflows` test runner that runs both checking scripts.
 - **Goal:** Provide "Continuous Integration" for Copilot Agent settings, preventing developer tools configurations from drifting out of alignment.
+
+## 7. Migration of Sub-Agent Workflows
+- **Context:** The Phase 4 cleanup proves `.github/prompts/` is successfully removed.
+- **Action:** Future projects using this repo should look into `tests/unit/test_maestro.py` to ensure their test environments are resilient to prompt restructurings in the future.
