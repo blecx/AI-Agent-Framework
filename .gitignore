@@ -1,81 +1,79 @@
-# Byte- und Logdateien
+# ── Python runtime ───────────────────────────────────────────────────────────
 *.pyc
 *.pyo
 *.pyd
-__pycache__/
-*.log
+**/__pycache__/
+*.egg-info/
+.eggs/
+*.so
 
-# Virtuelle Umgebungen
+# ── Build output ──────────────────────────────────────────────────────────────
+dist/
+build/
+
+# ── Virtual environments (any depth) ─────────────────────────────────────────
 venv/
-.env/
 .venv/
+.env/
 ENV/
+env/
 
-# Client-specific
-client/.venv/
-client/.env
-client/__pycache__/
-client/src/__pycache__/
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+configs/llm.json
 
-# TUI-specific
-apps/tui/.venv/
-apps/tui/.env
-apps/tui/__pycache__/
-apps/tui/commands/__pycache__/
+# ── Test & coverage runtime ───────────────────────────────────────────────────
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+# coverage.json is a committed project artifact — do NOT ignore it
 
-# VS Code (ignore all except settings.json and tasks.json)
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Temp & AI agent workspace files ──────────────────────────────────────────
+# .tmp/ is workspace-scoped storage for resolve-issue-dev agent;
+# .tmp/README.md is intentionally ignored (not committed).
+.tmp/
+tmp/
+temp/
+
+# ── VS Code (keep settings and tasks) ────────────────────────────────────────
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 
-# Betriebssystemdateien
+# ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+*~
 
-# Python-Umgebungen in Agent-Ordnern
-openAI-generic/venv/
-openAI-generic/.env/
-openAI-generic/.venv/
-openAI-generic/ENV/
-
-# Node.js
-node_modules/
-dist/
-build/
-*.tsbuildinfo
-
-# Environment files
-.env.local
-.env.*.local
-
-# Sonstige
+# ── Editor swap ───────────────────────────────────────────────────────────────
 *.swp
+*.swo
 *.bak
-*.tmp
 
-# Project documents (separate git repo)
+# ── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+*.tsbuildinfo
+.eslintcache
+.vite/
+
+# ── Project documents (separate git repo) ────────────────────────────────────
 projectDocs/
 
-# Local-only: external repos checked out for review/testing
+# ── Local-only external repos ─────────────────────────────────────────────────
 _external/
 !_external/
 !_external/AI-Agent-Framework-Client/
 !_external/AI-Agent-Framework-Client/**
-
-# Testing & Coverage
-.pytest_cache/
-.coverage
-coverage.json
-coverage.xml
-htmlcov/
-.tox/
-
-# Issue Resolution Learning (should be committed to track progress)
-# .issue-resolution-knowledge.json
-
-# AI Agent temporary files (workspace-scoped for better tool access)
-# Used by resolve-issue-dev agent for PR bodies, issue notes, etc.
-# Must be in workspace (not /tmp) for Copilot tool access
-.tmp/
-
-.env
