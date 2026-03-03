@@ -173,5 +173,6 @@
     "TMPDIR": "${workspaceFolder}/.tmp",
     "TMP": "${workspaceFolder}/.tmp",
     "TEMP": "${workspaceFolder}/.tmp"
-  }
+  },
+  "makefile.configureOnOpen": false
 }
