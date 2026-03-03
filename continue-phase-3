@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-exec ./scripts/continue-phase-3.sh "$@"
