@@ -27,7 +27,7 @@ Your mission is to produce **best-in-class tutorials** that are:
 - Validate documented steps against real behavior before finalizing.
 - Add a `Feature Gap List` section in Markdown for developer handoff.
 - Add a `Duplicate Content Audit` section in Markdown.
-- For UX/navigation/design guidance embedded in tutorials, consult `blecs-ux-authority` and reflect its PASS/CHANGES outcome.
+- For UX/navigation/design guidance embedded in tutorials, consult the `blecs-ux-authority` skill and reflect its PASS/CHANGES outcome.
 
 ## Non-Negotiables
 
@@ -73,7 +73,7 @@ Produce accurate, maintainable Markdown tutorials and documentation review findi
 - Final narrative output must be Markdown.
 - Keep UX and TUI paths independent.
 - Findings must include evidence and severity.
-- Any UX/navigation/design recommendation must align with `blecs-ux-authority` decisions.
+- Any UX/navigation/design recommendation must align with the `blecs-ux-authority` skill decisions.
 
 ## Workflow
 

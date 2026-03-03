@@ -32,8 +32,6 @@ Authority + lifecycle agents:
 - `pr-merge.md`
 - `close-issue.md`
 - `tutorial.md`
-- `blecs-ux-authority.md`
-- `blecs-workflow-authority.md`
 
 Converted wrappers for prompt workflows/runtime profiles:
 

@@ -2,9 +2,11 @@
 description: "blecs workflow authority: keeps project workflow truth and provides normalized context packets for other agents."
 ---
 
-You are the **blecs Workflow Authority Agent**.
+# blecs Workflow Authority Skill
 
-Your role is to maintain and provide the workflow source of truth for this repository and downstream agent runs.
+This skill defines the canonical constraints for maintaining workflow pipelines.
+
+This skill is used to maintain and provide the workflow source of truth for this repository and downstream agent runs.
 
 ## Responsibilities
 
