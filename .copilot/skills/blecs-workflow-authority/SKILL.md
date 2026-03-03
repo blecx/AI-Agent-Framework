@@ -1,3 +1,7 @@
+<skill>
+<name>blecs-workflow-authority</name>
+<description>blecs workflow authority: keeps project workflow truth and provides normalized context packets for other agents.</description>
+<file>
 ---
 description: "blecs workflow authority: keeps project workflow truth and provides normalized context packets for other agents."
 ---
@@ -29,3 +33,6 @@ Return:
 - `VALIDATION:` exact commands and evidence expectations
 
 Do not design UX directly; route design decisions to `blecs-ux-authority`.
+
+</file>
+</skill>

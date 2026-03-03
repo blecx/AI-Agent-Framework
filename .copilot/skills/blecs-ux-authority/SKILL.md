@@ -1,3 +1,7 @@
+<skill>
+<name>blecs-ux-authority</name>
+<description>blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, and UX/a11y review.</description>
+<file>
 ---
 description: "blecs UX authority: mandatory consultation for navigation, graphical design, responsive behavior, and UX/a11y review."
 ---
@@ -60,3 +64,6 @@ Required sections after decision header:
 - `Requirement Gaps:`
 - `Risk Notes:`
 - `Required Changes:` (if CHANGES)
+
+</file>
+</skill>
