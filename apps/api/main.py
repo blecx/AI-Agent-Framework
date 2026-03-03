@@ -8,52 +8,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 """Main FastAPI application for ISO 21500 Project Management AI Agent System."""
 
-try:
-    # Package execution (e.g. `uvicorn apps.api.main:app`)
-    from .routers import (
-        projects,
-        commands,
-        artifacts,
-        governance,
-        raid,
-        workflow,
-        skills,
-        proposals,
-        commands_global,
-        templates,
-        blueprints,
-        health,
-    )
-    from .services.git_manager import GitManager
-    from .services.llm_service import LLMService
-    from .services.audit_service import AuditService
-    from .services.monitoring_service import (
-        MetricsCollector,
-        REQUEST_IN_PROGRESS,
-    )
-except ImportError:
-    # Local execution from apps/api (e.g. `uvicorn main:app`)
-    from routers import (
-        projects,
-        commands,
-        artifacts,
-        governance,
-        raid,
-        workflow,
-        skills,
-        proposals,
-        commands_global,
-        templates,
-        blueprints,
-        health,
-    )
-    from services.git_manager import GitManager
-    from services.llm_service import LLMService
-    from services.audit_service import AuditService
-    from services.monitoring_service import (
-        MetricsCollector,
-        REQUEST_IN_PROGRESS,
-    )
+# Package execution strictly enforced: `uvicorn apps.api.main:app`
+from apps.api.routers import (
+    projects,
+    commands,
+    artifacts,
+    governance,
+    raid,
+    workflow,
+    skills,
+    proposals,
+    commands_global,
+    templates,
+    blueprints,
+    health,
+)
+from apps.api.services.git_manager import GitManager
+from apps.api.services.llm_service import LLMService
+from apps.api.services.audit_service import AuditService
+from apps.api.services.monitoring_service import (
+    MetricsCollector,
+    REQUEST_IN_PROGRESS,
+)
 
 
 @asynccontextmanager
@@ -63,29 +39,28 @@ async def lifespan(app: FastAPI):
     docs_path = os.getenv("PROJECT_DOCS_PATH", "/projectDocs")
 
     # Initialize git manager with error handling
-    try:
-        git_manager = GitManager(docs_path)
-        git_manager.ensure_repository()
-        app.state.git_manager = git_manager
-    except Exception as e:
-        # Log error but don't fail startup - health checks will report this
-        # This handles cases like missing Git, permission issues, or mounted volumes
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.error(f"Git manager initialization failed: {e}", exc_info=True)
-        print(f"Warning: Git manager initialization failed: {e}")
-        print("API will start but project document management may be unavailable.")
-        app.state.git_manager = None
-
-    # Store services in app state
-    app.state.llm_service = LLMService()
-    app.state.audit_service = AuditService()
-
-    yield
-
-    # Cleanup if needed
-    pass
+    # Package execution strictly enforced: `uvicorn apps.api.main:app`
+from apps.api.routers import (
+    projects,
+    commands,
+    artifacts,
+    governance,
+    raid,
+    workflow,
+    skills,
+    proposals,
+    commands_global,
+    templates,
+    blueprints,
+    health,
+)
+from apps.api.services.git_manager import GitManager
+from apps.api.services.llm_service import LLMService
+from apps.api.services.audit_service import AuditService
+from apps.api.services.monitoring_service import (
+    MetricsCollector,
+    REQUEST_IN_PROGRESS,
+)
 
 
 app = FastAPI(
