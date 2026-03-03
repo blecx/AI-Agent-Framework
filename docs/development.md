@@ -864,3 +864,7 @@ Recommended extensions:
 **Last Updated:** 2026-01-09  
 **Maintained By:** Development Team  
 **Status:** Active
+
+## AI & Autonomous Toolchain
+
+For AI agent setup documentation, Copilot prompts, integrations, and automation tools, refer to the external [Maestro Toolchain Setup](https://github.com/blecx/maestro).

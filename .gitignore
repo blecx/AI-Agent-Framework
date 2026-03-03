@@ -78,3 +78,4 @@ htmlcov/
 # Must be in workspace (not /tmp) for Copilot tool access
 .tmp/
 
+.env
