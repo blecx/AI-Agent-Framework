@@ -280,7 +280,7 @@ Merge a ready PR safely, close the linked issue with traceability, and clean tem
 
 ## Workflow
 
-Use detailed checklist: [`../prompts/modules/pr-merge-workflow.md`](../prompts/modules/pr-merge-workflow.md).
+Use detailed checklist: [`../prompts/modules/pr-merge-workflow.md`](../../.copilot/skills/pr-merge-workflow/SKILL.md).
 
 High level:
 

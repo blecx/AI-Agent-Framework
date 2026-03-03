@@ -1,3 +1,7 @@
+<skill>
+<name>multi-step-planning-checklist</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/multi-step-planning-checklist.md</description>
+<file>
 # Multi-Step Planning Checklist (Module)
 
 ## Plan Deliverables
@@ -19,3 +23,6 @@
 - 100% requirements mapped to issues.
 - No unresolved blockers in execution order.
 - Hand-off package is implementation-ready.
+
+</file>
+</skill>

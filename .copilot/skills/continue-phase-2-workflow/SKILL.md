@@ -1,3 +1,7 @@
+<skill>
+<name>continue-phase-2-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/continue-phase-2-workflow.md</description>
+<file>
 # Continue Phase-2 Workflow
 
 Use this module when running `/continue-phase-2`.
@@ -38,3 +42,6 @@ Merge rule:
 - No selectable issues available.
 - Blocking dependency unresolved.
 - Repeated CI failure requiring human decision.
+
+</file>
+</skill>

@@ -1,3 +1,7 @@
+<skill>
+<name>continue-backend-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/continue-backend-workflow.md</description>
+<file>
 # Continue Backend Workflow
 
 Use this module when running `/continue-backend`.
@@ -38,3 +42,6 @@ Merge rule:
 - No scoped backend issues available.
 - Blocking dependency unresolved.
 - Repeated API rate limiting requiring operator pause.
+
+</file>
+</skill>

@@ -1,3 +1,7 @@
+<skill>
+<name>pr-merge-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/pr-merge-workflow.md</description>
+<file>
 # PR Merge Workflow (Module)
 
 ## Steps
@@ -14,3 +18,6 @@
 - Do not fix failing code/tests in this workflow.
 - Delegate implementation changes to `resolve-issue`.
 - Document any admin override rationale.
+
+</file>
+</skill>

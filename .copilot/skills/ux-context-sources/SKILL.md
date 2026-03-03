@@ -1,3 +1,7 @@
+<skill>
+<name>ux-context-sources</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/ux/context-sources.md</description>
+<file>
 # UX Skill: Context Sources
 
 Derive product intent from:
@@ -17,3 +21,6 @@ Source precedence for conflicts:
 
 Confidence rule:
 - If confidence is low due to missing evidence, record it as a requirement gap.
+
+</file>
+</skill>

@@ -1,3 +1,7 @@
+<skill>
+<name>ux-consult-request</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/ux/consult-request.md</description>
+<file>
 # UX Skill: Consult Request Template
 
 Use this payload for UX consultations:
@@ -32,3 +36,6 @@ CONSTRAINTS:
 KNOWN_RISKS:
 EVIDENCE_PATHS:
 ```
+
+</file>
+</skill>

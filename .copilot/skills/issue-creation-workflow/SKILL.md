@@ -1,3 +1,7 @@
+<skill>
+<name>issue-creation-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/issue-creation-workflow.md</description>
+<file>
 # Issue Creation Workflow (Module)
 
 ## Steps
@@ -25,3 +29,6 @@
 - No unresolved placeholders remain.
 - Repo constraints included (`projectDocs/`, `configs/llm.json`).
 - Cross-repo link exists when downstream work is needed.
+
+</file>
+</skill>

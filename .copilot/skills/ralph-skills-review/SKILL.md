@@ -1,3 +1,7 @@
+<skill>
+<name>ralph-skills-review</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/ralph-skills-review.md</description>
+<file>
 # Ralph Skills & Review Matrix
 
 Use this matrix as hard acceptance criteria for Ralph executions.
@@ -43,3 +47,6 @@ Run these gates after implementation and validation:
 - `REVIEW_DECISION: PASS` only when all required skills and reviewer gates pass.
 - Otherwise output `REVIEW_DECISION: CHANGES` with a minimal, ordered fix list.
 - Stop after iteration budget is exhausted and return escalation packet.
+
+</file>
+</skill>
