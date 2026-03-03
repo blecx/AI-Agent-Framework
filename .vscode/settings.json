@@ -21,7 +21,8 @@
     "close-issue": true,
     "pr-merge": true,
     "Plan": true,
-    "tutorial": true
+    "tutorial": true,
+    "maestro-operator": true
   },
   "chat.tools.terminal.autoApprove": {
     "bash": true,
