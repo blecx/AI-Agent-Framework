@@ -17,8 +17,6 @@ These files have been consolidated from legacy duplicate folders to serve as the
 - **[workflow.md](./workflow.md)** - Legacy workflow-agent wrapper profile for scripted batch runs.
 
 ## Legacy Sub-Agents functioning as Pseudo-Skills (Soon to be moved to `.copilot/skills`)
-- **[blecs-ux-authority.md](./blecs-ux-authority.md)** - Master authority for UX/navigation/graphical design and responsive/a11y guardrails.
-- **[blecs-workflow-authority.md](./blecs-workflow-authority.md)** - Workflow source-of-truth agent that normalizes process context for implementation and UX agents.
 
 ## Automation Inventory
 

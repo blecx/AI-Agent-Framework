@@ -92,7 +92,7 @@ Your **first** assistant message in a run must be short and action-oriented:
 
 ## UX Design Authority Delegation (mandatory)
 
-- For any work that affects graphical design, navigation, responsive behavior, or UX flow, you must consult `blecs-ux-authority` before finalizing implementation.
+- For any work that affects graphical design, navigation, responsive behavior, or UX flow, you must consult the `blecs-ux-authority` skill before finalizing implementation.
 - Treat UX decisions as blocked until the authority returns `UX_DECISION: PASS`.
 - If `UX_DECISION: CHANGES`, apply required changes and re-consult before review/PR completion.
 
