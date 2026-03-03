@@ -1,3 +1,7 @@
+<skill>
+<name>ux-delegation-policy</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/ux/delegation-policy.md</description>
+<file>
 # UX Skill: Delegation Policy (Mandatory)
 
 Canonical policy source: This file is the single source of truth for UX delegation rules across governance prompts and workflow prompts.
@@ -15,3 +19,6 @@ Trigger matrix (consultation REQUIRED):
 
 Anti-bypass rule:
 - Ambiguous scope defaults to consultation REQUIRED.
+
+</file>
+</skill>

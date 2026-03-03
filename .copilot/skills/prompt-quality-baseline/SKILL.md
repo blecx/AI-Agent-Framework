@@ -1,3 +1,7 @@
+<skill>
+<name>prompt-quality-baseline</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/prompt-quality-baseline.md</description>
+<file>
 # Prompt Quality Baseline
 
 ## Required Sections
@@ -65,3 +69,6 @@ Prompts must treat these as hard rules, not preferences.
 - Run: `python scripts/check_prompt_quality.py`
 - Run: `python scripts/check_context7_guardrails.py`
 - Verify links: `rg -n "\]\(.*\)" .github/prompts --glob '*.md'`
+
+</file>
+</skill>

@@ -1,3 +1,7 @@
+<skill>
+<name>cross-repo-coordination-checklist</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/cross-repo-coordination-checklist.md</description>
+<file>
 # Cross-Repo Coordination Checklist (Module)
 
 ## Analysis
@@ -19,3 +23,6 @@
 - Linked backend + client issues
 - Validation plan for isolated and integrated testing
 - Rollback strategy
+
+</file>
+</skill>

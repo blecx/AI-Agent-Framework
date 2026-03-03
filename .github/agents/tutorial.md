@@ -77,7 +77,7 @@ Produce accurate, maintainable Markdown tutorials and documentation review findi
 
 ## Workflow
 
-Use detailed checklist: [`../prompts/modules/tutorial-review-workflow.md`](../prompts/modules/tutorial-review-workflow.md).
+Use detailed checklist: [`../prompts/modules/tutorial-review-workflow.md`](../../.copilot/skills/tutorial-review-workflow/SKILL.md).
 
 Minimum flow:
 

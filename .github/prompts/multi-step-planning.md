@@ -29,7 +29,7 @@ Create a concise, execution-ready plan for complex multi-issue work while preser
 
 ## Workflow
 
-Use detailed checklist: [`modules/multi-step-planning-checklist.md`](modules/multi-step-planning-checklist.md).
+Use detailed checklist: [`modules/multi-step-planning-checklist.md`](../../.copilot/skills/multi-step-planning-checklist/SKILL.md).
 
 Minimum outputs:
 

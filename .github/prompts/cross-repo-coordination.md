@@ -29,7 +29,7 @@ Plan and execute coordinated backend/frontend changes with explicit contracts, o
 
 ## Workflow
 
-Use detailed checklist: [`modules/cross-repo-coordination-checklist.md`](modules/cross-repo-coordination-checklist.md).
+Use detailed checklist: [`modules/cross-repo-coordination-checklist.md`](../../.copilot/skills/cross-repo-coordination-checklist/SKILL.md).
 
 Core steps:
 

@@ -1,3 +1,7 @@
+<skill>
+<name>tutorial-review-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/tutorial-review-workflow.md</description>
+<file>
 # Tutorial Review Workflow (Module)
 
 ## Steps
@@ -22,3 +26,6 @@
 - Final narrative output stays in Markdown.
 - Keep UX and TUI paths separate.
 - Do not invent unsupported product behavior.
+
+</file>
+</skill>

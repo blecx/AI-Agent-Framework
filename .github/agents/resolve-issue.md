@@ -262,7 +262,7 @@ Implement one issue into a small, reviewable PR with DDD-compliant changes and l
 
 ## Workflow
 
-Use detailed checklist: [`../prompts/modules/resolve-issue-workflow.md`](../prompts/modules/resolve-issue-workflow.md).
+Use detailed checklist: [`../prompts/modules/resolve-issue-workflow.md`](../../.copilot/skills/resolve-issue-workflow/SKILL.md).
 
 Core flow:
 

@@ -1,3 +1,7 @@
+<skill>
+<name>resolve-issue-workflow</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/resolve-issue-workflow.md</description>
+<file>
 # Resolve Issue Workflow (Module)
 
 ## Steps
@@ -23,3 +27,6 @@
 - Keep diffs reviewable and DDD-compliant.
 - Use `.tmp/` for transient artifacts.
 - Follow `./ux/delegation-policy.md` as the canonical delegation rule source.
+
+</file>
+</skill>

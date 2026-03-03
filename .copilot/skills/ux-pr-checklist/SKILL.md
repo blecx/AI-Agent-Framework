@@ -1,3 +1,7 @@
+<skill>
+<name>ux-pr-checklist</name>
+<description>Workflow or rule module extracted from .github/prompts/modules/ux/pr-checklist.md</description>
+<file>
 # UX Skill: PR Checklist
 
 - Include navigation-plan evidence for UI-affecting changes.
@@ -6,3 +10,6 @@
 - Include any remaining UX risks and follow-up items.
 - Include requirement-gap disposition (all blocking gaps closed or explicitly deferred).
 - Include evidence link/path for each UX-sensitive claim.
+
+</file>
+</skill>

@@ -75,7 +75,7 @@ Draft and create high-quality GitHub issues (template-compliant, testable, and t
 
 ## Workflow
 
-Use the detailed checklist: [`../prompts/modules/issue-creation-workflow.md`](../prompts/modules/issue-creation-workflow.md).
+Use the detailed checklist: [`../prompts/modules/issue-creation-workflow.md`](../../.copilot/skills/issue-creation-workflow/SKILL.md).
 
 Minimum flow:
 
