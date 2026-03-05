@@ -99,8 +99,9 @@ class GatewayRouter:
         """Select provider, optionally checking that *requested_model* is reachable.
 
         Currently the gateway uses a single provider at a time, so the
-        model is passed through to the provider unchanged.  Future
-        versions may route different models to different backends.
+        model is passed through to the provider unchanged.  The
+        ``requested_model`` parameter is reserved for future multi-provider
+        routing where different models might be served by different backends.
         """
         return self.select_provider()
 

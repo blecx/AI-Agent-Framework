@@ -29,6 +29,15 @@ _DEFAULT_TIMEOUT = 60.0
 _DEFAULT_GITHUB_BASE_URL = "https://models.github.ai/inference"
 
 
+def _parse_timeout(value: Any, fallback: float = _DEFAULT_TIMEOUT) -> float:
+    """Parse a timeout value from a string or number, returning fallback on error."""
+    try:
+        t = float(value)
+        return t if t > 0 else fallback
+    except (TypeError, ValueError):
+        return fallback
+
+
 @dataclass
 class GatewayConfig:
     """Holds all runtime configuration for the LLM gateway."""
@@ -64,12 +73,7 @@ class GatewayConfig:
         api_key = os.environ.get("LLM_GATEWAY_API_KEY", "")
         model = os.environ.get("LLM_GATEWAY_MODEL", _DEFAULT_MODEL)
         timeout_str = os.environ.get("LLM_GATEWAY_TIMEOUT", str(_DEFAULT_TIMEOUT))
-        try:
-            timeout = float(timeout_str)
-            if timeout <= 0:
-                timeout = _DEFAULT_TIMEOUT
-        except ValueError:
-            timeout = _DEFAULT_TIMEOUT
+        timeout = _parse_timeout(timeout_str)
 
         return cls(
             provider=provider,
@@ -87,9 +91,7 @@ class GatewayConfig:
         api_key = str(data.get("api_key", ""))
         model = str(data.get("model", _DEFAULT_MODEL))
         try:
-            timeout = float(data.get("timeout", _DEFAULT_TIMEOUT))
-            if timeout <= 0:
-                timeout = _DEFAULT_TIMEOUT
+            timeout = _parse_timeout(data.get("timeout", _DEFAULT_TIMEOUT))
         except (TypeError, ValueError):
             timeout = _DEFAULT_TIMEOUT
 
@@ -182,9 +184,4 @@ def _apply_env_overrides(cfg: GatewayConfig) -> None:
     if v := os.environ.get("LLM_GATEWAY_MODEL"):
         cfg.default_model = v
     if v := os.environ.get("LLM_GATEWAY_TIMEOUT"):
-        try:
-            t = float(v)
-            if t > 0:
-                cfg.timeout = t
-        except ValueError:
-            pass
+        cfg.timeout = _parse_timeout(v, cfg.timeout)

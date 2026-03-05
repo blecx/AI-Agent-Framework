@@ -19,6 +19,26 @@ from poc.gateway.router import GatewayRouter, _build_provider
 
 
 # ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+_GITHUB_TOKEN_VARS = ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT")
+
+
+@pytest.fixture()
+def no_github_token(monkeypatch):
+    """Ensure no GitHub token env vars are set."""
+    for var in _GITHUB_TOKEN_VARS:
+        monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture()
+def with_github_token(monkeypatch):
+    """Set a fake GitHub token in the environment."""
+    monkeypatch.setenv("GITHUB_TOKEN", "ghp_test_fake_token_for_unit_tests")
+
+
+# ---------------------------------------------------------------------------
 # Config tests
 # ---------------------------------------------------------------------------
 
@@ -64,7 +84,7 @@ def test_config_from_env_reads_env_vars(monkeypatch):
     assert cfg.timeout == 30.0
 
 
-def test_config_from_env_uses_defaults_when_env_absent(monkeypatch):
+def test_config_from_env_uses_defaults_when_env_absent(no_github_token, monkeypatch):
     for var in ("LLM_GATEWAY_PROVIDER", "LLM_GATEWAY_MODEL", "LLM_GATEWAY_API_KEY"):
         monkeypatch.delenv(var, raising=False)
 
@@ -110,8 +130,7 @@ def test_build_provider_stub():
     assert provider.name == "stub"
 
 
-def test_build_provider_github(monkeypatch):
-    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+def test_build_provider_github(with_github_token):
     cfg = GatewayConfig(provider="github")
     provider = _build_provider(cfg)
     assert isinstance(provider, GitHubModelsProvider)
@@ -148,29 +167,23 @@ def test_stub_provider_health_ok():
     assert health["provider"] == "stub"
 
 
-def test_github_provider_not_configured_without_token(monkeypatch):
-    for var in ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT"):
-        monkeypatch.delenv(var, raising=False)
+def test_github_provider_not_configured_without_token(no_github_token):
     p = GitHubModelsProvider(api_key="")
     assert p.is_configured() is False
 
 
-def test_github_provider_configured_with_token(monkeypatch):
-    monkeypatch.setenv("GITHUB_TOKEN", "ghp_test")
+def test_github_provider_configured_with_token(with_github_token):
     p = GitHubModelsProvider(api_key="")
     assert p.is_configured() is True
 
 
-def test_github_provider_health_error_without_token(monkeypatch):
-    for var in ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT"):
-        monkeypatch.delenv(var, raising=False)
+def test_github_provider_health_error_without_token(no_github_token):
     health = GitHubModelsProvider(api_key="").health_check()
     assert health["status"] == "error"
     assert "GITHUB_TOKEN" in health["error"]
 
 
-def test_github_provider_health_ok_with_token(monkeypatch):
-    monkeypatch.setenv("GITHUB_TOKEN", "ghp_test")
+def test_github_provider_health_ok_with_token(with_github_token):
     health = GitHubModelsProvider(api_key="").health_check()
     assert health["status"] == "ok"
 
@@ -244,18 +257,15 @@ def test_router_selects_stub_by_default():
     assert isinstance(provider, StubProvider)
 
 
-def test_router_selects_github_when_configured(monkeypatch):
-    monkeypatch.setenv("GITHUB_TOKEN", "ghp_test")
+def test_router_selects_github_when_configured(with_github_token):
     cfg = GatewayConfig(provider="github")
     router = GatewayRouter(cfg)
     provider = router.select_provider()
     assert isinstance(provider, GitHubModelsProvider)
 
 
-def test_router_falls_back_to_stub_when_github_not_configured(monkeypatch):
+def test_router_falls_back_to_stub_when_github_not_configured(no_github_token):
     """If github provider has no token, router falls back to stub."""
-    for var in ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT"):
-        monkeypatch.delenv(var, raising=False)
     cfg = GatewayConfig(provider="github", api_key="")
     router = GatewayRouter(cfg)
     with pytest.warns(RuntimeWarning, match="not configured"):
@@ -315,9 +325,7 @@ def test_router_health_stub_ok():
     assert health["model_policy"] == {"x": "y"}
 
 
-def test_router_health_github_error_without_token(monkeypatch):
-    for var in ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT"):
-        monkeypatch.delenv(var, raising=False)
+def test_router_health_github_error_without_token(no_github_token):
     cfg = GatewayConfig(provider="github", api_key="")
     router = GatewayRouter(cfg)
     # Router falls back to stub when github is unconfigured; stub is always healthy

@@ -65,11 +65,19 @@ class GitHubModelsProvider(LLMProvider):
     def is_configured(self) -> bool:
         """Return True when a non-empty, non-placeholder token is available."""
         token = self._api_key or self._resolve_token()
-        return bool(token) and token not in {
-            "your-api-key-here",
-            "your-token-here",
-            "changeme",
-        }
+        if not token:
+            return False
+        lowered = token.lower().strip()
+        # Reject known placeholder strings
+        if lowered in {"your-api-key-here", "your-token-here", "changeme"}:
+            return False
+        # Accept tokens that look like real GitHub credentials
+        # (ghp_ = classic PAT, github_pat_ = fine-grained PAT,
+        #  ghs_ = GitHub App installation token, gho_ = OAuth token)
+        return any(
+            token.startswith(prefix)
+            for prefix in ("ghp_", "github_pat_", "ghs_", "gho_")
+        ) or len(token) >= 20  # fallback: accept any sufficiently long token
 
     async def complete(
         self, model: str, messages: List[Dict[str, str]], **kwargs: Any
