@@ -1,0 +1,98 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hubpass
+      POSTGRES_DB: hubdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hubdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  hub:
+    build:
+      context: ./hub
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://hub:hubpass@db:5432/hubdb
+      ARTIFACT_DIR: /data/artifacts
+      REPOS_DIR: /data/repos
+    volumes:
+      - artifacts:/data/artifacts
+      - repos:/data/repos
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  llm-gateway:
+    build:
+      context: ./llm-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Leave blank to use the built-in stub (offline mode)
+      # Set to e.g. http://host.docker.internal:11434 for Ollama
+      UPSTREAM_LLM_URL: "${UPSTREAM_LLM_URL:-}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  agent-generalist:
+    build:
+      context: ./agent-generalist
+      dockerfile: Dockerfile
+    environment:
+      HUB_URL: http://hub:8000
+      LLM_GATEWAY_URL: http://llm-gateway:8080
+      POLL_INTERVAL: "5"
+      LEASE_SECONDS: "180"
+      SANDBOX_DIR: /tmp/sandboxes
+      # Optional: set for private repos
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+    volumes:
+      - artifacts:/data/artifacts
+    depends_on:
+      hub:
+        condition: service_healthy
+      llm-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+  python-runner:
+    build:
+      context: ./python-runner
+      dockerfile: Dockerfile
+    environment:
+      HUB_URL: http://hub:8000
+      POLL_INTERVAL: "5"
+      LEASE_SECONDS: "300"
+      TEST_COMMAND: "pytest -q"
+      TEST_TIMEOUT_SECONDS: "300"
+    volumes:
+      - artifacts:/data/artifacts
+    depends_on:
+      hub:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  artifacts:
+  repos:

@@ -374,6 +374,40 @@
       }
     },
     {
+      "label": "🤖 PoC: Start stack",
+      "type": "shell",
+      "command": "docker compose up --build -d",
+      "options": { "cwd": "${workspaceFolder}/poc" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "group": "build"
+    },
+    {
+      "label": "🤖 PoC: Stop stack",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}/poc" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "🤖 PoC: Hub logs",
+      "type": "shell",
+      "command": "docker compose logs -f hub",
+      "options": { "cwd": "${workspaceFolder}/poc" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "🤖 PoC: Create run",
+      "type": "shell",
+      "command": "agentctl run create --repo ${input:pocRepo} --ref ${input:pocRef}",
+      "options": { "cwd": "${workspaceFolder}/poc" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
       "label": "✅ Validate: Full Backend",
       "dependsOn": ["✅ Backend: Format & Lint", "🧪 Backend: Run Tests"],
       "dependsOrder": "sequence",
@@ -464,6 +498,18 @@
       "type": "promptString",
       "description": "Enter GitHub PR number",
       "default": ""
+    },
+    {
+      "id": "pocRepo",
+      "type": "promptString",
+      "description": "GitHub owner/repo (e.g. octocat/Hello-World)",
+      "default": ""
+    },
+    {
+      "id": "pocRef",
+      "type": "promptString",
+      "description": "git ref (branch, SHA, tag)",
+      "default": "main"
     }
   ]
 }

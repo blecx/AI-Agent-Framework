@@ -2,11 +2,31 @@
 
 [![Backend CI](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci.yml)
 [![Backend Quality Gates](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-backend.yml)
+[![PoC CI](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-poc.yml/badge.svg)](https://github.com/blecx/AI-Agent-Framework/actions/workflows/ci-poc.yml)
 [![codecov](https://codecov.io/gh/blecx/AI-Agent-Framework/branch/main/graph/badge.svg)](https://codecov.io/gh/blecx/AI-Agent-Framework)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 An ISO 21500 Project Management AI Agent System with FastAPI backend and React/Vite frontend, deployed as Docker containers.
+
+---
+
+## 🤖 Multi-Agent Coding Framework (PoC → MVP Roadmap)
+
+This repository also contains a **multi-agent local coding framework** that automates code changes via a hub-and-agent Docker stack.
+
+### Roadmap
+
+| Phase | Label | Status | Description |
+|---|---|---|---|
+| **S1** | **PoC** | ✅ *current* | Hub (FastAPI+Postgres), generalist agent, python-runner, LLM-gateway stub, CLI (`agentctl`) |
+| S2 | MVP | 🔜 planned | Specialised agents (architect, tester, reviewer), real LLM policies, approval UI, multi-repo |
+| S3 | Hardening | 🔜 planned | Retry/back-off, RBAC, audit log, observability |
+| 9C | VS Code Extension | 🔜 deferred | Full IDE integration, run panel, diff viewer |
+
+**→ See [`poc/README.md`](poc/README.md) for setup, quickstart, and full documentation.**
+
+---
 
 ## Overview
 
